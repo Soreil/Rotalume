@@ -109,9 +109,10 @@ namespace generator
                 foreach (var o in block.Value)
                 {
                     string tag = MakeTag(o);
-                    Console.WriteLine(tag + " = 0x" + o.ID.ToString("X2") + ",");
+                    string value = "0x" + o.ID.ToString("X2");
+                    Console.WriteLine("\t" + tag + " = " + value + ",");
                 }
-                Console.WriteLine("}");
+                Console.WriteLine("};");
             }
         }
 
@@ -119,15 +120,15 @@ namespace generator
         {
             foreach (var block in opcodes)
             {
-                Console.WriteLine("string " + block.Key + "ToString()");
-                Console.WriteLine("{");
-                Console.WriteLine("");
-                foreach (var o in block.Value)
+                Console.WriteLine("string " + block.Key + "ToString(Opcode op)");
+                Console.WriteLine("=> op switch {");
+                foreach (var v in block.Value)
                 {
-                    string tag = MakeTag(o);
-                    Console.WriteLine(tag + " = 0x" + o.ID.ToString("X2") + ",");
+                    string tag = block.Key + "." + MakeTag(v);
+                    string value = "\"" + MakePrettyTag(v) + "\"";
+                    Console.WriteLine("\t" + tag + " => " + value + ",");
                 }
-                Console.WriteLine("}");
+                Console.WriteLine("};");
             }
         }
 
@@ -136,8 +137,26 @@ namespace generator
             string tag = o.mnemonic;
             foreach (var t in o.operands)
             {
+                if (t.Increment) tag += "I";
+                if (t.Decrement) tag += "D";
                 tag += "_";
                 tag += t.Pointer ? t.Name : "AT_" + t.Name;
+            }
+
+            return tag;
+        }
+
+        private static string MakePrettyTag(Opcode o)
+        {
+            string tag = o.mnemonic;
+            foreach (var t in o.operands)
+            {
+                tag += " ";
+                if (!t.Pointer) tag += "(";
+                tag += t.Name;
+                if (t.Increment) tag += "+";
+                if (t.Decrement) tag += "-";
+                if (!t.Pointer) tag += ")";
             }
 
             return tag;
