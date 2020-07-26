@@ -6,17 +6,25 @@ namespace Tests
 {
     public class Tests
     {
-        [SetUp]
-        public void Setup()
-        {
-        }
+        private readonly Reader r;
+
+        public Tests() => r = new Reader("..\\..\\..\\json\\Opcodes.json");
 
         [Test]
-        public void ReadJSON()
+        public void PrintEnum() => r.PrintEnum();
+
+        [Test]
+        public void PrintEnumString() => r.PrintEnumStrings();
+
+        [Test]
+        public void RegisterWrite()
         {
-            var o = new Reader("..\\..\\..\\json\\Opcodes.json");
-            o.PrintEnum();
-            o.PrintEnumStrings();
+            Storage s = new Storage();
+            s.AF.Write(0xf00f);
+            Console.WriteLine(s.AF.Read());
+            Console.WriteLine(s.A.Read());
+            Console.WriteLine(s.F.Read());
         }
     }
+
 }
