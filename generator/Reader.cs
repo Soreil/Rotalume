@@ -73,7 +73,25 @@ namespace generator
                     current.operands = new List<Operand>();
                     foreach (var currentOperand in op.Value.GetProperty("operands").EnumerateArray())
                     {
-                        Operand operands = new Operand(currentOperand.GetProperty("name").GetString(),
+                        var operandName = currentOperand.GetProperty("name").GetString();
+
+                        bool isConditional;
+                        switch (current.mnemonic)
+                        {
+                            case "JR":
+                            case "RET":
+                            case "JP":
+                            case "CALL":
+                                isConditional = true;
+                                break;
+                            default:
+                                isConditional = false;
+                                break;
+                        }
+
+                        if (isConditional) operandName = DisambiguateFlagName(operandName);
+
+                        Operand operands = new Operand(operandName,
                             currentOperand.GetProperty("immediate").GetBoolean());
 
                         if (currentOperand.TryGetProperty("bytes", out JsonElement optional))
@@ -99,6 +117,15 @@ namespace generator
                 }
             }
         }
+
+        private string DisambiguateFlagName(string operandName) => operandName switch
+        {
+            "Z" => "Zero",
+            "N" => "Negative",
+            "H" => "HalfCarry",
+            "C" => "Carry",
+            _ => operandName,
+        };
 
         public void PrintEnum()
         {
@@ -161,6 +188,36 @@ namespace generator
 
             return tag;
         }
+
+        private static string MakeFunctionSignature(Opcode o)
+        {
+            string functionName = o.mnemonic;
+            List<string> functionArguments = new List<string>();
+            foreach (var op in o.operands)
+            {
+                string arg = op.MakeOperandArgumentValue();
+                functionArguments.Add(arg);
+            }
+
+            var functionArgument = string.Join(',', functionArguments);
+
+            return functionName + "(" + functionArgument + ")";
+        }
+
+        public void PrintFunctionSignatures()
+        {
+            foreach (var block in opcodes)
+            {
+                Console.WriteLine("public static void " + "Exec(" + block.Key + " o" + ") {");
+                Console.WriteLine("switch(o) {");
+                foreach (var op in block.Value)
+                    Console.WriteLine("\tcase" + " " + block.Key + "." + MakeTag(op) + " : " +
+                        MakeFunctionSignature(op) + "; break;");
+                Console.WriteLine("}");
+                Console.WriteLine("}");
+            }
+        }
+
 
         public HashSet<(string, bool)> PossibleOperands()
         {

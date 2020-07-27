@@ -1,0 +1,14 @@
+﻿namespace generator
+{
+    public enum Flag
+    {
+        Z,
+        NZ,
+        N,
+        NN,
+        H,
+        NH,
+        C,
+        NC
+    }
+}

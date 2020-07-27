@@ -17,14 +17,30 @@ namespace Tests
         public void PrintEnumString() => r.PrintEnumStrings();
 
         [Test]
-        public void RegisterWrite()
+        public void PrintPossibleTags()
         {
-            Storage s = new Storage();
-            s.AF.Write(0xf00f);
-            Console.WriteLine(s.AF.Read());
-            Console.WriteLine(s.A.Read());
-            Console.WriteLine(s.F.Read());
+            var ops = r.PossibleOperands();
+            foreach (var op in ops)
+            {
+                Console.WriteLine(op.Item1 + " " + op.Item2.ToString());
+            }
         }
+
+        [Test]
+        public void PrintFunctionSignatures()
+        {
+            r.PrintFunctionSignatures();
+        }
+
+        //[Test]
+        //public void RegisterWrite()
+        //{
+        //    Registers s = new Registers();
+        //    s.Set(AF,0xf00f);
+        //    Console.WriteLine(s.AF.Read());
+        //    Console.WriteLine(s.A.Read());
+        //    Console.WriteLine(s.F.Read());
+        //}
     }
 
 }
