@@ -208,7 +208,7 @@ namespace generator
         {
             foreach (var block in opcodes)
             {
-                Console.WriteLine("public static void " + "Exec(" + block.Key + " o" + ") {");
+                Console.WriteLine("public Dictionary<"+block.Key+", Delegate>" + " MakeTable(" + block.Key + " o" + ") {");
                 Console.WriteLine("switch(o) {");
                 foreach (var op in block.Value)
                     Console.WriteLine("\tcase" + " " + block.Key + "." + MakeTag(op) + " : " +
