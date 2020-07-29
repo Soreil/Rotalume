@@ -27,20 +27,16 @@ namespace Tests
         }
 
         [Test]
-        public void PrintFunctionSignatures()
+        public void PrintFunctionConstructors()
         {
             r.PrintFunctionConstructors();
         }
 
-        //[Test]
-        //public void RegisterWrite()
-        //{
-        //    Registers s = new Registers();
-        //    s.Set(AF,0xf00f);
-        //    Console.WriteLine(s.AF.Read());
-        //    Console.WriteLine(s.A.Read());
-        //    Console.WriteLine(s.F.Read());
-        //}
+        [Test]
+        public void PrintFunctionSignatures()
+        {
+            r.PrintFunctionSignatures();
+        }
     }
 
 }

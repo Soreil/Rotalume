@@ -19,89 +19,81 @@ namespace generator
             Pointer = pointer;
         }
 
-        internal string MakeOperandArgumentValue()
+        internal string MakeOperandArgumentValue() => Name switch
         {
-            string valueOfOperand = Name switch
-            {
-                "A" => "Register.A",
-                "B" => "Register.B",
-                "C" => "Register.C",
-                "D" => "Register.D",
-                "E" => "Register.E",
-                "F" => "Register.F",
-                "H" => "Register.H",
-                "L" => "Register.L",
+            "A" => "Register.A",
+            "B" => "Register.B",
+            "C" => "Register.C",
+            "D" => "Register.D",
+            "E" => "Register.E",
+            "F" => "Register.F",
+            "H" => "Register.H",
+            "L" => "Register.L",
 
-                "AF" => "WideRegister.AF",
-                "BC" => "WideRegister.BC",
-                "DE" => "WideRegister.DE",
-                "HL" => "WideRegister.HL",
-                "SP" => "WideRegister.SP",
+            "AF" => "WideRegister.AF",
+            "BC" => "WideRegister.BC",
+            "DE" => "WideRegister.DE",
+            "HL" => "WideRegister.HL",
+            "SP" => "WideRegister.SP",
 
-                "d16" => "DMGInteger.d16",
-                "a16" => "DMGInteger.a16",
+            "d16" => "DMGInteger.d16",
+            "a16" => "DMGInteger.a16",
 
-                "a8" => "DMGInteger.a8",
-                "d8" => "DMGInteger.d8",
-                "r8" => "DMGInteger.r8",
+            "a8" => "DMGInteger.a8",
+            "d8" => "DMGInteger.d8",
+            "r8" => "DMGInteger.r8",
 
-                "Zero" => "Flag.Z",
-                "Negative" => "Flag.M",
-                "HalfCarry" => "Flag.H",
-                "Carry" => "Flag.C",
+            "Zero" => "Flag.Z",
+            "Negative" => "Flag.M",
+            "HalfCarry" => "Flag.H",
+            "Carry" => "Flag.C",
 
-                "NZ" => "Flag.NZ",
-                "NN" => "Flag.NN",
-                "NH" => "Flag.NH",
-                "NC" => "Flag.NC",
+            "NZ" => "Flag.NZ",
+            "NN" => "Flag.NN",
+            "NH" => "Flag.NH",
+            "NC" => "Flag.NC",
 
-                _ => Name
-            };
+            _ => Name
+        };
 
-            return valueOfOperand;
-        }
+
 
         internal string MakeOperandArgumentType()
+        => Name switch
         {
-            string typeOfOperand = Name switch
-            {
-                "A" => "Register",
-                "B" => "Register",
-                "C" => "Register",
-                "D" => "Register",
-                "E" => "Register",
-                "F" => "Register",
-                "H" => "Register",
-                "L" => "Register",
+            "A" => "Register",
+            "B" => "Register",
+            "C" => "Register",
+            "D" => "Register",
+            "E" => "Register",
+            "F" => "Register",
+            "H" => "Register",
+            "L" => "Register",
 
-                "AF" => "WideRegister",
-                "BC" => "WideRegister",
-                "DE" => "WideRegister",
-                "HL" => "WideRegister",
-                "SP" => "WideRegister",
+            "AF" => "WideRegister",
+            "BC" => "WideRegister",
+            "DE" => "WideRegister",
+            "HL" => "WideRegister",
+            "SP" => "WideRegister",
 
-                "d16" => "ushort",
-                "a16" => "ushort",
+            "d16" => "ushort",
+            "a16" => "ushort",
 
-                "d8" => "byte",
-                "r8" => "sbyte",
+            "d8" => "byte",
+            "r8" => "sbyte",
 
-                "Zero" => "Flag",
-                "Negative" => "Flag",
-                "HalfCarry" => "Flag",
-                "Carry" => "Flag",
+            "Zero" => "Flag",
+            "Negative" => "Flag",
+            "HalfCarry" => "Flag",
+            "Carry" => "Flag",
 
-                "NZ" => "Flag",
-                "NN" => "Flag",
-                "NH" => "Flag",
-                "NC" => "Flag",
+            "NZ" => "Flag",
+            "NN" => "Flag",
+            "NH" => "Flag",
+            "NC" => "Flag",
 
-                _ => "byte"
-            };
+            _ => "byte"
+        };
 
-            return typeOfOperand;
-        }
     }
-
-
 }

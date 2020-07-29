@@ -131,7 +131,7 @@ namespace generator
         {
             foreach (var block in opcodes)
             {
-                Console.WriteLine("public enum " + block.Key.ToString().ToUpper() + block.Key.Substring(1) + " : byte");
+                Console.WriteLine("public enum " + block.Key.Substring(0, 1).ToString().ToUpper() + block.Key.Substring(1) + " : byte");
                 Console.WriteLine("{");
                 foreach (var o in block.Value)
                 {
@@ -189,7 +189,7 @@ namespace generator
             return tag;
         }
 
-        private static string MakeFunctionConstructorArgument(Opcode o)
+        private static List<string> MakeFunctionConstructorArguments(Opcode o)
         {
             string functionName = o.mnemonic;
             List<string> functionArguments = new List<string>();
@@ -202,9 +202,7 @@ namespace generator
                 functionArguments.Add(arg);
             }
 
-            var functionArgument = string.Join(',', functionArguments);
-
-            return functionName + "(" + functionArgument + ")";
+            return functionArguments;
         }
 
         public void PrintFunctionConstructors()
@@ -212,15 +210,30 @@ namespace generator
             foreach (var block in opcodes) PrintFunctionConstructor(block);
         }
 
+        public void MakeFunction(Opcode op)
+        {
+            var sig = MakeFunctionSignature(op);
+            var body = MakeFunctionBody(op);
+            string.Join("\n", new string[] { sig, "{", "}" });
+        }
+
         public void PrintFunctionSignatures()
         {
             List<string> functions = new List<string>();
             foreach (var block in opcodes)
-            {
-                functions.Add(MakeFunctionSignature(block.Value));
-            }
+                foreach (var op in block.Value)
+                    functions.Add(MakeFunctionSignature(op));
+
             foreach (var s in functions)
                 Console.WriteLine(s);
+        }
+
+        private static string MakeFunctionSignature(Opcode op)
+            => "public Action " + op.mnemonic + "(" + MakeFunctionSignatureParamList(op) + ")";
+
+        private static string MakeFunctionBody(Opcode op)
+        {
+
         }
 
         private static void PrintFunctionConstructor(KeyValuePair<string, List<Opcode>> block)
@@ -230,23 +243,19 @@ namespace generator
             Console.WriteLine(mapType + " m = new " + mapType + "();");
             foreach (var op in block.Value)
                 Console.WriteLine("m[" + TypedTag(block.Key, MakeTag(op)) + "] = " +
-                    MakeFunctionConstructorArgument(op) + ";");
+                    MakeFunctionConstructorArguments(op) + ";");
             Console.WriteLine("}");
         }
 
-        private static string MakeFunctionSignature(Opcode op)
+        private static string MakeFunctionSignatureParamList(Opcode op)
         {
-            List<string> arguments = new List<string>();
-            foreach (var op in ops)
-            {
-                arguments.Add(MakeFunctionConstructorArgument(op));
-            }
+            var arguments = MakeFunctionConstructorArguments(op);
 
             List<string> taggedArguments = new List<string>();
             for (int i = 0; i < arguments.Count; i++)
                 taggedArguments.Add(arguments[i] + "p" + i.ToString());
 
-            return  string.Join(", ", taggedArguments);
+            return string.Join(", ", taggedArguments);
         }
 
         private static string TypedTag(string key, string op) => key + "." + op;
