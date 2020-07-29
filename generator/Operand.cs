@@ -2,7 +2,6 @@
 
 namespace generator
 {
-
     public struct Operand
     {
         public string Name;
@@ -39,11 +38,12 @@ namespace generator
                 "HL" => "WideRegister.HL",
                 "SP" => "WideRegister.SP",
 
-                "d16" => "0",
-                "a16" => "0",
+                "d16" => "DMGInteger.d16",
+                "a16" => "DMGInteger.a16",
 
-                "d8" => "0",
-                "r8" => "0",
+                "a8" => "DMGInteger.a8",
+                "d8" => "DMGInteger.d8",
+                "r8" => "DMGInteger.r8",
 
                 "Zero" => "Flag.Z",
                 "Negative" => "Flag.M",

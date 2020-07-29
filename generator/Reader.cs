@@ -131,7 +131,7 @@ namespace generator
         {
             foreach (var block in opcodes)
             {
-                Console.WriteLine("enum " + block.Key + " : byte");
+                Console.WriteLine("public enum " + block.Key.ToString().ToUpper() + block.Key.Substring(1) + " : byte");
                 Console.WriteLine("{");
                 foreach (var o in block.Value)
                 {
@@ -189,13 +189,16 @@ namespace generator
             return tag;
         }
 
-        private static string MakeFunctionSignature(Opcode o)
+        private static string MakeFunctionConstructorArgument(Opcode o)
         {
             string functionName = o.mnemonic;
             List<string> functionArguments = new List<string>();
             foreach (var op in o.operands)
             {
-                string arg = op.MakeOperandArgumentValue();
+                string arg = "(" + op.MakeOperandArgumentValue();
+                arg += ", ";
+                arg += op.Pointer ? "true" : "false";
+                arg += ")";
                 functionArguments.Add(arg);
             }
 
@@ -204,19 +207,49 @@ namespace generator
             return functionName + "(" + functionArgument + ")";
         }
 
+        public void PrintFunctionConstructors()
+        {
+            foreach (var block in opcodes) PrintFunctionConstructor(block);
+        }
+
         public void PrintFunctionSignatures()
         {
+            List<string> functions = new List<string>();
             foreach (var block in opcodes)
             {
-                Console.WriteLine("public Dictionary<"+block.Key+", Delegate>" + " MakeTable(" + block.Key + " o" + ") {");
-                Console.WriteLine("switch(o) {");
-                foreach (var op in block.Value)
-                    Console.WriteLine("\tcase" + " " + block.Key + "." + MakeTag(op) + " : " +
-                        MakeFunctionSignature(op) + "; break;");
-                Console.WriteLine("}");
-                Console.WriteLine("}");
+                functions.Add(MakeFunctionSignature(block.Value));
             }
+            foreach (var s in functions)
+                Console.WriteLine(s);
         }
+
+        private static void PrintFunctionConstructor(KeyValuePair<string, List<Opcode>> block)
+        {
+            string mapType = "Dictionary <" + block.Key + ", Action>";
+            Console.WriteLine("public " + mapType + " MakeTable(" + block.Key + " o" + ") {");
+            Console.WriteLine(mapType + " m = new " + mapType + "();");
+            foreach (var op in block.Value)
+                Console.WriteLine("m[" + TypedTag(block.Key, MakeTag(op)) + "] = " +
+                    MakeFunctionConstructorArgument(op) + ";");
+            Console.WriteLine("}");
+        }
+
+        private static string MakeFunctionSignature(Opcode op)
+        {
+            List<string> arguments = new List<string>();
+            foreach (var op in ops)
+            {
+                arguments.Add(MakeFunctionConstructorArgument(op));
+            }
+
+            List<string> taggedArguments = new List<string>();
+            for (int i = 0; i < arguments.Count; i++)
+                taggedArguments.Add(arguments[i] + "p" + i.ToString());
+
+            return  string.Join(", ", taggedArguments);
+        }
+
+        private static string TypedTag(string key, string op) => key + "." + op;
 
 
         public HashSet<(string, bool)> PossibleOperands()

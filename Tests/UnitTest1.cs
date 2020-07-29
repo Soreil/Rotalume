@@ -29,7 +29,7 @@ namespace Tests
         [Test]
         public void PrintFunctionSignatures()
         {
-            r.PrintFunctionSignatures();
+            r.PrintFunctionConstructors();
         }
 
         //[Test]
