@@ -37,6 +37,12 @@ namespace Tests
         {
             r.PrintFunctionSignatures();
         }
+
+        [Test]
+        public void PrintFunctionSkeletons()
+        {
+            r.PrintFunctions();
+        }
     }
 
 }

@@ -76,11 +76,12 @@ namespace generator
             "HL" => "WideRegister",
             "SP" => "WideRegister",
 
-            "d16" => "ushort",
-            "a16" => "ushort",
+            "d16" => "DMGInteger",
+            "a16" => "DMGInteger",
 
-            "d8" => "byte",
-            "r8" => "sbyte",
+            "a8" => "DMGInteger",
+            "d8" => "DMGInteger",
+            "r8" => "DMGInteger",
 
             "Zero" => "Flag",
             "Negative" => "Flag",
