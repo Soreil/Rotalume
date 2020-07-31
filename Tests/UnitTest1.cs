@@ -11,10 +11,19 @@ namespace Tests
         public Tests() => r = new Reader("..\\..\\..\\json\\Opcodes.json");
 
         [Test]
-        public void PrintEnum() => r.PrintEnum();
+        public void PrintEnum()
+        {
+            var enums = r.PrintableEnum();
+            Assert.AreEqual(2, enums.Count);
+            foreach (var e in enums) Console.WriteLine(e);
+        }
 
         [Test]
-        public void PrintEnumString() => r.PrintEnumStrings();
+        public void PrintEnumToStringMapping()
+        {
+           var lines = r.PrintableEnumToStringMapping();
+            foreach (var line in lines) Console.WriteLine(line);
+        }
 
         [Test]
         public void PrintPossibleTags()

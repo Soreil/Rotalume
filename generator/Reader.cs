@@ -6,51 +6,6 @@ using System.Text.Json;
 
 namespace generator
 {
-    public struct Opcode
-    {
-        public byte ID;
-        public string mnemonic;
-        public int bytes;
-
-        public List<int> cycles;
-
-        //There is also a possible increment flag here, we really need a struct instead 
-        //of a tuple at this point since it changes too often.
-        public List<Operand> operands;
-        public bool immediate;
-        public List<(string, string)> flags;
-
-        public override string ToString()
-        {
-            List<string> cycleStrings = new List<string>();
-            foreach (var c in cycles)
-            {
-                cycleStrings.Add(c.ToString());
-            }
-
-            var cycleString = string.Join(' ', cycleStrings);
-
-            List<string> operandStrings = new List<string>();
-            foreach (var o in operands)
-                operandStrings.Add("\t" + o.Name + " " + o.Pointer);
-            var operandString = string.Join('\n', operandStrings);
-
-            List<string> flagStrings = new List<string>();
-            foreach (var f in flags)
-                flagStrings.Add("\t" + f.Item1 + ":" + f.Item2);
-            var flagString = string.Join('\n', flagStrings);
-
-            return string.Join('\n', new List<string>
-            {
-                mnemonic,
-                bytes.ToString(),
-                cycleString,
-                operandString,
-                immediate.ToString(),
-                flagString
-            });
-        }
-    }
 
     public class Reader
     {
@@ -135,136 +90,62 @@ namespace generator
             _ => operandName,
         };
 
-        public void PrintEnum()
+        public List<string> PrintableEnum()
         {
+            var output = new List<string>();
             foreach (var block in opcodes)
             {
-                Console.WriteLine("public enum " + block.Key.Substring(0, 1).ToString().ToUpper() +
+                var currentEnum = new List<string>();
+                currentEnum.Add("public enum " + block.Key.Substring(0, 1).ToString().ToUpper() +
                                   block.Key.Substring(1) + " : byte");
-                Console.WriteLine("{");
+                currentEnum.Add("{");
                 foreach (var o in block.Value)
                 {
-                    string tag = MakeTag(o);
+                    string tag = o.MakePrettyTag();
                     string value = "0x" + o.ID.ToString("X2");
-                    Console.WriteLine("\t" + tag + " = " + value + ",");
+                    currentEnum.Add("\t" + tag + " = " + value + ",");
                 }
 
-                Console.WriteLine("};");
+                currentEnum.Add("};");
+                output.Add(string.Join('\n', currentEnum));
+
             }
+            return output;
         }
 
-        public void PrintEnumStrings()
+        public List<string> PrintableEnumToStringMapping()
         {
+            List<string> output = new List<string>();
             foreach (var block in opcodes)
             {
-                Console.WriteLine("string " + block.Key + "ToString(Opcode op)");
-                Console.WriteLine("=> op switch {");
+                List<string> current = new List<string>();
+                current.Add("string " + block.Key + "ToString(Opcode op)");
+                current.Add("=> op switch {");
                 foreach (var v in block.Value)
                 {
-                    string tag = block.Key + "." + MakeTag(v);
-                    string value = "\"" + MakePrettyTag(v) + "\"";
-                    Console.WriteLine("\t" + tag + " => " + value + ",");
+                    string tag = block.Key + "." + v.MakeTag();
+                    string value = "\"" + v.MakePrettyTag() + "\"";
+                    current.Add("\t" + tag + " => " + value + ",");
                 }
 
-                Console.WriteLine("};");
+                current.Add("};");
+                output.Add(string.Join('\n', current));
             }
+            return output;
         }
-
-        private static string MakeTag(Opcode o)
-        {
-            string tag = o.mnemonic;
-            foreach (var t in o.operands)
-            {
-                if (t.Increment) tag += "I";
-                if (t.Decrement) tag += "D";
-                tag += "_";
-                tag += t.Pointer ? t.Name : "AT_" + t.Name;
-            }
-
-            return tag;
-        }
-
-        private static string MakePrettyTag(Opcode o)
-        {
-            string tag = o.mnemonic;
-            foreach (var t in o.operands)
-            {
-                tag += " ";
-                if (!t.Pointer) tag += "(";
-                tag += t.Name;
-                if (t.Increment) tag += "+";
-                if (t.Decrement) tag += "-";
-                if (!t.Pointer) tag += ")";
-            }
-
-            return tag;
-        }
-
-        //This function is called to make the actual calls, therefore we need values instead of types
-        private static List<string> MakeFunctionCallArguments(Opcode o)
-        {
-            string functionName = o.mnemonic;
-            List<string> functionArguments = new List<string>();
-            foreach (var op in o.operands)
-            {
-                string arg = "(" + op.MakeOperandArgumentValue();
-                arg += ", ";
-                arg += op.Pointer ? "true" : "false";
-                arg += ")";
-                functionArguments.Add(arg);
-            }
-
-            return functionArguments;
-        }
-
-        //This function is called for the function skeletons, we need types here instead of values
-        private static List<string> MakeFunctionConstructorArguments(Opcode o)
-        {
-            string functionName = o.mnemonic;
-            List<string> functionArguments = new List<string>();
-            foreach (var op in o.operands)
-            {
-                string arg = "(" + op.MakeOperandArgumentType();
-                arg += ", ";
-                arg += "bool";
-                arg += ")";
-                functionArguments.Add(arg);
-            }
-
-            return functionArguments;
-        }
-
         public void PrintFunctionConstructors()
         {
             foreach (var block in opcodes) PrintFunctionConstructor(block);
         }
-
-
-
-        public string MakeFunction(Opcode op)
-        {
-            var sig = MakeFunctionSignature(op);
-            var body = MakeFunctionBody(op);
-            return string.Join("\n", new string[] { sig, "{", body, "}" });
-        }
-
         public void PrintFunctionSignatures()
         {
             List<string> functions = new List<string>();
             foreach (var block in opcodes)
                 foreach (var op in block.Value)
-                    functions.Add(MakeFunctionSignature(op));
+                    functions.Add(op.MakeFunctionSignature());
 
             foreach (var s in functions)
                 Console.WriteLine(s);
-        }
-
-        private static string MakeFunctionSignature(Opcode op)
-            => "public Action " + op.mnemonic + "(" + MakeFunctionSignatureParamList(op) + ")";
-
-        private static string MakeFunctionBody(Opcode op)
-        {
-            return "return () => { };";
         }
 
         private static void PrintFunctionConstructor(KeyValuePair<string, List<Opcode>> block)
@@ -273,31 +154,9 @@ namespace generator
             Console.WriteLine("public " + mapType + " MakeTable(" + block.Key + " o" + ") {");
             Console.WriteLine(mapType + " m = new " + mapType + "();");
             foreach (var op in block.Value)
-                Console.WriteLine("m[" + TypedTag(block.Key, MakeTag(op)) + "] = " +
-                                  string.Join(',', MakeFunctionConstructorArguments(op)) + ";");
+                Console.WriteLine("m[" + TypedTag(block.Key, op.MakeTag()) + "] = " +
+                                  string.Join(',', op.MakeFunctionConstructorArguments()) + ";");
             Console.WriteLine("}");
-        }
-
-        private static string MakeFunctionCallParamList(Opcode op)
-        {
-            var arguments = MakeFunctionConstructorArguments(op);
-
-            List<string> taggedArguments = new List<string>();
-            for (int i = 0; i < arguments.Count; i++)
-                taggedArguments.Add(arguments[i] + "p" + i.ToString());
-
-            return string.Join(", ", taggedArguments);
-        }
-
-        private static string MakeFunctionSignatureParamList(Opcode op)
-        {
-            var arguments = MakeFunctionConstructorArguments(op);
-
-            List<string> taggedArguments = new List<string>();
-            for (int i = 0; i < arguments.Count; i++)
-                taggedArguments.Add(arguments[i] + "p" + i.ToString());
-
-            return string.Join(", ", taggedArguments);
         }
 
         private static string TypedTag(string key, string op) => key + "." + op;
@@ -326,7 +185,7 @@ namespace generator
 
             foreach (var block in opcodes)
                 foreach (var op in block.Value)
-                    Seen.Add(MakeFunction(op));
+                    Seen.Add(op.MakeFunction());
             return Seen.ToList();
         }
 
