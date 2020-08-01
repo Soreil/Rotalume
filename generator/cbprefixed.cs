@@ -1,6 +1,6 @@
 ﻿namespace generator
 {
-   public enum Cbprefixed : byte
+    public enum Cbprefixed : byte
     {
         RLC_B = 0x00,
         RLC_C = 0x01,

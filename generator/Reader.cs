@@ -9,11 +9,11 @@ namespace generator
 
     public class Reader
     {
-        readonly Dictionary<string, List<Opcode>> opcodes = new Dictionary<string, List<Opcode>>();
+        private readonly Dictionary<string, List<Opcode>> opcodes = new Dictionary<string, List<Opcode>>();
 
         public Reader(string s)
         {
-            using JsonDocument document = JsonDocument.Parse(File.ReadAllText(s));
+            using var document = JsonDocument.Parse(File.ReadAllText(s));
             var root = document.RootElement;
 
             foreach (var block in new string[] { "unprefixed", "cbprefixed" })
@@ -51,16 +51,19 @@ namespace generator
                                 break;
                         }
 
-                        if (isConditional) operandName = DisambiguateFlagName(operandName);
+                        if (isConditional)
+                            operandName = DisambiguateFlagName(operandName);
 
-                        Operand operands = new Operand(operandName,
+                        var operands = new Operand(operandName,
                             currentOperand.GetProperty("immediate").GetBoolean());
 
-                        if (currentOperand.TryGetProperty("bytes", out JsonElement optional))
+                        if (currentOperand.TryGetProperty("bytes", out var optional))
                             operands.Size = optional.GetInt32();
-                        if (currentOperand.TryGetProperty("increment", out JsonElement increment))
+
+                        if (currentOperand.TryGetProperty("increment", out var increment))
                             operands.Increment = increment.GetBoolean();
-                        if (currentOperand.TryGetProperty("decrement", out JsonElement decrement))
+
+                        if (currentOperand.TryGetProperty("decrement", out var decrement))
                             operands.Decrement = decrement.GetBoolean();
 
                         current.operands.Add(operands);
@@ -95,14 +98,16 @@ namespace generator
             var output = new List<string>();
             foreach (var block in opcodes)
             {
-                var currentEnum = new List<string>();
-                currentEnum.Add("public enum " + block.Key.Substring(0, 1).ToString().ToUpper() +
-                                  block.Key.Substring(1) + " : byte");
-                currentEnum.Add("{");
+                var currentEnum = new List<string>
+                {
+                    "public enum " + block.Key.Substring(0, 1).ToString().ToUpper() +
+                                  block.Key.Substring(1) + " : byte",
+                    "{"
+                };
                 foreach (var o in block.Value)
                 {
-                    string tag = o.MakePrettyTag();
-                    string value = "0x" + o.ID.ToString("X2");
+                    var tag = o.MakePrettyTag();
+                    var value = "0x" + o.ID.ToString("X2");
                     currentEnum.Add("\t" + tag + " = " + value + ",");
                 }
 
@@ -115,16 +120,18 @@ namespace generator
 
         public List<string> PrintableEnumToStringMapping()
         {
-            List<string> output = new List<string>();
+            var output = new List<string>();
             foreach (var block in opcodes)
             {
-                List<string> current = new List<string>();
-                current.Add("string " + block.Key + "ToString(Opcode op)");
-                current.Add("=> op switch {");
+                var current = new List<string>
+                {
+                    "string " + block.Key + "ToString(Opcode op)",
+                    "=> op switch {"
+                };
                 foreach (var v in block.Value)
                 {
-                    string tag = block.Key + "." + v.MakeTag();
-                    string value = "\"" + v.MakePrettyTag() + "\"";
+                    var tag = block.Key + "." + v.MakeTag();
+                    var value = "\"" + v.MakePrettyTag() + "\"";
                     current.Add("\t" + tag + " => " + value + ",");
                 }
 
@@ -135,11 +142,12 @@ namespace generator
         }
         public void PrintFunctionConstructors()
         {
-            foreach (var block in opcodes) PrintFunctionConstructor(block);
+            foreach (var block in opcodes)
+                PrintFunctionConstructor(block);
         }
         public void PrintFunctionSignatures()
         {
-            List<string> functions = new List<string>();
+            var functions = new List<string>();
             foreach (var block in opcodes)
                 foreach (var op in block.Value)
                     functions.Add(op.MakeFunctionSignature());
@@ -150,21 +158,23 @@ namespace generator
 
         private static void PrintFunctionConstructor(KeyValuePair<string, List<Opcode>> block)
         {
-            string mapType = "Dictionary <" + block.Key + ", Action>";
+            var mapType = "Dictionary <" + block.Key + ", Action>";
             Console.WriteLine("public " + mapType + " MakeTable(" + block.Key + " o" + ") {");
             Console.WriteLine(mapType + " m = new " + mapType + "();");
             foreach (var op in block.Value)
+            {
                 Console.WriteLine("m[" + TypedTag(block.Key, op.MakeTag()) + "] = " +
                                   string.Join(',', op.MakeFunctionConstructorArguments()) + ";");
+            }
+
             Console.WriteLine("}");
         }
 
         private static string TypedTag(string key, string op) => key + "." + op;
 
-
         public HashSet<(string, bool)> PossibleOperands()
         {
-            HashSet<(string, bool)> s = new HashSet<(string, bool)>();
+            var s = new HashSet<(string, bool)>();
             foreach (var block in opcodes)
                 foreach (var op in block.Value)
                     foreach (var operand in op.operands)
@@ -181,11 +191,12 @@ namespace generator
 
         private List<string> MakeUniqueFunctions()
         {
-            HashSet<string> Seen = new HashSet<string>();
+            var Seen = new HashSet<string>();
 
             foreach (var block in opcodes)
                 foreach (var op in block.Value)
                     Seen.Add(op.MakeFunction());
+
             return Seen.ToList();
         }
 

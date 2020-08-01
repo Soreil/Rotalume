@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace generator
+﻿namespace generator
 {
     public struct Operand
     {
@@ -56,10 +54,7 @@ namespace generator
             _ => Name
         };
 
-
-
-        internal string MakeOperandArgumentType()
-        => Name switch
+        internal string MakeOperandArgumentType() => Name switch
         {
             "A" => "Register",
             "B" => "Register",
@@ -95,6 +90,5 @@ namespace generator
 
             _ => "byte"
         };
-
     }
 }

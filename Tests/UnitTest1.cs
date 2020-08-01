@@ -1,6 +1,8 @@
-using NUnit.Framework;
-using generator;
 using System;
+
+using generator;
+
+using NUnit.Framework;
 
 namespace Tests
 {
@@ -15,14 +17,16 @@ namespace Tests
         {
             var enums = r.PrintableEnum();
             Assert.AreEqual(2, enums.Count);
-            foreach (var e in enums) Console.WriteLine(e);
+            foreach (var e in enums)
+                Console.WriteLine(e);
         }
 
         [Test]
         public void PrintEnumToStringMapping()
         {
-           var lines = r.PrintableEnumToStringMapping();
-            foreach (var line in lines) Console.WriteLine(line);
+            var lines = r.PrintableEnumToStringMapping();
+            foreach (var line in lines)
+                Console.WriteLine(line);
         }
 
         [Test]
@@ -30,28 +34,17 @@ namespace Tests
         {
             var ops = r.PossibleOperands();
             foreach (var op in ops)
-            {
                 Console.WriteLine(op.Item1 + " " + op.Item2.ToString());
-            }
         }
 
         [Test]
-        public void PrintFunctionConstructors()
-        {
-            r.PrintFunctionConstructors();
-        }
+        public void PrintFunctionConstructors() => r.PrintFunctionConstructors();
 
         [Test]
-        public void PrintFunctionSignatures()
-        {
-            r.PrintFunctionSignatures();
-        }
+        public void PrintFunctionSignatures() => r.PrintFunctionSignatures();
 
         [Test]
-        public void PrintFunctionSkeletons()
-        {
-            r.PrintFunctions();
-        }
+        public void PrintFunctionSkeletons() => r.PrintFunctions();
     }
 
 }
