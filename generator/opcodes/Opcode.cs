@@ -52,10 +52,10 @@ namespace generator
             var tag = mnemonic;
             foreach (var t in operands)
             {
-                if (t.Increment)
+                if (t.Postfix == Postfix.increment)
                     tag += "I";
 
-                if (t.Decrement)
+                if (t.Postfix == Postfix.decrement)
                     tag += "D";
 
                 tag += "_";
@@ -75,10 +75,10 @@ namespace generator
                     tag += "(";
 
                 tag += t.Name;
-                if (t.Increment)
+                if (t.Postfix == Postfix.increment)
                     tag += "+";
 
-                if (t.Decrement)
+                if (t.Postfix == Postfix.decrement)
                     tag += "-";
 
                 if (!t.Pointer)

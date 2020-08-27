@@ -1,19 +1,18 @@
 ﻿namespace generator
 {
-    public struct Operand
-    {
+
+    public record Operand
+    { 
         public string Name;
         public int? Size;
-        public bool Increment;
-        public bool Decrement;
         public bool Pointer;
+        public Postfix Postfix;
 
         public Operand(string name, bool pointer)
         {
             Name = name;
             Size = null;
-            Increment = false;
-            Decrement = false;
+            Postfix = Postfix.unchanged;
             Pointer = pointer;
         }
 

@@ -61,10 +61,10 @@ namespace generator
                             operands.Size = optional.GetInt32();
 
                         if (currentOperand.TryGetProperty("increment", out var increment))
-                            operands.Increment = increment.GetBoolean();
+                            if (increment.GetBoolean()) operands.Postfix = Postfix.increment;
 
                         if (currentOperand.TryGetProperty("decrement", out var decrement))
-                            operands.Decrement = decrement.GetBoolean();
+                            if (decrement.GetBoolean()) operands.Postfix = Postfix.decrement;
 
                         current.operands.Add(operands);
                     }

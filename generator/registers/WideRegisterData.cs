@@ -4,7 +4,7 @@ namespace generator
 {
     public class WideRegisterData
     {
-        private ushort value = 0;
+        private ushort value;
         public RegisterData Low;
         public RegisterData High;
 
