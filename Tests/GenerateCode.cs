@@ -6,11 +6,11 @@ using NUnit.Framework;
 
 namespace Tests
 {
-    public class Tests
+    public class GenerationTests
     {
         private readonly Reader r;
 
-        public Tests() => r = new Reader("..\\..\\..\\json\\Opcodes.json");
+        public GenerationTests() => r = new Reader("..\\..\\..\\json\\Opcodes.json");
 
         [Test]
         public void PrintEnum()

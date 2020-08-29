@@ -84,7 +84,7 @@ namespace generator
             }
         }
 
-        private string DisambiguateFlagName(string operandName) => operandName switch
+        private static string DisambiguateFlagName(string operandName) => operandName switch
         {
             "Z" => "Zero",
             "N" => "Negative",
@@ -106,7 +106,7 @@ namespace generator
                 };
                 foreach (var o in block.Value)
                 {
-                    var tag = o.MakePrettyTag();
+                    var tag = o.MakeTag();
                     var value = "0x" + o.ID.ToString("X2");
                     currentEnum.Add("\t" + tag + " = " + value + ",");
                 }
@@ -140,11 +140,13 @@ namespace generator
             }
             return output;
         }
+
         public void PrintFunctionConstructors()
         {
             foreach (var block in opcodes)
-                PrintFunctionConstructor(block);
+                PrintFunctionConstructors(block);
         }
+
         public void PrintFunctionSignatures()
         {
             var functions = new List<string>();
@@ -155,8 +157,7 @@ namespace generator
             foreach (var s in functions)
                 Console.WriteLine(s);
         }
-
-        private static void PrintFunctionConstructor(KeyValuePair<string, List<Opcode>> block)
+        private static void PrintFunctionConstructors(KeyValuePair<string, List<Opcode>> block)
         {
             var mapType = "Dictionary <" + block.Key + ", Action>";
             Console.WriteLine("public " + mapType + " MakeTable(" + block.Key + " o" + ") {");

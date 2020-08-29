@@ -1,5 +1,10 @@
 ﻿namespace generator
 {
+    public record Traits
+    {
+        public bool Immediate;
+        public Postfix Postfix;
+    }
 
     public record Operand
     { 

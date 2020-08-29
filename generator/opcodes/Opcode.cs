@@ -112,7 +112,7 @@ namespace generator
             {
                 var arg = "(" + op.MakeOperandArgumentType();
                 arg += ", ";
-                arg += "bool";
+                arg += "Traits";
                 arg += ")";
                 functionArguments.Add(arg);
             }
