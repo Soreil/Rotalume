@@ -2,7 +2,7 @@
 
 namespace generator
 {
-    public struct Opcode
+    public record Opcode
     {
         public byte ID;
         public string mnemonic;
@@ -94,9 +94,15 @@ namespace generator
             var functionArguments = new List<string>();
             foreach (var op in operands)
             {
+                var traits = new Traits(op);
+
                 var arg = "(" + op.MakeOperandArgumentValue();
                 arg += ", ";
-                arg += op.Pointer ? "true" : "false";
+                arg += "new " + typeof(Traits) + "( ";
+                arg += traits.Immediate.ToString().ToLower();
+                arg += ", ";
+                arg += typeof(Postfix) + "." + traits.Postfix.ToString();
+                arg += ")";
                 arg += ")";
                 functionArguments.Add(arg);
             }

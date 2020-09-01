@@ -6,7 +6,6 @@ using System.Text.Json;
 
 namespace generator
 {
-
     public class Reader
     {
         private readonly Dictionary<string, List<Opcode>> opcodes = new Dictionary<string, List<Opcode>>();
@@ -23,12 +22,14 @@ namespace generator
 
                 foreach (var op in OpCodeCategory.EnumerateObject())
                 {
-                    Opcode current;
-                    current.ID = Convert.ToByte(op.Name, 16);
-                    current.mnemonic = op.Value.GetProperty("mnemonic").GetString();
-                    current.bytes = op.Value.GetProperty("bytes").GetInt32();
+                    Opcode current = new Opcode
+                    {
+                        ID = Convert.ToByte(op.Name, 16),
+                        mnemonic = op.Value.GetProperty("mnemonic").GetString(),
+                        bytes = op.Value.GetProperty("bytes").GetInt32(),
 
-                    current.cycles = new List<int>();
+                        cycles = new List<int>()
+                    };
                     foreach (var cycle in op.Value.GetProperty("cycles").EnumerateArray())
                         current.cycles.Add(cycle.GetInt32());
 
@@ -159,15 +160,22 @@ namespace generator
         }
         private static void PrintFunctionConstructors(KeyValuePair<string, List<Opcode>> block)
         {
-            var mapType = "Dictionary <" + block.Key + ", Action>";
-            Console.WriteLine("public " + mapType + " MakeTable(" + block.Key + " o" + ") {");
+            var upperKey = block.Key.FirstCharToUpper();
+            var mapType = "Dictionary <" + upperKey + ", Action>";
+            Console.WriteLine("public " + mapType + " MakeTable(" + upperKey + " o" + ") {");
             Console.WriteLine(mapType + " m = new " + mapType + "();");
             foreach (var op in block.Value)
             {
-                Console.WriteLine("m[" + TypedTag(block.Key, op.MakeTag()) + "] = " +
-                                  string.Join(',', op.MakeFunctionConstructorArguments()) + ";");
+                Console.WriteLine("m[" +
+                    TypedTag(upperKey, op.MakeTag()) +
+                    "] = " +
+                    op.mnemonic +
+                    "(" +
+                    string.Join(',', op.MakeFunctionCallArguments()) +
+                    ")" +
+                    ";");
             }
-
+            Console.WriteLine("return m;");
             Console.WriteLine("}");
         }
 

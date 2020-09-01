@@ -44,6 +44,16 @@ namespace generator
             Register.L => L.Read(),
             _ => throw new NotImplementedException(),
         };
+        public ushort Get(WideRegister r) => r switch
+        {
+            WideRegister.AF => AF.Read(),
+            WideRegister.BC => BC.Read(),
+            WideRegister.DE => DE.Read(),
+            WideRegister.HL => HL.Read(),
+            //WideRegister.PC => PC.Read(),
+            //WideRegister.SP => SP.Read(),
+            _ => throw new NotImplementedException(),
+        };
 
         public void Set(Register r, byte v)
         {
@@ -57,6 +67,17 @@ namespace generator
                 case Register.F: F.Write(v); break;
                 case Register.H: H.Write(v); break;
                 case Register.L: L.Write(v); break;
+                default: throw new NotImplementedException();
+            }
+        }
+        public void Set(WideRegister r, ushort v)
+        {
+            switch (r)
+            {
+                case WideRegister.AF: AF.Write(v); break;
+                case WideRegister.BC: BC.Write(v); break;
+                case WideRegister.DE: DE.Write(v); break;
+                case WideRegister.HL: HL.Write(v); break;
                 default: throw new NotImplementedException();
             }
         }

@@ -1,11 +1,5 @@
 ﻿namespace generator
 {
-    public record Traits
-    {
-        public bool Immediate;
-        public Postfix Postfix;
-    }
-
     public record Operand
     { 
         public string Name;
@@ -54,6 +48,15 @@
             "NN" => "Flag.NN",
             "NH" => "Flag.NH",
             "NC" => "Flag.NC",
+
+            "00H" => "0x00",
+            "08H" => "0x08",
+            "10H" => "0x10",
+            "18H" => "0x18",
+            "20H" => "0x20",
+            "28H" => "0x28",
+            "30H" => "0x30",
+            "38H" => "0x38",
 
             _ => Name
         };

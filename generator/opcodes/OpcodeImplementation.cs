@@ -3,106 +3,420 @@ namespace generator
 {
     public partial class Decoder
     {
-        public Action NOP() => () => { };
-        public Action LD((WideRegister, bool) p0, (DMGInteger, bool) p1) => () => { };
-        public Action LD((WideRegister, bool) p0, (Register, bool) p1) => () => { };
-        public Action INC((WideRegister, bool) p0) => () => { };
-        public Action INC((Register, bool) p0) => () => { };
-        public Action DEC((Register, bool) p0) => () => { };
-        public Action LD((Register, bool) p0, (DMGInteger, bool) p1) => () => { };
-        public Action RLCA() => () => { };
-        public Action LD((DMGInteger, bool) p0, (WideRegister, bool) p1) => () => { };
-        public Action ADD((WideRegister, bool) p0, (WideRegister, bool) p1) => () => { };
-        public Action LD((Register, bool) p0, (WideRegister, bool) p1) => () => { };
-        public Action DEC((WideRegister, bool) p0) => () => { };
-        public Action RRCA() => () => { };
-        public Action STOP() => () => { };
-        public Action RLA() => () => { };
-        public Action JR((DMGInteger, bool) p0) => () => { };
-        public Action RRA() => () => { };
-        public Action JR((Flag, bool) p0, (DMGInteger, bool) p1) => () => { };
-        public Action DAA() => () => { };
-        public Action CPL() => () => { };
-        public Action SCF() => () => { };
-        public Action CCF() => () => { };
-        public Action LD((Register, bool) p0, (Register, bool) p1) => () => { };
-        public Action HALT() => () => { };
-        public Action ADD((Register, bool) p0, (Register, bool) p1) => () => { };
-        public Action ADD((Register, bool) p0, (WideRegister, bool) p1) => () => { };
-        public Action ADC((Register, bool) p0, (Register, bool) p1) => () => { };
-        public Action ADC((Register, bool) p0, (WideRegister, bool) p1) => () => { };
-        public Action SUB((Register, bool) p0) => () => { };
-        public Action SUB((WideRegister, bool) p0) => () => { };
-        public Action SBC((Register, bool) p0, (Register, bool) p1) => () => { };
-        public Action SBC((Register, bool) p0, (WideRegister, bool) p1) => () => { };
-        public Action AND((Register, bool) p0) => () => { };
-        public Action AND((WideRegister, bool) p0) => () => { };
-        public Action XOR((Register, bool) p0) => () => { };
-        public Action XOR((WideRegister, bool) p0) => () => { };
-        public Action OR((Register, bool) p0) => () => { };
-        public Action OR((WideRegister, bool) p0) => () => { };
-        public Action CP((Register, bool) p0) => () => { };
-        public Action CP((WideRegister, bool) p0) => () => { };
-        public Action RET((Flag, bool) p0) => () => { };
-        public Action POP((WideRegister, bool) p0) => () => { };
-        public Action JP((Flag, bool) p0, (DMGInteger, bool) p1) => () => { };
-        public Action JP((DMGInteger, bool) p0) => () => { };
-        public Action CALL((Flag, bool) p0, (DMGInteger, bool) p1) => () => { };
-        public Action PUSH((WideRegister, bool) p0) => () => { };
-        public Action ADD((Register, bool) p0, (DMGInteger, bool) p1) => () => { };
-        public Action RST((byte, bool) p0) => () => { };
-        public Action RET() => () => { };
-        public Action PREFIX() => () => { };
-        public Action CALL((DMGInteger, bool) p0) => () => { };
-        public Action ADC((Register, bool) p0, (DMGInteger, bool) p1) => () => { };
-        public Action ILLEGAL_D3() => () => { };
-        public Action SUB((DMGInteger, bool) p0) => () => { };
-        public Action RETI() => () => { };
-        public Action ILLEGAL_DB() => () => { };
-        public Action ILLEGAL_DD() => () => { };
-        public Action SBC((Register, bool) p0, (DMGInteger, bool) p1) => () => { };
-        public Action LDH((DMGInteger, bool) p0, (Register, bool) p1) => () => { };
-        public Action ILLEGAL_E3() => () => { };
-        public Action ILLEGAL_E4() => () => { };
-        public Action AND((DMGInteger, bool) p0) => () => { };
-        public Action ADD((WideRegister, bool) p0, (DMGInteger, bool) p1) => () => { };
-        public Action JP((WideRegister, bool) p0) => () => { };
-        public Action LD((DMGInteger, bool) p0, (Register, bool) p1) => () => { };
-        public Action ILLEGAL_EB() => () => { };
-        public Action ILLEGAL_EC() => () => { };
-        public Action ILLEGAL_ED() => () => { };
-        public Action XOR((DMGInteger, bool) p0) => () => { };
-        public Action LDH((Register, bool) p0, (DMGInteger, bool) p1) => () => { };
-        public Action DI() => () => { };
-        public Action ILLEGAL_F4() => () => { };
-        public Action OR((DMGInteger, bool) p0) => () => { };
-        public Action LD((WideRegister, bool) p0, (WideRegister, bool) p1) => () => { };
-        public Action EI() => () => { };
-        public Action ILLEGAL_FC() => () => { };
-        public Action ILLEGAL_FD() => () => { };
-        public Action CP((DMGInteger, bool) p0) => () => { };
-        public Action RLC((Register, bool) p0) => () => { };
-        public Action RLC((WideRegister, bool) p0) => () => { };
-        public Action RRC((Register, bool) p0) => () => { };
-        public Action RRC((WideRegister, bool) p0) => () => { };
-        public Action RL((Register, bool) p0) => () => { };
-        public Action RL((WideRegister, bool) p0) => () => { };
-        public Action RR((Register, bool) p0) => () => { };
-        public Action RR((WideRegister, bool) p0) => () => { };
-        public Action SLA((Register, bool) p0) => () => { };
-        public Action SLA((WideRegister, bool) p0) => () => { };
-        public Action SRA((Register, bool) p0) => () => { };
-        public Action SRA((WideRegister, bool) p0) => () => { };
-        public Action SWAP((Register, bool) p0) => () => { };
-        public Action SWAP((WideRegister, bool) p0) => () => { };
-        public Action SRL((Register, bool) p0) => () => { };
-        public Action SRL((WideRegister, bool) p0) => () => { };
-        public Action BIT((byte, bool) p0, (Register, bool) p1) => () => { };
-        public Action BIT((byte, bool) p0, (WideRegister, bool) p1) => () => { };
-        public Action RES((byte, bool) p0, (Register, bool) p1) => () => { };
-        public Action RES((byte, bool) p0, (WideRegister, bool) p1) => () => { };
-        public Action SET((byte, bool) p0, (Register, bool) p1) => () => { };
-        public Action SET((byte, bool) p0, (WideRegister, bool) p1) => () => { };
+        readonly Registers Registers;
+        readonly Storage Storage;
+        public Action NOP()
+        {
+            return () => { };
+        }
+        public Action LD((WideRegister, Traits) p0, (DMGInteger, Traits) p1)
+        {
+            return () =>
+            {
+                var arg = Storage.Read(p1.Item1);
+                if (!p0.Item2.Immediate)
+                {
+                    var HL = Registers.Get(p0.Item1);
+                    Storage.Write(HL, (byte)arg);
+                }
+                else
+                {
+                    Registers.Set(p0.Item1, (ushort)arg);
+                }
+            };
+        }
+        public Action LD((WideRegister, Traits) p0, (Register, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action INC((WideRegister, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action INC((Register, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action DEC((Register, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action LD((Register, Traits) p0, (DMGInteger, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action RLCA()
+        {
+            return () => { };
+        }
+        public Action LD((DMGInteger, Traits) p0, (WideRegister, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action ADD((WideRegister, Traits) p0, (WideRegister, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action LD((Register, Traits) p0, (WideRegister, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action DEC((WideRegister, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action RRCA()
+        {
+            return () => { };
+        }
+        public Action STOP()
+        {
+            return () => { };
+        }
+        public Action RLA()
+        {
+            return () => { };
+        }
+        public Action JR((DMGInteger, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action RRA()
+        {
+            return () => { };
+        }
+        public Action JR((Flag, Traits) p0, (DMGInteger, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action DAA()
+        {
+            return () => { };
+        }
+        public Action CPL()
+        {
+            return () => { };
+        }
+        public Action SCF()
+        {
+            return () => { };
+        }
+        public Action CCF()
+        {
+            return () => { };
+        }
+        public Action LD((Register, Traits) p0, (Register, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action HALT()
+        {
+            return () => { };
+        }
+        public Action ADD((Register, Traits) p0, (Register, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action ADD((Register, Traits) p0, (WideRegister, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action ADC((Register, Traits) p0, (Register, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action ADC((Register, Traits) p0, (WideRegister, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action SUB((Register, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action SUB((WideRegister, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action SBC((Register, Traits) p0, (Register, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action SBC((Register, Traits) p0, (WideRegister, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action AND((Register, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action AND((WideRegister, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action XOR((Register, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action XOR((WideRegister, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action OR((Register, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action OR((WideRegister, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action CP((Register, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action CP((WideRegister, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action RET((Flag, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action POP((WideRegister, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action JP((Flag, Traits) p0, (DMGInteger, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action JP((DMGInteger, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action CALL((Flag, Traits) p0, (DMGInteger, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action PUSH((WideRegister, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action ADD((Register, Traits) p0, (DMGInteger, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action RST((byte, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action RET()
+        {
+            return () => { };
+        }
+        public Action PREFIX()
+        {
+            return () => { };
+        }
+        public Action CALL((DMGInteger, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action ADC((Register, Traits) p0, (DMGInteger, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action ILLEGAL_D3()
+        {
+            return () => { };
+        }
+        public Action SUB((DMGInteger, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action RETI()
+        {
+            return () => { };
+        }
+        public Action ILLEGAL_DB()
+        {
+            return () => { };
+        }
+        public Action ILLEGAL_DD()
+        {
+            return () => { };
+        }
+        public Action SBC((Register, Traits) p0, (DMGInteger, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action LDH((DMGInteger, Traits) p0, (Register, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action ILLEGAL_E3()
+        {
+            return () => { };
+        }
+        public Action ILLEGAL_E4()
+        {
+            return () => { };
+        }
+        public Action AND((DMGInteger, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action ADD((WideRegister, Traits) p0, (DMGInteger, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action JP((WideRegister, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action LD((DMGInteger, Traits) p0, (Register, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action ILLEGAL_EB()
+        {
+            return () => { };
+        }
+        public Action ILLEGAL_EC()
+        {
+            return () => { };
+        }
+        public Action ILLEGAL_ED()
+        {
+            return () => { };
+        }
+        public Action XOR((DMGInteger, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action LDH((Register, Traits) p0, (DMGInteger, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action DI()
+        {
+            return () => { };
+        }
+        public Action ILLEGAL_F4()
+        {
+            return () => { };
+        }
+        public Action OR((DMGInteger, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action LD((WideRegister, Traits) p0, (WideRegister, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action EI()
+        {
+            return () => { };
+        }
+        public Action ILLEGAL_FC()
+        {
+            return () => { };
+        }
+        public Action ILLEGAL_FD()
+        {
+            return () => { };
+        }
+        public Action CP((DMGInteger, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action RLC((Register, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action RLC((WideRegister, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action RRC((Register, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action RRC((WideRegister, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action RL((Register, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action RL((WideRegister, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action RR((Register, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action RR((WideRegister, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action SLA((Register, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action SLA((WideRegister, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action SRA((Register, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action SRA((WideRegister, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action SWAP((Register, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action SWAP((WideRegister, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action SRL((Register, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action SRL((WideRegister, Traits) p0)
+        {
+            return () => { };
+        }
+        public Action BIT((byte, Traits) p0, (Register, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action BIT((byte, Traits) p0, (WideRegister, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action RES((byte, Traits) p0, (Register, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action RES((byte, Traits) p0, (WideRegister, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action SET((byte, Traits) p0, (Register, Traits) p1)
+        {
+            return () => { };
+        }
+        public Action SET((byte, Traits) p0, (WideRegister, Traits) p1)
+        {
+            return () => { };
+        }
 
 
     }
