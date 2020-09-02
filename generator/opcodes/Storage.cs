@@ -2,12 +2,18 @@
 
 namespace generator
 {
-    internal class Storage
+    public record Storage
     {
         readonly byte[] mem = new byte[0x10000];
         private readonly Func<byte> ReadInput;
         private readonly Func<ushort> ReadInputWide;
-        internal object Read(DMGInteger arg)
+
+        public Storage(Func<byte> readInput)
+        {
+            ReadInput = readInput;
+            ReadInputWide = () => BitConverter.ToUInt16(new byte[] { ReadInput(), ReadInput() });
+        }
+        internal object Fetch(DMGInteger arg)
         {
             return arg switch
             {
@@ -19,10 +25,17 @@ namespace generator
                 _ => throw new Exception("Expected a valid DMGInteger"),
             };
         }
-
+        public byte Read(ushort at) => mem[at];
         internal void Write(ushort at, byte arg)
         {
             mem[at] = arg;
+        }
+
+        internal void Write(ushort at, short arg)
+        {
+            var bytes = BitConverter.GetBytes(arg);
+            for (int i = 0; i < bytes.Length; i++)
+                mem[at + i] = bytes[i];
         }
     }
 }

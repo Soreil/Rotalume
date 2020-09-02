@@ -5,7 +5,17 @@ namespace generator
 {
     public partial class Decoder
     {
-        public Dictionary<Unprefixed, Action> MakeTable()
+        public Dictionary<Unprefixed, Action> StdOps;
+        public Dictionary<Cbprefixed, Action> CbOps;
+        public Decoder(Func<byte> read)
+        {
+            StdOps = MakeTable();
+            CbOps = MakeTableCb();
+            Registers = new Registers();
+            Storage = new Storage(read);
+        }
+
+        private Dictionary<Unprefixed, Action> MakeTable()
         {
             Dictionary<Unprefixed, Action> m = new Dictionary<Unprefixed, Action>();
             m[Unprefixed.NOP] = NOP();
@@ -266,7 +276,7 @@ namespace generator
             m[Unprefixed.RST_38H] = RST((0x38, new generator.Traits(true, generator.Postfix.unchanged)));
             return m;
         }
-        public Dictionary<Cbprefixed, Action> MakeTable(Cbprefixed o)
+        private Dictionary<Cbprefixed, Action> MakeTableCb()
         {
             Dictionary<Cbprefixed, Action> m = new Dictionary<Cbprefixed, Action>();
             m[Cbprefixed.RLC_B] = RLC((Register.B, new generator.Traits(true, generator.Postfix.unchanged)));

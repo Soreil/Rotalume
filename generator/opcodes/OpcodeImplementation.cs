@@ -3,8 +3,8 @@ namespace generator
 {
     public partial class Decoder
     {
-        readonly Registers Registers;
-        readonly Storage Storage;
+        readonly public Registers Registers;
+        readonly public Storage Storage;
         public Action NOP()
         {
             return () => { };
@@ -13,7 +13,7 @@ namespace generator
         {
             return () =>
             {
-                var arg = Storage.Read(p1.Item1);
+                var arg = Storage.Fetch(p1.Item1);
                 if (!p0.Item2.Immediate)
                 {
                     var HL = Registers.Get(p0.Item1);
@@ -27,11 +27,32 @@ namespace generator
         }
         public Action LD((WideRegister, Traits) p0, (Register, Traits) p1)
         {
-            return () => { };
+            return () =>
+            {
+                var address = Registers.Get(p0.Item1);
+                var value = Registers.Get(p1.Item1);
+
+                Storage.Write(address, value);
+
+                switch (p0.Item2.Postfix)
+                {
+                    default:
+                        break;
+                    case Postfix.increment:
+                        Registers.Set(p0.Item1, (ushort)(address + 1));
+                        break;
+                    case Postfix.decrement:
+                        Registers.Set(p0.Item1, (ushort)(address - 1));
+                        break;
+                }
+            };
         }
         public Action INC((WideRegister, Traits) p0)
         {
-            return () => { };
+            return () =>
+            {
+                Registers.Set(p0.Item1, (ushort)(Registers.Get(p0.Item1) + 1));
+            };
         }
         public Action INC((Register, Traits) p0)
         {
