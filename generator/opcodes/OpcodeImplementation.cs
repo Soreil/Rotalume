@@ -51,20 +51,32 @@ namespace generator
         {
             return () =>
             {
-                Registers.Set(p0.Item1, (ushort)(Registers.Get(p0.Item1) + 1));
+                if (p0.Item2.Immediate)
+                    Registers.Set(p0.Item1, (ushort)(Registers.Get(p0.Item1) + 1));
+                else
+                {
+                    var addr = Registers.Get(p0.Item1);
+                    Storage.Write(addr, (byte)(Storage.Read(addr) + 1));
+                }
             };
         }
         public Action INC((Register, Traits) p0)
         {
-            return () => { };
+            return () => { Registers.Set(p0.Item1, (byte)(Registers.Get(p0.Item1) + 1)); };
         }
         public Action DEC((Register, Traits) p0)
         {
-            return () => { };
+            return () => { Registers.Set(p0.Item1, (byte)(Registers.Get(p0.Item1) - 1)); };
         }
         public Action LD((Register, Traits) p0, (DMGInteger, Traits) p1)
         {
-            return () => { };
+            return () =>
+            {
+                var arg = Storage.Fetch(p1.Item1);
+
+                Registers.Set(p0.Item1, (byte)arg);
+
+            };
         }
         public Action RLCA()
         {
