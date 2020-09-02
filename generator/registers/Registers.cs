@@ -2,20 +2,21 @@
 
 namespace generator
 {
-    public class Registers
+    public record Registers
     {
-        private readonly WideRegisterData AF;
-        private readonly RegisterData A;
-        private readonly RegisterData F;
-        private readonly WideRegisterData BC;
-        private readonly RegisterData B;
-        private readonly RegisterData C;
-        private readonly WideRegisterData DE;
-        private readonly RegisterData D;
-        private readonly RegisterData E;
-        private readonly WideRegisterData HL;
-        private readonly RegisterData H;
-        private readonly RegisterData L;
+        public WideRegisterData AF;
+        public RegisterData A;
+        public RegisterData F;
+        public WideRegisterData BC;
+        public RegisterData B;
+        public RegisterData C;
+        public WideRegisterData DE;
+        public RegisterData D;
+        public RegisterData E;
+        public WideRegisterData HL;
+        public RegisterData H;
+        public RegisterData L;
+        public WideRegisterData SP;
 
         public Registers()
         {
@@ -31,7 +32,10 @@ namespace generator
             HL = new WideRegisterData();
             H = HL.High;
             L = HL.Low;
+
+            SP = new WideRegisterData();
         }
+
         public byte Get(Register r) => r switch
         {
             Register.A => A.Read(),
@@ -44,6 +48,7 @@ namespace generator
             Register.L => L.Read(),
             _ => throw new NotImplementedException(),
         };
+
         public ushort Get(WideRegister r) => r switch
         {
             WideRegister.AF => AF.Read(),
@@ -51,7 +56,7 @@ namespace generator
             WideRegister.DE => DE.Read(),
             WideRegister.HL => HL.Read(),
             //WideRegister.PC => PC.Read(),
-            //WideRegister.SP => SP.Read(),
+            WideRegister.SP => SP.Read(),
             _ => throw new NotImplementedException(),
         };
 
@@ -78,6 +83,7 @@ namespace generator
                 case WideRegister.BC: BC.Write(v); break;
                 case WideRegister.DE: DE.Write(v); break;
                 case WideRegister.HL: HL.Write(v); break;
+                case WideRegister.SP: SP.Write(v); break;
                 default: throw new NotImplementedException();
             }
         }
