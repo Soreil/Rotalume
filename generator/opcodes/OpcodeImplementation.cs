@@ -51,12 +51,19 @@ namespace generator
         {
             return () =>
             {
+                //Wide registers do not use flags for INC and DEC
                 if (p0.Item2.Immediate)
                     Registers.Set(p0.Item1, (ushort)(Registers.Get(p0.Item1) + 1));
                 else
                 {
                     var addr = Registers.Get(p0.Item1);
-                    Storage.Write(addr, (byte)(Storage.Read(addr) + 1));
+                    var before = Storage.Read(addr);
+                    var arg = (byte)(before + 1);
+                    Storage.Write(addr, arg);
+
+                    Registers.Set(Flag.Z, arg == 0);
+                    Registers.Mark(Flag.NN);
+                    Registers.Set(Flag.H, before.IsHalfCarryAdd(arg));
                 }
             };
         }

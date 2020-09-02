@@ -26,12 +26,12 @@ namespace generator
             };
         }
         public byte Read(ushort at) => mem[at];
-        internal void Write(ushort at, byte arg)
+        public void Write(ushort at, byte arg)
         {
             mem[at] = arg;
         }
 
-        internal void Write(ushort at, short arg)
+        public void Write(ushort at, ushort arg)
         {
             var bytes = BitConverter.GetBytes(arg);
             for (int i = 0; i < bytes.Length; i++)

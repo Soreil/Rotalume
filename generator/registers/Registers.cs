@@ -36,6 +36,23 @@ namespace generator
             SP = new WideRegisterData();
         }
 
+        public bool Get(Flag f)
+        {
+            var FReg = F.Read();
+            return f switch
+            {
+                Flag.Z => FReg.GetBit(7),
+                Flag.NZ => !FReg.GetBit(7),
+                Flag.N => FReg.GetBit(6),
+                Flag.NN => !FReg.GetBit(6),
+                Flag.H => FReg.GetBit(5),
+                Flag.NH => !FReg.GetBit(5),
+                Flag.C => FReg.GetBit(4),
+                Flag.NC => !FReg.GetBit(4),
+                _ => throw new NotImplementedException(),
+            };
+        }
+
         public byte Get(Register r) => r switch
         {
             Register.A => A.Read(),
@@ -59,6 +76,61 @@ namespace generator
             WideRegister.SP => SP.Read(),
             _ => throw new NotImplementedException(),
         };
+
+        public void Mark(Flag f)
+        {
+            var FReg = F.Read();
+            switch (f)
+            {
+                case Flag.Z:
+                    FReg = FReg.SetBit(7);
+                    break;
+                case Flag.NZ:
+                    FReg = FReg.ClearBit(7);
+                    break;
+                case Flag.N:
+                    FReg = FReg.SetBit(6);
+                    break;
+                case Flag.NN:
+                    FReg = FReg.ClearBit(6);
+                    break;
+                case Flag.H:
+                    FReg = FReg.SetBit(5);
+                    break;
+                case Flag.NH:
+                    FReg = FReg.ClearBit(5);
+                    break;
+                case Flag.C:
+                    FReg = FReg.SetBit(4);
+                    break;
+                case Flag.NC:
+                    FReg = FReg.ClearBit(4);
+                    break;
+            }
+            F.Write(FReg);
+        }
+        public void Set(Flag f, bool b)
+        {
+            var FReg = F.Read();
+            switch (f)
+            {
+                case Flag.Z:
+                    FReg = FReg.SetBit(7, b);
+                    break;
+                case Flag.N:
+                    FReg = FReg.SetBit(6, b);
+                    break;
+                case Flag.H:
+                    FReg = FReg.SetBit(5, b);
+                    break;
+                case Flag.C:
+                    FReg = FReg.SetBit(4, b);
+                    break;
+                default:
+                    throw new Exception("Flag argument can only be a flag name, not a state");
+            }
+            F.Write(FReg);
+        }
 
         public void Set(Register r, byte v)
         {

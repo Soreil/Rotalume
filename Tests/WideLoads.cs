@@ -100,7 +100,7 @@ namespace Tests
 
             var memoryAfterButAtOldHL = dec.Storage.Read(before);
 
-            Assert.AreEqual(before-1, after);
+            Assert.AreEqual(before - 1, after);
             Assert.AreEqual(memoryBefore, memoryAfter);
 
             Assert.AreNotEqual(0x77, memoryAfter);
@@ -124,11 +124,45 @@ namespace Tests
 
             var memoryAfterButAtOldHL = dec.Storage.Read(before);
 
-            Assert.AreEqual(before+1, after);
+            Assert.AreEqual(before + 1, after);
             Assert.AreEqual(memoryBefore, memoryAfter);
 
             Assert.AreNotEqual(0x77, memoryAfter);
             Assert.AreEqual(0x77, memoryAfterButAtOldHL);
+        }
+
+        [Test]
+        public void INC_SP()
+        {
+            var dec = new Decoder(() => 0);
+
+            {
+                dec.Registers.Set(WideRegister.SP, 20);
+                var before = dec.Registers.Get(WideRegister.SP);
+
+                dec.StdOps[Unprefixed.INC_SP]();
+
+                Assert.AreEqual(before + 1, dec.Registers.Get(WideRegister.SP));
+            }
+        }
+
+        [Test]
+        public void INC_AT_HL()
+        {
+            var dec = new Decoder(() => 0);
+            {
+                dec.Storage.Write(0x0001, (ushort)0xFF);
+                dec.Registers.Set(WideRegister.HL, 0x0001);
+                var before = dec.Storage.Read(0x0001);
+
+                dec.StdOps[Unprefixed.INC_AT_HL]();
+
+                Assert.AreEqual(0, dec.Registers.Get(WideRegister.SP));
+
+                Assert.IsTrue(dec.Registers.Get(Flag.NN));
+                Assert.IsTrue(dec.Registers.Get(Flag.Z));
+                Assert.IsFalse(dec.Registers.Get(Flag.H));
+            }
         }
 
         private static Decoder Setup0x4020BufferedDecoder()
