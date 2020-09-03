@@ -12,5 +12,7 @@
             ((input >> at) & 1) == 1;
         public static bool IsHalfCarryAdd(this byte input, byte arg) =>
             (((input & 0xf) + (arg & 0xf)) & 0x10) == 0x10;
+        public static bool IsHalfCarrySub(this byte input, byte arg) =>
+            (((input & 0xf) - (arg & 0xf)) & 0x10) == 0x10;
     }
 }
