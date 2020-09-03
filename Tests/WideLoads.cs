@@ -132,72 +132,44 @@ namespace Tests
         }
 
         [Test]
-        public void INC_SP()
+        public void LD_AT_a16_SP()
         {
-            var dec = new Decoder(() => 0);
+            var dec = Setup0x4020BufferedDecoder();
+            dec.Registers.SP.Write(0x6688);
+            dec.StdOps[Unprefixed.LD_AT_a16_SP]();
 
-            {
-                dec.Registers.Set(WideRegister.SP, 20);
-                var before = dec.Registers.Get(WideRegister.SP);
-
-                dec.StdOps[Unprefixed.INC_SP]();
-
-                Assert.AreEqual(before + 1, dec.Registers.Get(WideRegister.SP));
-            }
+            var result = dec.Storage.ReadWide(0x4020);
+            Assert.AreEqual(0x6688, result);
         }
 
         [Test]
-        public void INC_AT_HL()
+        public void ADD_HL_BC()
         {
             var dec = new Decoder(() => 0);
-            {
-                dec.Storage.Write(0x0001, (ushort)0xFF);
-                dec.Registers.Set(WideRegister.HL, 0x0001);
 
-                dec.StdOps[Unprefixed.INC_AT_HL]();
+            dec.Registers.HL.Write(0x8a23);
+            dec.Registers.BC.Write(0x0605);
 
-                Assert.AreEqual(0, dec.Storage.Read(dec.Registers.Get(WideRegister.HL)));
+            dec.StdOps[Unprefixed.ADD_HL_BC]();
 
-                Assert.IsTrue(dec.Registers.Get(Flag.NN));
-                Assert.IsTrue(dec.Registers.Get(Flag.Z));
-                Assert.IsTrue(dec.Registers.Get(Flag.H));
-            }
-            {
-                dec.Storage.Write(0x0001, (ushort)0xFE);
-                dec.Registers.Set(WideRegister.HL, 0x0001);
+            Assert.AreEqual(0x9028, dec.Registers.HL.Read());
+            Assert.IsTrue(dec.Registers.Get(Flag.H));
+            Assert.IsTrue(dec.Registers.Get(Flag.NN));
+            Assert.IsTrue(dec.Registers.Get(Flag.NC));
+        }
+        [Test]
+        public void ADD_HL_HL()
+        {
+            var dec = new Decoder(() => 0);
 
-                dec.StdOps[Unprefixed.INC_AT_HL]();
+            dec.Registers.HL.Write(0x8a23);
 
-                Assert.AreEqual(0xff, dec.Storage.Read(dec.Registers.Get(WideRegister.HL)));
+            dec.StdOps[Unprefixed.ADD_HL_HL]();
 
-                Assert.IsTrue(dec.Registers.Get(Flag.NN));
-                Assert.IsTrue(dec.Registers.Get(Flag.NZ));
-                Assert.IsTrue(dec.Registers.Get(Flag.NH));
-            }
-            {
-                dec.Storage.Write(0x0001, (ushort)0x0F);
-                dec.Registers.Set(WideRegister.HL, 0x0001);
-
-                dec.StdOps[Unprefixed.INC_AT_HL]();
-
-                Assert.AreEqual(0x10, dec.Storage.Read(dec.Registers.Get(WideRegister.HL)));
-
-                Assert.IsTrue(dec.Registers.Get(Flag.NN));
-                Assert.IsTrue(dec.Registers.Get(Flag.NZ));
-                Assert.IsTrue(dec.Registers.Get(Flag.H));
-            }
-            {
-                dec.Storage.Write(0x0001, (ushort)0x0E);
-                dec.Registers.Set(WideRegister.HL, 0x0001);
-
-                dec.StdOps[Unprefixed.INC_AT_HL]();
-
-                Assert.AreEqual(0x0F, dec.Storage.Read(dec.Registers.Get(WideRegister.HL)));
-
-                Assert.IsTrue(dec.Registers.Get(Flag.NN));
-                Assert.IsTrue(dec.Registers.Get(Flag.NZ));
-                Assert.IsFalse(dec.Registers.Get(Flag.H));
-            }
+            Assert.AreEqual(0x1446, dec.Registers.HL.Read());
+            Assert.IsTrue(dec.Registers.Get(Flag.H));
+            Assert.IsTrue(dec.Registers.Get(Flag.NN));
+            Assert.IsTrue(dec.Registers.Get(Flag.C));
         }
 
         private static Decoder Setup0x4020BufferedDecoder()
