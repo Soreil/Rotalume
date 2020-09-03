@@ -63,7 +63,7 @@ namespace generator
 
                     Registers.Set(Flag.Z, arg == 0);
                     Registers.Mark(Flag.NN);
-                    Registers.Set(Flag.H, before.IsHalfCarryAdd(arg));
+                    Registers.Set(Flag.H, before.IsHalfCarryAdd(1));
                 }
             };
         }

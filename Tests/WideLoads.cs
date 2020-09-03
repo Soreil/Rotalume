@@ -153,14 +153,49 @@ namespace Tests
             {
                 dec.Storage.Write(0x0001, (ushort)0xFF);
                 dec.Registers.Set(WideRegister.HL, 0x0001);
-                var before = dec.Storage.Read(0x0001);
 
                 dec.StdOps[Unprefixed.INC_AT_HL]();
 
-                Assert.AreEqual(0, dec.Registers.Get(WideRegister.SP));
+                Assert.AreEqual(0, dec.Storage.Read(dec.Registers.Get(WideRegister.HL)));
 
                 Assert.IsTrue(dec.Registers.Get(Flag.NN));
                 Assert.IsTrue(dec.Registers.Get(Flag.Z));
+                Assert.IsTrue(dec.Registers.Get(Flag.H));
+            }
+            {
+                dec.Storage.Write(0x0001, (ushort)0xFE);
+                dec.Registers.Set(WideRegister.HL, 0x0001);
+
+                dec.StdOps[Unprefixed.INC_AT_HL]();
+
+                Assert.AreEqual(0xff, dec.Storage.Read(dec.Registers.Get(WideRegister.HL)));
+
+                Assert.IsTrue(dec.Registers.Get(Flag.NN));
+                Assert.IsTrue(dec.Registers.Get(Flag.NZ));
+                Assert.IsTrue(dec.Registers.Get(Flag.NH));
+            }
+            {
+                dec.Storage.Write(0x0001, (ushort)0x0F);
+                dec.Registers.Set(WideRegister.HL, 0x0001);
+
+                dec.StdOps[Unprefixed.INC_AT_HL]();
+
+                Assert.AreEqual(0x10, dec.Storage.Read(dec.Registers.Get(WideRegister.HL)));
+
+                Assert.IsTrue(dec.Registers.Get(Flag.NN));
+                Assert.IsTrue(dec.Registers.Get(Flag.NZ));
+                Assert.IsTrue(dec.Registers.Get(Flag.H));
+            }
+            {
+                dec.Storage.Write(0x0001, (ushort)0x0E);
+                dec.Registers.Set(WideRegister.HL, 0x0001);
+
+                dec.StdOps[Unprefixed.INC_AT_HL]();
+
+                Assert.AreEqual(0x0F, dec.Storage.Read(dec.Registers.Get(WideRegister.HL)));
+
+                Assert.IsTrue(dec.Registers.Get(Flag.NN));
+                Assert.IsTrue(dec.Registers.Get(Flag.NZ));
                 Assert.IsFalse(dec.Registers.Get(Flag.H));
             }
         }
