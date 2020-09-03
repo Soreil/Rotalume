@@ -48,8 +48,7 @@ namespace generator
             };
         }
         public Action INC((WideRegister, Traits) p0)
-        {
-            return () =>
+        => () =>
             {
                 //Wide registers do not use flags for INC and DEC
                 if (p0.Item2.Immediate)
@@ -66,36 +65,74 @@ namespace generator
                     Registers.Set(Flag.H, before.IsHalfCarryAdd(1));
                 }
             };
-        }
+
         public Action INC((Register, Traits) p0)
-        {
-            return () => { Registers.Set(p0.Item1, (byte)(Registers.Get(p0.Item1) + 1)); };
-        }
+        => () =>
+            {
+                var before = Registers.Get(p0.Item1);
+                var arg = (byte)(before + 1);
+                Registers.Set(p0.Item1, arg);
+
+                Registers.Set(Flag.Z, arg == 0);
+                Registers.Mark(Flag.NN);
+                Registers.Set(Flag.H, before.IsHalfCarryAdd(1));
+            };
         public Action DEC((Register, Traits) p0)
-        {
-            return () => { Registers.Set(p0.Item1, (byte)(Registers.Get(p0.Item1) - 1)); };
-        }
+        => () =>
+             {
+                 var before = Registers.Get(p0.Item1);
+                 var arg = (byte)(before - 1);
+                 Registers.Set(p0.Item1, arg);
+
+                 Registers.Set(Flag.Z, arg == 0);
+                 Registers.Mark(Flag.N);
+                 Registers.Set(Flag.H, before.IsHalfCarrySub(1));
+             };
         public Action LD((Register, Traits) p0, (DMGInteger, Traits) p1)
+            => () =>
+            {
+                var arg = Storage.Fetch(p1.Item1);
+                Registers.Set(p0.Item1, (byte)arg);
+            };
+        public Action RLCA()
+
+            => () =>
+            {
+                var A = Registers.A.Read();
+                var TopBit = A.GetBit(7);
+                Registers.Set(Flag.C, TopBit);
+
+                A <<= 1;
+                A += TopBit ? 1 : 0;
+                Registers.A.Write(A);
+            };
+
+        //This op is a litle weird, we should have generate
+        //lefthandsided shorts as being a different type.
+        public Action LD((DMGInteger, Traits) p0, (WideRegister, Traits) p1)
+            => () =>
+            {
+                var addr = (ushort)Storage.Fetch(DMGInteger.d16);
+                var arg = Registers.Get(p1.Item1);
+
+                Storage.Write(addr, arg);
+            };
+
+        public Action ADD((WideRegister, Traits) p0, (WideRegister, Traits) p1)
         {
             return () =>
             {
-                var arg = Storage.Fetch(p1.Item1);
 
-                Registers.Set(p0.Item1, (byte)arg);
+                var target = Registers.Get(p0.Item1);
+                var arg = Registers.Get(p1.Item1);
 
+                var result = (ushort)(target + arg);
+                Registers.Set(p0.Item1, result);
+
+                Registers.Set(Flag.N, false);
+                Registers.Set(Flag.H, target.IsHalfCarryAdd(arg));
+                Registers.Set(Flag.C, target+arg > 0xFFFF);
             };
-        }
-        public Action RLCA()
-        {
-            return () => { };
-        }
-        public Action LD((DMGInteger, Traits) p0, (WideRegister, Traits) p1)
-        {
-            return () => { };
-        }
-        public Action ADD((WideRegister, Traits) p0, (WideRegister, Traits) p1)
-        {
-            return () => { };
         }
         public Action LD((Register, Traits) p0, (WideRegister, Traits) p1)
         {
