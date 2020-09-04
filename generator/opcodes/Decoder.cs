@@ -7,13 +7,19 @@ namespace generator
     {
         public Dictionary<Unprefixed, Action> StdOps;
         public Dictionary<Cbprefixed, Action> CbOps;
-        public Decoder(Func<byte> read)
+        public Decoder(Func<byte> read) : this(read, () => 0, x => { })
+        { }
+
+        public Decoder(Func<byte> read, Func<ushort> getPC, Action<ushort> setPC)
         {
             StdOps = MakeTable();
             CbOps = MakeTableCb();
             Registers = new Registers();
             Storage = new Storage(read);
+            SetPC = setPC;
+            GetPC = getPC;
         }
+
 
         private Dictionary<Unprefixed, Action> MakeTable()
         {
