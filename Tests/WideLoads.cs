@@ -172,6 +172,45 @@ namespace Tests
             Assert.IsTrue(dec.Registers.Get(Flag.C));
         }
 
+        [Test]
+        public void LD_A_B()
+        {
+            var dec = new Decoder(() => 0);
+
+            dec.Registers.B.Write(0x10);
+
+            dec.StdOps[Unprefixed.LD_A_B]();
+
+            Assert.AreEqual(0x10, dec.Registers.A.Read());
+
+        }
+        [Test]
+        public void LD_AT_C_A()
+        {
+            var dec = new Decoder(() => 0);
+
+            dec.Registers.A.Write(0x10);
+            dec.Registers.C.Write(0x77);
+
+            dec.StdOps[Unprefixed.LD_AT_C_A]();
+
+            Assert.AreEqual(0x10, dec.Storage.Read(0xff77));
+
+        }
+        [Test]
+        public void LD_A_AT_C()
+        {
+            var dec = new Decoder(() => 0);
+
+            dec.Storage.Write(0xff77, 0x10);
+            dec.Registers.C.Write(0x77);
+
+
+            dec.StdOps[Unprefixed.LD_A_AT_C]();
+
+            Assert.AreEqual(0x10, dec.Registers.A.Read());
+
+        }
         private static Decoder Setup0x4020BufferedDecoder()
         {
             var mem = new byte[] { 0x20, 0x40 }; // little endian
