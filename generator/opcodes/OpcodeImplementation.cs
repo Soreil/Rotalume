@@ -131,37 +131,91 @@ namespace generator
 
                 Registers.Set(Flag.N, false);
                 Registers.Set(Flag.H, target.IsHalfCarryAdd(arg));
-                Registers.Set(Flag.C, target+arg > 0xFFFF);
+                Registers.Set(Flag.C, target + arg > 0xFFFF);
             };
         }
         public Action LD((Register, Traits) p0, (WideRegister, Traits) p1)
         {
-            return () => { };
+            return () =>
+            {
+                var addr = Registers.Get(p1.Item1);
+                var value = Storage.Read(addr);
+
+                Registers.Set(p0.Item1, value);
+                switch (p1.Item2.Postfix)
+                {
+                    case Postfix.decrement:
+                        Registers.Set(p1.Item1, (ushort)(addr - 1));
+                        break;
+                    case Postfix.increment:
+                        Registers.Set(p1.Item1, (ushort)(addr + 1));
+                        break;
+                    default:
+                        break;
+                }
+            };
         }
         public Action DEC((WideRegister, Traits) p0)
+        => () =>
         {
-            return () => { };
-        }
+            //Wide registers do not use flags for INC and DEC
+            if (p0.Item2.Immediate)
+                Registers.Set(p0.Item1, (ushort)(Registers.Get(p0.Item1) + 1));
+            else
+            {
+                var addr = Registers.Get(p0.Item1);
+                var before = Storage.Read(addr);
+                var arg = (byte)(before + 1);
+                Storage.Write(addr, arg);
+
+                Registers.Set(Flag.Z, arg == 0);
+                Registers.Mark(Flag.NN);
+                Registers.Set(Flag.H, before.IsHalfCarryAdd(1));
+            }
+        };
         public Action RRCA()
-        {
-            return () => { };
-        }
+            => () =>
+            {
+                var A = Registers.A.Read();
+                var BottomBiy = A.GetBit(0);
+                Registers.Set(Flag.C, BottomBiy);
+
+                A >>= 1;
+                if (BottomBiy) A += 0x80;
+                Registers.A.Write(A);
+            };
         public Action STOP()
         {
             return () => { };
         }
         public Action RLA()
-        {
-            return () => { };
-        }
+            => () =>
+            {
+                var A = Registers.A.Read();
+                var TopBit = A.GetBit(7);
+                var OldBit = Registers.Get(Flag.C);
+                Registers.Set(Flag.C, TopBit);
+
+                A <<= 1;
+                A += OldBit ? 1 : 0;
+                Registers.A.Write(A);
+            };
         public Action JR((DMGInteger, Traits) p0)
         {
             return () => { };
         }
         public Action RRA()
-        {
-            return () => { };
-        }
+            => () =>
+            {
+                var A = Registers.A.Read();
+                var TopBit = A.GetBit(0);
+                var OldBit = Registers.Get(Flag.C);
+                Registers.Set(Flag.C, TopBit);
+
+                A >>= 1;
+                if (OldBit) A += 0x80;
+                Registers.A.Write(A);
+            };
         public Action JR((Flag, Traits) p0, (DMGInteger, Traits) p1)
         {
             return () => { };
