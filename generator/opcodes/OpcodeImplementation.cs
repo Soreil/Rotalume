@@ -118,17 +118,23 @@ namespace generator
             => () =>
             {
                 var A = Registers.A.Read();
-                var TopBit = A.GetBit(7);
-
                 Registers.Mark(Flag.NZ);
-                Registers.Mark(Flag.NN);
-                Registers.Mark(Flag.NH);
-                Registers.Set(Flag.C, TopBit);
-
-                A <<= 1;
-                A += TopBit ? 1 : 0;
-                Registers.A.Write(A);
+                var res = RLC(A);
+                Registers.A.Write(res);
             };
+
+        private byte RLC(byte reg)
+        {
+            var TopBit = reg.GetBit(7);
+
+            Registers.Mark(Flag.NN);
+            Registers.Mark(Flag.NH);
+            Registers.Set(Flag.C, TopBit);
+
+            reg <<= 1;
+            reg += TopBit ? 1 : 0;
+            return reg;
+        }
 
         //This op is a litle weird, we should have generate
         //lefthandsided shorts as being a different type.
@@ -200,17 +206,24 @@ namespace generator
             => () =>
             {
                 var A = Registers.A.Read();
-                var BottomBiy = A.GetBit(0);
-
                 Registers.Mark(Flag.NZ);
-                Registers.Mark(Flag.NN);
-                Registers.Mark(Flag.NH);
-                Registers.Set(Flag.C, BottomBiy);
-
-                A >>= 1;
-                if (BottomBiy) A += 0x80;
+                A = RRC(A);
                 Registers.A.Write(A);
             };
+
+        private byte RRC(byte reg)
+        {
+            var BottomBit = reg.GetBit(0);
+
+            Registers.Mark(Flag.NN);
+            Registers.Mark(Flag.NH);
+            Registers.Set(Flag.C, BottomBit);
+
+            reg >>= 1;
+            if (BottomBit) reg += 0x80;
+            return reg;
+        }
+
         public Action STOP()
         {
             return () => { throw new Exception("Yea we ain't stopping clean partner"); };
@@ -356,7 +369,7 @@ namespace generator
                 var lhs = Registers.Get(p0.Item1);
                 var rhs = Storage.Read(Registers.Get(p1.Item1));
 
-                Registers.Set(p0.Item1, ADD(lhs,rhs));
+                Registers.Set(p0.Item1, ADD(lhs, rhs));
             };
         }
 
@@ -859,19 +872,44 @@ namespace generator
 
         public Action RLC((Register, Traits) p0)
         {
-            return () => { };
+            return () =>
+            {
+                var reg = Registers.Get(p0.Item1);
+                Registers.Mark(Flag.Z);
+                var res = RLC(reg);
+                Registers.Set(p0.Item1, res);
+            };
         }
         public Action RLC((WideRegister, Traits) p0)
         {
-            return () => { };
+            return () =>
+            {
+                var addr = Registers.Get(p0.Item1);
+                var reg = Storage.Read(addr);
+                Registers.Mark(Flag.Z);
+                var res = RLC(reg);
+                Storage.Write(addr, res);
+            };
         }
         public Action RRC((Register, Traits) p0)
         {
-            return () => { };
+            return () =>
+            {
+                var reg = Registers.Get(p0.Item1);
+                Registers.Mark(Flag.Z);
+                var res = RRC(reg);
+                Registers.Set(p0.Item1, res);
+            };
         }
         public Action RRC((WideRegister, Traits) p0)
         {
-            return () => { };
+            return () => {
+                var addr = Registers.Get(p0.Item1);
+                var reg = Storage.Read(addr);
+                Registers.Mark(Flag.Z);
+                var res = RRC(reg);
+                Storage.Write(addr, res);
+            };
         }
         public Action RL((Register, Traits) p0)
         {
