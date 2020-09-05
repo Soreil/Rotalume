@@ -35,6 +35,16 @@ namespace generator
             mem[at] = arg;
         }
 
+        public void Write(DMGInteger at, byte arg)
+        {
+            if (at == DMGInteger.a8)
+                Write((ushort)(0xff00 + (byte)Fetch(DMGInteger.d8)), arg);
+            else if (at == DMGInteger.a16)
+                Write((ushort)Fetch(DMGInteger.d8), arg);
+            else
+                throw new Exception("Not an adress");
+        }
+
         public void Write(ushort at, ushort arg)
         {
             var bytes = BitConverter.GetBytes(arg);

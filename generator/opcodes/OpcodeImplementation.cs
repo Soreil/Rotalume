@@ -7,6 +7,20 @@ namespace generator
         readonly public Storage Storage;
         readonly public Action<ushort> SetPC;
         readonly public Func<ushort> GetPC;
+
+        private ushort pop()
+        {
+            var SP = Registers.SP.Read();
+            var popped = Storage.ReadWide(SP);
+            SP += 2;
+            Registers.SP.Write(SP);
+            return popped;
+        }
+        private void push(ushort s)
+        {
+            Storage.Write(Registers.SP.Read(), s);
+            Registers.SP.Write((ushort)(Registers.SP.Read() - 2));
+        }
         public Action NOP()
         {
             return () => { };
@@ -196,7 +210,7 @@ namespace generator
             };
         public Action STOP()
         {
-            return () => { };
+            return () => { throw new Exception("Yea we ain't stopping clean partner"); };
         }
         public Action RLA()
             => () =>
@@ -216,7 +230,11 @@ namespace generator
             };
         public Action JR((DMGInteger, Traits) p0)
         {
-            return () => { };
+            return () =>
+            {
+                var offset = (sbyte)Storage.Fetch(p0.Item1);
+                SetPC((ushort)(GetPC() + offset));
+            };
         }
         public Action RRA()
             => () =>
@@ -236,7 +254,14 @@ namespace generator
             };
         public Action JR((Flag, Traits) p0, (DMGInteger, Traits) p1)
         {
-            return () => { };
+            return () =>
+            {
+                if (Registers.Get(p0.Item1))
+                {
+                    var offset = (sbyte)Storage.Fetch(p1.Item1);
+                    SetPC((ushort)(GetPC() + offset));
+                }
+            };
         }
         public Action DAA()
         {
@@ -307,7 +332,7 @@ namespace generator
         }
         public Action HALT()
         {
-            return () => { };
+            return () => { throw new Exception("Not implemented"); };
         }
         public Action ADD((Register, Traits) p0, (Register, Traits) p1)
         {
@@ -473,7 +498,6 @@ namespace generator
             Registers.Set(Flag.Z, result == 0);
 
             Registers.A.Write(result);
-
         };
         public Action XOR((WideRegister, Traits) p0) => () =>
         {
@@ -483,7 +507,6 @@ namespace generator
             Registers.Set(Flag.Z, result == 0);
 
             Registers.A.Write(result);
-
         };
         public Action OR((Register, Traits) p0) => () =>
         {
@@ -494,7 +517,6 @@ namespace generator
             Registers.Set(Flag.Z, result == 0);
 
             Registers.A.Write(result);
-
         };
         public Action OR((WideRegister, Traits) p0) => () =>
         {
@@ -505,7 +527,6 @@ namespace generator
             Registers.Set(Flag.Z, result == 0);
 
             Registers.A.Write(result);
-
         };
         public Action CP((Register, Traits) p0) => () =>
         {
@@ -533,87 +554,189 @@ namespace generator
         };
         public Action RET((Flag, Traits) p0)
         {
-            return () => { };
+            return () =>
+            {
+                if (Registers.Get(p0.Item1))
+                {
+                    SetPC(pop());
+                }
+            };
         }
         public Action POP((WideRegister, Traits) p0)
         {
-            return () => { };
+            return () =>
+            {
+                var SP = Registers.SP.Read();
+                Registers.Set(p0.Item1, Storage.ReadWide(SP));
+                SP += 2;
+                Registers.SP.Write(SP);
+            };
         }
         public Action JP((Flag, Traits) p0, (DMGInteger, Traits) p1)
         {
-            return () => { };
+            return () =>
+            {
+                if (Registers.Get(p0.Item1))
+                {
+                    var addr = (ushort)Storage.Fetch(p1.Item1);
+                    SetPC(addr);
+                }
+            };
         }
         public Action JP((DMGInteger, Traits) p0)
         {
-            return () => { };
+            return () =>
+            {
+                var addr = (ushort)Storage.Fetch(p1.Item1);
+                SetPC(addr);
+            };
         }
         public Action CALL((Flag, Traits) p0, (DMGInteger, Traits) p1)
         {
-            return () => { };
+            return () =>
+            {
+                if (Registers.Get(p0.Item1))
+                {
+                    push(GetPC());
+                    var addr = (ushort)Storage.Fetch(p1.Item1);
+                    SetPC(addr);
+                }
+            };
         }
         public Action PUSH((WideRegister, Traits) p0)
         {
-            return () => { };
+            return () =>
+            {
+                push(Registers.Get(p0.Item1));
+            };
         }
         public Action ADD((Register, Traits) p0, (DMGInteger, Traits) p1)
         {
-            return () => { };
+            return () =>
+            {
+                Registers.Mark(Flag.NN);
+
+                var lhs = Registers.Get(p0.Item1);
+                var rhs = (byte)Storage.Fetch(p1.Item1);
+                var sum = lhs + rhs;
+
+                Registers.Set(Flag.Z, sum == 0);
+                Registers.Set(Flag.C, sum > 0xff);
+                Registers.Set(Flag.H, lhs.IsHalfCarryAdd(rhs));
+
+                Registers.Set(p0.Item1, (byte)sum);
+            };
         }
         public Action RST((byte, Traits) p0)
         {
-            return () => { };
+            return () => { SetPC(p0.Item1); };
         }
         public Action RET()
         {
-            return () => { };
+            return () =>
+            {
+                SetPC(pop());
+            };
         }
+        //Not an actual instruction
         public Action PREFIX()
         {
-            return () => { };
+            return () => { throw new Exception("unimplementable"); };
         }
         public Action CALL((DMGInteger, Traits) p0)
         {
-            return () => { };
+            return () =>
+            {
+                push(GetPC());
+                var addr = (ushort)Storage.Fetch(p0.Item1);
+                SetPC(addr);
+            };
         }
         public Action ADC((Register, Traits) p0, (DMGInteger, Traits) p1)
         {
-            return () => { };
+            return () =>
+            {
+                Registers.Mark(Flag.NN);
+
+                var lhs = Registers.Get(p0.Item1);
+                var rhs = (byte)Storage.Fetch(p1.Item1);
+                var sum = lhs + rhs + (Registers.Get(Flag.C) ? 1 : 0);
+
+                Registers.Set(Flag.Z, sum == 0);
+                Registers.Set(Flag.H, lhs.IsHalfCarryAdd((byte)(rhs + (Registers.Get(Flag.C) ? 1 : 0))));
+                Registers.Set(Flag.C, sum > 0xff);
+
+                Registers.Set(p0.Item1, (byte)sum);
+            };
         }
         public Action ILLEGAL_D3()
         {
-            return () => { };
+            return () => { throw new Exception("illegal"); };
         }
         public Action SUB((DMGInteger, Traits) p0)
         {
-            return () => { };
+            return () =>
+            {
+                Registers.Mark(Flag.N);
+
+                var lhs = Registers.A.Read();
+                var rhs = (byte)Storage.Fetch(p0.Item1);
+                var sum = lhs - rhs;
+
+                Registers.Set(Flag.Z, sum == 0);
+                Registers.Set(Flag.C, lhs < rhs);
+                Registers.Set(Flag.H, lhs.IsHalfCarrySub(rhs));
+
+                Registers.A.Write((byte)sum);
+            };
         }
         public Action RETI()
         {
-            return () => { };
+            return () =>
+            {
+                SetPC(pop());
+                enableInterrupts();
+            };
         }
         public Action ILLEGAL_DB()
         {
-            return () => { };
+            return () => { throw new Exception("illegal"); };
         }
         public Action ILLEGAL_DD()
         {
-            return () => { };
+            return () => { throw new Exception("illegal"); };
         }
         public Action SBC((Register, Traits) p0, (DMGInteger, Traits) p1)
         {
-            return () => { };
+            return () =>
+            {
+                Registers.Mark(Flag.N);
+
+                var lhs = Registers.Get(p0.Item1);
+                var rhs = (byte)Storage.Fetch(p1.Item1);
+                var sum = lhs - rhs - (Registers.Get(Flag.C) ? 1 : 0);
+
+                Registers.Set(Flag.Z, sum == 0);
+                Registers.Set(Flag.H, lhs.IsHalfCarrySub((byte)(rhs - (Registers.Get(Flag.C) ? 1 : 0))));
+                Registers.Set(Flag.C, lhs < rhs);
+
+                Registers.Set(p0.Item1, ((byte)sum));
+            };
         }
         public Action LDH((DMGInteger, Traits) p0, (Register, Traits) p1)
         {
-            return () => { };
+            return () =>
+            {
+                Storage.Write(p0.Item1, Registers.Get(p1.Item1));
+            };
         }
         public Action ILLEGAL_E3()
         {
-            return () => { };
+            return () => { throw new Exception("illegal"); };
         }
         public Action ILLEGAL_E4()
         {
-            return () => { };
+            return () => { throw new Exception("illegal"); };
         }
         public Action AND((DMGInteger, Traits) p0)
         {
@@ -633,15 +756,15 @@ namespace generator
         }
         public Action ILLEGAL_EB()
         {
-            return () => { };
+            return () => { throw new Exception("illegal"); };
         }
         public Action ILLEGAL_EC()
         {
-            return () => { };
+            return () => { throw new Exception("illegal"); };
         }
         public Action ILLEGAL_ED()
         {
-            return () => { };
+            return () => { throw new Exception("illegal"); };
         }
         public Action XOR((DMGInteger, Traits) p0)
         {
@@ -649,15 +772,15 @@ namespace generator
         }
         public Action LDH((Register, Traits) p0, (DMGInteger, Traits) p1)
         {
-            return () => { };
+            return () => { Registers.Set(p0.Item1, (byte)Storage.Fetch(p1.Item1)); };
         }
         public Action DI()
         {
-            return () => { };
+            return () => { disableInterrupts(); };
         }
         public Action ILLEGAL_F4()
         {
-            return () => { };
+            return () => { throw new Exception("illegal"); };
         }
         public Action OR((DMGInteger, Traits) p0)
         {
@@ -669,15 +792,15 @@ namespace generator
         }
         public Action EI()
         {
-            return () => { };
+            return () => { enableInterrupts(); };
         }
         public Action ILLEGAL_FC()
         {
-            return () => { };
+            return () => { throw new Exception("illegal"); };
         }
         public Action ILLEGAL_FD()
         {
-            return () => { };
+            return () => { throw new Exception("illegal"); };
         }
         public Action CP((DMGInteger, Traits) p0)
         {
