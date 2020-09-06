@@ -21,8 +21,8 @@ namespace generator
         }
         private void Push(ushort s)
         {
-            Storage.Write(Registers.SP.Read(), s);
             Registers.SP.Write((ushort)(Registers.SP.Read() - 2));
+            Storage.Write(Registers.SP.Read(), s);
         }
         public Action NOP()
         {
