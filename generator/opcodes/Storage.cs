@@ -1,17 +1,21 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace generator
 {
     public record Storage
     {
-        readonly byte[] mem = new byte[0x10000];
+        public readonly byte[] mem;
         private readonly Func<byte> ReadInput;
         private readonly Func<ushort> ReadInputWide;
 
-        public Storage(Func<byte> readInput)
+        public Storage(Func<byte> readInput, List<byte> rom)
         {
             ReadInput = readInput;
             ReadInputWide = () => BitConverter.ToUInt16(new byte[] { ReadInput(), ReadInput() });
+
+            mem = new byte[0x10000];
+            rom.CopyTo(mem);
         }
         internal object Fetch(DMGInteger arg)
         {
