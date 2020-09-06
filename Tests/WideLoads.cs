@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 using generator;
 
@@ -64,6 +65,18 @@ namespace Tests
             Assert.AreNotEqual(before, after);
             Assert.AreEqual(after, 0x4020);
         }
+        [Test]
+        public void LD_SP_d16_v2()
+        {
+            var p = new BootBase(new List<byte>
+            { (byte)Unprefixed.LD_SP_d16, 0x12, 0x45 }
+            );
+
+            p.DoNextOP();
+            Assert.AreEqual(3, p.PC);
+            Assert.AreEqual(0x4512, p.dec.Registers.SP.Read());
+        }
+
         [Test]
         public void LD_AT_HL_d8()
         {
