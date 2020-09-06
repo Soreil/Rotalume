@@ -232,18 +232,25 @@ namespace generator
             => () =>
             {
                 var A = Registers.A.Read();
-                var TopBit = A.GetBit(7);
-                var OldBit = Registers.Get(Flag.C);
-
                 Registers.Mark(Flag.NZ);
-                Registers.Mark(Flag.NN);
-                Registers.Mark(Flag.NH);
-                Registers.Set(Flag.C, TopBit);
-
-                A <<= 1;
-                A += OldBit ? 1 : 0;
+                A = RL(A);
                 Registers.A.Write(A);
             };
+
+        private byte RL(byte A)
+        {
+            var TopBit = A.GetBit(7);
+            var OldBit = Registers.Get(Flag.C);
+
+            Registers.Mark(Flag.NN);
+            Registers.Mark(Flag.NH);
+            Registers.Set(Flag.C, TopBit);
+
+            A <<= 1;
+            A += OldBit ? 1 : 0;
+            return A;
+        }
+
         public Action JR((DMGInteger, Traits) p0)
         {
             return () =>
@@ -256,18 +263,25 @@ namespace generator
             => () =>
             {
                 var A = Registers.A.Read();
-                var TopBit = A.GetBit(0);
-                var OldBit = Registers.Get(Flag.C);
-
                 Registers.Mark(Flag.NZ);
-                Registers.Mark(Flag.NN);
-                Registers.Mark(Flag.NH);
-                Registers.Set(Flag.C, TopBit);
-
-                A >>= 1;
-                if (OldBit) A += 0x80;
+                A = RR(A);
                 Registers.A.Write(A);
             };
+
+        private byte RR(byte A)
+        {
+            var TopBit = A.GetBit(0);
+            var OldBit = Registers.Get(Flag.C);
+
+            Registers.Mark(Flag.NN);
+            Registers.Mark(Flag.NH);
+            Registers.Set(Flag.C, TopBit);
+
+            A >>= 1;
+            if (OldBit) A += 0x80;
+            return A;
+        }
+
         public Action JR((Flag, Traits) p0, (DMGInteger, Traits) p1)
         {
             return () =>
@@ -875,8 +889,10 @@ namespace generator
             return () =>
             {
                 var reg = Registers.Get(p0.Item1);
-                Registers.Mark(Flag.Z);
+
                 var res = RLC(reg);
+                Registers.Set(Flag.Z, res == 0);
+
                 Registers.Set(p0.Item1, res);
             };
         }
@@ -886,8 +902,10 @@ namespace generator
             {
                 var addr = Registers.Get(p0.Item1);
                 var reg = Storage.Read(addr);
-                Registers.Mark(Flag.Z);
+
                 var res = RLC(reg);
+                Registers.Set(Flag.Z, res == 0);
+
                 Storage.Write(addr, res);
             };
         }
@@ -896,8 +914,10 @@ namespace generator
             return () =>
             {
                 var reg = Registers.Get(p0.Item1);
-                Registers.Mark(Flag.Z);
+
                 var res = RRC(reg);
+                Registers.Set(Flag.Z, res == 0);
+
                 Registers.Set(p0.Item1, res);
             };
         }
@@ -906,43 +926,130 @@ namespace generator
             return () => {
                 var addr = Registers.Get(p0.Item1);
                 var reg = Storage.Read(addr);
-                Registers.Mark(Flag.Z);
+
                 var res = RRC(reg);
+                Registers.Set(Flag.Z, res == 0);
+
                 Storage.Write(addr, res);
             };
         }
         public Action RL((Register, Traits) p0)
         {
-            return () => { };
+            return () =>
+            {
+                var reg = Registers.Get(p0.Item1);
+
+                var res = RL(reg);
+                Registers.Set(Flag.Z, res == 0);
+
+                Registers.Set(p0.Item1, res);
+            };
         }
         public Action RL((WideRegister, Traits) p0)
         {
-            return () => { };
+            return () => {
+                var addr = Registers.Get(p0.Item1);
+                var reg = Storage.Read(addr);
+
+                var res = RL(reg);
+                Registers.Set(Flag.Z, res == 0);
+
+                Storage.Write(addr, res);
+            };
         }
         public Action RR((Register, Traits) p0)
         {
-            return () => { };
+            return () =>
+            {
+                var reg = Registers.Get(p0.Item1);
+
+                var res = RR(reg);
+                Registers.Set(Flag.Z, res == 0);
+
+                Registers.Set(p0.Item1, res);
+            };
         }
         public Action RR((WideRegister, Traits) p0)
         {
-            return () => { };
+            return () => {
+                var addr = Registers.Get(p0.Item1);
+                var reg = Storage.Read(addr);
+
+                var res = RR(reg);
+                Registers.Set(Flag.Z, res == 0);
+
+                Storage.Write(addr, res);
+            };
         }
         public Action SLA((Register, Traits) p0)
         {
-            return () => { };
+            return () =>
+            {
+                var reg = Registers.Get(p0.Item1);
+                var res = SLA(reg);
+
+                Registers.Set(p0.Item1, res);
+            };
         }
         public Action SLA((WideRegister, Traits) p0)
         {
-            return () => { };
+            return () => {
+                var addr = Registers.Get(p0.Item1);
+                var reg = Storage.Read(addr);
+
+                var res = SLA(reg);
+
+                Storage.Write(addr, res);
+            };
+        }
+        private byte SLA(byte reg)
+        {
+            var TopBit = reg.GetBit(7);
+
+            Registers.Mark(Flag.NN);
+            Registers.Mark(Flag.NH);
+            Registers.Set(Flag.C, TopBit);
+
+            reg <<= 1;
+            Registers.Set(Flag.Z, reg == 0);
+            return reg;
         }
         public Action SRA((Register, Traits) p0)
         {
-            return () => { };
+            return () =>
+            {
+                var reg = Registers.Get(p0.Item1);
+                var res = SRA(reg);
+
+                Registers.Set(p0.Item1, res);
+            };
         }
         public Action SRA((WideRegister, Traits) p0)
         {
-            return () => { };
+            return () => {
+                var addr = Registers.Get(p0.Item1);
+                var reg = Storage.Read(addr);
+
+                var res = SRA(reg);
+
+                Storage.Write(addr, res);
+            };
         }
+
+        private byte SRA(byte reg)
+        {
+            var BottomBit = reg.GetBit(0);
+
+            Registers.Mark(Flag.NN);
+            Registers.Mark(Flag.NH);
+
+            Registers.Set(Flag.C, BottomBit);
+
+            reg = (byte)(reg >> 1 | reg &0x80);
+            Registers.Set(Flag.Z, reg == 0);
+            return reg;
+        }
+
         public Action SWAP((Register, Traits) p0)
         {
             return () => { };
