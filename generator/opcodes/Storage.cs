@@ -44,7 +44,7 @@ namespace generator
             if (at == DMGInteger.a8)
                 Write((ushort)(0xff00 + (byte)Fetch(DMGInteger.d8)), arg);
             else if (at == DMGInteger.a16)
-                Write((ushort)Fetch(DMGInteger.d8), arg);
+                Write((ushort)Fetch(DMGInteger.d16), arg);
             else
                 throw new Exception("Not an adress");
         }
