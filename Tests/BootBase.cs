@@ -3,8 +3,6 @@ using System.Collections.Generic;
 
 using generator;
 
-using NUnit.Framework;
-
 namespace Tests
 {
     public class BootBase
