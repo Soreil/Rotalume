@@ -286,9 +286,9 @@ namespace generator
         {
             return () =>
             {
+                var offset = (sbyte)Storage.Fetch(p1.Item1);
                 if (Registers.Get(p0.Item1))
                 {
-                    var offset = (sbyte)Storage.Fetch(p1.Item1);
                     SetPC((ushort)(GetPC() + offset));
                 }
             };
@@ -680,7 +680,7 @@ namespace generator
             return () =>
             {
                 Push(GetPC());
-                var addr = (ushort)Storage.Fetch(p0.Item1);
+                var addr = (ushort)Storage.Fetch(DMGInteger.d16);
                 SetPC(addr);
             };
         }
@@ -1160,7 +1160,8 @@ namespace generator
         }
         public Action SET((byte, Traits) p0, (Register, Traits) p1)
         {
-            return () => {
+            return () =>
+            {
                 var reg = Registers.Get(p1.Item1);
                 var res = SET(p0.Item1, reg);
                 Registers.Set(p1.Item1, res);
@@ -1168,7 +1169,8 @@ namespace generator
         }
         public Action SET((byte, Traits) p0, (WideRegister, Traits) p1)
         {
-            return () => {
+            return () =>
+            {
                 var addr = Registers.Get(p1.Item1);
                 var reg = Storage.Read(addr);
 
