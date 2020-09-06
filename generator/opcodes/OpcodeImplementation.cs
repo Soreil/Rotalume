@@ -923,7 +923,8 @@ namespace generator
         }
         public Action RRC((WideRegister, Traits) p0)
         {
-            return () => {
+            return () =>
+            {
                 var addr = Registers.Get(p0.Item1);
                 var reg = Storage.Read(addr);
 
@@ -947,7 +948,8 @@ namespace generator
         }
         public Action RL((WideRegister, Traits) p0)
         {
-            return () => {
+            return () =>
+            {
                 var addr = Registers.Get(p0.Item1);
                 var reg = Storage.Read(addr);
 
@@ -971,7 +973,8 @@ namespace generator
         }
         public Action RR((WideRegister, Traits) p0)
         {
-            return () => {
+            return () =>
+            {
                 var addr = Registers.Get(p0.Item1);
                 var reg = Storage.Read(addr);
 
@@ -993,7 +996,8 @@ namespace generator
         }
         public Action SLA((WideRegister, Traits) p0)
         {
-            return () => {
+            return () =>
+            {
                 var addr = Registers.Get(p0.Item1);
                 var reg = Storage.Read(addr);
 
@@ -1019,24 +1023,25 @@ namespace generator
             return () =>
             {
                 var reg = Registers.Get(p0.Item1);
-                var res = SRA(reg);
+                var res = SR(reg);
 
                 Registers.Set(p0.Item1, res);
             };
         }
         public Action SRA((WideRegister, Traits) p0)
         {
-            return () => {
+            return () =>
+            {
                 var addr = Registers.Get(p0.Item1);
                 var reg = Storage.Read(addr);
 
-                var res = SRA(reg);
+                var res = SR(reg);
 
                 Storage.Write(addr, res);
             };
         }
 
-        private byte SRA(byte reg)
+        private byte SR(byte reg)
         {
             var BottomBit = reg.GetBit(0);
 
@@ -1045,50 +1050,131 @@ namespace generator
 
             Registers.Set(Flag.C, BottomBit);
 
-            reg = (byte)(reg >> 1 | reg &0x80);
+            reg = (byte)(reg >> 1 | reg & 0x80);
             Registers.Set(Flag.Z, reg == 0);
             return reg;
         }
 
         public Action SWAP((Register, Traits) p0)
         {
-            return () => { };
+            return () =>
+            {
+                var reg = Registers.Get(p0.Item1);
+                var res = SWAP(reg);
+                Registers.Set(p0.Item1, res);
+            };
         }
         public Action SWAP((WideRegister, Traits) p0)
         {
-            return () => { };
+            return () =>
+            {
+                var addr = Registers.Get(p0.Item1);
+                var reg = Storage.Read(addr);
+
+                var res = SWAP(reg);
+
+                Storage.Write(addr, res);
+            };
         }
+
+        private byte SWAP(byte b)
+        {
+            var low = (b & 0xf) << 4;
+            var high = (b & 0xf0) >> 4;
+            var swapped = low | high;
+
+            Registers.Set(Flag.Z, swapped == 0);
+            Registers.Mark(Flag.NN);
+            Registers.Mark(Flag.NH);
+            Registers.Mark(Flag.NC);
+            return (byte)swapped;
+        }
+
         public Action SRL((Register, Traits) p0)
         {
-            return () => { };
+            return () =>
+            {
+                var reg = Registers.Get(p0.Item1);
+                var res = SR(reg);
+                Registers.Set(p0.Item1, res);
+            };
         }
         public Action SRL((WideRegister, Traits) p0)
         {
-            return () => { };
+            return () =>
+            {
+                var addr = Registers.Get(p0.Item1);
+                var reg = Storage.Read(addr);
+
+                var res = SR(reg);
+
+                Storage.Write(addr, res);
+            };
         }
         public Action BIT((byte, Traits) p0, (Register, Traits) p1)
         {
-            return () => { };
+            return () =>
+            {
+                var reg = Registers.Get(p1.Item1);
+                BIT(p0.Item1, reg);
+            };
         }
         public Action BIT((byte, Traits) p0, (WideRegister, Traits) p1)
         {
-            return () => { };
+            return () =>
+            {
+                var addr = Registers.Get(p1.Item1);
+                var reg = Storage.Read(addr);
+                BIT(p0.Item1, reg);
+            };
         }
+
+        private void BIT(int at, byte b)
+        {
+            Registers.Set(Flag.Z, !b.GetBit(at));
+            Registers.Mark(Flag.NN);
+            Registers.Mark(Flag.H);
+        }
+        private byte RES(int at, byte b) => b.ClearBit(at);
+        private byte SET(int at, byte b) => b.SetBit(at);
+
         public Action RES((byte, Traits) p0, (Register, Traits) p1)
         {
-            return () => { };
+            return () =>
+            {
+                var reg = Registers.Get(p1.Item1);
+                var res = RES(p0.Item1, reg);
+                Registers.Set(p1.Item1, res);
+            };
         }
         public Action RES((byte, Traits) p0, (WideRegister, Traits) p1)
         {
-            return () => { };
+            return () =>
+            {
+                var addr = Registers.Get(p1.Item1);
+                var reg = Storage.Read(addr);
+
+                var res = RES(p0.Item1, reg);
+                Storage.Write(addr, res);
+            };
         }
         public Action SET((byte, Traits) p0, (Register, Traits) p1)
         {
-            return () => { };
+            return () => {
+                var reg = Registers.Get(p1.Item1);
+                var res = SET(p0.Item1, reg);
+                Registers.Set(p1.Item1, res);
+            };
         }
         public Action SET((byte, Traits) p0, (WideRegister, Traits) p1)
         {
-            return () => { };
+            return () => {
+                var addr = Registers.Get(p1.Item1);
+                var reg = Storage.Read(addr);
+
+                var res = SET(p0.Item1, reg);
+                Storage.Write(addr, res);
+            };
         }
 
 
