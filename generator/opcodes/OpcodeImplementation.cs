@@ -426,7 +426,7 @@ namespace generator
             Registers.Mark(Flag.NN);
             var sum = lhs + rhs + (Registers.Get(Flag.C) ? 1 : 0);
 
-            Registers.Set(Flag.Z, sum == 0);
+            Registers.Set(Flag.Z, ((byte)sum) == 0);
             Registers.Set(Flag.H, lhs.IsHalfCarryAdd((byte)(rhs + (Registers.Get(Flag.C) ? 1 : 0))));
             Registers.Set(Flag.C, sum > 0xff);
             return (byte)sum;
@@ -461,7 +461,7 @@ namespace generator
             Registers.Mark(Flag.N);
             var sum = lhs - rhs;
 
-            Registers.Set(Flag.Z, sum == 0);
+            Registers.Set(Flag.Z, ((byte)sum) == 0);
             Registers.Set(Flag.C, lhs < rhs);
             Registers.Set(Flag.H, lhs.IsHalfCarrySub(rhs));
             return (byte)sum;
@@ -493,7 +493,7 @@ namespace generator
             Registers.Mark(Flag.N);
             var sum = lhs - rhs - (Registers.Get(Flag.C) ? 1 : 0);
 
-            Registers.Set(Flag.Z, sum == 0);
+            Registers.Set(Flag.Z, ((byte)sum) == 0);
             Registers.Set(Flag.H, lhs.IsHalfCarrySub((byte)(rhs - (Registers.Get(Flag.C) ? 1 : 0))));
             Registers.Set(Flag.C, lhs < rhs);
             return (byte)sum;
@@ -652,7 +652,7 @@ namespace generator
                 var rhs = (byte)Storage.Fetch(p1.Item1);
                 var sum = lhs + rhs;
 
-                Registers.Set(Flag.Z, sum == 0);
+                Registers.Set(Flag.Z, ((byte)sum) == 0);
                 Registers.Set(Flag.C, sum > 0xff);
                 Registers.Set(Flag.H, lhs.IsHalfCarryAdd(rhs));
 
@@ -694,7 +694,7 @@ namespace generator
                 var rhs = (byte)Storage.Fetch(p1.Item1);
                 var sum = lhs + rhs + (Registers.Get(Flag.C) ? 1 : 0);
 
-                Registers.Set(Flag.Z, sum == 0);
+                Registers.Set(Flag.Z, ((byte)sum) == 0);
                 Registers.Set(Flag.H, lhs.IsHalfCarryAdd((byte)(rhs + (Registers.Get(Flag.C) ? 1 : 0))));
                 Registers.Set(Flag.C, sum > 0xff);
 
@@ -715,7 +715,7 @@ namespace generator
                 var rhs = (byte)Storage.Fetch(p0.Item1);
                 var sum = lhs - rhs;
 
-                Registers.Set(Flag.Z, sum == 0);
+                Registers.Set(Flag.Z, ((byte)sum) == 0);
                 Registers.Set(Flag.C, lhs < rhs);
                 Registers.Set(Flag.H, lhs.IsHalfCarrySub(rhs));
 
@@ -748,7 +748,7 @@ namespace generator
                 var rhs = (byte)Storage.Fetch(p1.Item1);
                 var sum = lhs - rhs - (Registers.Get(Flag.C) ? 1 : 0);
 
-                Registers.Set(Flag.Z, sum == 0);
+                Registers.Set(Flag.Z, ((byte)sum) == 0);
                 Registers.Set(Flag.H, lhs.IsHalfCarrySub((byte)(rhs - (Registers.Get(Flag.C) ? 1 : 0))));
                 Registers.Set(Flag.C, lhs < rhs);
 
@@ -879,7 +879,7 @@ namespace generator
             Registers.Mark(Flag.N);
             var sum = lhs - rhs;
 
-            Registers.Set(Flag.Z, sum == 0);
+            Registers.Set(Flag.Z, ((byte)sum) == 0);
             Registers.Set(Flag.C, lhs < rhs);
             Registers.Set(Flag.H, lhs.IsHalfCarrySub(rhs));
         }
