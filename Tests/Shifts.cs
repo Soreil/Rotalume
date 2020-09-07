@@ -78,7 +78,7 @@ namespace Tests
         {
             var dec = new Decoder(() => 0);
 
-            dec.Registers.A=(0xff);
+            dec.Registers.A = (0xff);
             dec.StdOps[Unprefixed.CPL]();
 
             Assert.AreEqual(0, dec.Registers.A);

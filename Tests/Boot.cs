@@ -12,7 +12,6 @@ namespace Tests
 {
     class Boot
     {
-        byte[] program;
         ushort PC = 0;
         Func<ushort> GetProgramCounter;
         Action<ushort> SetProgramCounter;
@@ -24,11 +23,10 @@ namespace Tests
         {
             GetProgramCounter = () => PC;
             SetProgramCounter = (x) => { PC = x; };
-            Read = () => program[PC++];
-            dec = new Decoder(Read, LoadBootROM().Concat(LoadGameROM()[0x100..]).ToList(), GetProgramCounter, SetProgramCounter);
-            program = dec.Storage.mem;
+            Read = () => dec.Storage[PC++];
+            dec = new Decoder(Read, LoadBootROM().ToList(), LoadGameROM().ToList(), GetProgramCounter, SetProgramCounter);
         }
-        public byte[] LoadBootROM()
+        public static byte[] LoadBootROM()
         {
             byte[] bootROM = {
     0x31, 0xFE, 0xFF, 0xAF, 0x21, 0xFF, 0x9F, 0x32, 0xCB, 0x7C, 0x20, 0xFB,
@@ -64,8 +62,7 @@ namespace Tests
         public void Init()
         {
             PC = 0;
-            dec = new Decoder(Read, LoadBootROM().Concat(LoadGameROM()[0x100..]).ToList(), GetProgramCounter, SetProgramCounter);
-            program = dec.Storage.mem;
+            dec = new Decoder(Read, LoadBootROM().ToList(),LoadGameROM().ToList(), GetProgramCounter, SetProgramCounter);
         }
 
         [Test]

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using generator;
 
@@ -7,7 +8,7 @@ namespace Tests
 {
     public class BootBase
     {
-        public byte[] program;
+        //public byte[] program;
         public ushort PC;
         public Func<ushort> GetProgramCounter;
         public Action<ushort> SetProgramCounter;
@@ -22,9 +23,9 @@ namespace Tests
         {
             GetProgramCounter = () => PC;
             SetProgramCounter = (x) => { PC = x; };
-            Read = () => program[PC++];
-            dec = new Decoder(Read, ROM, GetProgramCounter, SetProgramCounter);
-            program = dec.Storage.mem;
+            Read = () => dec.Storage[PC++];
+            dec = new Decoder(Read, new List<byte>(), ROM, GetProgramCounter, SetProgramCounter);
+            //program = dec.Storage.mem;
         }
         public void DoNextOP()
         {
