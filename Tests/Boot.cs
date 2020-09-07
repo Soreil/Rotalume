@@ -78,7 +78,7 @@ namespace Tests
 
         //The boot loop currently doesn't work yet
         [Test]
-        public void LoopThroughOps()
+        public void DoBootNoGPU()
         {
             //Temporary write which sets the VBlank to always be the current GPU stage. 
             //This will let us boot without a GPU.
@@ -96,10 +96,16 @@ namespace Tests
                 DoNextOP(dec);
             while (PC != 0xa3)
                 DoNextOP(dec);
-            while (PC != 0xfa)
+            while (PC != 0xe0) //Start of logo check
+                DoNextOP(dec);
+            while (PC != 0xf1) //logo checksum initialized
+                DoNextOP(dec);
+            while (PC != 0xf9) //Past first subloop
+                DoNextOP(dec);
+            while (PC != 0xfa) //Logo checksum validation
                 DoNextOP(dec);
             DoNextOP(dec);
-            Assert.AreNotEqual(0xfa, PC);
+            Assert.AreNotEqual(0xfa, PC); //Logo if logo check failed and we are stuck
             while (PC != 0x100)
                 DoNextOP(dec);
         }
