@@ -392,7 +392,7 @@ namespace generator
             Registers.Mark(Flag.NN);
             var sum = lhs + rhs;
 
-            Registers.Set(Flag.Z, sum == 0);
+            Registers.Set(Flag.Z, ((byte)sum) == 0);
             Registers.Set(Flag.C, sum > 0xff);
             Registers.Set(Flag.H, lhs.IsHalfCarryAdd(rhs));
             return (byte)sum;
