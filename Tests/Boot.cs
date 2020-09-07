@@ -25,7 +25,7 @@ namespace Tests
             GetProgramCounter = () => PC;
             SetProgramCounter = (x) => { PC = x; };
             Read = () => program[PC++];
-            dec = new Decoder(Read, LoadBootROM().Concat(LoadGameROM()[0xff..]).ToList(), GetProgramCounter, SetProgramCounter);
+            dec = new Decoder(Read, LoadBootROM().Concat(LoadGameROM()[0x100..]).ToList(), GetProgramCounter, SetProgramCounter);
             program = dec.Storage.mem;
         }
         public byte[] LoadBootROM()
