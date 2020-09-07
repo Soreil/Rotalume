@@ -4,10 +4,10 @@ namespace generator
 {
     public record Registers
     {
-        private byte Low(ushort s) => (byte)(s & 0x00ff);
-        private byte High(ushort s) => (byte)((s & 0xff00) >> 8);
-        private ushort SetLow(ushort s, byte b) => (ushort)((s & 0xff00) | b);
-        private ushort SetHigh(ushort s, byte b) => (ushort)((s & 0x00ff) | (b << 8));
+        private static byte Low(ushort s) => (byte)(s & 0x00ff);
+        private static byte High(ushort s) => (byte)((s & 0xff00) >> 8);
+        private static ushort SetLow(ushort s, byte b) => (ushort)((s & 0xff00) | b);
+        private static ushort SetHigh(ushort s, byte b) => (ushort)((s & 0x00ff) | (b << 8));
 
         public ushort AF;
         public byte A
@@ -54,10 +54,16 @@ namespace generator
             set => HL = SetLow(HL, value);
         }
         public ushort SP;
-        
 
-        public Registers()
+        public Registers() { }
+
+        public Registers(ushort aF, ushort bC, ushort dE, ushort hL, ushort sP)
         {
+            AF = aF;
+            BC = bC;
+            DE = dE;
+            HL = hL;
+            SP = sP;
         }
 
         public bool Get(Flag f)

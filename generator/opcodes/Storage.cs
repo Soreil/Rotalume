@@ -31,13 +31,10 @@ namespace generator
         }
         public byte Read(ushort at) => mem[at];
 
-        public ushort ReadWide(ushort at)
-            => BitConverter.ToUInt16(new byte[] { mem[at], mem[at + 1] });
+        public ushort ReadWide(ushort at) => BitConverter.ToUInt16(new byte[] { mem[at], mem[at + 1] });
 
-        public void Write(ushort at, byte arg)
-        {
-            mem[at] = arg;
-        }
+        public void Write(ushort at, byte arg) => mem[at] = arg;
+
 
         public void Write(DMGInteger at, byte arg)
         {
