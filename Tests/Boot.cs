@@ -73,7 +73,7 @@ namespace Tests
         {
             DoNextOP(dec);
             Assert.AreEqual(3, PC);
-            Assert.AreEqual(0xFFFE, dec.Registers.SP.Read());
+            Assert.AreEqual(0xFFFE, dec.Registers.SP);
         }
 
         //The boot loop currently doesn't work yet

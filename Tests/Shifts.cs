@@ -78,10 +78,10 @@ namespace Tests
         {
             var dec = new Decoder(() => 0);
 
-            dec.Registers.A.Write(0xff);
+            dec.Registers.A=(0xff);
             dec.StdOps[Unprefixed.CPL]();
 
-            Assert.AreEqual(0, dec.Registers.A.Read());
+            Assert.AreEqual(0, dec.Registers.A);
         }
         [Test]
         public void SCF()

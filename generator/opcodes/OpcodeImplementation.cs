@@ -13,16 +13,16 @@ namespace generator
 
         private ushort Pop()
         {
-            var SP = Registers.SP.Read();
+            var SP = Registers.SP;
             var popped = Storage.ReadWide(SP);
             SP += 2;
-            Registers.SP.Write(SP);
+            Registers.SP = SP;
             return popped;
         }
         private void Push(ushort s)
         {
-            Registers.SP.Write((ushort)(Registers.SP.Read() - 2));
-            Storage.Write(Registers.SP.Read(), s);
+            Registers.SP = ((ushort)(Registers.SP - 2));
+            Storage.Write(Registers.SP, s);
         }
         public Action NOP()
         {
@@ -117,10 +117,10 @@ namespace generator
 
             => () =>
             {
-                var A = Registers.A.Read();
+                var A = Registers.A;
                 Registers.Mark(Flag.NZ);
                 var res = RLC(A);
-                Registers.A.Write(res);
+                Registers.A = (res);
             };
 
         private byte RLC(byte reg)
@@ -205,10 +205,10 @@ namespace generator
         public Action RRCA()
             => () =>
             {
-                var A = Registers.A.Read();
+                var A = Registers.A;
                 Registers.Mark(Flag.NZ);
                 A = RRC(A);
-                Registers.A.Write(A);
+                Registers.A =(A);
             };
 
         private byte RRC(byte reg)
@@ -231,10 +231,10 @@ namespace generator
         public Action RLA()
             => () =>
             {
-                var A = Registers.A.Read();
+                var A = Registers.A;
                 Registers.Mark(Flag.NZ);
                 A = RL(A);
-                Registers.A.Write(A);
+                Registers.A = (A);
             };
 
         private byte RL(byte A)
@@ -262,10 +262,10 @@ namespace generator
         public Action RRA()
             => () =>
             {
-                var A = Registers.A.Read();
+                var A = Registers.A;
                 Registers.Mark(Flag.NZ);
                 A = RR(A);
-                Registers.A.Write(A);
+                Registers.A =(A);
             };
 
         private byte RR(byte A)
@@ -301,7 +301,7 @@ namespace generator
 
                 var wasSub = Registers.Get(Flag.N);
 
-                var A = (ushort)Registers.A.Read();
+                var A = (ushort)Registers.A ;
                 if (!wasSub)
                 {
                     var low = A & 0xf;
@@ -319,12 +319,12 @@ namespace generator
                 Registers.Set(Flag.Z, A == 0);
                 Registers.Set(Flag.C, A > 0x99);
 
-                Registers.A.Write((byte)A);
+                Registers.A =((byte)A);
             };
         }
         public Action CPL() => () =>
         {
-            Registers.A.Write((byte)~Registers.A.Read());
+            Registers.A = ((byte)~Registers.A);
             Registers.Mark(Flag.N);
             Registers.Mark(Flag.H);
         };
@@ -438,10 +438,10 @@ namespace generator
             {
                 Registers.Mark(Flag.N);
 
-                var lhs = Registers.A.Read();
+                var lhs = Registers.A;
                 var rhs = Registers.Get(p0.Item1);
 
-                Registers.A.Write(SUB(lhs, rhs));
+                Registers.A = (SUB(lhs, rhs));
             };
         }
         public Action SUB((WideRegister, Traits) p0)
@@ -449,10 +449,10 @@ namespace generator
             return () =>
             {
 
-                var lhs = Registers.A.Read();
+                var lhs = Registers.A;
                 var rhs = Storage.Read(Registers.Get(p0.Item1));
 
-                Registers.A.Write(SUB(lhs, rhs));
+                Registers.A = (SUB(lhs, rhs));
             };
         }
 
@@ -500,14 +500,14 @@ namespace generator
         }
         public Action AND((Register, Traits) p0) => () =>
         {
-            var lhs = Registers.A.Read();
+            var lhs = Registers.A;
             var rhs = Registers.Get(p0.Item1);
 
             AND(lhs, rhs);
         };
         public Action AND((WideRegister, Traits) p0) => () =>
         {
-            var lhs = Registers.A.Read();
+            var lhs = Registers.A;
             var rhs = Storage.Read(Registers.Get(p0.Item1));
 
             AND(lhs, rhs);
@@ -520,19 +520,19 @@ namespace generator
             Registers.Mark(Flag.NN);
             Registers.Set(Flag.Z, result == 0);
 
-            Registers.A.Write((byte)result);
+            Registers.A = ((byte)result);
         }
 
         public Action XOR((Register, Traits) p0) => () =>
         {
-            var lhs = Registers.A.Read();
+            var lhs = Registers.A;
             var rhs = Registers.Get(p0.Item1);
 
             XOR(lhs, rhs);
         };
         public Action XOR((WideRegister, Traits) p0) => () =>
         {
-            var lhs = Registers.A.Read();
+            var lhs = Registers.A;
             var rhs = Storage.Read(Registers.Get(p0.Item1));
 
             XOR(lhs, rhs);
@@ -545,18 +545,18 @@ namespace generator
             Registers.Mark(Flag.NN);
             Registers.Set(Flag.Z, result == 0);
 
-            Registers.A.Write((byte)result);
+            Registers.A = ((byte)result);
         }
 
         public Action OR((Register, Traits) p0) => () =>
         {
-            var lhs = Registers.A.Read();
+            var lhs = Registers.A;
             var rhs = Registers.Get(p0.Item1);
             OR(lhs, rhs);
         };
         public Action OR((WideRegister, Traits) p0) => () =>
         {
-            var lhs = Registers.A.Read();
+            var lhs = Registers.A;
             var rhs = Storage.Read(Registers.Get(p0.Item1));
             OR(lhs, rhs);
         };
@@ -570,17 +570,17 @@ namespace generator
             Registers.Mark(Flag.NN);
             Registers.Set(Flag.Z, result == 0);
 
-            Registers.A.Write((byte)result);
+            Registers.A = ((byte)result);
         }
         public Action CP((Register, Traits) p0) => () =>
         {
-            var lhs = Registers.A.Read();
+            var lhs = Registers.A;
             var rhs = Registers.Get(p0.Item1);
             CP(lhs, rhs);
         };
         public Action CP((WideRegister, Traits) p0) => () =>
         {
-            var lhs = Registers.A.Read();
+            var lhs = Registers.A;
             var rhs = Storage.Read(Registers.Get(p0.Item1));
             CP(lhs, rhs);
         };
@@ -598,10 +598,10 @@ namespace generator
         {
             return () =>
             {
-                var SP = Registers.SP.Read();
+                var SP = Registers.SP;
                 Registers.Set(p0.Item1, Storage.ReadWide(SP));
                 SP += 2;
-                Registers.SP.Write(SP);
+                Registers.SP = (SP);
             };
         }
         public Action JP((Flag, Traits) p0, (DMGInteger, Traits) p1)
@@ -711,7 +711,7 @@ namespace generator
             {
                 Registers.Mark(Flag.N);
 
-                var lhs = Registers.A.Read();
+                var lhs = Registers.A;
                 var rhs = (byte)Storage.Fetch(p0.Item1);
                 var sum = lhs - rhs;
 
@@ -719,7 +719,7 @@ namespace generator
                 Registers.Set(Flag.C, lhs < rhs);
                 Registers.Set(Flag.H, lhs.IsHalfCarrySub(rhs));
 
-                Registers.A.Write((byte)sum);
+                Registers.A = ((byte)sum);
             };
         }
         public Action RETI()
@@ -774,7 +774,7 @@ namespace generator
         {
             return () =>
             {
-                Registers.A.Write((byte)(Registers.A.Read() & (byte)Storage.Fetch(p0.Item1)));
+                Registers.A =((byte)(Registers.A & (byte)Storage.Fetch(p0.Item1)));
             };
         }
         public Action ADD((WideRegister, Traits) p0, (DMGInteger, Traits) p1)
@@ -812,7 +812,7 @@ namespace generator
         {
             return () =>
             {
-                Registers.A.Write((byte)(Registers.A.Read() ^ (byte)Storage.Fetch(p0.Item1)));
+                Registers.A = ((byte)(Registers.A ^ (byte)Storage.Fetch(p0.Item1)));
             };
         }
         public Action LDH((Register, Traits) p0, (DMGInteger, Traits) p1)
@@ -831,7 +831,7 @@ namespace generator
         {
             return () =>
             {
-                Registers.A.Write((byte)(Registers.A.Read() | (byte)Storage.Fetch(p0.Item1)));
+                Registers.A = ((byte)(Registers.A | (byte)Storage.Fetch(p0.Item1)));
             };
         }
         public Action LD((WideRegister, Traits) p0, (WideRegister, Traits) p1)
@@ -869,7 +869,7 @@ namespace generator
         {
             return () =>
             {
-                var lhs = Registers.A.Read();
+                var lhs = Registers.A;
                 var rhs = (byte)Storage.Fetch(p0.Item1);
                 CP(lhs, rhs);
             };

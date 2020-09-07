@@ -4,41 +4,65 @@ namespace generator
 {
     public record Registers
     {
-        public WideRegisterData AF;
-        public RegisterData A;
-        public RegisterData F;
-        public WideRegisterData BC;
-        public RegisterData B;
-        public RegisterData C;
-        public WideRegisterData DE;
-        public RegisterData D;
-        public RegisterData E;
-        public WideRegisterData HL;
-        public RegisterData H;
-        public RegisterData L;
-        public WideRegisterData SP;
+        private byte Low(ushort s) => (byte)(s & 0x00ff);
+        private byte High(ushort s) => (byte)((s & 0xff00) >> 8);
+        private ushort SetLow(ushort s, byte b) => (ushort)((s & 0xff00) | b);
+        private ushort SetHigh(ushort s, byte b) => (ushort)((s & 0x00ff) | (b << 8));
+
+        public ushort AF;
+        public byte A
+        {
+            get => High(AF);
+            set => AF = SetHigh(AF, value);
+        }
+        public byte F
+        {
+            get => Low(AF);
+            set => AF = SetLow(AF, value);
+        }
+        public ushort BC;
+        public byte B
+        {
+            get => High(BC);
+            set => BC = SetHigh(BC, value);
+        }
+        public byte C
+        {
+            get => Low(BC);
+            set => BC = SetLow(BC, value);
+        }
+        public ushort DE;
+        public byte D
+        {
+            get => High(DE);
+            set => DE = SetHigh(DE, value);
+        }
+        public byte E
+        {
+            get => Low(DE);
+            set => DE = SetLow(DE, value);
+        }
+        public ushort HL;
+        public byte H
+        {
+            get => High(HL);
+            set => HL = SetHigh(HL, value);
+        }
+        public byte L
+        {
+            get => Low(HL);
+            set => HL = SetLow(HL, value);
+        }
+        public ushort SP;
+        
 
         public Registers()
         {
-            AF = new WideRegisterData();
-            A = AF.High;
-            F = AF.Low;
-            BC = new WideRegisterData();
-            B = BC.High;
-            C = BC.Low;
-            DE = new WideRegisterData();
-            D = DE.High;
-            E = DE.Low;
-            HL = new WideRegisterData();
-            H = HL.High;
-            L = HL.Low;
-
-            SP = new WideRegisterData();
         }
 
         public bool Get(Flag f)
         {
-            var FReg = F.Read();
+            var FReg = F;
             return f switch
             {
                 Flag.Z => FReg.GetBit(7),
@@ -55,31 +79,30 @@ namespace generator
 
         public byte Get(Register r) => r switch
         {
-            Register.A => A.Read(),
-            Register.B => B.Read(),
-            Register.C => C.Read(),
-            Register.D => D.Read(),
-            Register.E => E.Read(),
-            Register.F => F.Read(),
-            Register.H => H.Read(),
-            Register.L => L.Read(),
+            Register.A => A,
+            Register.B => B,
+            Register.C => C,
+            Register.D => D,
+            Register.E => E,
+            Register.F => F,
+            Register.H => H,
+            Register.L => L,
             _ => throw new NotImplementedException(),
         };
 
         public ushort Get(WideRegister r) => r switch
         {
-            WideRegister.AF => AF.Read(),
-            WideRegister.BC => BC.Read(),
-            WideRegister.DE => DE.Read(),
-            WideRegister.HL => HL.Read(),
-            //WideRegister.PC => PC.Read(),
-            WideRegister.SP => SP.Read(),
+            WideRegister.AF => AF,
+            WideRegister.BC => BC,
+            WideRegister.DE => DE,
+            WideRegister.HL => HL,
+            WideRegister.SP => SP,
             _ => throw new NotImplementedException(),
         };
 
         public void Mark(Flag f)
         {
-            var FReg = F.Read();
+            var FReg = F;
             switch (f)
             {
                 case Flag.Z:
@@ -107,11 +130,11 @@ namespace generator
                     FReg = FReg.ClearBit(4);
                     break;
             }
-            F.Write(FReg);
+            F = FReg;
         }
         public void Set(Flag f, bool b)
         {
-            var FReg = F.Read();
+            var FReg = F;
             switch (f)
             {
                 case Flag.Z:
@@ -129,21 +152,21 @@ namespace generator
                 default:
                     throw new Exception("Flag argument can only be a flag name, not a state");
             }
-            F.Write(FReg);
+            F = FReg;
         }
 
         public void Set(Register r, byte v)
         {
             switch (r)
             {
-                case Register.A: A.Write(v); break;
-                case Register.B: B.Write(v); break;
-                case Register.C: C.Write(v); break;
-                case Register.D: D.Write(v); break;
-                case Register.E: E.Write(v); break;
-                case Register.F: F.Write(v); break;
-                case Register.H: H.Write(v); break;
-                case Register.L: L.Write(v); break;
+                case Register.A: A = v; break;
+                case Register.B: B = v; break;
+                case Register.C: C = v; break;
+                case Register.D: D = v; break;
+                case Register.E: E = v; break;
+                case Register.F: F = v; break;
+                case Register.H: H = v; break;
+                case Register.L: L = v; break;
                 default: throw new NotImplementedException();
             }
         }
@@ -151,11 +174,11 @@ namespace generator
         {
             switch (r)
             {
-                case WideRegister.AF: AF.Write(v); break;
-                case WideRegister.BC: BC.Write(v); break;
-                case WideRegister.DE: DE.Write(v); break;
-                case WideRegister.HL: HL.Write(v); break;
-                case WideRegister.SP: SP.Write(v); break;
+                case WideRegister.AF: AF = v; break;
+                case WideRegister.BC: BC = v; break;
+                case WideRegister.DE: DE = v; break;
+                case WideRegister.HL: HL = v; break;
+                case WideRegister.SP: SP = v; break;
                 default: throw new NotImplementedException();
             }
         }
