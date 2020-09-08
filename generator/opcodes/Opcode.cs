@@ -146,7 +146,7 @@ namespace generator
 
             var taggedArguments = new List<string>();
             for (var i = 0; i < arguments.Count; i++)
-                taggedArguments.Add(arguments[i] + "p" + i.ToString());
+                taggedArguments.Add(arguments[i] + " p" + i.ToString());
             taggedArguments.Add("int duration");
             if (cycles.Count == 2)
             {
