@@ -98,13 +98,17 @@ namespace generator
 
                 var arg = "(" + op.MakeOperandArgumentValue();
                 arg += ", ";
-                arg += "new " + typeof(Traits) + "( ";
+                arg += "new " + "Traits" + "( ";
                 arg += traits.Immediate.ToString().ToLower();
                 arg += ", ";
-                arg += typeof(Postfix) + "." + traits.Postfix.ToString();
+                arg += "Postfix" + "." + traits.Postfix.ToString();
                 arg += ")";
                 arg += ")";
                 functionArguments.Add(arg);
+            }
+            foreach (var duration in cycles)
+            {
+                functionArguments.Add(duration.ToString());
             }
 
             return functionArguments;
@@ -143,6 +147,12 @@ namespace generator
             var taggedArguments = new List<string>();
             for (var i = 0; i < arguments.Count; i++)
                 taggedArguments.Add(arguments[i] + "p" + i.ToString());
+            taggedArguments.Add("int duration");
+            if (cycles.Count == 2)
+            {
+                taggedArguments.Add("int alternativeDuration");
+            }
+            else if (cycles.Count > 2) throw new System.Exception("Well then");
 
             return string.Join(", ", taggedArguments);
         }

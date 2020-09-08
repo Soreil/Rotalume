@@ -6,7 +6,7 @@ namespace generator
     public record Storage
     {
         private readonly byte[] _mem;
-        private readonly bool bootROMActive;
+        private bool bootROMActive;
 
         public byte this[int at]
         {
@@ -27,6 +27,10 @@ namespace generator
                 {
                     if (at < 0x100)
                         bootROM[at] = value;
+                    else if (at == 0xff50 && value == 1) //We need a way to load checks like
+                        //this to the set method or some other way to inform other parts of
+                        //the system that a memory write was relevant for them.
+                        bootROMActive = false;
                     else _mem[at] = value;
                 }
                 else _mem[at] = value;
@@ -66,7 +70,6 @@ namespace generator
         public ushort ReadWide(ushort at) => BitConverter.ToUInt16(new byte[] { this[at], this[at + 1] });
 
         public void Write(ushort at, byte arg) => this[at] = arg;
-
 
         public void Write(DMGInteger at, byte arg)
         {

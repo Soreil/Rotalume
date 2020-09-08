@@ -4,6 +4,8 @@
     {
         public bool Immediate;
         public Postfix Postfix;
+        public int duration;
+        public int? branchDuration;
 
         public Traits(Operand o)
         {
