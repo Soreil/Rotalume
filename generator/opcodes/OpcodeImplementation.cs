@@ -10,6 +10,7 @@ namespace generator
         readonly public Func<ushort> GetPC;
         readonly public Action enableInterrupts;
         readonly public Action disableInterrupts;
+        readonly private Action<int> Tick;
 
         private ushort Pop()
         {
@@ -24,11 +25,11 @@ namespace generator
             Registers.SP = ((ushort)(Registers.SP - 2));
             Storage.Write(Registers.SP, s);
         }
-        public Action NOP()
+        public Action NOP(int duration)
         {
             return () => { };
         }
-        public Action LD((WideRegister, Traits) p0, (DMGInteger, Traits) p1)
+        public Action LD((WideRegister, Traits) p0, (DMGInteger, Traits) p1, int duration)
         {
             return () =>
             {
@@ -44,7 +45,7 @@ namespace generator
                 }
             };
         }
-        public Action LD((WideRegister, Traits) p0, (Register, Traits) p1)
+        public Action LD((WideRegister, Traits) p0, (Register, Traits) p1, int duration)
         {
             return () =>
             {
@@ -66,54 +67,54 @@ namespace generator
                 }
             };
         }
-        public Action INC((WideRegister, Traits) p0)
+        public Action INC((WideRegister, Traits) p0, int duration)
         => () =>
+        {
+            //Wide registers do not use flags for INC and DEC
+            if (p0.Item2.Immediate)
+                Registers.Set(p0.Item1, (ushort)(Registers.Get(p0.Item1) + 1));
+            else
             {
-                //Wide registers do not use flags for INC and DEC
-                if (p0.Item2.Immediate)
-                    Registers.Set(p0.Item1, (ushort)(Registers.Get(p0.Item1) + 1));
-                else
-                {
-                    var addr = Registers.Get(p0.Item1);
-                    var before = Storage.Read(addr);
-                    var arg = (byte)(before + 1);
-                    Storage.Write(addr, arg);
-
-                    Registers.Set(Flag.Z, arg == 0);
-                    Registers.Mark(Flag.NN);
-                    Registers.Set(Flag.H, before.IsHalfCarryAdd(1));
-                }
-            };
-
-        public Action INC((Register, Traits) p0)
-        => () =>
-            {
-                var before = Registers.Get(p0.Item1);
+                var addr = Registers.Get(p0.Item1);
+                var before = Storage.Read(addr);
                 var arg = (byte)(before + 1);
-                Registers.Set(p0.Item1, arg);
+                Storage.Write(addr, arg);
 
                 Registers.Set(Flag.Z, arg == 0);
                 Registers.Mark(Flag.NN);
                 Registers.Set(Flag.H, before.IsHalfCarryAdd(1));
-            };
-        public Action DEC((Register, Traits) p0)
-        => () =>
-             {
-                 var before = Registers.Get(p0.Item1);
-                 var arg = (byte)(before - 1);
-                 Registers.Set(p0.Item1, arg);
+            }
+        };
 
-                 Registers.Set(Flag.Z, arg == 0);
-                 Registers.Mark(Flag.N);
-                 Registers.Set(Flag.H, before.IsHalfCarrySub(1));
-             };
-        public Action LD((Register, Traits) p0, (DMGInteger, Traits) p1)
+        public Action INC((Register, Traits) p0, int duration)
+        => () =>
+        {
+            var before = Registers.Get(p0.Item1);
+            var arg = (byte)(before + 1);
+            Registers.Set(p0.Item1, arg);
+
+            Registers.Set(Flag.Z, arg == 0);
+            Registers.Mark(Flag.NN);
+            Registers.Set(Flag.H, before.IsHalfCarryAdd(1));
+        };
+        public Action DEC((Register, Traits) p0, int duration)
+        => () =>
+        {
+            var before = Registers.Get(p0.Item1);
+            var arg = (byte)(before - 1);
+            Registers.Set(p0.Item1, arg);
+
+            Registers.Set(Flag.Z, arg == 0);
+            Registers.Mark(Flag.N);
+            Registers.Set(Flag.H, before.IsHalfCarrySub(1));
+        };
+        public Action LD((Register, Traits) p0, (DMGInteger, Traits) p1, int duration)
             => () =>
             {
                 var arg = Storage.Fetch(p1.Item1);
                 Registers.Set(p0.Item1, (byte)arg);
             };
-        public Action RLCA()
+        public Action RLCA(int duration)
 
             => () =>
             {
@@ -138,7 +139,7 @@ namespace generator
 
         //This op is a litle weird, we should have generate
         //lefthandsided shorts as being a different type.
-        public Action LD((DMGInteger, Traits) p0, (WideRegister, Traits) p1)
+        public Action LD((DMGInteger, Traits) p0, (WideRegister, Traits) p1, int duration)
             => () =>
             {
                 var addr = (ushort)Storage.Fetch(DMGInteger.d16);
@@ -147,7 +148,7 @@ namespace generator
                 Storage.Write(addr, arg);
             };
 
-        public Action ADD((WideRegister, Traits) p0, (WideRegister, Traits) p1)
+        public Action ADD((WideRegister, Traits) p0, (WideRegister, Traits) p1, int duration)
         {
             return () =>
             {
@@ -163,7 +164,7 @@ namespace generator
                 Registers.Set(Flag.C, target + arg > 0xFFFF);
             };
         }
-        public Action LD((Register, Traits) p0, (WideRegister, Traits) p1)
+        public Action LD((Register, Traits) p0, (WideRegister, Traits) p1, int duration)
         {
             return () =>
             {
@@ -184,7 +185,7 @@ namespace generator
                 }
             };
         }
-        public Action DEC((WideRegister, Traits) p0)
+        public Action DEC((WideRegister, Traits) p0, int duration)
         => () =>
         {
             //Wide registers do not use flags for INC and DEC
@@ -202,13 +203,13 @@ namespace generator
                 Registers.Set(Flag.H, before.IsHalfCarryAdd(1));
             }
         };
-        public Action RRCA()
+        public Action RRCA(int duration)
             => () =>
             {
                 var A = Registers.A;
                 Registers.Mark(Flag.NZ);
                 A = RRC(A);
-                Registers.A =(A);
+                Registers.A = (A);
             };
 
         private byte RRC(byte reg)
@@ -224,11 +225,11 @@ namespace generator
             return reg;
         }
 
-        public Action STOP()
+        public Action STOP(int duration)
         {
             return () => { throw new Exception("Yea we ain't stopping clean partner"); };
         }
-        public Action RLA()
+        public Action RLA(int duration)
             => () =>
             {
                 var A = Registers.A;
@@ -251,7 +252,7 @@ namespace generator
             return A;
         }
 
-        public Action JR((DMGInteger, Traits) p0)
+        public Action JR((DMGInteger, Traits) p0, int duration)
         {
             return () =>
             {
@@ -259,13 +260,13 @@ namespace generator
                 SetPC((ushort)(GetPC() + offset));
             };
         }
-        public Action RRA()
+        public Action RRA(int duration)
             => () =>
             {
                 var A = Registers.A;
                 Registers.Mark(Flag.NZ);
                 A = RR(A);
-                Registers.A =(A);
+                Registers.A = (A);
             };
 
         private byte RR(byte A)
@@ -282,7 +283,7 @@ namespace generator
             return A;
         }
 
-        public Action JR((Flag, Traits) p0, (DMGInteger, Traits) p1)
+        public Action JR((Flag, Traits) p0, (DMGInteger, Traits) p1, int duration, int alternativeDuration)
         {
             return () =>
             {
@@ -290,10 +291,12 @@ namespace generator
                 if (Registers.Get(p0.Item1))
                 {
                     SetPC((ushort)(GetPC() + offset));
+                    Tick(duration);
                 }
+                else Tick(alternativeDuration);
             };
         }
-        public Action DAA()
+        public Action DAA(int duration)
         {
             return () =>
             {
@@ -301,7 +304,7 @@ namespace generator
 
                 var wasSub = Registers.Get(Flag.N);
 
-                var A = (ushort)Registers.A ;
+                var A = (ushort)Registers.A;
                 if (!wasSub)
                 {
                     var low = A & 0xf;
@@ -319,30 +322,30 @@ namespace generator
                 Registers.Set(Flag.Z, A == 0);
                 Registers.Set(Flag.C, A > 0x99);
 
-                Registers.A =((byte)A);
+                Registers.A = ((byte)A);
             };
         }
-        public Action CPL() => () =>
+        public Action CPL(int duration) => () =>
         {
             Registers.A = ((byte)~Registers.A);
             Registers.Mark(Flag.N);
             Registers.Mark(Flag.H);
         };
 
-        public Action SCF() => () =>
+        public Action SCF(int duration) => () =>
         {
             Registers.Mark(Flag.NN);
             Registers.Mark(Flag.NH);
             Registers.Mark(Flag.C);
         };
 
-        public Action CCF() => () =>
+        public Action CCF(int duration) => () =>
         {
             Registers.Mark(Flag.NN);
             Registers.Mark(Flag.NH);
             Registers.Set(Flag.C, !Registers.Get(Flag.C));
         };
-        public Action LD((Register, Traits) p0, (Register, Traits) p1)
+        public Action LD((Register, Traits) p0, (Register, Traits) p1, int duration)
         {
             if (p0.Item2.Immediate && p1.Item2.Immediate)
                 return () =>
@@ -360,11 +363,11 @@ namespace generator
                         Storage.Write((ushort)(0xFF00 + Registers.Get(p0.Item1)), Registers.Get(p1.Item1));
             };
         }
-        public Action HALT()
+        public Action HALT(int duration)
         {
             return () => { throw new Exception("Not implemented"); };
         }
-        public Action ADD((Register, Traits) p0, (Register, Traits) p1)
+        public Action ADD((Register, Traits) p0, (Register, Traits) p1, int duration)
         {
             return () =>
             {
@@ -375,7 +378,7 @@ namespace generator
                 Registers.Set(p0.Item1, ADD(lhs, rhs));
             };
         }
-        public Action ADD((Register, Traits) p0, (WideRegister, Traits) p1)
+        public Action ADD((Register, Traits) p0, (WideRegister, Traits) p1, int duration)
         {
             return () =>
             {
@@ -398,7 +401,7 @@ namespace generator
             return (byte)sum;
         }
 
-        public Action ADC((Register, Traits) p0, (Register, Traits) p1)
+        public Action ADC((Register, Traits) p0, (Register, Traits) p1, int duration)
         {
             return () =>
             {
@@ -410,7 +413,7 @@ namespace generator
                 Registers.Set(p0.Item1, ADC(lhs, rhs));
             };
         }
-        public Action ADC((Register, Traits) p0, (WideRegister, Traits) p1)
+        public Action ADC((Register, Traits) p0, (WideRegister, Traits) p1, int duration)
         {
             return () =>
             {
@@ -432,7 +435,7 @@ namespace generator
             return (byte)sum;
         }
 
-        public Action SUB((Register, Traits) p0)
+        public Action SUB((Register, Traits) p0, int duration)
         {
             return () =>
             {
@@ -444,7 +447,7 @@ namespace generator
                 Registers.A = (SUB(lhs, rhs));
             };
         }
-        public Action SUB((WideRegister, Traits) p0)
+        public Action SUB((WideRegister, Traits) p0, int duration)
         {
             return () =>
             {
@@ -467,7 +470,7 @@ namespace generator
             return (byte)sum;
         }
 
-        public Action SBC((Register, Traits) p0, (Register, Traits) p1)
+        public Action SBC((Register, Traits) p0, (Register, Traits) p1, int duration)
         {
             return () =>
             {
@@ -477,7 +480,7 @@ namespace generator
                 Registers.Set(p0.Item1, SBC(lhs, rhs));
             };
         }
-        public Action SBC((Register, Traits) p0, (WideRegister, Traits) p1)
+        public Action SBC((Register, Traits) p0, (WideRegister, Traits) p1, int duration)
         {
             return () =>
             {
@@ -498,686 +501,692 @@ namespace generator
             Registers.Set(Flag.C, lhs < rhs);
             return (byte)sum;
         }
-        public Action AND((Register, Traits) p0) => () =>
+        public Action AND((Register, Traits) p0, int duration) => () =>
         {
             var lhs = Registers.A;
-            var rhs = Registers.Get(p0.Item1);
+        var rhs = Registers.Get(p0.Item1);
 
-            AND(lhs, rhs);
-        };
-        public Action AND((WideRegister, Traits) p0) => () =>
+        AND(lhs, rhs);
+    };
+    public Action AND((WideRegister, Traits) p0, int duration) => () =>
         {
             var lhs = Registers.A;
-            var rhs = Storage.Read(Registers.Get(p0.Item1));
+    var rhs = Storage.Read(Registers.Get(p0.Item1));
 
-            AND(lhs, rhs);
+    AND(lhs, rhs);
+};
+private void AND(byte lhs, byte rhs)
+{
+    var result = lhs & rhs;
+    Registers.Mark(Flag.NC);
+    Registers.Mark(Flag.H);
+    Registers.Mark(Flag.NN);
+    Registers.Set(Flag.Z, result == 0);
+
+    Registers.A = ((byte)result);
+}
+
+public Action XOR((Register, Traits) p0, int duration) => () =>
+        {
+    var lhs = Registers.A;
+    var rhs = Registers.Get(p0.Item1);
+
+    XOR(lhs, rhs);
+};
+public Action XOR((WideRegister, Traits) p0, int duration) => () =>
+        {
+    var lhs = Registers.A;
+    var rhs = Storage.Read(Registers.Get(p0.Item1));
+
+    XOR(lhs, rhs);
+};
+
+private void XOR(byte lhs, byte rhs)
+{
+    var result = lhs ^ rhs;
+    Registers.Mark(Flag.NH);
+    Registers.Mark(Flag.NN);
+    Registers.Set(Flag.Z, result == 0);
+
+    Registers.A = ((byte)result);
+}
+
+public Action OR((Register, Traits) p0, int duration) => () =>
+        {
+    var lhs = Registers.A;
+    var rhs = Registers.Get(p0.Item1);
+    OR(lhs, rhs);
+};
+public Action OR((WideRegister, Traits) p0, int duration) => () =>
+        {
+    var lhs = Registers.A;
+    var rhs = Storage.Read(Registers.Get(p0.Item1));
+    OR(lhs, rhs);
+};
+
+private void OR(byte lhs, byte rhs)
+{
+    var result = lhs | rhs;
+
+    Registers.Mark(Flag.NC);
+    Registers.Mark(Flag.NH);
+    Registers.Mark(Flag.NN);
+    Registers.Set(Flag.Z, result == 0);
+
+    Registers.A = ((byte)result);
+}
+public Action CP((Register, Traits) p0, int duration) => () =>
+        {
+    var lhs = Registers.A;
+    var rhs = Registers.Get(p0.Item1);
+    CP(lhs, rhs);
+};
+public Action CP((WideRegister, Traits) p0, int duration) => () =>
+        {
+    var lhs = Registers.A;
+    var rhs = Storage.Read(Registers.Get(p0.Item1));
+    CP(lhs, rhs);
+};
+public Action RET((Flag, Traits) p0, int duration, int alternativeDuration)
+{
+    return () =>
+    {
+        if (Registers.Get(p0.Item1))
+        {
+            SetPC(Pop());
+            Tick(duration);
+        }
+        else Tick(alternativeDuration);
+    };
+}
+public Action POP((WideRegister, Traits) p0, int duration)
+{
+    return () =>
+    {
+        var SP = Registers.SP;
+        Registers.Set(p0.Item1, Storage.ReadWide(SP));
+        SP += 2;
+        Registers.SP = (SP);
+    };
+}
+public Action JP((Flag, Traits) p0, (DMGInteger, Traits) p1, int duration, int alternativeDuration)
+{
+    return () =>
+    {
+        if (Registers.Get(p0.Item1))
+        {
+            var addr = (ushort)Storage.Fetch(p1.Item1);
+            SetPC(addr);
+            Tick(duration);
+        }
+        else Tick(alternativeDuration);
+    };
+}
+public Action JP((DMGInteger, Traits) p0, int duration)
+{
+    return () =>
+    {
+        var addr = (ushort)Storage.Fetch(p0.Item1);
+        SetPC(addr);
+    };
+}
+public Action CALL((Flag, Traits) p0, (DMGInteger, Traits) p1, int duration, int alternativeDuration)
+{
+    return () =>
+    {
+        if (Registers.Get(p0.Item1))
+        {
+            Push(GetPC());
+            var addr = (ushort)Storage.Fetch(p1.Item1);
+            SetPC(addr);
+            Tick(duration);
+        }
+        else Tick(alternativeDuration);
+    };
+}
+public Action PUSH((WideRegister, Traits) p0, int duration)
+{
+    return () =>
+    {
+        Push(Registers.Get(p0.Item1));
+    };
+}
+public Action ADD((Register, Traits) p0, (DMGInteger, Traits) p1, int duration)
+{
+    return () =>
+    {
+        Registers.Mark(Flag.NN);
+
+        var lhs = Registers.Get(p0.Item1);
+        var rhs = (byte)Storage.Fetch(p1.Item1);
+        var sum = lhs + rhs;
+
+        Registers.Set(Flag.Z, ((byte)sum) == 0);
+        Registers.Set(Flag.C, sum > 0xff);
+        Registers.Set(Flag.H, lhs.IsHalfCarryAdd(rhs));
+
+        Registers.Set(p0.Item1, (byte)sum);
+    };
+}
+public Action RST((byte, Traits) p0, int duration)
+{
+    return () => { SetPC(p0.Item1); };
+}
+public Action RET(int duration)
+{
+    return () =>
+    {
+        SetPC(Pop());
+    };
+}
+//Not an actual instruction
+public Action PREFIX(int duration)
+{
+    return () => { throw new Exception("unimplementable"); };
+}
+public Action CALL((DMGInteger, Traits) p0, int duration)
+{
+    return () =>
+    {
+        Push(GetPC());
+        var addr = (ushort)Storage.Fetch(DMGInteger.d16);
+        SetPC(addr);
+    };
+}
+public Action ADC((Register, Traits) p0, (DMGInteger, Traits) p1, int duration)
+{
+    return () =>
+    {
+        Registers.Mark(Flag.NN);
+
+        var lhs = Registers.Get(p0.Item1);
+        var rhs = (byte)Storage.Fetch(p1.Item1);
+        var sum = lhs + rhs + (Registers.Get(Flag.C) ? 1 : 0);
+
+        Registers.Set(Flag.Z, ((byte)sum) == 0);
+        Registers.Set(Flag.H, lhs.IsHalfCarryAdd((byte)(rhs + (Registers.Get(Flag.C) ? 1 : 0))));
+        Registers.Set(Flag.C, sum > 0xff);
+
+        Registers.Set(p0.Item1, (byte)sum);
+    };
+}
+public Action ILLEGAL_D3(int duration)
+{
+    return () => { throw new Exception("illegal"); };
+}
+public Action SUB((DMGInteger, Traits) p0, int duration)
+{
+    return () =>
+    {
+        Registers.Mark(Flag.N);
+
+        var lhs = Registers.A;
+        var rhs = (byte)Storage.Fetch(p0.Item1);
+        var sum = lhs - rhs;
+
+        Registers.Set(Flag.Z, ((byte)sum) == 0);
+        Registers.Set(Flag.C, lhs < rhs);
+        Registers.Set(Flag.H, lhs.IsHalfCarrySub(rhs));
+
+        Registers.A = ((byte)sum);
+    };
+}
+public Action RETI(int duration)
+{
+    return () =>
+    {
+        SetPC(Pop());
+        enableInterrupts();
+    };
+}
+public Action ILLEGAL_DB(int duration)
+{
+    return () => { throw new Exception("illegal"); };
+}
+public Action ILLEGAL_DD(int duration)
+{
+    return () => { throw new Exception("illegal"); };
+}
+public Action SBC((Register, Traits) p0, (DMGInteger, Traits) p1, int duration)
+{
+    return () =>
+    {
+        Registers.Mark(Flag.N);
+
+        var lhs = Registers.Get(p0.Item1);
+        var rhs = (byte)Storage.Fetch(p1.Item1);
+        var sum = lhs - rhs - (Registers.Get(Flag.C) ? 1 : 0);
+
+        Registers.Set(Flag.Z, ((byte)sum) == 0);
+        Registers.Set(Flag.H, lhs.IsHalfCarrySub((byte)(rhs - (Registers.Get(Flag.C) ? 1 : 0))));
+        Registers.Set(Flag.C, lhs < rhs);
+
+        Registers.Set(p0.Item1, ((byte)sum));
+    };
+}
+public Action LDH((DMGInteger, Traits) p0, (Register, Traits) p1, int duration)
+{
+    return () =>
+    {
+        Storage.Write(p0.Item1, Registers.Get(p1.Item1));
+    };
+}
+public Action ILLEGAL_E3(int duration)
+{
+    return () => { throw new Exception("illegal"); };
+}
+public Action ILLEGAL_E4(int duration)
+{
+    return () => { throw new Exception("illegal"); };
+}
+public Action AND((DMGInteger, Traits) p0, int duration)
+{
+    return () =>
+    {
+        Registers.A = ((byte)(Registers.A & (byte)Storage.Fetch(p0.Item1)));
+    };
+}
+public Action ADD((WideRegister, Traits) p0, (DMGInteger, Traits) p1, int duration)
+{
+    return () =>
+    {
+        Registers.Set(p0.Item1, (ushort)(Registers.Get(p0.Item1) + (sbyte)Storage.Fetch(p1.Item1)));
+    };
+}
+public Action JP((WideRegister, Traits) p0, int duration)
+{
+    return () =>
+    {
+        var addr = Registers.Get(p0.Item1);
+        SetPC(addr);
+    };
+}
+public Action LD((DMGInteger, Traits) p0, (Register, Traits) p1, int duration)
+{
+    return () => { Storage.Write(p0.Item1, Registers.Get(p1.Item1)); };
+}
+public Action ILLEGAL_EB(int duration)
+{
+    return () => { throw new Exception("illegal"); };
+}
+public Action ILLEGAL_EC(int duration)
+{
+    return () => { throw new Exception("illegal"); };
+}
+public Action ILLEGAL_ED(int duration)
+{
+    return () => { throw new Exception("illegal"); };
+}
+public Action XOR((DMGInteger, Traits) p0, int duration)
+{
+    return () =>
+    {
+        Registers.A = ((byte)(Registers.A ^ (byte)Storage.Fetch(p0.Item1)));
+    };
+}
+public Action LDH((Register, Traits) p0, (DMGInteger, Traits) p1, int duration)
+{
+    return () => { Registers.Set(p0.Item1, (byte)Storage.Fetch(p1.Item1)); };
+}
+public Action DI(int duration)
+{
+    return () => { disableInterrupts(); };
+}
+public Action ILLEGAL_F4(int duration)
+{
+    return () => { throw new Exception("illegal"); };
+}
+public Action OR((DMGInteger, Traits) p0, int duration)
+{
+    return () =>
+    {
+        Registers.A = ((byte)(Registers.A | (byte)Storage.Fetch(p0.Item1)));
+    };
+}
+public Action LD((WideRegister, Traits) p0, (WideRegister, Traits) p1, int duration)
+{
+    if (p1.Item2.Postfix == Postfix.increment)
+    {
+        return () =>
+        {
+            Registers.Set(p0.Item1, Registers.Get(p1.Item1));
+            Registers.Set(p1.Item1, (ushort)(Registers.Get(p1.Item1) + 1));
         };
-        private void AND(byte lhs, byte rhs)
+    }
+    else
+    {
+        return () =>
         {
-            var result = lhs & rhs;
-            Registers.Mark(Flag.NC);
-            Registers.Mark(Flag.H);
-            Registers.Mark(Flag.NN);
-            Registers.Set(Flag.Z, result == 0);
-
-            Registers.A = ((byte)result);
-        }
-
-        public Action XOR((Register, Traits) p0) => () =>
-        {
-            var lhs = Registers.A;
-            var rhs = Registers.Get(p0.Item1);
-
-            XOR(lhs, rhs);
+            Registers.Set(p0.Item1, Registers.Get(p1.Item1));
         };
-        public Action XOR((WideRegister, Traits) p0) => () =>
-        {
-            var lhs = Registers.A;
-            var rhs = Storage.Read(Registers.Get(p0.Item1));
+    }
 
-            XOR(lhs, rhs);
-        };
+}
+public Action EI(int duration)
+{
+    return () => { enableInterrupts(); };
+}
+public Action ILLEGAL_FC(int duration)
+{
+    return () => { throw new Exception("illegal"); };
+}
+public Action ILLEGAL_FD(int duration)
+{
+    return () => { throw new Exception("illegal"); };
+}
+public Action CP((DMGInteger, Traits) p0, int duration)
+{
+    return () =>
+    {
+        var lhs = Registers.A;
+        var rhs = (byte)Storage.Fetch(p0.Item1);
+        CP(lhs, rhs);
+    };
+}
+private void CP(byte lhs, byte rhs)
+{
+    Registers.Mark(Flag.N);
+    var sum = lhs - rhs;
 
-        private void XOR(byte lhs, byte rhs)
-        {
-            var result = lhs ^ rhs;
-            Registers.Mark(Flag.NH);
-            Registers.Mark(Flag.NN);
-            Registers.Set(Flag.Z, result == 0);
+    Registers.Set(Flag.Z, ((byte)sum) == 0);
+    Registers.Set(Flag.C, lhs < rhs);
+    Registers.Set(Flag.H, lhs.IsHalfCarrySub(rhs));
+}
 
-            Registers.A = ((byte)result);
-        }
+public Action RLC((Register, Traits) p0, int duration)
+{
+    return () =>
+    {
+        var reg = Registers.Get(p0.Item1);
 
-        public Action OR((Register, Traits) p0) => () =>
-        {
-            var lhs = Registers.A;
-            var rhs = Registers.Get(p0.Item1);
-            OR(lhs, rhs);
-        };
-        public Action OR((WideRegister, Traits) p0) => () =>
-        {
-            var lhs = Registers.A;
-            var rhs = Storage.Read(Registers.Get(p0.Item1));
-            OR(lhs, rhs);
-        };
+        var res = RLC(reg);
+        Registers.Set(Flag.Z, res == 0);
 
-        private void OR(byte lhs, byte rhs)
-        {
-            var result = lhs | rhs;
+        Registers.Set(p0.Item1, res);
+    };
+}
+public Action RLC((WideRegister, Traits) p0, int duration)
+{
+    return () =>
+    {
+        var addr = Registers.Get(p0.Item1);
+        var reg = Storage.Read(addr);
 
-            Registers.Mark(Flag.NC);
-            Registers.Mark(Flag.NH);
-            Registers.Mark(Flag.NN);
-            Registers.Set(Flag.Z, result == 0);
+        var res = RLC(reg);
+        Registers.Set(Flag.Z, res == 0);
 
-            Registers.A = ((byte)result);
-        }
-        public Action CP((Register, Traits) p0) => () =>
-        {
-            var lhs = Registers.A;
-            var rhs = Registers.Get(p0.Item1);
-            CP(lhs, rhs);
-        };
-        public Action CP((WideRegister, Traits) p0) => () =>
-        {
-            var lhs = Registers.A;
-            var rhs = Storage.Read(Registers.Get(p0.Item1));
-            CP(lhs, rhs);
-        };
-        public Action RET((Flag, Traits) p0)
-        {
-            return () =>
-            {
-                if (Registers.Get(p0.Item1))
-                {
-                    SetPC(Pop());
-                }
-            };
-        }
-        public Action POP((WideRegister, Traits) p0)
-        {
-            return () =>
-            {
-                var SP = Registers.SP;
-                Registers.Set(p0.Item1, Storage.ReadWide(SP));
-                SP += 2;
-                Registers.SP = (SP);
-            };
-        }
-        public Action JP((Flag, Traits) p0, (DMGInteger, Traits) p1)
-        {
-            return () =>
-            {
-                if (Registers.Get(p0.Item1))
-                {
-                    var addr = (ushort)Storage.Fetch(p1.Item1);
-                    SetPC(addr);
-                }
-            };
-        }
-        public Action JP((DMGInteger, Traits) p0)
-        {
-            return () =>
-            {
-                var addr = (ushort)Storage.Fetch(p0.Item1);
-                SetPC(addr);
-            };
-        }
-        public Action CALL((Flag, Traits) p0, (DMGInteger, Traits) p1)
-        {
-            return () =>
-            {
-                if (Registers.Get(p0.Item1))
-                {
-                    Push(GetPC());
-                    var addr = (ushort)Storage.Fetch(p1.Item1);
-                    SetPC(addr);
-                }
-            };
-        }
-        public Action PUSH((WideRegister, Traits) p0)
-        {
-            return () =>
-            {
-                Push(Registers.Get(p0.Item1));
-            };
-        }
-        public Action ADD((Register, Traits) p0, (DMGInteger, Traits) p1)
-        {
-            return () =>
-            {
-                Registers.Mark(Flag.NN);
+        Storage.Write(addr, res);
+    };
+}
+public Action RRC((Register, Traits) p0, int duration)
+{
+    return () =>
+    {
+        var reg = Registers.Get(p0.Item1);
 
-                var lhs = Registers.Get(p0.Item1);
-                var rhs = (byte)Storage.Fetch(p1.Item1);
-                var sum = lhs + rhs;
+        var res = RRC(reg);
+        Registers.Set(Flag.Z, res == 0);
 
-                Registers.Set(Flag.Z, ((byte)sum) == 0);
-                Registers.Set(Flag.C, sum > 0xff);
-                Registers.Set(Flag.H, lhs.IsHalfCarryAdd(rhs));
+        Registers.Set(p0.Item1, res);
+    };
+}
+public Action RRC((WideRegister, Traits) p0, int duration)
+{
+    return () =>
+    {
+        var addr = Registers.Get(p0.Item1);
+        var reg = Storage.Read(addr);
 
-                Registers.Set(p0.Item1, (byte)sum);
-            };
-        }
-        public Action RST((byte, Traits) p0)
-        {
-            return () => { SetPC(p0.Item1); };
-        }
-        public Action RET()
-        {
-            return () =>
-            {
-                SetPC(Pop());
-            };
-        }
-        //Not an actual instruction
-        public Action PREFIX()
-        {
-            return () => { throw new Exception("unimplementable"); };
-        }
-        public Action CALL((DMGInteger, Traits) p0)
-        {
-            return () =>
-            {
-                Push(GetPC());
-                var addr = (ushort)Storage.Fetch(DMGInteger.d16);
-                SetPC(addr);
-            };
-        }
-        public Action ADC((Register, Traits) p0, (DMGInteger, Traits) p1)
-        {
-            return () =>
-            {
-                Registers.Mark(Flag.NN);
+        var res = RRC(reg);
+        Registers.Set(Flag.Z, res == 0);
 
-                var lhs = Registers.Get(p0.Item1);
-                var rhs = (byte)Storage.Fetch(p1.Item1);
-                var sum = lhs + rhs + (Registers.Get(Flag.C) ? 1 : 0);
+        Storage.Write(addr, res);
+    };
+}
+public Action RL((Register, Traits) p0, int duration)
+{
+    return () =>
+    {
+        var reg = Registers.Get(p0.Item1);
 
-                Registers.Set(Flag.Z, ((byte)sum) == 0);
-                Registers.Set(Flag.H, lhs.IsHalfCarryAdd((byte)(rhs + (Registers.Get(Flag.C) ? 1 : 0))));
-                Registers.Set(Flag.C, sum > 0xff);
+        var res = RL(reg);
+        Registers.Set(Flag.Z, res == 0);
 
-                Registers.Set(p0.Item1, (byte)sum);
-            };
-        }
-        public Action ILLEGAL_D3()
-        {
-            return () => { throw new Exception("illegal"); };
-        }
-        public Action SUB((DMGInteger, Traits) p0)
-        {
-            return () =>
-            {
-                Registers.Mark(Flag.N);
+        Registers.Set(p0.Item1, res);
+    };
+}
+public Action RL((WideRegister, Traits) p0, int duration)
+{
+    return () =>
+    {
+        var addr = Registers.Get(p0.Item1);
+        var reg = Storage.Read(addr);
 
-                var lhs = Registers.A;
-                var rhs = (byte)Storage.Fetch(p0.Item1);
-                var sum = lhs - rhs;
+        var res = RL(reg);
+        Registers.Set(Flag.Z, res == 0);
 
-                Registers.Set(Flag.Z, ((byte)sum) == 0);
-                Registers.Set(Flag.C, lhs < rhs);
-                Registers.Set(Flag.H, lhs.IsHalfCarrySub(rhs));
+        Storage.Write(addr, res);
+    };
+}
+public Action RR((Register, Traits) p0, int duration)
+{
+    return () =>
+    {
+        var reg = Registers.Get(p0.Item1);
 
-                Registers.A = ((byte)sum);
-            };
-        }
-        public Action RETI()
-        {
-            return () =>
-            {
-                SetPC(Pop());
-                enableInterrupts();
-            };
-        }
-        public Action ILLEGAL_DB()
-        {
-            return () => { throw new Exception("illegal"); };
-        }
-        public Action ILLEGAL_DD()
-        {
-            return () => { throw new Exception("illegal"); };
-        }
-        public Action SBC((Register, Traits) p0, (DMGInteger, Traits) p1)
-        {
-            return () =>
-            {
-                Registers.Mark(Flag.N);
+        var res = RR(reg);
+        Registers.Set(Flag.Z, res == 0);
 
-                var lhs = Registers.Get(p0.Item1);
-                var rhs = (byte)Storage.Fetch(p1.Item1);
-                var sum = lhs - rhs - (Registers.Get(Flag.C) ? 1 : 0);
+        Registers.Set(p0.Item1, res);
+    };
+}
+public Action RR((WideRegister, Traits) p0, int duration)
+{
+    return () =>
+    {
+        var addr = Registers.Get(p0.Item1);
+        var reg = Storage.Read(addr);
 
-                Registers.Set(Flag.Z, ((byte)sum) == 0);
-                Registers.Set(Flag.H, lhs.IsHalfCarrySub((byte)(rhs - (Registers.Get(Flag.C) ? 1 : 0))));
-                Registers.Set(Flag.C, lhs < rhs);
+        var res = RR(reg);
+        Registers.Set(Flag.Z, res == 0);
 
-                Registers.Set(p0.Item1, ((byte)sum));
-            };
-        }
-        public Action LDH((DMGInteger, Traits) p0, (Register, Traits) p1)
-        {
-            return () =>
-            {
-                Storage.Write(p0.Item1, Registers.Get(p1.Item1));
-            };
-        }
-        public Action ILLEGAL_E3()
-        {
-            return () => { throw new Exception("illegal"); };
-        }
-        public Action ILLEGAL_E4()
-        {
-            return () => { throw new Exception("illegal"); };
-        }
-        public Action AND((DMGInteger, Traits) p0)
-        {
-            return () =>
-            {
-                Registers.A =((byte)(Registers.A & (byte)Storage.Fetch(p0.Item1)));
-            };
-        }
-        public Action ADD((WideRegister, Traits) p0, (DMGInteger, Traits) p1)
-        {
-            return () =>
-            {
-                Registers.Set(p0.Item1, (ushort)(Registers.Get(p0.Item1) + (sbyte)Storage.Fetch(p1.Item1)));
-            };
-        }
-        public Action JP((WideRegister, Traits) p0)
-        {
-            return () =>
-            {
-                var addr = Registers.Get(p0.Item1);
-                SetPC(addr);
-            };
-        }
-        public Action LD((DMGInteger, Traits) p0, (Register, Traits) p1)
-        {
-            return () => { Storage.Write(p0.Item1, Registers.Get(p1.Item1)); };
-        }
-        public Action ILLEGAL_EB()
-        {
-            return () => { throw new Exception("illegal"); };
-        }
-        public Action ILLEGAL_EC()
-        {
-            return () => { throw new Exception("illegal"); };
-        }
-        public Action ILLEGAL_ED()
-        {
-            return () => { throw new Exception("illegal"); };
-        }
-        public Action XOR((DMGInteger, Traits) p0)
-        {
-            return () =>
-            {
-                Registers.A = ((byte)(Registers.A ^ (byte)Storage.Fetch(p0.Item1)));
-            };
-        }
-        public Action LDH((Register, Traits) p0, (DMGInteger, Traits) p1)
-        {
-            return () => { Registers.Set(p0.Item1, (byte)Storage.Fetch(p1.Item1)); };
-        }
-        public Action DI()
-        {
-            return () => { disableInterrupts(); };
-        }
-        public Action ILLEGAL_F4()
-        {
-            return () => { throw new Exception("illegal"); };
-        }
-        public Action OR((DMGInteger, Traits) p0)
-        {
-            return () =>
-            {
-                Registers.A = ((byte)(Registers.A | (byte)Storage.Fetch(p0.Item1)));
-            };
-        }
-        public Action LD((WideRegister, Traits) p0, (WideRegister, Traits) p1)
-        {
-            if (p1.Item2.Postfix == Postfix.increment)
-            {
-                return () =>
-                {
-                    Registers.Set(p0.Item1, Registers.Get(p1.Item1));
-                    Registers.Set(p1.Item1, (ushort)(Registers.Get(p1.Item1) + 1));
-                };
-            }
-            else
-            {
-                return () =>
-                {
-                    Registers.Set(p0.Item1, Registers.Get(p1.Item1));
-                };
-            }
+        Storage.Write(addr, res);
+    };
+}
+public Action SLA((Register, Traits) p0, int duration)
+{
+    return () =>
+    {
+        var reg = Registers.Get(p0.Item1);
+        var res = SLA(reg);
 
-        }
-        public Action EI()
-        {
-            return () => { enableInterrupts(); };
-        }
-        public Action ILLEGAL_FC()
-        {
-            return () => { throw new Exception("illegal"); };
-        }
-        public Action ILLEGAL_FD()
-        {
-            return () => { throw new Exception("illegal"); };
-        }
-        public Action CP((DMGInteger, Traits) p0)
-        {
-            return () =>
-            {
-                var lhs = Registers.A;
-                var rhs = (byte)Storage.Fetch(p0.Item1);
-                CP(lhs, rhs);
-            };
-        }
-        private void CP(byte lhs, byte rhs)
-        {
-            Registers.Mark(Flag.N);
-            var sum = lhs - rhs;
+        Registers.Set(p0.Item1, res);
+    };
+}
+public Action SLA((WideRegister, Traits) p0, int duration)
+{
+    return () =>
+    {
+        var addr = Registers.Get(p0.Item1);
+        var reg = Storage.Read(addr);
 
-            Registers.Set(Flag.Z, ((byte)sum) == 0);
-            Registers.Set(Flag.C, lhs < rhs);
-            Registers.Set(Flag.H, lhs.IsHalfCarrySub(rhs));
-        }
+        var res = SLA(reg);
 
-        public Action RLC((Register, Traits) p0)
-        {
-            return () =>
-            {
-                var reg = Registers.Get(p0.Item1);
+        Storage.Write(addr, res);
+    };
+}
+private byte SLA(byte reg)
+{
+    var TopBit = reg.GetBit(7);
 
-                var res = RLC(reg);
-                Registers.Set(Flag.Z, res == 0);
+    Registers.Mark(Flag.NN);
+    Registers.Mark(Flag.NH);
+    Registers.Set(Flag.C, TopBit);
 
-                Registers.Set(p0.Item1, res);
-            };
-        }
-        public Action RLC((WideRegister, Traits) p0)
-        {
-            return () =>
-            {
-                var addr = Registers.Get(p0.Item1);
-                var reg = Storage.Read(addr);
+    reg <<= 1;
+    Registers.Set(Flag.Z, reg == 0);
+    return reg;
+}
+public Action SRA((Register, Traits) p0, int duration)
+{
+    return () =>
+    {
+        var reg = Registers.Get(p0.Item1);
+        var res = SR(reg);
 
-                var res = RLC(reg);
-                Registers.Set(Flag.Z, res == 0);
+        Registers.Set(p0.Item1, res);
+    };
+}
+public Action SRA((WideRegister, Traits) p0, int duration)
+{
+    return () =>
+    {
+        var addr = Registers.Get(p0.Item1);
+        var reg = Storage.Read(addr);
 
-                Storage.Write(addr, res);
-            };
-        }
-        public Action RRC((Register, Traits) p0)
-        {
-            return () =>
-            {
-                var reg = Registers.Get(p0.Item1);
+        var res = SR(reg);
 
-                var res = RRC(reg);
-                Registers.Set(Flag.Z, res == 0);
+        Storage.Write(addr, res);
+    };
+}
 
-                Registers.Set(p0.Item1, res);
-            };
-        }
-        public Action RRC((WideRegister, Traits) p0)
-        {
-            return () =>
-            {
-                var addr = Registers.Get(p0.Item1);
-                var reg = Storage.Read(addr);
+private byte SR(byte reg)
+{
+    var BottomBit = reg.GetBit(0);
 
-                var res = RRC(reg);
-                Registers.Set(Flag.Z, res == 0);
+    Registers.Mark(Flag.NN);
+    Registers.Mark(Flag.NH);
 
-                Storage.Write(addr, res);
-            };
-        }
-        public Action RL((Register, Traits) p0)
-        {
-            return () =>
-            {
-                var reg = Registers.Get(p0.Item1);
+    Registers.Set(Flag.C, BottomBit);
 
-                var res = RL(reg);
-                Registers.Set(Flag.Z, res == 0);
+    reg = (byte)(reg >> 1 | reg & 0x80);
+    Registers.Set(Flag.Z, reg == 0);
+    return reg;
+}
 
-                Registers.Set(p0.Item1, res);
-            };
-        }
-        public Action RL((WideRegister, Traits) p0)
-        {
-            return () =>
-            {
-                var addr = Registers.Get(p0.Item1);
-                var reg = Storage.Read(addr);
+public Action SWAP((Register, Traits) p0, int duration)
+{
+    return () =>
+    {
+        var reg = Registers.Get(p0.Item1);
+        var res = SWAP(reg);
+        Registers.Set(p0.Item1, res);
+    };
+}
+public Action SWAP((WideRegister, Traits) p0, int duration)
+{
+    return () =>
+    {
+        var addr = Registers.Get(p0.Item1);
+        var reg = Storage.Read(addr);
 
-                var res = RL(reg);
-                Registers.Set(Flag.Z, res == 0);
+        var res = SWAP(reg);
 
-                Storage.Write(addr, res);
-            };
-        }
-        public Action RR((Register, Traits) p0)
-        {
-            return () =>
-            {
-                var reg = Registers.Get(p0.Item1);
+        Storage.Write(addr, res);
+    };
+}
 
-                var res = RR(reg);
-                Registers.Set(Flag.Z, res == 0);
+private byte SWAP(byte b)
+{
+    var low = (b & 0xf) << 4;
+    var high = (b & 0xf0) >> 4;
+    var swapped = low | high;
 
-                Registers.Set(p0.Item1, res);
-            };
-        }
-        public Action RR((WideRegister, Traits) p0)
-        {
-            return () =>
-            {
-                var addr = Registers.Get(p0.Item1);
-                var reg = Storage.Read(addr);
+    Registers.Set(Flag.Z, swapped == 0);
+    Registers.Mark(Flag.NN);
+    Registers.Mark(Flag.NH);
+    Registers.Mark(Flag.NC);
+    return (byte)swapped;
+}
 
-                var res = RR(reg);
-                Registers.Set(Flag.Z, res == 0);
+public Action SRL((Register, Traits) p0, int duration)
+{
+    return () =>
+    {
+        var reg = Registers.Get(p0.Item1);
+        var res = SR(reg);
+        Registers.Set(p0.Item1, res);
+    };
+}
+public Action SRL((WideRegister, Traits) p0, int duration)
+{
+    return () =>
+    {
+        var addr = Registers.Get(p0.Item1);
+        var reg = Storage.Read(addr);
 
-                Storage.Write(addr, res);
-            };
-        }
-        public Action SLA((Register, Traits) p0)
-        {
-            return () =>
-            {
-                var reg = Registers.Get(p0.Item1);
-                var res = SLA(reg);
+        var res = SR(reg);
 
-                Registers.Set(p0.Item1, res);
-            };
-        }
-        public Action SLA((WideRegister, Traits) p0)
-        {
-            return () =>
-            {
-                var addr = Registers.Get(p0.Item1);
-                var reg = Storage.Read(addr);
+        Storage.Write(addr, res);
+    };
+}
+public Action BIT((byte, Traits) p0, (Register, Traits) p1, int duration)
+{
+    return () =>
+    {
+        var reg = Registers.Get(p1.Item1);
+        BIT(p0.Item1, reg);
+    };
+}
+public Action BIT((byte, Traits) p0, (WideRegister, Traits) p1, int duration)
+{
+    return () =>
+    {
+        var addr = Registers.Get(p1.Item1);
+        var reg = Storage.Read(addr);
+        BIT(p0.Item1, reg);
+    };
+}
 
-                var res = SLA(reg);
+private void BIT(int at, byte b)
+{
+    Registers.Set(Flag.Z, !b.GetBit(at));
+    Registers.Mark(Flag.NN);
+    Registers.Mark(Flag.H);
+}
+private byte RES(int at, byte b) => b.ClearBit(at);
+private byte SET(int at, byte b) => b.SetBit(at);
 
-                Storage.Write(addr, res);
-            };
-        }
-        private byte SLA(byte reg)
-        {
-            var TopBit = reg.GetBit(7);
+public Action RES((byte, Traits) p0, (Register, Traits) p1, int duration)
+{
+    return () =>
+    {
+        var reg = Registers.Get(p1.Item1);
+        var res = RES(p0.Item1, reg);
+        Registers.Set(p1.Item1, res);
+    };
+}
+public Action RES((byte, Traits) p0, (WideRegister, Traits) p1, int duration)
+{
+    return () =>
+    {
+        var addr = Registers.Get(p1.Item1);
+        var reg = Storage.Read(addr);
 
-            Registers.Mark(Flag.NN);
-            Registers.Mark(Flag.NH);
-            Registers.Set(Flag.C, TopBit);
+        var res = RES(p0.Item1, reg);
+        Storage.Write(addr, res);
+    };
+}
+public Action SET((byte, Traits) p0, (Register, Traits) p1, int duration)
+{
+    return () =>
+    {
+        var reg = Registers.Get(p1.Item1);
+        var res = SET(p0.Item1, reg);
+        Registers.Set(p1.Item1, res);
+    };
+}
+public Action SET((byte, Traits) p0, (WideRegister, Traits) p1, int duration)
+{
+    return () =>
+    {
+        var addr = Registers.Get(p1.Item1);
+        var reg = Storage.Read(addr);
 
-            reg <<= 1;
-            Registers.Set(Flag.Z, reg == 0);
-            return reg;
-        }
-        public Action SRA((Register, Traits) p0)
-        {
-            return () =>
-            {
-                var reg = Registers.Get(p0.Item1);
-                var res = SR(reg);
-
-                Registers.Set(p0.Item1, res);
-            };
-        }
-        public Action SRA((WideRegister, Traits) p0)
-        {
-            return () =>
-            {
-                var addr = Registers.Get(p0.Item1);
-                var reg = Storage.Read(addr);
-
-                var res = SR(reg);
-
-                Storage.Write(addr, res);
-            };
-        }
-
-        private byte SR(byte reg)
-        {
-            var BottomBit = reg.GetBit(0);
-
-            Registers.Mark(Flag.NN);
-            Registers.Mark(Flag.NH);
-
-            Registers.Set(Flag.C, BottomBit);
-
-            reg = (byte)(reg >> 1 | reg & 0x80);
-            Registers.Set(Flag.Z, reg == 0);
-            return reg;
-        }
-
-        public Action SWAP((Register, Traits) p0)
-        {
-            return () =>
-            {
-                var reg = Registers.Get(p0.Item1);
-                var res = SWAP(reg);
-                Registers.Set(p0.Item1, res);
-            };
-        }
-        public Action SWAP((WideRegister, Traits) p0)
-        {
-            return () =>
-            {
-                var addr = Registers.Get(p0.Item1);
-                var reg = Storage.Read(addr);
-
-                var res = SWAP(reg);
-
-                Storage.Write(addr, res);
-            };
-        }
-
-        private byte SWAP(byte b)
-        {
-            var low = (b & 0xf) << 4;
-            var high = (b & 0xf0) >> 4;
-            var swapped = low | high;
-
-            Registers.Set(Flag.Z, swapped == 0);
-            Registers.Mark(Flag.NN);
-            Registers.Mark(Flag.NH);
-            Registers.Mark(Flag.NC);
-            return (byte)swapped;
-        }
-
-        public Action SRL((Register, Traits) p0)
-        {
-            return () =>
-            {
-                var reg = Registers.Get(p0.Item1);
-                var res = SR(reg);
-                Registers.Set(p0.Item1, res);
-            };
-        }
-        public Action SRL((WideRegister, Traits) p0)
-        {
-            return () =>
-            {
-                var addr = Registers.Get(p0.Item1);
-                var reg = Storage.Read(addr);
-
-                var res = SR(reg);
-
-                Storage.Write(addr, res);
-            };
-        }
-        public Action BIT((byte, Traits) p0, (Register, Traits) p1)
-        {
-            return () =>
-            {
-                var reg = Registers.Get(p1.Item1);
-                BIT(p0.Item1, reg);
-            };
-        }
-        public Action BIT((byte, Traits) p0, (WideRegister, Traits) p1)
-        {
-            return () =>
-            {
-                var addr = Registers.Get(p1.Item1);
-                var reg = Storage.Read(addr);
-                BIT(p0.Item1, reg);
-            };
-        }
-
-        private void BIT(int at, byte b)
-        {
-            Registers.Set(Flag.Z, !b.GetBit(at));
-            Registers.Mark(Flag.NN);
-            Registers.Mark(Flag.H);
-        }
-        private byte RES(int at, byte b) => b.ClearBit(at);
-        private byte SET(int at, byte b) => b.SetBit(at);
-
-        public Action RES((byte, Traits) p0, (Register, Traits) p1)
-        {
-            return () =>
-            {
-                var reg = Registers.Get(p1.Item1);
-                var res = RES(p0.Item1, reg);
-                Registers.Set(p1.Item1, res);
-            };
-        }
-        public Action RES((byte, Traits) p0, (WideRegister, Traits) p1)
-        {
-            return () =>
-            {
-                var addr = Registers.Get(p1.Item1);
-                var reg = Storage.Read(addr);
-
-                var res = RES(p0.Item1, reg);
-                Storage.Write(addr, res);
-            };
-        }
-        public Action SET((byte, Traits) p0, (Register, Traits) p1)
-        {
-            return () =>
-            {
-                var reg = Registers.Get(p1.Item1);
-                var res = SET(p0.Item1, reg);
-                Registers.Set(p1.Item1, res);
-            };
-        }
-        public Action SET((byte, Traits) p0, (WideRegister, Traits) p1)
-        {
-            return () =>
-            {
-                var addr = Registers.Get(p1.Item1);
-                var reg = Storage.Read(addr);
-
-                var res = SET(p0.Item1, reg);
-                Storage.Write(addr, res);
-            };
-        }
+        var res = SET(p0.Item1, reg);
+        Storage.Write(addr, res);
+    };
+}
 
 
     }
