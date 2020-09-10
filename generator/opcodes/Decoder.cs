@@ -7,10 +7,10 @@ namespace generator
     {
         public Dictionary<Unprefixed, Action> StdOps;
         public Dictionary<Cbprefixed, Action> CbOps;
-        public Decoder(Func<byte> read) : this(read, new List<byte>(), new List<byte>(), () => 0, x => { })
+        public Decoder(Func<byte> read) : this(read, new List<byte>(), new List<byte>(), () => 0, x => { }, x => { })
         { }
 
-        public Decoder(Func<byte> read, List<byte> boot, List<byte> game, Func<ushort> getPC, Action<ushort> setPC)
+        public Decoder(Func<byte> read, List<byte> boot, List<byte> game, Func<ushort> getPC, Action<ushort> setPC, Action<int> TickClock)
         {
             StdOps = MakeTable();
             CbOps = MakeTableCb();
@@ -21,7 +21,7 @@ namespace generator
 
             enableInterrupts = () => { };
             disableInterrupts = () => { };
-            Tick = (x) => { };
+            Tick = TickClock;
         }
 
         private Dictionary<Unprefixed, Action> MakeTable()

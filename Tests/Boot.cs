@@ -17,14 +17,18 @@ namespace Tests
         Action<ushort> SetProgramCounter;
         Func<byte> Read;
 
+        public int Clock;
+        public Action<int> IncrementClock;
+
         Decoder dec;
 
         public Boot()
         {
             GetProgramCounter = () => PC;
             SetProgramCounter = (x) => { PC = x; };
+            IncrementClock = x => { Clock = x; };
             Read = () => dec.Storage[PC++];
-            dec = new Decoder(Read, LoadBootROM().ToList(), LoadGameROM().ToList(), GetProgramCounter, SetProgramCounter);
+            dec = new Decoder(Read, LoadBootROM().ToList(), LoadGameROM().ToList(), GetProgramCounter, SetProgramCounter, IncrementClock);
         }
         public static byte[] LoadBootROM()
         {
@@ -62,7 +66,7 @@ namespace Tests
         public void Init()
         {
             PC = 0;
-            dec = new Decoder(Read, LoadBootROM().ToList(),LoadGameROM().ToList(), GetProgramCounter, SetProgramCounter);
+            dec = new Decoder(Read, LoadBootROM().ToList(), LoadGameROM().ToList(), GetProgramCounter, SetProgramCounter, IncrementClock);
         }
 
         [Test]

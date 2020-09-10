@@ -27,7 +27,7 @@ namespace generator
         }
         public Action NOP(int duration)
         {
-            return () => { };
+            return () => { Tick(duration); };
         }
         public Action LD((WideRegister, Traits) p0, (DMGInteger, Traits) p1, int duration)
         {
@@ -43,6 +43,7 @@ namespace generator
                 {
                     Registers.Set(p0.Item1, (ushort)arg);
                 }
+                Tick(duration);
             };
         }
         public Action LD((WideRegister, Traits) p0, (Register, Traits) p1, int duration)
@@ -65,6 +66,7 @@ namespace generator
                         Registers.Set(p0.Item1, (ushort)(address - 1));
                         break;
                 }
+                Tick(duration);
             };
         }
         public Action INC((WideRegister, Traits) p0, int duration)
@@ -84,6 +86,7 @@ namespace generator
                 Registers.Mark(Flag.NN);
                 Registers.Set(Flag.H, before.IsHalfCarryAdd(1));
             }
+            Tick(duration);
         };
 
         public Action INC((Register, Traits) p0, int duration)
@@ -96,6 +99,7 @@ namespace generator
             Registers.Set(Flag.Z, arg == 0);
             Registers.Mark(Flag.NN);
             Registers.Set(Flag.H, before.IsHalfCarryAdd(1));
+            Tick(duration);
         };
         public Action DEC((Register, Traits) p0, int duration)
         => () =>
@@ -107,12 +111,14 @@ namespace generator
             Registers.Set(Flag.Z, arg == 0);
             Registers.Mark(Flag.N);
             Registers.Set(Flag.H, before.IsHalfCarrySub(1));
+            Tick(duration);
         };
         public Action LD((Register, Traits) p0, (DMGInteger, Traits) p1, int duration)
             => () =>
             {
                 var arg = Storage.Fetch(p1.Item1);
                 Registers.Set(p0.Item1, (byte)arg);
+                Tick(duration);
             };
         public Action RLCA(int duration)
 
@@ -122,6 +128,7 @@ namespace generator
                 Registers.Mark(Flag.NZ);
                 var res = RLC(A);
                 Registers.A = (res);
+                Tick(duration);
             };
 
         private byte RLC(byte reg)
@@ -146,6 +153,7 @@ namespace generator
                 var arg = Registers.Get(p1.Item1);
 
                 Storage.Write(addr, arg);
+                Tick(duration);
             };
 
         public Action ADD((WideRegister, Traits) p0, (WideRegister, Traits) p1, int duration)
@@ -162,6 +170,7 @@ namespace generator
                 Registers.Set(Flag.N, false);
                 Registers.Set(Flag.H, target.IsHalfCarryAdd(arg));
                 Registers.Set(Flag.C, target + arg > 0xFFFF);
+                Tick(duration);
             };
         }
         public Action LD((Register, Traits) p0, (WideRegister, Traits) p1, int duration)
@@ -183,6 +192,7 @@ namespace generator
                     default:
                         break;
                 }
+                Tick(duration);
             };
         }
         public Action DEC((WideRegister, Traits) p0, int duration)
@@ -202,6 +212,7 @@ namespace generator
                 Registers.Mark(Flag.NN);
                 Registers.Set(Flag.H, before.IsHalfCarryAdd(1));
             }
+            Tick(duration);
         };
         public Action RRCA(int duration)
             => () =>
@@ -210,6 +221,7 @@ namespace generator
                 Registers.Mark(Flag.NZ);
                 A = RRC(A);
                 Registers.A = (A);
+                Tick(duration);
             };
 
         private byte RRC(byte reg)
@@ -236,6 +248,7 @@ namespace generator
                 Registers.Mark(Flag.NZ);
                 A = RL(A);
                 Registers.A = (A);
+                Tick(duration);
             };
 
         private byte RL(byte A)
@@ -267,6 +280,7 @@ namespace generator
                 Registers.Mark(Flag.NZ);
                 A = RR(A);
                 Registers.A = (A);
+                Tick(duration);
             };
 
         private byte RR(byte A)
@@ -323,6 +337,7 @@ namespace generator
                 Registers.Set(Flag.C, A > 0x99);
 
                 Registers.A = ((byte)A);
+                Tick(duration);
             };
         }
         public Action CPL(int duration)
@@ -332,6 +347,7 @@ namespace generator
               Registers.A = ((byte)~Registers.A);
               Registers.Mark(Flag.N);
               Registers.Mark(Flag.H);
+              Tick(duration);
           };
         }
 
@@ -342,6 +358,7 @@ namespace generator
                 Registers.Mark(Flag.NN);
                 Registers.Mark(Flag.NH);
                 Registers.Mark(Flag.C);
+                Tick(duration);
             };
         }
 
@@ -352,6 +369,7 @@ namespace generator
                 Registers.Mark(Flag.NN);
                 Registers.Mark(Flag.NH);
                 Registers.Set(Flag.C, !Registers.Get(Flag.C));
+                Tick(duration);
             };
         }
         public Action LD((Register, Traits) p0, (Register, Traits) p1, int duration)
@@ -361,20 +379,31 @@ namespace generator
                 {
                     var arg = Registers.Get(p1.Item1);
                     Registers.Set(p0.Item1, arg);
+                    Tick(duration);
                 };
             else
             {
                 if (p0.Item2.Immediate)
                     return () =>
+                    {
                         Registers.Set(p0.Item1, Storage.Read((ushort)(0xFF00 + Registers.Get(p1.Item1))));
+                        Tick(duration);
+                    };
                 else
                     return () =>
+                    {
                         Storage.Write((ushort)(0xFF00 + Registers.Get(p0.Item1)), Registers.Get(p1.Item1));
-            };
+                        Tick(duration);
+                    };
+            }
         }
         public Action HALT(int duration)
         {
-            return () => { throw new Exception("Not implemented"); };
+            return () =>
+            {
+                Tick(duration);
+                throw new Exception("Not implemented");
+            };
         }
         public Action ADD((Register, Traits) p0, (Register, Traits) p1, int duration)
         {
@@ -385,6 +414,7 @@ namespace generator
                 var rhs = Registers.Get(p1.Item1);
 
                 Registers.Set(p0.Item1, ADD(lhs, rhs));
+                Tick(duration);
             };
         }
         public Action ADD((Register, Traits) p0, (WideRegister, Traits) p1, int duration)
@@ -396,6 +426,7 @@ namespace generator
                 var rhs = Storage.Read(Registers.Get(p1.Item1));
 
                 Registers.Set(p0.Item1, ADD(lhs, rhs));
+                Tick(duration);
             };
         }
 
@@ -420,6 +451,7 @@ namespace generator
                 var rhs = Registers.Get(p1.Item1);
 
                 Registers.Set(p0.Item1, ADC(lhs, rhs));
+                Tick(duration);
             };
         }
         public Action ADC((Register, Traits) p0, (WideRegister, Traits) p1, int duration)
@@ -430,6 +462,7 @@ namespace generator
                 var rhs = Storage.Read(Registers.Get(p1.Item1));
 
                 Registers.Set(p0.Item1, ADC(lhs, rhs));
+                Tick(duration);
             };
         }
 
@@ -454,6 +487,7 @@ namespace generator
                 var rhs = Registers.Get(p0.Item1);
 
                 Registers.A = (SUB(lhs, rhs));
+                Tick(duration);
             };
         }
         public Action SUB((WideRegister, Traits) p0, int duration)
@@ -465,6 +499,7 @@ namespace generator
                 var rhs = Storage.Read(Registers.Get(p0.Item1));
 
                 Registers.A = (SUB(lhs, rhs));
+                Tick(duration);
             };
         }
 
@@ -487,6 +522,7 @@ namespace generator
                 var rhs = Registers.Get(p1.Item1);
 
                 Registers.Set(p0.Item1, SBC(lhs, rhs));
+                Tick(duration);
             };
         }
         public Action SBC((Register, Traits) p0, (WideRegister, Traits) p1, int duration)
@@ -497,6 +533,7 @@ namespace generator
                 var rhs = Storage.Read(Registers.Get(p1.Item1));
 
                 Registers.Set(p0.Item1, SBC(lhs, rhs));
+                Tick(duration);
             };
         }
 
@@ -518,19 +555,18 @@ namespace generator
                 var rhs = Registers.Get(p0.Item1);
 
                 AND(lhs, rhs);
+                Tick(duration);
             };
         }
         public Action AND((WideRegister, Traits) p0, int duration)
         {
             return () =>
             {
+                var lhs = Registers.A;
+                var rhs = Storage.Read(Registers.Get(p0.Item1));
 
-                {
-                    var lhs = Registers.A;
-                    var rhs = Storage.Read(Registers.Get(p0.Item1));
-
-                    AND(lhs, rhs);
-                };
+                AND(lhs, rhs);
+                Tick(duration);
             };
         }
         private void AND(byte lhs, byte rhs)
@@ -552,19 +588,18 @@ namespace generator
                 var rhs = Registers.Get(p0.Item1);
 
                 XOR(lhs, rhs);
+                Tick(duration);
             };
         }
         public Action XOR((WideRegister, Traits) p0, int duration)
         {
             return () =>
             {
-
-
                 var lhs = Registers.A;
                 var rhs = Storage.Read(Registers.Get(p0.Item1));
 
                 XOR(lhs, rhs);
-
+                Tick(duration);
             };
         }
 
@@ -582,12 +617,10 @@ namespace generator
         {
             return () =>
             {
-
-
                 var lhs = Registers.A;
                 var rhs = Registers.Get(p0.Item1);
                 OR(lhs, rhs);
-
+                Tick(duration);
             };
         }
         public Action OR((WideRegister, Traits) p0, int duration)
@@ -597,6 +630,7 @@ namespace generator
                 var lhs = Registers.A;
                 var rhs = Storage.Read(Registers.Get(p0.Item1));
                 OR(lhs, rhs);
+                Tick(duration);
             };
         }
 
@@ -618,6 +652,7 @@ namespace generator
                     var lhs = Registers.A;
                     var rhs = Registers.Get(p0.Item1);
                     CP(lhs, rhs);
+                    Tick(duration);
                 };
         }
         public Action CP((WideRegister, Traits) p0, int duration)
@@ -627,6 +662,7 @@ namespace generator
                 var lhs = Registers.A;
                 var rhs = Storage.Read(Registers.Get(p0.Item1));
                 CP(lhs, rhs);
+                Tick(duration);
             };
         }
         public Action RET((Flag, Traits) p0, int duration, int alternativeDuration)
@@ -649,6 +685,7 @@ namespace generator
                 Registers.Set(p0.Item1, Storage.ReadWide(SP));
                 SP += 2;
                 Registers.SP = (SP);
+                Tick(duration);
             };
         }
         public Action JP((Flag, Traits) p0, (DMGInteger, Traits) p1, int duration, int alternativeDuration)
@@ -670,6 +707,7 @@ namespace generator
             {
                 var addr = (ushort)Storage.Fetch(p0.Item1);
                 SetPC(addr);
+                Tick(duration);
             };
         }
         public Action CALL((Flag, Traits) p0, (DMGInteger, Traits) p1, int duration, int alternativeDuration)
@@ -691,6 +729,7 @@ namespace generator
             return () =>
             {
                 Push(Registers.Get(p0.Item1));
+                Tick(duration);
             };
         }
         public Action ADD((Register, Traits) p0, (DMGInteger, Traits) p1, int duration)
@@ -708,23 +747,33 @@ namespace generator
                 Registers.Set(Flag.H, lhs.IsHalfCarryAdd(rhs));
 
                 Registers.Set(p0.Item1, (byte)sum);
+                Tick(duration);
             };
         }
         public Action RST((byte, Traits) p0, int duration)
         {
-            return () => { SetPC(p0.Item1); };
+            return () =>
+            {
+                SetPC(p0.Item1);
+                Tick(duration);
+            };
         }
         public Action RET(int duration)
         {
             return () =>
             {
                 SetPC(Pop());
+                Tick(duration);
             };
         }
         //Not an actual instruction
         public Action PREFIX(int duration)
         {
-            return () => { throw new Exception("unimplementable"); };
+            return () =>
+            {
+                Tick(duration);
+                throw new Exception("unimplementable");
+            };
         }
         public Action CALL((DMGInteger, Traits) p0, int duration)
         {
@@ -733,6 +782,7 @@ namespace generator
                 Push(GetPC());
                 var addr = (ushort)Storage.Fetch(DMGInteger.d16);
                 SetPC(addr);
+                Tick(duration);
             };
         }
         public Action ADC((Register, Traits) p0, (DMGInteger, Traits) p1, int duration)
@@ -750,11 +800,16 @@ namespace generator
                 Registers.Set(Flag.C, sum > 0xff);
 
                 Registers.Set(p0.Item1, (byte)sum);
+                Tick(duration);
             };
         }
         public Action ILLEGAL_D3(int duration)
         {
-            return () => { throw new Exception("illegal"); };
+            return () =>
+            {
+                Tick(duration);
+                throw new Exception("illegal");
+            };
         }
         public Action SUB((DMGInteger, Traits) p0, int duration)
         {
@@ -771,6 +826,7 @@ namespace generator
                 Registers.Set(Flag.H, lhs.IsHalfCarrySub(rhs));
 
                 Registers.A = ((byte)sum);
+                Tick(duration);
             };
         }
         public Action RETI(int duration)
@@ -779,15 +835,24 @@ namespace generator
             {
                 SetPC(Pop());
                 enableInterrupts();
+                Tick(duration);
             };
         }
         public Action ILLEGAL_DB(int duration)
         {
-            return () => { throw new Exception("illegal"); };
+            return () =>
+            {
+                Tick(duration);
+                throw new Exception("illegal");
+            };
         }
         public Action ILLEGAL_DD(int duration)
         {
-            return () => { throw new Exception("illegal"); };
+            return () =>
+            {
+                Tick(duration);
+                throw new Exception("illegal");
+            };
         }
         public Action SBC((Register, Traits) p0, (DMGInteger, Traits) p1, int duration)
         {
@@ -804,6 +869,7 @@ namespace generator
                 Registers.Set(Flag.C, lhs < rhs);
 
                 Registers.Set(p0.Item1, ((byte)sum));
+                Tick(duration);
             };
         }
         public Action LDH((DMGInteger, Traits) p0, (Register, Traits) p1, int duration)
@@ -811,21 +877,31 @@ namespace generator
             return () =>
             {
                 Storage.Write(p0.Item1, Registers.Get(p1.Item1));
+                Tick(duration);
             };
         }
         public Action ILLEGAL_E3(int duration)
         {
-            return () => { throw new Exception("illegal"); };
+            return () =>
+            {
+                Tick(duration);
+                throw new Exception("illegal");
+            };
         }
         public Action ILLEGAL_E4(int duration)
         {
-            return () => { throw new Exception("illegal"); };
+            return () =>
+            {
+                Tick(duration);
+                throw new Exception("illegal");
+            };
         }
         public Action AND((DMGInteger, Traits) p0, int duration)
         {
             return () =>
             {
                 Registers.A = ((byte)(Registers.A & (byte)Storage.Fetch(p0.Item1)));
+                Tick(duration);
             };
         }
         public Action ADD((WideRegister, Traits) p0, (DMGInteger, Traits) p1, int duration)
@@ -833,6 +909,7 @@ namespace generator
             return () =>
             {
                 Registers.Set(p0.Item1, (ushort)(Registers.Get(p0.Item1) + (sbyte)Storage.Fetch(p1.Item1)));
+                Tick(duration);
             };
         }
         public Action JP((WideRegister, Traits) p0, int duration)
@@ -841,48 +918,79 @@ namespace generator
             {
                 var addr = Registers.Get(p0.Item1);
                 SetPC(addr);
+                Tick(duration);
             };
         }
         public Action LD((DMGInteger, Traits) p0, (Register, Traits) p1, int duration)
         {
-            return () => { Storage.Write(p0.Item1, Registers.Get(p1.Item1)); };
+            return () =>
+            {
+                Storage.Write(p0.Item1, Registers.Get(p1.Item1));
+                Tick(duration);
+            };
         }
         public Action ILLEGAL_EB(int duration)
         {
-            return () => { throw new Exception("illegal"); };
+            return () =>
+            {
+                Tick(duration);
+                throw new Exception("illegal");
+            };
         }
         public Action ILLEGAL_EC(int duration)
         {
-            return () => { throw new Exception("illegal"); };
+            return () =>
+            {
+                Tick(duration);
+                throw new Exception("illegal");
+            };
         }
         public Action ILLEGAL_ED(int duration)
         {
-            return () => { throw new Exception("illegal"); };
+            return () =>
+            {
+                Tick(duration);
+                throw new Exception("illegal");
+            };
         }
         public Action XOR((DMGInteger, Traits) p0, int duration)
         {
             return () =>
             {
                 Registers.A = ((byte)(Registers.A ^ (byte)Storage.Fetch(p0.Item1)));
+                Tick(duration);
             };
         }
         public Action LDH((Register, Traits) p0, (DMGInteger, Traits) p1, int duration)
         {
-            return () => { Registers.Set(p0.Item1, (byte)Storage.Fetch(p1.Item1)); };
+            return () =>
+            {
+                Registers.Set(p0.Item1, (byte)Storage.Fetch(p1.Item1));
+                Tick(duration);
+            };
         }
         public Action DI(int duration)
         {
-            return () => { disableInterrupts(); };
+            return () =>
+            {
+                disableInterrupts();
+                Tick(duration);
+            };
         }
         public Action ILLEGAL_F4(int duration)
         {
-            return () => { throw new Exception("illegal"); };
+            return () =>
+            {
+                Tick(duration);
+                throw new Exception("illegal");
+            };
         }
         public Action OR((DMGInteger, Traits) p0, int duration)
         {
             return () =>
             {
                 Registers.A = ((byte)(Registers.A | (byte)Storage.Fetch(p0.Item1)));
+                Tick(duration);
             };
         }
         public Action LD((WideRegister, Traits) p0, (WideRegister, Traits) p1, int duration)
@@ -893,6 +1001,7 @@ namespace generator
                 {
                     Registers.Set(p0.Item1, Registers.Get(p1.Item1));
                     Registers.Set(p1.Item1, (ushort)(Registers.Get(p1.Item1) + 1));
+                    Tick(duration);
                 };
             }
             else
@@ -900,21 +1009,34 @@ namespace generator
                 return () =>
                 {
                     Registers.Set(p0.Item1, Registers.Get(p1.Item1));
+                    Tick(duration);
                 };
             }
 
         }
         public Action EI(int duration)
         {
-            return () => { enableInterrupts(); };
+            return () =>
+            {
+                enableInterrupts();
+                Tick(duration);
+            };
         }
         public Action ILLEGAL_FC(int duration)
         {
-            return () => { throw new Exception("illegal"); };
+            return () =>
+            {
+                Tick(duration);
+                throw new Exception("illegal");
+            };
         }
         public Action ILLEGAL_FD(int duration)
         {
-            return () => { throw new Exception("illegal"); };
+            return () =>
+            {
+                Tick(duration);
+                throw new Exception("illegal");
+            };
         }
         public Action CP((DMGInteger, Traits) p0, int duration)
         {
@@ -923,6 +1045,7 @@ namespace generator
                 var lhs = Registers.A;
                 var rhs = (byte)Storage.Fetch(p0.Item1);
                 CP(lhs, rhs);
+                Tick(duration);
             };
         }
         private void CP(byte lhs, byte rhs)
@@ -945,6 +1068,7 @@ namespace generator
                 Registers.Set(Flag.Z, res == 0);
 
                 Registers.Set(p0.Item1, res);
+                Tick(duration);
             };
         }
         public Action RLC((WideRegister, Traits) p0, int duration)
@@ -958,6 +1082,7 @@ namespace generator
                 Registers.Set(Flag.Z, res == 0);
 
                 Storage.Write(addr, res);
+                Tick(duration);
             };
         }
         public Action RRC((Register, Traits) p0, int duration)
@@ -970,6 +1095,7 @@ namespace generator
                 Registers.Set(Flag.Z, res == 0);
 
                 Registers.Set(p0.Item1, res);
+                Tick(duration);
             };
         }
         public Action RRC((WideRegister, Traits) p0, int duration)
@@ -983,6 +1109,7 @@ namespace generator
                 Registers.Set(Flag.Z, res == 0);
 
                 Storage.Write(addr, res);
+                Tick(duration);
             };
         }
         public Action RL((Register, Traits) p0, int duration)
@@ -995,6 +1122,7 @@ namespace generator
                 Registers.Set(Flag.Z, res == 0);
 
                 Registers.Set(p0.Item1, res);
+                Tick(duration);
             };
         }
         public Action RL((WideRegister, Traits) p0, int duration)
@@ -1008,6 +1136,7 @@ namespace generator
                 Registers.Set(Flag.Z, res == 0);
 
                 Storage.Write(addr, res);
+                Tick(duration);
             };
         }
         public Action RR((Register, Traits) p0, int duration)
@@ -1020,6 +1149,7 @@ namespace generator
                 Registers.Set(Flag.Z, res == 0);
 
                 Registers.Set(p0.Item1, res);
+                Tick(duration);
             };
         }
         public Action RR((WideRegister, Traits) p0, int duration)
@@ -1033,6 +1163,7 @@ namespace generator
                 Registers.Set(Flag.Z, res == 0);
 
                 Storage.Write(addr, res);
+                Tick(duration);
             };
         }
         public Action SLA((Register, Traits) p0, int duration)
@@ -1043,6 +1174,7 @@ namespace generator
                 var res = SLA(reg);
 
                 Registers.Set(p0.Item1, res);
+                Tick(duration);
             };
         }
         public Action SLA((WideRegister, Traits) p0, int duration)
@@ -1055,6 +1187,7 @@ namespace generator
                 var res = SLA(reg);
 
                 Storage.Write(addr, res);
+                Tick(duration);
             };
         }
         private byte SLA(byte reg)
@@ -1077,6 +1210,7 @@ namespace generator
                 var res = SR(reg);
 
                 Registers.Set(p0.Item1, res);
+                Tick(duration);
             };
         }
         public Action SRA((WideRegister, Traits) p0, int duration)
@@ -1089,6 +1223,7 @@ namespace generator
                 var res = SR(reg);
 
                 Storage.Write(addr, res);
+                Tick(duration);
             };
         }
 
@@ -1113,6 +1248,7 @@ namespace generator
                 var reg = Registers.Get(p0.Item1);
                 var res = SWAP(reg);
                 Registers.Set(p0.Item1, res);
+                Tick(duration);
             };
         }
         public Action SWAP((WideRegister, Traits) p0, int duration)
@@ -1125,6 +1261,7 @@ namespace generator
                 var res = SWAP(reg);
 
                 Storage.Write(addr, res);
+                Tick(duration);
             };
         }
 
@@ -1148,6 +1285,7 @@ namespace generator
                 var reg = Registers.Get(p0.Item1);
                 var res = SR(reg);
                 Registers.Set(p0.Item1, res);
+                Tick(duration);
             };
         }
         public Action SRL((WideRegister, Traits) p0, int duration)
@@ -1160,6 +1298,7 @@ namespace generator
                 var res = SR(reg);
 
                 Storage.Write(addr, res);
+                Tick(duration);
             };
         }
         public Action BIT((byte, Traits) p0, (Register, Traits) p1, int duration)
@@ -1168,6 +1307,7 @@ namespace generator
             {
                 var reg = Registers.Get(p1.Item1);
                 BIT(p0.Item1, reg);
+                Tick(duration);
             };
         }
         public Action BIT((byte, Traits) p0, (WideRegister, Traits) p1, int duration)
@@ -1177,6 +1317,7 @@ namespace generator
                 var addr = Registers.Get(p1.Item1);
                 var reg = Storage.Read(addr);
                 BIT(p0.Item1, reg);
+                Tick(duration);
             };
         }
 
@@ -1196,6 +1337,7 @@ namespace generator
                 var reg = Registers.Get(p1.Item1);
                 var res = RES(p0.Item1, reg);
                 Registers.Set(p1.Item1, res);
+                Tick(duration);
             };
         }
         public Action RES((byte, Traits) p0, (WideRegister, Traits) p1, int duration)
@@ -1207,6 +1349,7 @@ namespace generator
 
                 var res = RES(p0.Item1, reg);
                 Storage.Write(addr, res);
+                Tick(duration);
             };
         }
         public Action SET((byte, Traits) p0, (Register, Traits) p1, int duration)
@@ -1216,6 +1359,7 @@ namespace generator
                 var reg = Registers.Get(p1.Item1);
                 var res = SET(p0.Item1, reg);
                 Registers.Set(p1.Item1, res);
+                Tick(duration);
             };
         }
         public Action SET((byte, Traits) p0, (WideRegister, Traits) p1, int duration)
@@ -1227,9 +1371,8 @@ namespace generator
 
                 var res = SET(p0.Item1, reg);
                 Storage.Write(addr, res);
+                Tick(duration);
             };
         }
-
-
     }
 }

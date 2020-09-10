@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 
 using generator;
 
@@ -8,10 +9,14 @@ namespace Tests
 {
     public class BootBase
     {
-        //public byte[] program;
         public ushort PC;
+
         public Func<ushort> GetProgramCounter;
         public Action<ushort> SetProgramCounter;
+
+        public int Clock;
+        public Action<int> IncrementClock;
+
         public Func<byte> Read;
 
         public Decoder dec;
@@ -23,8 +28,9 @@ namespace Tests
         {
             GetProgramCounter = () => PC;
             SetProgramCounter = (x) => { PC = x; };
+            IncrementClock = (x) => { Clock += x; };
             Read = () => dec.Storage[PC++];
-            dec = new Decoder(Read, new List<byte>(), ROM, GetProgramCounter, SetProgramCounter);
+            dec = new Decoder(Read, new List<byte>(), ROM, GetProgramCounter, SetProgramCounter,IncrementClock);
             //program = dec.Storage.mem;
         }
         public void DoNextOP()
