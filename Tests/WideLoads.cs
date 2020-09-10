@@ -75,6 +75,7 @@ namespace Tests
             p.DoNextOP();
             Assert.AreEqual(3, p.PC);
             Assert.AreEqual(0x4512, p.dec.Registers.SP);
+            Assert.AreEqual(12, p.Clock);
         }
 
         [Test]

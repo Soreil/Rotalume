@@ -291,6 +291,7 @@ namespace generator
             m[Cbprefixed.RLC_D] = RLC((Register.D, new Traits(true, Postfix.unchanged)), 8);
             m[Cbprefixed.RLC_E] = RLC((Register.E, new Traits(true, Postfix.unchanged)), 8);
             m[Cbprefixed.RLC_C] = RLC((Register.C, new Traits(true, Postfix.unchanged)), 8);
+            m[Cbprefixed.RLC_B] = RLC((Register.B, new Traits(true, Postfix.unchanged)), 8);
             m[Cbprefixed.RLC_H] = RLC((Register.H, new Traits(true, Postfix.unchanged)), 8);
             m[Cbprefixed.RLC_L] = RLC((Register.L, new Traits(true, Postfix.unchanged)), 8);
             m[Cbprefixed.RLC_AT_HL] = RLC((WideRegister.HL, new Traits(false, Postfix.unchanged)), 16);

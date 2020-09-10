@@ -16,6 +16,7 @@ namespace Tests
             });
             p.DoNextOP();
             Assert.AreEqual(1, p.PC);
+            Assert.AreEqual(4, p.Clock);
         }
 
         [Test]
@@ -27,6 +28,7 @@ namespace Tests
 
             p.DoNextOP();
             Assert.AreEqual(7, p.PC);
+            Assert.AreEqual(12, p.Clock);
 
             p = new BootBase(new List<byte>
             { (byte)Unprefixed.JR_NZ_r8, 0x05}
@@ -35,6 +37,7 @@ namespace Tests
 
             p.DoNextOP();
             Assert.AreEqual(2, p.PC);
+            Assert.AreEqual(8, p.Clock);
         }
     }
 }

@@ -59,7 +59,7 @@ namespace generator
             {
                 DMGInteger.d16 => ReadInputWide(),
                 DMGInteger.d8 => ReadInput(),
-                DMGInteger.a16 => this[ReadInputWide()],
+                DMGInteger.a16 => ReadInputWide(),
                 DMGInteger.a8 => this[0xFF00 + ReadInput()],
                 DMGInteger.r8 => (sbyte)ReadInput(),
                 _ => throw new Exception("Expected a valid DMGInteger"),

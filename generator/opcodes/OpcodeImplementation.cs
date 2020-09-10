@@ -116,9 +116,19 @@ namespace generator
         public Action LD((Register, Traits) p0, (DMGInteger, Traits) p1, int duration)
             => () =>
             {
-                var arg = Storage.Fetch(p1.Item1);
-                Registers.Set(p0.Item1, (byte)arg);
-                Tick(duration);
+
+                if (p1.Item1 == DMGInteger.a16 && !p1.Item2.Immediate)
+                {
+                    var addr = (ushort)Storage.Fetch(p1.Item1);
+                    var arg = Storage.Read(addr);
+                    Registers.Set(p0.Item1, arg);
+                    Tick(duration);
+                } else
+                {
+                    var arg = (byte)Storage.Fetch(p1.Item1);
+                    Registers.Set(p0.Item1, arg);
+                    Tick(duration);
+                }
             };
         public Action RLCA(int duration)
 
@@ -239,7 +249,11 @@ namespace generator
 
         public Action STOP(int duration)
         {
-            return () => { throw new Exception("Yea we ain't stopping clean partner"); };
+            return () =>
+            {
+                Tick(duration);
+                throw new Exception("Yea we ain't stopping clean partner");
+            };
         }
         public Action RLA(int duration)
             => () =>
@@ -271,6 +285,7 @@ namespace generator
             {
                 var offset = (sbyte)Storage.Fetch(p0.Item1);
                 SetPC((ushort)(GetPC() + offset));
+                Tick(duration);
             };
         }
         public Action RRA(int duration)

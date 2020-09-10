@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -26,7 +25,7 @@ namespace Tests
         {
             GetProgramCounter = () => PC;
             SetProgramCounter = (x) => { PC = x; };
-            IncrementClock = x => { Clock = x; };
+            IncrementClock = x => { Clock += x; };
             Read = () => dec.Storage[PC++];
             dec = new Decoder(Read, LoadBootROM().ToList(), LoadGameROM().ToList(), GetProgramCounter, SetProgramCounter, IncrementClock);
         }
