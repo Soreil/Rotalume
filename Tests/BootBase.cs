@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+
 using generator;
 
 namespace Tests
@@ -11,6 +12,29 @@ namespace Tests
         public Func<ushort> GetProgramCounter;
         public Action<ushort> SetProgramCounter;
 
+        bool bootROMActive = true;
+        ControlRegister BootROMFlagController;
+
+        byte LCDControl;
+        ControlRegister LCDControlController;
+
+        byte ScrollY;
+        ControlRegister ScrollYController;
+
+        byte ScrollX;
+        ControlRegister ScrollXController;
+
+        byte LCDLine;
+        ControlRegister LCDLineController;
+
+        byte SoundON;
+        ControlRegister SoundController;
+
+        byte Palette;
+        ControlRegister PaletteController;
+
+        ControlRegister Unimplemented;
+
         public int Clock;
         public Action<int> IncrementClock;
 
@@ -18,17 +42,55 @@ namespace Tests
 
         public Decoder dec;
 
-        public BootBase() : this(LoadBootROM())
+        public BootBase(List<byte> l) : this(new List<byte>(),l)
+        {
+            bootROMActive = false;
+        }
+        public BootBase() : this(LoadBootROM(), new List<byte>())
         {
         }
-        public BootBase(List<byte> ROM)
+        public BootBase(List<byte> bootROM, List<byte> gameROM)
         {
+            BootROMFlagController = () =>
+            {
+                if (dec.Storage.Read(0xff50) == 1)
+                {
+                    dec.Storage.Handlers[0x50] -= BootROMFlagController;
+                    bootROMActive = false;
+                }
+            };
+
+            LCDControlController = () => LCDControl = dec.Storage.Read(0xFF40);
+
+            ScrollYController = () => ScrollY = dec.Storage.Read(0xFF42);
+            ScrollXController = () => ScrollX = dec.Storage.Read(0xFF43);
+            LCDLineController = () => LCDLine = dec.Storage.Read(0xFF44);
+
+            PaletteController = () => Palette = dec.Storage.Read(0xff47);
+
+            SoundController = () => SoundON = dec.Storage.Read(0xFF26);
+
+            Unimplemented = () => { };
+
             GetProgramCounter = () => PC;
             SetProgramCounter = (x) => { PC = x; };
             IncrementClock = (x) => { Clock += x; };
             Read = () => dec.Storage[PC++];
-            dec = new Decoder(Read, new List<byte>(), ROM, GetProgramCounter, SetProgramCounter,IncrementClock);
-            //program = dec.Storage.mem;
+            var decoder = new Decoder(Read, bootROM, gameROM, GetProgramCounter, SetProgramCounter, IncrementClock, () => bootROMActive);
+
+            decoder.Storage.Handlers[0x50] += BootROMFlagController;
+
+            decoder.Storage.Handlers[0x40] += LCDControlController;
+            decoder.Storage.Handlers[0x42] += ScrollYController;
+            decoder.Storage.Handlers[0x43] += ScrollXController;
+            decoder.Storage.Handlers[0x44] += LCDLineController;
+            decoder.Storage.Handlers[0x47] += PaletteController;
+
+            decoder.Storage.Handlers[0x26] += SoundController;
+
+            for (int i = 0x10; i < 0x26; i++) decoder.Storage.Handlers[i] = Unimplemented;
+
+            dec = decoder;
         }
         public void DoNextOP()
         {
