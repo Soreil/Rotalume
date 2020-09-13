@@ -7,15 +7,15 @@ namespace generator
     {
         public Dictionary<Unprefixed, Action> StdOps;
         public Dictionary<Cbprefixed, Action> CbOps;
-        public Decoder(Func<byte> read) : this(read, new List<byte>(), new List<byte>(), () => 0, x => { }, x => { })
+        public Decoder(Func<byte> read) : this(read, new List<byte>(), new List<byte>(), () => 0, x => { }, x => { }, () => false)
         { }
 
-        public Decoder(Func<byte> read, List<byte> boot, List<byte> game, Func<ushort> getPC, Action<ushort> setPC, Action<int> TickClock)
+        public Decoder(Func<byte> read, List<byte> boot, List<byte> game, Func<ushort> getPC, Action<ushort> setPC, Action<int> TickClock, Func<bool> bootROMActive)
         {
             StdOps = MakeTable();
             CbOps = MakeTableCb();
             Registers = new Registers();
-            Storage = new Storage(read, boot, game);
+            Storage = new Storage(read, boot, game, bootROMActive);
             SetPC = setPC;
             GetPC = getPC;
 
