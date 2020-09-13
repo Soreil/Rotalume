@@ -3,10 +3,18 @@ using System.Collections.Generic;
 
 namespace generator
 {
+    public delegate void ControlRegister();
+
     public record Storage
     {
+        public ControlRegister[] Handlers = new ControlRegister[0x80];
         private readonly byte[] _mem;
-        private bool bootROMActive;
+
+        private readonly Func<bool> _bootROMActive;
+        private bool bootROMActive
+        {
+            get => _bootROMActive();
+        }
 
         public byte this[int at]
         {
@@ -27,13 +35,16 @@ namespace generator
                 {
                     if (at < 0x100)
                         bootROM[at] = value;
-                    else if (at == 0xff50 && value == 1) //We need a way to load checks like
-                        //this to the set method or some other way to inform other parts of
-                        //the system that a memory write was relevant for them.
-                        bootROMActive = false;
                     else _mem[at] = value;
                 }
                 else _mem[at] = value;
+
+                //TODO: turn the bootrom active flag in to a handler.
+                //We have to pull the flag out of the storage system and remove
+                //the handler after we have have triggered it once with a 1 at
+                //0xff50. Removing the handler from inside the handler might not
+                //work so we might need a disable flag in the handler instead.
+                if (at >= 0xff00 && at < 0xff80) Handlers[at & 0xFF]?.Invoke();
             }
         }
         private readonly List<byte> bootROM;
@@ -41,7 +52,7 @@ namespace generator
         private readonly Func<byte> ReadInput;
         private readonly Func<ushort> ReadInputWide;
 
-        public Storage(Func<byte> readInput, List<byte> boot, List<byte> game)
+        public Storage(Func<byte> readInput, List<byte> boot, List<byte> game, Func<bool> bootROMActive)
         {
             ReadInput = readInput;
             ReadInputWide = () => BitConverter.ToUInt16(new byte[] { ReadInput(), ReadInput() });
@@ -49,9 +60,8 @@ namespace generator
             _mem = new byte[0x10000];
             game.CopyTo(_mem);
 
-            bootROMActive = boot.Count != 0;
+            _bootROMActive = bootROMActive;
             bootROM = boot;
-
         }
         internal object Fetch(DMGInteger arg)
         {
