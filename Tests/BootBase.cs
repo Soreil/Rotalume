@@ -15,6 +15,7 @@ namespace Tests
         bool bootROMActive = true;
         private byte bootROMField = 0;
         ControlRegisterWrite BootROMFlagController;
+        ControlRegisterRead ReadBootROMFlag;
 
         ControlRegisterWrite LCDControlController;
         ControlRegisterRead ReadLCDControl;
@@ -51,12 +52,15 @@ namespace Tests
         {
             BootROMFlagController = (byte b) =>
             {
+                bootROMField = b;
                 if (b == 1)
                 {
                     dec.Storage.WriteHandlers[0x50] -= BootROMFlagController;
                     bootROMActive = false;
                 }
             };
+
+            ReadBootROMFlag = () => bootROMField;
 
             LCDControlController = (byte b) => PPU.LCDC = b;
             ReadLCDControl = () => PPU.LCDC;
@@ -79,6 +83,7 @@ namespace Tests
             var decoder = new Decoder(Read, bootROM, gameROM, GetProgramCounter, SetProgramCounter, IncrementClock, () => bootROMActive);
 
             decoder.Storage.WriteHandlers[0x50] += BootROMFlagController;
+            decoder.Storage.ReadHandlers[0x50] += ReadBootROMFlag;
 
             decoder.Storage.WriteHandlers[0x40] += LCDControlController;
             decoder.Storage.ReadHandlers[0x40] += ReadLCDControl;
