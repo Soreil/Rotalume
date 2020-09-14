@@ -3,11 +3,13 @@ using System.Collections.Generic;
 
 namespace generator
 {
-    public delegate void ControlRegister();
+    public delegate void ControlRegisterWrite(byte b);
+    public delegate byte ControlRegisterRead();
 
     public record Storage
     {
-        public ControlRegister[] Handlers = new ControlRegister[0x80];
+        public ControlRegisterWrite[] WriteHandlers = new ControlRegisterWrite[0x80];
+        public ControlRegisterRead[] ReadHandlers = new ControlRegisterRead[0x80];
         private readonly byte[] _mem;
 
         private readonly Func<bool> _bootROMActive;
@@ -20,31 +22,27 @@ namespace generator
         {
             get
             {
-                if (bootROMActive)
+                if (bootROMActive && at < 0x100)
                 {
-                    if (at < 0x100)
-                        return bootROM[at];
-                    else return _mem[at];
+                    return bootROM[at];
                 }
+                if (at >= 0xff00 && at < 0xff80 && ReadHandlers[at & 0xff] != null)
+                    return ReadHandlers[at & 0xFF].Invoke();
                 else return _mem[at];
             }
 
             set
             {
-                if (bootROMActive)
+                if (bootROMActive && at < 0x100)
                 {
-                    if (at < 0x100)
-                        bootROM[at] = value;
-                    else _mem[at] = value;
+                    bootROM[at] = value;
+                    return;
                 }
+
+                if (at >= 0xff00 && at < 0xff80 && WriteHandlers[at & 0xff] != null)
+                    WriteHandlers[at & 0xFF].Invoke(value);
                 else _mem[at] = value;
 
-                //TODO: turn the bootrom active flag in to a handler.
-                //We have to pull the flag out of the storage system and remove
-                //the handler after we have have triggered it once with a 1 at
-                //0xff50. Removing the handler from inside the handler might not
-                //work so we might need a disable flag in the handler instead.
-                if (at >= 0xff00 && at < 0xff80) Handlers[at & 0xFF]?.Invoke();
             }
         }
         private readonly List<byte> bootROM;
