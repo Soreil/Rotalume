@@ -13,27 +13,23 @@ namespace Tests
         public Action<ushort> SetProgramCounter;
 
         bool bootROMActive = true;
-        ControlRegister BootROMFlagController;
+        private byte bootROMField = 0;
+        ControlRegisterWrite BootROMFlagController;
 
-        byte LCDControl;
-        ControlRegister LCDControlController;
+        ControlRegisterWrite LCDControlController;
+        ControlRegisterRead ReadLCDControl;
 
-        byte ScrollY;
-        ControlRegister ScrollYController;
+        ControlRegisterWrite ScrollYController;
+        ControlRegisterRead ReadScrollY;
 
-        byte ScrollX;
-        ControlRegister ScrollXController;
+        ControlRegisterWrite ScrollXController;
+        ControlRegisterRead ReadScrollX;
 
-        byte LCDLine;
-        ControlRegister LCDLineController;
+        ControlRegisterWrite LCDLineController;
+        ControlRegisterRead ReadLine;
 
-        byte SoundON;
-        ControlRegister SoundController;
-
-        byte Palette;
-        ControlRegister PaletteController;
-
-        ControlRegister Unimplemented;
+        ControlRegisterWrite PaletteController;
+        ControlRegisterRead ReadPalette;
 
         public int Clock;
         public Action<int> IncrementClock;
@@ -42,7 +38,9 @@ namespace Tests
 
         public Decoder dec;
 
-        public BootBase(List<byte> l) : this(new List<byte>(),l)
+        public PPU PPU;
+
+        public BootBase(List<byte> l) : this(new List<byte>(), l)
         {
             bootROMActive = false;
         }
@@ -51,26 +49,28 @@ namespace Tests
         }
         public BootBase(List<byte> bootROM, List<byte> gameROM)
         {
-            BootROMFlagController = () =>
+            BootROMFlagController = (byte b) =>
             {
-                if (dec.Storage.Read(0xff50) == 1)
+                if (b == 1)
                 {
-                    dec.Storage.Handlers[0x50] -= BootROMFlagController;
+                    dec.Storage.WriteHandlers[0x50] -= BootROMFlagController;
                     bootROMActive = false;
                 }
             };
 
-            LCDControlController = () => LCDControl = dec.Storage.Read(0xFF40);
+            LCDControlController = (byte b) => PPU.LCDC = b;
+            ReadLCDControl = () => PPU.LCDC;
 
-            ScrollYController = () => ScrollY = dec.Storage.Read(0xFF42);
-            ScrollXController = () => ScrollX = dec.Storage.Read(0xFF43);
-            LCDLineController = () => LCDLine = dec.Storage.Read(0xFF44);
+            ScrollYController = (byte b) => PPU.SCY = b;
+            ReadScrollY = () => PPU.SCY;
+            ScrollXController = (byte b) => PPU.SCX = b;
+            ReadScrollX = () => PPU.SCX;
+            LCDLineController = (byte b) => PPU.LY = b;
+            ReadLine = () => PPU.LY;
 
-            PaletteController = () => Palette = dec.Storage.Read(0xff47);
+            PaletteController = (byte b) => PPU.BGP = b;
+            ReadPalette = () => PPU.BGP;
 
-            SoundController = () => SoundON = dec.Storage.Read(0xFF26);
-
-            Unimplemented = () => { };
 
             GetProgramCounter = () => PC;
             SetProgramCounter = (x) => { PC = x; };
@@ -78,19 +78,21 @@ namespace Tests
             Read = () => dec.Storage[PC++];
             var decoder = new Decoder(Read, bootROM, gameROM, GetProgramCounter, SetProgramCounter, IncrementClock, () => bootROMActive);
 
-            decoder.Storage.Handlers[0x50] += BootROMFlagController;
+            decoder.Storage.WriteHandlers[0x50] += BootROMFlagController;
 
-            decoder.Storage.Handlers[0x40] += LCDControlController;
-            decoder.Storage.Handlers[0x42] += ScrollYController;
-            decoder.Storage.Handlers[0x43] += ScrollXController;
-            decoder.Storage.Handlers[0x44] += LCDLineController;
-            decoder.Storage.Handlers[0x47] += PaletteController;
-
-            decoder.Storage.Handlers[0x26] += SoundController;
-
-            for (int i = 0x10; i < 0x26; i++) decoder.Storage.Handlers[i] = Unimplemented;
+            decoder.Storage.WriteHandlers[0x40] += LCDControlController;
+            decoder.Storage.ReadHandlers[0x40] += ReadLCDControl;
+            decoder.Storage.WriteHandlers[0x42] += ScrollYController;
+            decoder.Storage.ReadHandlers[0x42] += ReadScrollY;
+            decoder.Storage.WriteHandlers[0x43] += ScrollXController;
+            decoder.Storage.ReadHandlers[0x43] += ReadScrollX;
+            decoder.Storage.WriteHandlers[0x44] += LCDLineController;
+            decoder.Storage.ReadHandlers[0x44] += ReadLine;
+            decoder.Storage.WriteHandlers[0x47] += PaletteController;
+            decoder.Storage.ReadHandlers[0x47] += ReadPalette;
 
             dec = decoder;
+            PPU = new PPU();
         }
         public void DoNextOP()
         {
