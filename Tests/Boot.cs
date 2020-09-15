@@ -54,12 +54,12 @@ namespace Tests
             var op = Proc.Read();
             if (op != 0xcb)
             {
-                dec.StdOps[(Unprefixed)op]();
+                dec.Op((Unprefixed)op)();
             }
             else
             {
                 var CBop = Proc.Read();
-                dec.CbOps[(Cbprefixed)CBop]();
+                dec.Op((Cbprefixed)CBop)();
             }
         }
     }

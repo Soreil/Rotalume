@@ -16,7 +16,7 @@ namespace Tests
 
             var before = dec.Registers.BC;
 
-            dec.StdOps[Unprefixed.LD_BC_d16]();
+            dec.Op(Unprefixed.LD_BC_d16)();
 
             var after = dec.Registers.BC;
 
@@ -30,7 +30,7 @@ namespace Tests
 
             var before = dec.Registers.DE;
 
-            dec.StdOps[Unprefixed.LD_DE_d16]();
+            dec.Op(Unprefixed.LD_DE_d16)();
 
             var after = dec.Registers.DE;
 
@@ -44,7 +44,7 @@ namespace Tests
 
             var before = dec.Registers.HL;
 
-            dec.StdOps[Unprefixed.LD_HL_d16]();
+            dec.Op(Unprefixed.LD_HL_d16)();
 
             var after = dec.Registers.HL;
 
@@ -58,7 +58,7 @@ namespace Tests
 
             var before = dec.Registers.SP;
 
-            dec.StdOps[Unprefixed.LD_SP_d16]();
+            dec.Op(Unprefixed.LD_SP_d16)();
 
             var after = dec.Registers.SP;
 
@@ -86,7 +86,7 @@ namespace Tests
             var before = dec.Registers.HL;
             var memoryBefore = dec.Storage.Read(before);
 
-            dec.StdOps[Unprefixed.LD_AT_HL_d8]();
+            dec.Op(Unprefixed.LD_AT_HL_d8)();
 
             var after = dec.Registers.HL;
             var memoryAfter = dec.Storage.Read(after);
@@ -107,7 +107,7 @@ namespace Tests
             var before = dec.Registers.HL;
             var memoryBefore = dec.Storage.Read(before);
 
-            dec.StdOps[Unprefixed.LDD_AT_HL_A]();
+            dec.Op(Unprefixed.LDD_AT_HL_A)();
 
             var after = dec.Registers.HL;
             var memoryAfter = dec.Storage.Read(after);
@@ -131,7 +131,7 @@ namespace Tests
             var before = dec.Registers.HL;
             var memoryBefore = dec.Storage.Read(before);
 
-            dec.StdOps[Unprefixed.LDI_AT_HL_A]();
+            dec.Op(Unprefixed.LDI_AT_HL_A)();
 
             var after = dec.Registers.HL;
             var memoryAfter = dec.Storage.Read(after);
@@ -150,7 +150,7 @@ namespace Tests
         {
             var dec = Setup0x4020BufferedDecoder();
             dec.Registers.SP = (0x6688);
-            dec.StdOps[Unprefixed.LD_AT_a16_SP]();
+            dec.Op(Unprefixed.LD_AT_a16_SP)();
 
             var result = dec.Storage.ReadWide(0x4020);
             Assert.AreEqual(0x6688, result);
@@ -164,7 +164,7 @@ namespace Tests
             dec.Registers.HL = (0x8a23);
             dec.Registers.BC = (0x0605);
 
-            dec.StdOps[Unprefixed.ADD_HL_BC]();
+            dec.Op(Unprefixed.ADD_HL_BC)();
 
             Assert.AreEqual(0x9028, dec.Registers.HL);
             Assert.IsTrue(dec.Registers.Get(Flag.H));
@@ -178,7 +178,7 @@ namespace Tests
 
             dec.Registers.HL=(0x8a23);
 
-            dec.StdOps[Unprefixed.ADD_HL_HL]();
+            dec.Op(Unprefixed.ADD_HL_HL)();
 
             Assert.AreEqual(0x1446, dec.Registers.HL);
             Assert.IsTrue(dec.Registers.Get(Flag.H));
@@ -193,7 +193,7 @@ namespace Tests
 
             dec.Registers.B = (0x10);
 
-            dec.StdOps[Unprefixed.LD_A_B]();
+            dec.Op(Unprefixed.LD_A_B)();
 
             Assert.AreEqual(0x10, dec.Registers.A);
 
@@ -206,7 +206,7 @@ namespace Tests
             dec.Registers.A = (0x10);
             dec.Registers.C = (0x77);
 
-            dec.StdOps[Unprefixed.LD_AT_C_A]();
+            dec.Op(Unprefixed.LD_AT_C_A)();
 
             Assert.AreEqual(0x10, dec.Storage.Read(0xff77));
 
@@ -220,7 +220,7 @@ namespace Tests
             dec.Registers.C = (0x77);
 
 
-            dec.StdOps[Unprefixed.LD_A_AT_C]();
+            dec.Op(Unprefixed.LD_A_AT_C)();
 
             Assert.AreEqual(0x10, dec.Registers.A);
 

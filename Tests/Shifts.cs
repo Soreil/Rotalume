@@ -15,7 +15,7 @@ namespace Tests
             {
                 dec.Registers.Set(Register.A, 0x80);
 
-                dec.StdOps[Unprefixed.RLCA]();
+                dec.Op(Unprefixed.RLCA)();
 
                 Assert.AreEqual(1, dec.Registers.Get(Register.A));
 
@@ -24,7 +24,7 @@ namespace Tests
             {
                 dec.Registers.Set(Register.A, 0);
 
-                dec.StdOps[Unprefixed.RLCA]();
+                dec.Op(Unprefixed.RLCA)();
 
                 Assert.AreEqual(0, dec.Registers.Get(Register.A));
 
@@ -33,7 +33,7 @@ namespace Tests
             {
                 dec.Registers.Set(Register.A, 0xff);
 
-                dec.StdOps[Unprefixed.RLCA]();
+                dec.Op(Unprefixed.RLCA)();
 
                 Assert.AreEqual(0xff, dec.Registers.Get(Register.A));
 
@@ -48,7 +48,7 @@ namespace Tests
             {
                 dec.Registers.Set(Register.A, 0x01);
 
-                dec.StdOps[Unprefixed.RRCA]();
+                dec.Op(Unprefixed.RRCA)();
 
                 Assert.AreEqual(0x80, dec.Registers.Get(Register.A));
 
@@ -57,7 +57,7 @@ namespace Tests
             {
                 dec.Registers.Set(Register.A, 0xFF);
 
-                dec.StdOps[Unprefixed.RRCA]();
+                dec.Op(Unprefixed.RRCA)();
 
                 Assert.AreEqual(0xFF, dec.Registers.Get(Register.A));
 
@@ -66,7 +66,7 @@ namespace Tests
             {
                 dec.Registers.Set(Register.A, 0);
 
-                dec.StdOps[Unprefixed.RRCA]();
+                dec.Op(Unprefixed.RRCA)();
 
                 Assert.AreEqual(0, dec.Registers.Get(Register.A));
 
@@ -79,7 +79,7 @@ namespace Tests
             var dec = new Decoder(() => 0);
 
             dec.Registers.A = (0xff);
-            dec.StdOps[Unprefixed.CPL]();
+            dec.Op(Unprefixed.CPL)();
 
             Assert.AreEqual(0, dec.Registers.A);
         }
@@ -88,7 +88,7 @@ namespace Tests
         {
             var dec = new Decoder(() => 0);
 
-            dec.StdOps[Unprefixed.SCF]();
+            dec.Op(Unprefixed.SCF)();
 
             Assert.IsTrue(dec.Registers.Get(Flag.C));
         }
@@ -97,10 +97,10 @@ namespace Tests
         {
             var dec = new Decoder(() => 0);
 
-            dec.StdOps[Unprefixed.CCF]();
+            dec.Op(Unprefixed.CCF)();
             Assert.IsTrue(dec.Registers.Get(Flag.C));
 
-            dec.StdOps[Unprefixed.CCF]();
+            dec.Op(Unprefixed.CCF)();
             Assert.IsTrue(dec.Registers.Get(Flag.NC));
         }
     }

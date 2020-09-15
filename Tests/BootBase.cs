@@ -104,12 +104,12 @@ namespace Tests
             var op = Read();
             if (op != 0xcb)
             {
-                dec.StdOps[(Unprefixed)op]();
+                dec.Op((Unprefixed)op)();
             }
             else
             {
                 var CBop = Read();
-                dec.CbOps[(Cbprefixed)CBop]();
+                dec.Op((Cbprefixed)CBop)();
             }
         }
         public static List<byte> LoadBootROM()
