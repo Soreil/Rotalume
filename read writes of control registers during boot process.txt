@@ -1,0 +1,11 @@
+write	ff44	90	(that's us!)
+
+write	ff47	fc	(black,black,black,white)
+write	ff42	64
+write	ff40	91
+read	ff44		(many times)
+write	ff42	63
+read	ff44		(many times)
+write	ff42	62
+.....
+write	ff50	01

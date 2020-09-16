@@ -43,10 +43,14 @@ namespace Tests
                 DoNextOP(Proc.dec);
             while (Proc.PC != 0xfa) //Logo checksum validation
                 DoNextOP(Proc.dec);
+
             DoNextOP(Proc.dec);
             Assert.AreNotEqual(0xfa, Proc.PC); //Logo if logo check failed and we are stuck
+
             while (Proc.PC != 0x100)
                 DoNextOP(Proc.dec);
+
+            Assert.AreEqual(0x100, Proc.PC);
         }
 
         private void DoNextOP(Decoder dec)
