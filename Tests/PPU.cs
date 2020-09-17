@@ -2,6 +2,14 @@
 
 namespace Tests
 {
+    public enum Mode
+    {
+        HBlank = 0,
+        VBlank = 1,
+        OAMSearch = 2,
+        Transfer = 3
+    }
+
     public class PPU
     {
         //FF40 - FF4B, PPU control registers
@@ -38,6 +46,25 @@ namespace Tests
 
         byte STAT; //FF41
 
+        private Mode Mode
+        {
+            get => (Mode)(STAT & 0x03);
+            set => STAT = (byte)(STAT & 0xFC | (int)value & 0x3);
+        }
 
+        public int TimePPUWasStarted;
+        public void Run(int Clock)
+        {
+        }
+
+        const int ScanlinesPerFrame = 154;
+        const int TicksPerScanline = 456;
+        const int TicksPerFrame = ScanlinesPerFrame * TicksPerScanline;
+        private void Stage(int clocks)
+        {
+            int clocksInFrame = clocks % TicksPerFrame;
+            int line = clocksInFrame / TicksPerScanline;
+            int clockInScanline = clocksInFrame % TicksPerScanline;
+        }
     }
 }
