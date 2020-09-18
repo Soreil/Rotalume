@@ -24,47 +24,33 @@ namespace Tests
             Proc.dec.Storage.Write(0xff44, 0x90);
 
             while (Proc.PC != 0x1d)
-                DoNextOP(Proc.dec);
+                Proc.DoNextOP();
             while (Proc.PC != 0x28)
-                DoNextOP(Proc.dec);
+                Proc.DoNextOP();
             while (Proc.PC != 0x98)
-                DoNextOP(Proc.dec);
+                Proc.DoNextOP();
             while (Proc.PC != 0x9c)
-                DoNextOP(Proc.dec);
+                Proc.DoNextOP();
             while (Proc.PC != 0xa1)
-                DoNextOP(Proc.dec);
+                Proc.DoNextOP();
             while (Proc.PC != 0xa3)
-                DoNextOP(Proc.dec);
+                Proc.DoNextOP();
             while (Proc.PC != 0xe0) //Start of logo check
-                DoNextOP(Proc.dec);
+                Proc.DoNextOP();
             while (Proc.PC != 0xf1) //logo checksum initialized
-                DoNextOP(Proc.dec);
+                Proc.DoNextOP();
             while (Proc.PC != 0xf9) //Past first subloop
-                DoNextOP(Proc.dec);
+                Proc.DoNextOP();
             while (Proc.PC != 0xfa) //Logo checksum validation
-                DoNextOP(Proc.dec);
+                Proc.DoNextOP();
 
-            DoNextOP(Proc.dec);
+            Proc.DoNextOP();
             Assert.AreNotEqual(0xfa, Proc.PC); //Logo if logo check failed and we are stuck
 
             while (Proc.PC != 0x100)
-                DoNextOP(Proc.dec);
+                Proc.DoNextOP();
 
             Assert.AreEqual(0x100, Proc.PC);
-        }
-
-        private void DoNextOP(Decoder dec)
-        {
-            var op = Proc.Read();
-            if (op != 0xcb)
-            {
-                dec.Op((Unprefixed)op)();
-            }
-            else
-            {
-                var CBop = Proc.Read();
-                dec.Op((Cbprefixed)CBop)();
-            }
         }
     }
 }

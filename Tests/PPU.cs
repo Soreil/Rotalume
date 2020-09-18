@@ -27,15 +27,8 @@ namespace Tests
         public byte DMA; //FF46
 
         public byte LCDC; //FF40
-        ushort TileMapDisplaySelect
-        {
-            get
-            {
-                if (LCDC.GetBit(6)) return 0x9C00;
-                else return 0x9800;
-            }
-        }
 
+        ushort TileMapDisplaySelect => (LCDC.GetBit(6)) ? 0x9C00 : 0x9800;
         ushort BGAndWindowTileDataSelect => LCDC.GetBit(4) ? 0x8000 : 0x8800;
         ushort BGTileMapDisplaySelect => LCDC.GetBit(3) ? 0x9c00 : 0x9800;
         int SpriteHeight => LCDC.GetBit(2) ? 16 : 8;
@@ -52,7 +45,8 @@ namespace Tests
             set => STAT = (byte)(STAT & 0xFC | (int)value & 0x3);
         }
 
-        public int TimePPUWasStarted;
+        public readonly int TimePPUWasStarted;
+        public int TimeSince;
         public void Run(int Clock)
         {
         }
@@ -60,11 +54,9 @@ namespace Tests
         const int ScanlinesPerFrame = 154;
         const int TicksPerScanline = 456;
         const int TicksPerFrame = ScanlinesPerFrame * TicksPerScanline;
-        private void Stage(int clocks)
-        {
-            int clocksInFrame = clocks % TicksPerFrame;
-            int line = clocksInFrame / TicksPerScanline;
-            int clockInScanline = clocksInFrame % TicksPerScanline;
-        }
+
+        int clocksInFrame => TimeSince % TicksPerFrame;
+        int line => clocksInFrame / TicksPerScanline;
+        int clockInScanline => clocksInFrame % TicksPerScanline;
     }
 }
