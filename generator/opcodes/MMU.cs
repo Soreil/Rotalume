@@ -3,14 +3,11 @@ using System.Collections.Generic;
 
 namespace generator
 {
-    public delegate void ControlRegisterWrite(byte b);
-    public delegate byte ControlRegisterRead();
 
     public record MMU
     {
-        public ControlRegisterWrite[] WriteHandlers = new ControlRegisterWrite[0x80];
-        public ControlRegisterRead[] ReadHandlers = new ControlRegisterRead[0x80];
         private readonly byte[] _mem;
+        public ControlRegisters ControlRegisters;
 
         private readonly Func<bool> _bootROMActive;
         private bool BootROMActive
@@ -23,18 +20,16 @@ namespace generator
             get
             {
                 if (BootROMActive && at < 0x100)
-                {
                     return bootROM[at];
-                }
-                if (at >= 0xff00 && at < 0xff80 && ReadHandlers[at & 0xff] != null)
-                    return ReadHandlers[at & 0xFF].Invoke();
+                if (at >= 0xff00 && at < 0xff80 && ControlRegisters.ContainsReader(at))
+                    return ControlRegisters[at];
                 else return _mem[at];
             }
 
             set
             {
-                if (at >= 0xff00 && at < 0xff80 && WriteHandlers[at & 0xff] != null)
-                    WriteHandlers[at & 0xFF].Invoke(value);
+                if (at >= 0xff00 && at < 0xff80 && ControlRegisters.ContainsWriter(at))
+                    ControlRegisters[at] = value;
                 else _mem[at] = value;
             }
         }
@@ -43,10 +38,12 @@ namespace generator
         private readonly Func<byte> ReadInput;
         private readonly Func<ushort> ReadInputWide;
 
-        public MMU(Func<byte> readInput, List<byte> boot, List<byte> game, Func<bool> bootROMActive)
+        public MMU(Func<byte> readInput, List<byte> boot, List<byte> game, Func<bool> bootROMActive, ControlRegisters controlRegisters)
         {
             ReadInput = readInput;
             ReadInputWide = () => BitConverter.ToUInt16(new byte[] { ReadInput(), ReadInput() });
+
+            ControlRegisters = controlRegisters;
 
             _mem = new byte[0x10000];
             game.CopyTo(_mem);

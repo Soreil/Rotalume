@@ -40,6 +40,7 @@ namespace Tests
         public Decoder dec;
 
         public PPU PPU;
+        ControlRegisters controlRegisters = new ControlRegisters();
 
         public BootBase(List<byte> l) : this(new List<byte>(), l)
         {
@@ -55,7 +56,7 @@ namespace Tests
                 bootROMField = b;
                 if (b == 1)
                 {
-                    dec.Storage.WriteHandlers[0x50] -= BootROMFlagController;
+                    controlRegisters.WriteHandlers[0x50] -= BootROMFlagController;
                     bootROMActive = false;
                 }
             };
@@ -80,21 +81,21 @@ namespace Tests
             SetProgramCounter = (x) => { PC = x; };
             IncrementClock = (x) => { Clock += x; };
             Read = () => dec.Storage[PC++];
-            var decoder = new Decoder(Read, bootROM, gameROM, GetProgramCounter, SetProgramCounter, IncrementClock, () => bootROMActive);
+            var decoder = new Decoder(Read, bootROM, gameROM, GetProgramCounter, SetProgramCounter, IncrementClock, () => bootROMActive,controlRegisters);
 
-            decoder.Storage.WriteHandlers[0x50] += BootROMFlagController;
-            decoder.Storage.ReadHandlers[0x50] += ReadBootROMFlag;
-
-            decoder.Storage.WriteHandlers[0x40] += LCDControlController;
-            decoder.Storage.ReadHandlers[0x40] += ReadLCDControl;
-            decoder.Storage.WriteHandlers[0x42] += ScrollYController;
-            decoder.Storage.ReadHandlers[0x42] += ReadScrollY;
-            decoder.Storage.WriteHandlers[0x43] += ScrollXController;
-            decoder.Storage.ReadHandlers[0x43] += ReadScrollX;
-            decoder.Storage.WriteHandlers[0x44] += LCDLineController;
-            decoder.Storage.ReadHandlers[0x44] += ReadLine;
-            decoder.Storage.WriteHandlers[0x47] += PaletteController;
-            decoder.Storage.ReadHandlers[0x47] += ReadPalette;
+            controlRegisters.WriteHandlers[0x50] += BootROMFlagController;
+            controlRegisters.ReadHandlers[0x50] += ReadBootROMFlag;
+            
+            controlRegisters.WriteHandlers[0x40] += LCDControlController;
+            controlRegisters.ReadHandlers[0x40] += ReadLCDControl;
+            controlRegisters.WriteHandlers[0x42] += ScrollYController;
+            controlRegisters.ReadHandlers[0x42] += ReadScrollY;
+            controlRegisters.WriteHandlers[0x43] += ScrollXController;
+            controlRegisters.ReadHandlers[0x43] += ReadScrollX;
+            controlRegisters.WriteHandlers[0x44] += LCDLineController;
+            controlRegisters.ReadHandlers[0x44] += ReadLine;
+            controlRegisters.WriteHandlers[0x47] += PaletteController;
+            controlRegisters.ReadHandlers[0x47] += ReadPalette;
 
             dec = decoder;
             PPU = new PPU();
