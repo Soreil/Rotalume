@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Tests
+namespace generator
 {
     public record SpriteAttributes
     {

@@ -1,4 +1,4 @@
-﻿namespace Tests
+﻿namespace generator
 {
     public class OAM
     {

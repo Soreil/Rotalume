@@ -1,5 +1,4 @@
-﻿
-using generator;
+﻿using generator;
 
 namespace Tests
 {

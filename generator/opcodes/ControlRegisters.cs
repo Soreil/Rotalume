@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace generator
+﻿namespace generator
 {
     public delegate void ControlRegisterWrite(byte b);
     public delegate byte ControlRegisterRead();
