@@ -6,14 +6,14 @@ namespace generator
     public delegate void ControlRegisterWrite(byte b);
     public delegate byte ControlRegisterRead();
 
-    public record Storage
+    public record MMU
     {
         public ControlRegisterWrite[] WriteHandlers = new ControlRegisterWrite[0x80];
         public ControlRegisterRead[] ReadHandlers = new ControlRegisterRead[0x80];
         private readonly byte[] _mem;
 
         private readonly Func<bool> _bootROMActive;
-        private bool bootROMActive
+        private bool BootROMActive
         {
             get => _bootROMActive();
         }
@@ -22,7 +22,7 @@ namespace generator
         {
             get
             {
-                if (bootROMActive && at < 0x100)
+                if (BootROMActive && at < 0x100)
                 {
                     return bootROM[at];
                 }
@@ -33,16 +33,9 @@ namespace generator
 
             set
             {
-                if (bootROMActive && at < 0x100)
-                {
-                    bootROM[at] = value;
-                    return;
-                }
-
                 if (at >= 0xff00 && at < 0xff80 && WriteHandlers[at & 0xff] != null)
                     WriteHandlers[at & 0xFF].Invoke(value);
                 else _mem[at] = value;
-
             }
         }
         private readonly List<byte> bootROM;
@@ -50,7 +43,7 @@ namespace generator
         private readonly Func<byte> ReadInput;
         private readonly Func<ushort> ReadInputWide;
 
-        public Storage(Func<byte> readInput, List<byte> boot, List<byte> game, Func<bool> bootROMActive)
+        public MMU(Func<byte> readInput, List<byte> boot, List<byte> game, Func<bool> bootROMActive)
         {
             ReadInput = readInput;
             ReadInputWide = () => BitConverter.ToUInt16(new byte[] { ReadInput(), ReadInput() });

@@ -5,7 +5,7 @@ namespace generator
     public partial class Decoder
     {
         readonly public Registers Registers;
-        readonly public Storage Storage;
+        readonly public MMU Storage;
         readonly public Action<ushort> SetPC;
         readonly public Func<ushort> GetPC;
         readonly public Action enableInterrupts;

@@ -19,7 +19,7 @@ namespace generator
             StdOps = MakeTable();
             CbOps = MakeTableCb();
             Registers = new Registers();
-            Storage = new Storage(read, boot, game, bootROMActive);
+            Storage = new MMU(read, boot, game, bootROMActive);
             SetPC = setPC;
             GetPC = getPC;
 
