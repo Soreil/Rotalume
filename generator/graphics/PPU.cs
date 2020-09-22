@@ -1,6 +1,4 @@
-﻿using generator;
-
-namespace Tests
+﻿namespace generator
 {
     public class PPU
     {
