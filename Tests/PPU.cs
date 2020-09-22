@@ -1,4 +1,6 @@
-﻿using generator;
+﻿using System;
+
+using generator;
 
 namespace Tests
 {
@@ -10,6 +12,34 @@ namespace Tests
         Transfer = 3
     }
 
+    public record SpriteAttributes
+    {
+        byte Y;
+        byte X;
+        byte ID;
+        byte Flags;
+        bool SpriteToBackgroundPriority => Flags.GetBit(7);
+        bool YFlipped => Flags.GetBit(6);
+        bool XFlipped => Flags.GetBit(5);
+        int Palette => Convert.ToInt32(Flags.GetBit(4));
+
+        public SpriteAttributes(byte y, byte x, byte id, byte flags)
+        {
+            Y = y;
+            X = x;
+            ID = id;
+            Flags = flags;
+        }
+    }
+
+    public class OAM
+    {
+        private readonly byte[] mem;
+
+        public OAM() => mem = new byte[0x100];
+
+        public SpriteAttributes this[int n] => new SpriteAttributes(mem[n * 4], mem[n * 4 + 1], mem[n * 4 + 2], mem[n * 4 + 3]);
+    }
     public class PPU
     {
         //FF40 - FF4B, PPU control registers
@@ -38,7 +68,6 @@ namespace Tests
         private bool BGOrWindowDisplayOrPriority() => LCDC.GetBit(0);
 
         byte STAT; //FF41
-
         private Mode Mode
         {
             get => (Mode)(STAT & 0x03);
