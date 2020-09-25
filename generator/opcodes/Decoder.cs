@@ -11,15 +11,15 @@ namespace generator
         public Action Op(Unprefixed op) => StdOps[(int)op];
         public Action Op(Cbprefixed op) => CbOps[(int)op];
 
-        public Decoder(Func<byte> read) : this(read, new List<byte>(), new List<byte>(), () => 0, x => { }, x => { }, () => false, new ControlRegisters())
+        public Decoder(Func<byte> read) : this(read, new List<byte>(), new List<byte>(), () => 0, x => { }, x => { }, () => false)
         { }
 
-        public Decoder(Func<byte> read, List<byte> boot, List<byte> game, Func<ushort> getPC, Action<ushort> setPC, Action<int> TickClock, Func<bool> bootROMActive,ControlRegisters controlRegisters)
+        public Decoder(Func<byte> read, List<byte> boot, List<byte> game, Func<ushort> getPC, Action<ushort> setPC, Action<int> TickClock, Func<bool> bootROMActive)
         {
             StdOps = MakeTable();
             CbOps = MakeTableCb();
             Registers = new Registers();
-            Storage = new MMU(read, boot, game, bootROMActive,controlRegisters);
+            Storage = new MMU(read, boot, game, bootROMActive);
             SetPC = setPC;
             GetPC = getPC;
 

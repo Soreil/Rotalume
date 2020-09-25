@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace generator
 {
@@ -7,7 +8,6 @@ namespace generator
     public record MMU
     {
         private readonly byte[] _mem;
-        public ControlRegisters ControlRegisters;
 
         private readonly Func<bool> _bootROMActive;
         private bool BootROMActive
@@ -15,21 +15,45 @@ namespace generator
             get => _bootROMActive();
         }
 
+        public record Range(int begin, int end, Func<int, bool> exists);
+        public record GetRange(int begin, int end, Func<int, byte> at, Func<int, bool> exists);
+        public record SetRange(int begin, int end, Action<int, byte> at, Func<int, bool> exists);
+
+
+        public List<GetRange> getRanges = new List<GetRange>();
+        public List<SetRange> setRanges = new List<SetRange>();
+
         public byte this[int at]
         {
             get
             {
+                var possible = getRanges.Where((x) => x.begin <= at && x.end < at && x.exists != null && x.exists(at));
+
                 if (BootROMActive && at < 0x100)
                     return bootROM[at];
-                if (at >= 0xff00 && at < 0xff80 && ControlRegisters.ContainsReader(at))
-                    return ControlRegisters[at];
-                else return _mem[at];
+
+                if (possible.Any())
+                {
+                    if (possible.Count() > 1) throw new Exception("Can't have overlapping ranges; ambiguous!");
+                    var chosen = possible.First();
+                    return chosen.at(at);
+                }
+                else
+                {
+                    return _mem[at];
+                }
             }
 
             set
             {
-                if (at >= 0xff00 && at < 0xff80 && ControlRegisters.ContainsWriter(at))
-                    ControlRegisters[at] = value;
+                var possible = setRanges.Where((x) => x.begin <= at && x.end < at && x.exists != null && x.exists(at));
+
+                if (possible.Any())
+                {
+                    if (possible.Count() > 1) throw new Exception("Can't have overlapping ranges; ambiguous!");
+                    var chosen = possible.First();
+                    chosen.at(at, value);
+                }
                 else _mem[at] = value;
             }
         }
@@ -38,12 +62,10 @@ namespace generator
         private readonly Func<byte> ReadInput;
         private readonly Func<ushort> ReadInputWide;
 
-        public MMU(Func<byte> readInput, List<byte> boot, List<byte> game, Func<bool> bootROMActive, ControlRegisters controlRegisters)
+        public MMU(Func<byte> readInput, List<byte> boot, List<byte> game, Func<bool> bootROMActive)
         {
             ReadInput = readInput;
             ReadInputWide = () => BitConverter.ToUInt16(new byte[] { ReadInput(), ReadInput() });
-
-            ControlRegisters = controlRegisters;
 
             _mem = new byte[0x10000];
             game.CopyTo(_mem);

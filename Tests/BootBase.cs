@@ -81,7 +81,7 @@ namespace Tests
             SetProgramCounter = (x) => { PC = x; };
             IncrementClock = (x) => { Clock += x; };
             Read = () => dec.Storage[PC++];
-            var decoder = new Decoder(Read, bootROM, gameROM, GetProgramCounter, SetProgramCounter, IncrementClock, () => bootROMActive,controlRegisters);
+            var decoder = new Decoder(Read, bootROM, gameROM, GetProgramCounter, SetProgramCounter, IncrementClock, () => bootROMActive);
 
             controlRegisters.WriteHandlers[0x50] += BootROMFlagController;
             controlRegisters.ReadHandlers[0x50] += ReadBootROMFlag;
