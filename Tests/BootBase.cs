@@ -40,7 +40,7 @@ namespace Tests
         public Decoder dec;
 
         public PPU PPU;
-        ControlRegisters controlRegisters = new ControlRegisters();
+        ControlRegisters controlRegisters = new ControlRegisters(0xff00,0x80);
 
         public BootBase(List<byte> l) : this(new List<byte>(), l)
         {

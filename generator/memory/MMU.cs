@@ -4,7 +4,6 @@ using System.Linq;
 
 namespace generator
 {
-
     public record MMU
     {
         private readonly byte[] _mem;
@@ -18,7 +17,6 @@ namespace generator
         public record Range(int begin, int end, Func<int, bool> exists);
         public record GetRange(int begin, int end, Func<int, byte> at, Func<int, bool> exists);
         public record SetRange(int begin, int end, Action<int, byte> at, Func<int, bool> exists);
-
 
         public List<GetRange> getRanges = new List<GetRange>();
         public List<SetRange> setRanges = new List<SetRange>();
@@ -38,10 +36,7 @@ namespace generator
                     var chosen = possible.First();
                     return chosen.at(at);
                 }
-                else
-                {
-                    return _mem[at];
-                }
+                else return _mem[at];
             }
 
             set

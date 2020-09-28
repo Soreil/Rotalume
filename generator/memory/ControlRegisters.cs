@@ -4,16 +4,23 @@
     public delegate byte ControlRegisterRead();
     public class ControlRegisters
     {
-        public ControlRegisterWrite[] WriteHandlers = new ControlRegisterWrite[0x80];
-        public ControlRegisterRead[] ReadHandlers = new ControlRegisterRead[0x80];
+        public ControlRegisterWrite[] WriteHandlers;
+        public ControlRegisterRead[] ReadHandlers;
+        public int Start;
+        public ControlRegisters(ushort startAddress, int size)
+        {
+            WriteHandlers = new ControlRegisterWrite[size];
+            ReadHandlers = new ControlRegisterRead[size];
+            Start = startAddress;
+        }
 
         public byte this[int at]
         {
-            get => ReadHandlers[at & 0xff]();
-            set => WriteHandlers[at & 0xff](value);
+            get => ReadHandlers[at - Start]();
+            set => WriteHandlers[at - Start](value);
         }
 
-        public bool ContainsWriter(int at) => WriteHandlers[at & 0xff] != null;
-        public bool ContainsReader(int at) => ReadHandlers[at & 0xff] != null;
+        public bool ContainsWriter(int at) => WriteHandlers[at - Start] != null;
+        public bool ContainsReader(int at) => ReadHandlers[at - Start] != null;
     }
 }
