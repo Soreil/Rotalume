@@ -14,23 +14,23 @@ namespace Tests
 
         bool bootROMActive = true;
         private byte bootROMField = 0;
-        ControlRegisterWrite BootROMFlagController;
-        ControlRegisterRead ReadBootROMFlag;
+        ControlRegister.Write BootROMFlagController;
+        ControlRegister.Read ReadBootROMFlag;
 
-        ControlRegisterWrite LCDControlController;
-        ControlRegisterRead ReadLCDControl;
+        ControlRegister.Write LCDControlController;
+        ControlRegister.Read ReadLCDControl;
 
-        ControlRegisterWrite ScrollYController;
-        ControlRegisterRead ReadScrollY;
+        ControlRegister.Write ScrollYController;
+        ControlRegister.Read ReadScrollY;
 
-        ControlRegisterWrite ScrollXController;
-        ControlRegisterRead ReadScrollX;
+        ControlRegister.Write ScrollXController;
+        ControlRegister.Read ReadScrollX;
 
-        ControlRegisterWrite LCDLineController;
-        ControlRegisterRead ReadLine;
+        ControlRegister.Write LCDLineController;
+        ControlRegister.Read ReadLine;
 
-        ControlRegisterWrite PaletteController;
-        ControlRegisterRead ReadPalette;
+        ControlRegister.Write PaletteController;
+        ControlRegister.Read ReadPalette;
 
         public int Clock;
         public Action<int> IncrementClock;
@@ -40,7 +40,7 @@ namespace Tests
         public Decoder dec;
 
         public PPU PPU;
-        ControlRegisters controlRegisters = new ControlRegisters(0xff00,0x80);
+        ControlRegister controlRegisters = new ControlRegister(0xff00,0x80);
 
         public BootBase(List<byte> l) : this(new List<byte>(), l)
         {
@@ -56,7 +56,7 @@ namespace Tests
                 bootROMField = b;
                 if (b == 1)
                 {
-                    controlRegisters.WriteHandlers[0x50] -= BootROMFlagController;
+                    controlRegisters.Writer[0x50] -= BootROMFlagController;
                     bootROMActive = false;
                 }
             };
@@ -76,26 +76,25 @@ namespace Tests
             PaletteController = (byte b) => PPU.BGP = b;
             ReadPalette = () => PPU.BGP;
 
+            controlRegisters.Writer[0x50] += BootROMFlagController;
+            controlRegisters.Reader[0x50] += ReadBootROMFlag;
+            
+            controlRegisters.Writer[0x40] += LCDControlController;
+            controlRegisters.Reader[0x40] += ReadLCDControl;
+            controlRegisters.Writer[0x42] += ScrollYController;
+            controlRegisters.Reader[0x42] += ReadScrollY;
+            controlRegisters.Writer[0x43] += ScrollXController;
+            controlRegisters.Reader[0x43] += ReadScrollX;
+            controlRegisters.Writer[0x44] += LCDLineController;
+            controlRegisters.Reader[0x44] += ReadLine;
+            controlRegisters.Writer[0x47] += PaletteController;
+            controlRegisters.Reader[0x47] += ReadPalette;
 
             GetProgramCounter = () => PC;
             SetProgramCounter = (x) => { PC = x; };
             IncrementClock = (x) => { Clock += x; };
             Read = () => dec.Storage[PC++];
             var decoder = new Decoder(Read, bootROM, gameROM, GetProgramCounter, SetProgramCounter, IncrementClock, () => bootROMActive);
-
-            controlRegisters.WriteHandlers[0x50] += BootROMFlagController;
-            controlRegisters.ReadHandlers[0x50] += ReadBootROMFlag;
-            
-            controlRegisters.WriteHandlers[0x40] += LCDControlController;
-            controlRegisters.ReadHandlers[0x40] += ReadLCDControl;
-            controlRegisters.WriteHandlers[0x42] += ScrollYController;
-            controlRegisters.ReadHandlers[0x42] += ReadScrollY;
-            controlRegisters.WriteHandlers[0x43] += ScrollXController;
-            controlRegisters.ReadHandlers[0x43] += ReadScrollX;
-            controlRegisters.WriteHandlers[0x44] += LCDLineController;
-            controlRegisters.ReadHandlers[0x44] += ReadLine;
-            controlRegisters.WriteHandlers[0x47] += PaletteController;
-            controlRegisters.ReadHandlers[0x47] += ReadPalette;
 
             dec = decoder;
             PPU = new PPU();

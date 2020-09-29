@@ -6,19 +6,15 @@ using NUnit.Framework;
 
 namespace Tests
 {
-    class Boot
+    class GPU
     {
         public static byte[] LoadGameROM() => File.ReadAllBytes(@"..\..\..\rom\Tetris (World) (Rev A).gb");
 
         private BootBase Proc = new BootBase(BootBase.LoadBootROM(), LoadGameROM().ToList());
 
-        [Test]
-        public void DoBootNoGPU()
+        [Ignore("No GPU yet")]
+        public void DoBootGPU()
         {
-            //Temporary write which sets the VBlank to always be the current GPU stage. 
-            //This will let us boot without a GPU.
-            Proc.dec.Storage.Write(0xff44, 0x90);
-
             while (Proc.PC != 0x1d)
                 Proc.DoNextOP();
             while (Proc.PC != 0x28)
@@ -43,6 +39,17 @@ namespace Tests
             Proc.DoNextOP();
             Assert.AreNotEqual(0xfa, Proc.PC); //Logo if logo check failed and we are stuck
 
+            while (Proc.PC != 0x100)
+                Proc.DoNextOP();
+
+            Assert.AreEqual(0x100, Proc.PC);
+        }
+
+        [Test]
+        public void GPUFieldsGetSetDuringBoot()
+        {
+            //Sets GPU to be in VBlank
+            Proc.dec.Storage.Write(0xff44, 0x90);
             while (Proc.PC != 0x100)
                 Proc.DoNextOP();
 

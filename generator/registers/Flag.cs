@@ -1,6 +1,4 @@
-﻿using System.Dynamic;
-
-namespace generator
+﻿namespace generator
 {
     public enum Flag
     {
@@ -22,19 +20,19 @@ namespace generator
         Unset
     }
 
-    public record FlagChangeOptions
-    {
-        FlagChange Zero;
-        FlagChange Negative;
-        FlagChange HalfCarry;
-        FlagChange Carry;
-    }
+    //public record FlagChangeOptions
+    //{
+    //    FlagChange Zero;
+    //    FlagChange Negative;
+    //    FlagChange HalfCarry;
+    //    FlagChange Carry;
+    //}
 
-    public record FlagResult
-    {
-        bool Zero;
-        bool Negative;
-        bool HalfCarry;
-        bool Carry;
-    }
+    //public record FlagResult
+    //{
+    //    bool Zero;
+    //    bool Negative;
+    //    bool HalfCarry;
+    //    bool Carry;
+    //}
 }
