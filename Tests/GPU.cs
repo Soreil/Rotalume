@@ -10,11 +10,11 @@ namespace Tests
     {
         public static byte[] LoadGameROM() => File.ReadAllBytes(@"..\..\..\rom\Tetris (World) (Rev A).gb");
 
-        private BootBase Proc = new BootBase(BootBase.LoadBootROM(), LoadGameROM().ToList());
 
         [Ignore("No GPU yet")]
         public void DoBootGPU()
         {
+        BootBase Proc = new BootBase(BootBase.LoadBootROM(), LoadGameROM().ToList());
             while (Proc.PC != 0x1d)
                 Proc.DoNextOP();
             while (Proc.PC != 0x28)
@@ -48,12 +48,45 @@ namespace Tests
         [Test]
         public void GPUFieldsGetSetDuringBoot()
         {
+            BootBase Proc = new BootBase(BootBase.LoadBootROM(), LoadGameROM().ToList());
+
+            Assert.AreEqual(Proc.PPU.LCDC, 0);
+            Assert.AreEqual(Proc.PPU.BGP, 0);
+            Assert.AreEqual(Proc.PPU.SCY, 0);
+
             //Sets GPU to be in VBlank
             Proc.dec.Storage.Write(0xff44, 0x90);
             while (Proc.PC != 0x100)
                 Proc.DoNextOP();
 
             Assert.AreEqual(0x100, Proc.PC);
+
+            Assert.AreEqual(Proc.PPU.LCDC, 0x91);
+            Assert.AreEqual(Proc.PPU.BGP, 0xFC);
+            Assert.AreEqual(Proc.PPU.SCY, 0);
+        }
+
+        [Test]
+        public void GPUBoot()
+        {
+            BootBase Proc = new BootBase(BootBase.LoadBootROM(), LoadGameROM().ToList());
+
+            Assert.AreEqual(Proc.PPU.LCDC, 0);
+            Assert.AreEqual(Proc.PPU.BGP, 0);
+            Assert.AreEqual(Proc.PPU.SCY, 0);
+
+            //Happy location where we check the value of 0xff44
+            while (Proc.PC != 0x64)
+                Proc.DoNextOP();
+
+            while (Proc.PC != 0x100)
+                Proc.DoNextOP();
+
+            Assert.AreEqual(0x100, Proc.PC);
+
+            Assert.AreEqual(Proc.PPU.LCDC, 0x91);
+            Assert.AreEqual(Proc.PPU.BGP, 0xFC);
+            Assert.AreEqual(Proc.PPU.SCY, 0);
         }
     }
 }

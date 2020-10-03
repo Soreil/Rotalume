@@ -17,8 +17,9 @@
         public byte DMA; //FF46
 
         public byte LCDC; //FF40
+        byte STAT; //FF41
 
-        ushort TileMapDisplaySelect => (LCDC.GetBit(6)) ? 0x9C00 : 0x9800;
+        ushort TileMapDisplaySelect => LCDC.GetBit(6) ? 0x9C00 : 0x9800;
         ushort BGAndWindowTileDataSelect => LCDC.GetBit(4) ? 0x8000 : 0x8800;
         ushort BGTileMapDisplaySelect => LCDC.GetBit(3) ? 0x9c00 : 0x9800;
         int SpriteHeight => LCDC.GetBit(2) ? 16 : 8;
@@ -27,7 +28,6 @@
         private bool OBJDisplayEnable() => LCDC.GetBit(1);
         private bool BGOrWindowDisplayOrPriority() => LCDC.GetBit(0);
 
-        byte STAT; //FF41
         private Mode Mode
         {
             get => (Mode)(STAT & 0x03);
@@ -36,9 +36,6 @@
 
         public readonly int TimePPUWasStarted;
         public int TimeSince;
-        public void Run(int Clock)
-        {
-        }
 
         const int ScanlinesPerFrame = 154;
         const int TicksPerScanline = 456;

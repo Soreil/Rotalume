@@ -14,9 +14,9 @@ namespace generator
             get => _bootROMActive();
         }
 
-        public record Range(int begin, int end, Func<int, bool> exists);
-        public record GetRange(int begin, int end, Func<int, byte> at, Func<int, bool> exists);
-        public record SetRange(int begin, int end, Action<int, byte> at, Func<int, bool> exists);
+        public abstract record Range(int Begin, int End, Func<int, bool> Exists);
+        public record GetRange(int Begin, int End, Func<int, bool> Exists, Func<int, byte> At) : Range(Begin, End, Exists);
+        public record SetRange(int Begin, int End, Func<int, bool> Exists, Action<int, byte> At) : Range(Begin, End, Exists);
 
         public List<GetRange> getRanges = new List<GetRange>();
         public List<SetRange> setRanges = new List<SetRange>();
@@ -25,7 +25,7 @@ namespace generator
         {
             get
             {
-                var possible = getRanges.Where((x) => x.begin <= at && x.end < at && x.exists != null && x.exists(at));
+                var possible = getRanges.Where((x) => x.Begin <= at && x.End > at && x.Exists != null && x.Exists(at));
 
                 if (BootROMActive && at < 0x100)
                     return bootROM[at];
@@ -34,20 +34,20 @@ namespace generator
                 {
                     if (possible.Count() > 1) throw new Exception("Can't have overlapping ranges; ambiguous!");
                     var chosen = possible.First();
-                    return chosen.at(at);
+                    return chosen.At(at);
                 }
                 else return _mem[at];
             }
 
             set
             {
-                var possible = setRanges.Where((x) => x.begin <= at && x.end < at && x.exists != null && x.exists(at));
+                var possible = setRanges.Where((x) => x.Begin <= at && x.End > at && x.Exists != null && x.Exists(at));
 
                 if (possible.Any())
                 {
                     if (possible.Count() > 1) throw new Exception("Can't have overlapping ranges; ambiguous!");
                     var chosen = possible.First();
-                    chosen.at(at, value);
+                    chosen.At(at, value);
                 }
                 else _mem[at] = value;
             }

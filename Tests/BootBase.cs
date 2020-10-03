@@ -40,7 +40,7 @@ namespace Tests
         public Decoder dec;
 
         public PPU PPU;
-        ControlRegister controlRegisters = new ControlRegister(0xff00,0x80);
+        ControlRegister controlRegisters = new ControlRegister(0xff00, 0x80);
 
         public BootBase(List<byte> l) : this(new List<byte>(), l)
         {
@@ -78,7 +78,7 @@ namespace Tests
 
             controlRegisters.Writer[0x50] += BootROMFlagController;
             controlRegisters.Reader[0x50] += ReadBootROMFlag;
-            
+
             controlRegisters.Writer[0x40] += LCDControlController;
             controlRegisters.Reader[0x40] += ReadLCDControl;
             controlRegisters.Writer[0x42] += ScrollYController;
@@ -98,6 +98,9 @@ namespace Tests
 
             dec = decoder;
             PPU = new PPU();
+
+            dec.Storage.setRanges.Add(new MMU.SetRange(controlRegisters.Start, controlRegisters.Start + controlRegisters.Size, controlRegisters.ContainsWriter, (x, v) => controlRegisters[x] = v));
+            dec.Storage.getRanges.Add(new MMU.GetRange(controlRegisters.Start, controlRegisters.Start + controlRegisters.Size, controlRegisters.ContainsReader, (x) => controlRegisters[x]));
         }
         public void DoNextOP()
         {
