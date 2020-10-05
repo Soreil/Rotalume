@@ -1,4 +1,7 @@
-﻿namespace generator
+﻿using System;
+using System.Diagnostics;
+
+namespace generator
 {
     public class PPU
     {
@@ -23,10 +26,10 @@
         ushort BGAndWindowTileDataSelect => LCDC.GetBit(4) ? 0x8000 : 0x8800;
         ushort BGTileMapDisplaySelect => LCDC.GetBit(3) ? 0x9c00 : 0x9800;
         int SpriteHeight => LCDC.GetBit(2) ? 16 : 8;
-        private bool LCDEnable() => LCDC.GetBit(7);
-        private bool WindowDisplayEnable() => LCDC.GetBit(5);
-        private bool OBJDisplayEnable() => LCDC.GetBit(1);
-        private bool BGOrWindowDisplayOrPriority() => LCDC.GetBit(0);
+        public bool LCDEnable => LCDC.GetBit(7);
+        bool WindowDisplayEnable => LCDC.GetBit(5);
+        bool OBJDisplayEnable => LCDC.GetBit(1);
+        bool BGOrWindowDisplayOrPriority => LCDC.GetBit(0);
 
         private Mode Mode
         {
@@ -34,15 +37,66 @@
             set => STAT = (byte)(STAT & 0xFC | (int)value & 0x3);
         }
 
-        public readonly int TimePPUWasStarted;
+        public int TimePPUWasStarted;
         public int TimeSince;
+        public int TimeUntilWhichToPause;
 
-        const int ScanlinesPerFrame = 154;
+        const int DrawlinesPerFrame = 144;
+        const int ScanlinesPerFrame = DrawlinesPerFrame+10;
+        
         const int TicksPerScanline = 456;
         const int TicksPerFrame = ScanlinesPerFrame * TicksPerScanline;
-
         int clocksInFrame => TimeSince % TicksPerFrame;
         int line => clocksInFrame / TicksPerScanline;
         int clockInScanline => clocksInFrame % TicksPerScanline;
+
+        public void DoPPU(int currentTime)
+        {
+            if (LCDEnable && TimePPUWasStarted == 0)
+            {
+                TimePPUWasStarted = currentTime;
+                Mode = Mode.OAMSearch;
+                return;
+            }
+            else if (!LCDEnable)
+            {
+                TimePPUWasStarted = 0;
+                return;
+            }
+
+            var delta = (currentTime - TimePPUWasStarted) - TimeSince;
+            Step(delta);
+        }
+
+        private void Step(int delta)
+        {
+            var newTime = TimeSince + delta;
+            if (newTime > TimeUntilWhichToPause)
+            {
+                var oldMode = Mode;
+
+                Execute(oldMode);
+
+                Mode newMode;
+                if (!(line == DrawlinesPerFrame && oldMode == Mode.HBlank))
+                {
+                    newMode = oldMode switch
+                    {
+                        Mode.OAMSearch => Mode.Transfer,
+                        Mode.Transfer => Mode.HBlank,
+                        Mode.HBlank => Mode.OAMSearch,
+                        Mode.VBlank => Mode.OAMSearch,
+                        _ => throw new NotImplementedException(),
+                    };
+                }
+                else newMode = Mode.VBlank;
+            }
+            TimeSince = newTime;
+        }
+
+        private void Execute(Mode oldMode)
+        {
+            if (oldMode == Mode.OAMSearch) throw new Exception("lol");
+        }
     }
 }

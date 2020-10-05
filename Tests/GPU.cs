@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 
 using NUnit.Framework;
@@ -14,7 +15,7 @@ namespace Tests
         [Ignore("No GPU yet")]
         public void DoBootGPU()
         {
-        BootBase Proc = new BootBase(BootBase.LoadBootROM(), LoadGameROM().ToList());
+            BootBase Proc = new BootBase(BootBase.LoadBootROM(), LoadGameROM().ToList());
             while (Proc.PC != 0x1d)
                 Proc.DoNextOP();
             while (Proc.PC != 0x28)
@@ -70,6 +71,7 @@ namespace Tests
         public void GPUBoot()
         {
             BootBase Proc = new BootBase(BootBase.LoadBootROM(), LoadGameROM().ToList());
+            var step = Stepper(Proc);
 
             Assert.AreEqual(Proc.PPU.LCDC, 0);
             Assert.AreEqual(Proc.PPU.BGP, 0);
@@ -77,16 +79,25 @@ namespace Tests
 
             //Happy location where we check the value of 0xff44
             while (Proc.PC != 0x64)
-                Proc.DoNextOP();
+                step();
 
             while (Proc.PC != 0x100)
-                Proc.DoNextOP();
+                step();
 
             Assert.AreEqual(0x100, Proc.PC);
 
             Assert.AreEqual(Proc.PPU.LCDC, 0x91);
             Assert.AreEqual(Proc.PPU.BGP, 0xFC);
             Assert.AreEqual(Proc.PPU.SCY, 0);
+        }
+
+        private static Action Stepper(BootBase b)
+        {
+            return () =>
+            {
+                b.DoNextOP();
+                b.DoPPU(b.Clock);
+            };
         }
     }
 }
