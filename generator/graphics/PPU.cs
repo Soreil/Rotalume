@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 
 namespace generator
 {
@@ -37,6 +36,12 @@ namespace generator
             set => STAT = (byte)(STAT & 0xFC | (int)value & 0x3);
         }
 
+        private bool LYCInterrupt
+        {
+            get => STAT.GetBit(2);
+            set => STAT.SetBit(2, value);
+        }
+
         public int TimePPUWasStarted;
         public int TimeSince;
         public int TimeUntilWhichToPause;
@@ -49,7 +54,7 @@ namespace generator
         int clocksInFrame => TimeSince % TicksPerFrame;
         int line => clocksInFrame / TicksPerScanline;
         int clockInScanline => clocksInFrame % TicksPerScanline;
-
+        public int FramesDrawn = 0;
         public void DoPPU(int currentTime)
         {
             if (LCDEnable && TimePPUWasStarted == 0)
@@ -70,17 +75,18 @@ namespace generator
 
         private void Step(int delta)
         {
+            LY = (byte)(line % ScanlinesPerFrame);
+            LYCInterrupt = LY == LYC;
+
             var newTime = TimeSince + delta;
             if (newTime > TimeUntilWhichToPause)
             {
-                var oldMode = Mode;
-
                 SetNewClockTarget();
 
                 Mode newMode;
-                if (!(line == DrawlinesPerFrame && oldMode == Mode.HBlank))
+                if (!(line == DrawlinesPerFrame && Mode == Mode.HBlank))
                 {
-                    newMode = oldMode switch
+                    newMode = Mode switch
                     {
                         Mode.OAMSearch => Mode.Transfer,
                         Mode.Transfer => Mode.HBlank,
@@ -89,7 +95,11 @@ namespace generator
                         _ => throw new NotImplementedException(),
                     };
                 }
-                else newMode = Mode.VBlank;
+                else
+                {
+                    newMode = Mode.VBlank;
+                    FramesDrawn++;
+                }
                 Mode = newMode;
             }
             TimeSince = newTime;

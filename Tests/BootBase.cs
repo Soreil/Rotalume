@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 using generator;
 
@@ -104,10 +103,7 @@ namespace Tests
             dec.Storage.getRanges.Add(new MMU.GetRange(controlRegisters.Start, controlRegisters.Start + controlRegisters.Size, controlRegisters.ContainsReader, (x) => controlRegisters[x]));
         }
 
-        internal void DoPPU(int time)
-        {
-            PPU.DoPPU(time);
-        }
+        internal void DoPPU(int time) => PPU.DoPPU(time);
 
         public void DoNextOP()
         {
