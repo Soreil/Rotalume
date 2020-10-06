@@ -42,8 +42,8 @@ namespace generator
         public int TimeUntilWhichToPause;
 
         const int DrawlinesPerFrame = 144;
-        const int ScanlinesPerFrame = DrawlinesPerFrame+10;
-        
+        const int ScanlinesPerFrame = DrawlinesPerFrame + 10;
+
         const int TicksPerScanline = 456;
         const int TicksPerFrame = ScanlinesPerFrame * TicksPerScanline;
         int clocksInFrame => TimeSince % TicksPerFrame;
@@ -75,7 +75,7 @@ namespace generator
             {
                 var oldMode = Mode;
 
-                Execute(oldMode);
+                SetNewClockTarget();
 
                 Mode newMode;
                 if (!(line == DrawlinesPerFrame && oldMode == Mode.HBlank))
@@ -85,18 +85,23 @@ namespace generator
                         Mode.OAMSearch => Mode.Transfer,
                         Mode.Transfer => Mode.HBlank,
                         Mode.HBlank => Mode.OAMSearch,
-                        Mode.VBlank => Mode.OAMSearch,
+                        Mode.VBlank => Mode.OAMSearch, //This isn't great, we should handle VBlank a line at a time instead of a block
                         _ => throw new NotImplementedException(),
                     };
                 }
                 else newMode = Mode.VBlank;
+                Mode = newMode;
             }
             TimeSince = newTime;
         }
 
-        private void Execute(Mode oldMode)
+        private void SetNewClockTarget() => TimeUntilWhichToPause += Mode switch
         {
-            if (oldMode == Mode.OAMSearch) throw new Exception("lol");
-        }
+            Mode.OAMSearch => 80,
+            Mode.Transfer => 172, //Transfer can take longer than this, what matters is that  transfer and hblank add up to be 376
+            Mode.HBlank => 204, //HBlank can take shorter than this
+            Mode.VBlank => 4560, //
+            _ => throw new NotImplementedException(),
+        };
     }
 }
