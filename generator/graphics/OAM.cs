@@ -12,8 +12,8 @@ namespace generator
         private SpriteAttributes Entry(int n) => new SpriteAttributes(mem[n * 4], mem[n * 4 + 1], mem[n * 4 + 2], mem[n * 4 + 3]);
         private IEnumerable<SpriteAttributes> Entries()
         {
-            List<SpriteAttributes> res = new List<SpriteAttributes>(40);
-            for (int i = 0; i < 40; i++)
+            List<SpriteAttributes> res = new List<SpriteAttributes>(mem.Length / 4);
+            for (int i = 0; i < res.Count; i++)
                 res[i] = Entry(i);
             return res;
         }
@@ -23,6 +23,8 @@ namespace generator
             set => mem[n] = value;
         }
 
-        public List<SpriteAttributes> SpritesOnLine(int line) => Entries().Where(x => x.X == line).ToList();
+        const int maxSpritesOnLine = 10;
+
+        public List<SpriteAttributes> SpritesOnLine(int line) => Entries().Where(x => x.X == line).Take(maxSpritesOnLine).ToList();
     }
 }
