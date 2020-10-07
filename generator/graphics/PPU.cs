@@ -57,52 +57,68 @@ namespace generator
         public int FramesDrawn = 0;
         public void DoPPU(int currentTime)
         {
-            if (LCDEnable && TimePPUWasStarted == 0)
+            if (ScreenJustTurnedOn())
             {
-                TimePPUWasStarted = currentTime;
-                Mode = Mode.OAMSearch;
-                return;
+                ReInitialize(currentTime);
             }
             else if (!LCDEnable)
             {
-                TimePPUWasStarted = 0;
-                return;
+                TimePPUWasStarted = 0; //We only have to do this at the moment the screen is turned off, might be good to handle it in the write call to LCDC?
             }
+            else
+            {
+                var delta = currentTime - TimePPUWasStarted - TimeSince;
+                Step(delta);
+            }
+        }
 
-            var delta = (currentTime - TimePPUWasStarted) - TimeSince;
-            Step(delta);
+        private bool ScreenJustTurnedOn() => LCDEnable && TimePPUWasStarted == 0;
+
+        private void ReInitialize(int currentTime)
+        {
+            TimePPUWasStarted = currentTime;
+            Mode = Mode.OAMSearch;
         }
 
         private void Step(int delta)
         {
-            LY = (byte)(line % ScanlinesPerFrame);
-            LYCInterrupt = LY == LYC;
+            UpdateLineRegister();
 
             var newTime = TimeSince + delta;
             if (newTime > TimeUntilWhichToPause)
             {
                 SetNewClockTarget();
-
-                Mode newMode;
-                if (!(line == DrawlinesPerFrame && Mode == Mode.HBlank))
-                {
-                    newMode = Mode switch
-                    {
-                        Mode.OAMSearch => Mode.Transfer,
-                        Mode.Transfer => Mode.HBlank,
-                        Mode.HBlank => Mode.OAMSearch,
-                        Mode.VBlank => Mode.OAMSearch, //This isn't great, we should handle VBlank a line at a time instead of a block
-                        _ => throw new NotImplementedException(),
-                    };
-                }
-                else
-                {
-                    newMode = Mode.VBlank;
-                    FramesDrawn++;
-                }
-                Mode = newMode;
+                IncrementMode();
             }
             TimeSince = newTime;
+        }
+
+        private void IncrementMode()
+        {
+            Mode newMode;
+            if (!(line == DrawlinesPerFrame && Mode == Mode.HBlank))
+            {
+                newMode = Mode switch
+                {
+                    Mode.OAMSearch => Mode.Transfer,
+                    Mode.Transfer => Mode.HBlank,
+                    Mode.HBlank => Mode.OAMSearch,
+                    Mode.VBlank => Mode.OAMSearch, //This isn't great, we should handle VBlank a line at a time instead of a block
+                    _ => throw new NotImplementedException(),
+                };
+            }
+            else
+            {
+                newMode = Mode.VBlank;
+                FramesDrawn++;
+            }
+            Mode = newMode;
+        }
+
+        private void UpdateLineRegister()
+        {
+            LY = (byte)(line % ScanlinesPerFrame);
+            LYCInterrupt = LY == LYC;
         }
 
         private void SetNewClockTarget() => TimeUntilWhichToPause += Mode switch
