@@ -57,19 +57,9 @@ namespace generator
         public int FramesDrawn = 0;
         public void DoPPU(int currentTime)
         {
-            if (ScreenJustTurnedOn())
-            {
-                ReInitialize(currentTime);
-            }
-            else if (!LCDEnable)
-            {
-                TimePPUWasStarted = 0; //We only have to do this at the moment the screen is turned off, might be good to handle it in the write call to LCDC?
-            }
-            else
-            {
-                var delta = currentTime - TimePPUWasStarted - TimeSince;
-                Step(delta);
-            }
+            if (ScreenJustTurnedOn()) ReInitialize(currentTime);
+            else if (!LCDEnable) TimePPUWasStarted = 0; //We only have to do this at the moment the screen is turned off, might be good to handle it in the write call to LCDC?
+            else Step(currentTime);
         }
 
         private bool ScreenJustTurnedOn() => LCDEnable && TimePPUWasStarted == 0;
@@ -80,25 +70,22 @@ namespace generator
             Mode = Mode.OAMSearch;
         }
 
-        private void Step(int delta)
+        private void Step(int currentTime)
         {
-            UpdateLineRegister();
-
-            var newTime = TimeSince + delta;
-            if (newTime > TimeUntilWhichToPause)
+            if (currentTime > TimeUntilWhichToPause)
             {
+                UpdateLineRegister();
                 SetNewClockTarget();
                 IncrementMode();
             }
-            TimeSince = newTime;
+            TimeSince = currentTime;
         }
 
         private void IncrementMode()
         {
-            Mode newMode;
-            if (!(line == DrawlinesPerFrame && Mode == Mode.HBlank))
+            if (!FinalStageOfFinalPrintedLine())
             {
-                newMode = Mode switch
+                Mode = Mode switch
                 {
                     Mode.OAMSearch => Mode.Transfer,
                     Mode.Transfer => Mode.HBlank,
@@ -109,11 +96,12 @@ namespace generator
             }
             else
             {
-                newMode = Mode.VBlank;
+                Mode = Mode.VBlank;
                 FramesDrawn++;
             }
-            Mode = newMode;
         }
+
+        private bool FinalStageOfFinalPrintedLine() => (line == DrawlinesPerFrame && Mode == Mode.HBlank);
 
         private void UpdateLineRegister()
         {
