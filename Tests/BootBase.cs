@@ -63,7 +63,7 @@ namespace Tests
 
             ReadBootROMFlag = () => bootROMField;
 
-            LCDControlController = (byte b) => PPU.LCDC = b;
+            LCDControlController = (byte b) => PPU.SetLCDC(b);
             ReadLCDControl = () => PPU.LCDC;
 
             ScrollYController = (byte b) => PPU.SCY = b;
@@ -97,13 +97,13 @@ namespace Tests
             var decoder = new Decoder(Read, bootROM, gameROM, GetProgramCounter, SetProgramCounter, IncrementClock, () => bootROMActive);
 
             dec = decoder;
-            PPU = new PPU();
+            PPU = new PPU(() => Clock);
 
             dec.Storage.setRanges.Add(new MMU.SetRange(controlRegisters.Start, controlRegisters.Start + controlRegisters.Size, controlRegisters.ContainsWriter, (x, v) => controlRegisters[x] = v));
             dec.Storage.getRanges.Add(new MMU.GetRange(controlRegisters.Start, controlRegisters.Start + controlRegisters.Size, controlRegisters.ContainsReader, (x) => controlRegisters[x]));
         }
 
-        internal void DoPPU(int time) => PPU.DoPPU(time);
+        internal void DoPPU(int time) => PPU.Do();
 
         public void DoNextOP()
         {

@@ -10,7 +10,7 @@ namespace Tests
     {
         public static byte[] LoadGameROM() => File.ReadAllBytes(@"..\..\..\rom\Tetris (World) (Rev A).gb");
 
-        private BootBase Proc = new BootBase(BootBase.LoadBootROM(), LoadGameROM().ToList());
+        private readonly BootBase Proc = new BootBase(BootBase.LoadBootROM(), LoadGameROM().ToList());
 
         [Test]
         public void DoBootNoGPU()
