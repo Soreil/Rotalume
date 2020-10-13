@@ -96,7 +96,7 @@ namespace Tests
             return () =>
             {
                 b.DoNextOP();
-                b.DoPPU(b.Clock);
+                b.DoPPU();
             };
         }
     }

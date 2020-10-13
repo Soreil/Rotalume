@@ -31,6 +31,10 @@ namespace generator
         public void Render()
         {
             var currentTime = Clock();
+
+            if (PPU.Mode == Mode.OAMSearch)
+                PPU.OAM.SpritesOnLine(PPU.LY);
+
             if (currentTime > TimeUntilWhichToPause)
             {
                 UpdateLineRegister();

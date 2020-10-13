@@ -103,7 +103,7 @@ namespace Tests
             dec.Storage.getRanges.Add(new MMU.GetRange(controlRegisters.Start, controlRegisters.Start + controlRegisters.Size, controlRegisters.ContainsReader, (x) => controlRegisters[x]));
         }
 
-        internal void DoPPU(int time) => PPU.Do();
+        internal void DoPPU() => PPU.Do();
 
         public void DoNextOP()
         {

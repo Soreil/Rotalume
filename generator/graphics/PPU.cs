@@ -8,7 +8,10 @@ namespace generator
         public PPU(Func<int> clock)
         {
             Clock = clock;
+            OAM = new OAM();
         }
+
+        public readonly OAM OAM;
 
         //FF40 - FF4B, PPU control registers
         public byte SCY; //FF42

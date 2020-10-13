@@ -25,29 +25,25 @@ namespace generator
         {
             get
             {
-                var possible = getRanges.Where((x) => x.Begin <= at && x.End > at && x.Exists != null && x.Exists(at));
+                var possible = getRanges.FirstOrDefault((x) => x.Begin <= at && x.End > at && x.Exists != null && x.Exists(at));
 
                 if (BootROMActive && at < 0x100)
                     return bootROM[at];
 
-                if (possible.Any())
+                if (possible != null)
                 {
-                    if (possible.Count() > 1) throw new Exception("Can't have overlapping ranges; ambiguous!");
-                    var chosen = possible.First();
-                    return chosen.At(at);
+                    return possible.At(at);
                 }
                 else return _mem[at];
             }
 
             set
             {
-                var possible = setRanges.Where((x) => x.Begin <= at && x.End > at && x.Exists != null && x.Exists(at));
+                var possible = setRanges.FirstOrDefault((x) => x.Begin <= at && x.End > at && x.Exists != null && x.Exists(at));
 
-                if (possible.Any())
+                if (possible != null)
                 {
-                    if (possible.Count() > 1) throw new Exception("Can't have overlapping ranges; ambiguous!");
-                    var chosen = possible.First();
-                    chosen.At(at, value);
+                    possible.At(at, value);
                 }
                 else _mem[at] = value;
             }
