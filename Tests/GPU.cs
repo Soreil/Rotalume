@@ -13,7 +13,7 @@ namespace Tests
 
 
         [Ignore("No GPU yet")]
-        public void DoBootGPU()
+        public static void DoBootGPU()
         {
             BootBase Proc = new BootBase(BootBase.LoadBootROM(), LoadGameROM().ToList());
             while (Proc.PC != 0x1d)
@@ -73,8 +73,11 @@ namespace Tests
             BootBase Proc = new BootBase(BootBase.LoadBootROM(), LoadGameROM().ToList());
             var step = Stepper(Proc);
 
+            //LCD is off
             Assert.AreEqual(Proc.PPU.LCDC, 0);
+            //No palette
             Assert.AreEqual(Proc.PPU.BGP, 0);
+            //No scroll
             Assert.AreEqual(Proc.PPU.SCY, 0);
 
             //Happy location where we check the value of 0xff44
@@ -86,8 +89,11 @@ namespace Tests
 
             Assert.AreEqual(0x100, Proc.PC);
 
+            //LCD is on and a layer is being drawn
             Assert.AreEqual(Proc.PPU.LCDC, 0x91);
+            //Palette has a value so we can see white and black
             Assert.AreEqual(Proc.PPU.BGP, 0xFC);
+            //We have scrolled to the top of the screen
             Assert.AreEqual(Proc.PPU.SCY, 0);
         }
 

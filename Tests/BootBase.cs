@@ -14,23 +14,18 @@ namespace Tests
 
         bool bootROMActive = true;
         private byte bootROMField = 0;
-        ControlRegister.Write BootROMFlagController;
-        ControlRegister.Read ReadBootROMFlag;
-
-        ControlRegister.Write LCDControlController;
-        ControlRegister.Read ReadLCDControl;
-
-        ControlRegister.Write ScrollYController;
-        ControlRegister.Read ReadScrollY;
-
-        ControlRegister.Write ScrollXController;
-        ControlRegister.Read ReadScrollX;
-
-        ControlRegister.Write LCDLineController;
-        ControlRegister.Read ReadLine;
-
-        ControlRegister.Write PaletteController;
-        ControlRegister.Read ReadPalette;
+        readonly ControlRegister.Write BootROMFlagController;
+        readonly ControlRegister.Read ReadBootROMFlag;
+        readonly ControlRegister.Write LCDControlController;
+        readonly ControlRegister.Read ReadLCDControl;
+        readonly ControlRegister.Write ScrollYController;
+        readonly ControlRegister.Read ReadScrollY;
+        readonly ControlRegister.Write ScrollXController;
+        readonly ControlRegister.Read ReadScrollX;
+        readonly ControlRegister.Write LCDLineController;
+        readonly ControlRegister.Read ReadLine;
+        readonly ControlRegister.Write PaletteController;
+        readonly ControlRegister.Read ReadPalette;
 
         public int Clock;
         public Action<int> IncrementClock;
@@ -40,7 +35,7 @@ namespace Tests
         public Decoder dec;
 
         public PPU PPU;
-        ControlRegister controlRegisters = new ControlRegister(0xff00, 0x80);
+        readonly ControlRegister controlRegisters = new ControlRegister(0xff00, 0x80);
 
         public BootBase(List<byte> l) : this(new List<byte>(), l)
         {

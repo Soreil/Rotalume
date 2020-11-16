@@ -14,12 +14,12 @@ namespace generator
 
         const int TicksPerScanline = 456;
         const int TicksPerFrame = ScanlinesPerFrame * TicksPerScanline;
-        int clocksInFrame => Clock() % TicksPerFrame;
-        int line => clocksInFrame / TicksPerScanline;
-        int clockInScanline => clocksInFrame % TicksPerScanline;
+        int ClocksInFrame => Clock() % TicksPerFrame;
+        int Line => ClocksInFrame / TicksPerScanline;
+        int ClockInScanline => ClocksInFrame % TicksPerScanline;
         private void UpdateLineRegister()
         {
-            PPU.LY = (byte)(line % ScanlinesPerFrame);
+            PPU.LY = (byte)(Line % ScanlinesPerFrame);
             PPU.LYCInterrupt = PPU.LY == PPU.LYC;
         }
 
@@ -30,7 +30,7 @@ namespace generator
             Clock = () => ppu.Clock() - startTime;
         }
 
-        public List<SpriteAttributes> SpriteAttributes;
+        public List<SpriteAttributes> SpriteAttributes = new();
 
         public void Render()
         {
@@ -88,7 +88,7 @@ namespace generator
             }
         }
 
-        private bool FinalStageOfFinalPrintedLine() => (line == DrawlinesPerFrame && PPU.Mode == Mode.HBlank);
+        private bool FinalStageOfFinalPrintedLine() => (Line == DrawlinesPerFrame && PPU.Mode == Mode.HBlank);
 
         private void SetNewClockTarget() => TimeUntilWhichToPause += PPU.Mode switch
         {

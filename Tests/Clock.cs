@@ -8,8 +8,7 @@ namespace Tests
 {
     class Clock
     {
-
-        List<Unprefixed> illegalOps = new List<Unprefixed> {Unprefixed.PREFIX,Unprefixed.ILLEGAL_D3,Unprefixed.ILLEGAL_DB,Unprefixed.ILLEGAL_DD,Unprefixed.ILLEGAL_E3,
+        readonly List<Unprefixed> illegalOps = new List<Unprefixed> {Unprefixed.PREFIX,Unprefixed.ILLEGAL_D3,Unprefixed.ILLEGAL_DB,Unprefixed.ILLEGAL_DD,Unprefixed.ILLEGAL_E3,
             Unprefixed.ILLEGAL_E4,Unprefixed.ILLEGAL_EB, Unprefixed.ILLEGAL_EC,Unprefixed.ILLEGAL_ED,Unprefixed.ILLEGAL_F4,Unprefixed.ILLEGAL_FC,Unprefixed.ILLEGAL_FD,
         Unprefixed.STOP,Unprefixed.HALT};
 
