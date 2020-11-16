@@ -9,16 +9,18 @@ namespace generator
         {
             Clock = clock;
             OAM = new OAM();
+            VRAM = new VRAM();
         }
 
         public readonly OAM OAM;
+        public readonly VRAM VRAM;
 
         //FF40 - FF4B, PPU control registers
         public byte SCY; //FF42
         public byte SCX; //FF43
         public byte LY; //FF44
         public byte LYC; //FF45
-        public byte WV; //FF4A
+        public byte WY; //FF4A
         public byte WX; //FF4B
 
         public byte BGP; //FF47
@@ -30,14 +32,14 @@ namespace generator
         public byte LCDC; //FF40
         byte STAT; //FF41
 
-        ushort TileMapDisplaySelect => LCDC.GetBit(6) ? 0x9C00 : 0x9800;
-        ushort BGAndWindowTileDataSelect => LCDC.GetBit(4) ? 0x8000 : 0x8800;
-        ushort BGTileMapDisplaySelect => LCDC.GetBit(3) ? 0x9c00 : 0x9800;
-        int SpriteHeight => LCDC.GetBit(2) ? 16 : 8;
+        public ushort TileMapDisplaySelect => LCDC.GetBit(6) ? 0x9C00 : 0x9800;
+        public ushort BGAndWindowTileDataSelect => LCDC.GetBit(4) ? 0x8000 : 0x8800;
+        public ushort BGTileMapDisplaySelect => LCDC.GetBit(3) ? 0x9c00 : 0x9800;
+        public int SpriteHeight => LCDC.GetBit(2) ? 16 : 8;
         public bool LCDEnable => LCDC.GetBit(7);
-        bool WindowDisplayEnable => LCDC.GetBit(5);
-        bool OBJDisplayEnable => LCDC.GetBit(1);
-        bool BGOrWindowDisplayOrPriority => LCDC.GetBit(0);
+        public bool WindowDisplayEnable => LCDC.GetBit(5);
+        public bool OBJDisplayEnable => LCDC.GetBit(1);
+        public bool BGOrWindowDisplayOrPriority => LCDC.GetBit(0);
 
         public Mode Mode
         {

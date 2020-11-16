@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace generator
 {
@@ -28,12 +29,17 @@ namespace generator
             var startTime = PPU.Clock();
             Clock = () => ppu.Clock() - startTime;
         }
+
+        public List<SpriteAttributes> SpriteAttributes;
+
         public void Render()
         {
             var currentTime = Clock();
 
             if (PPU.Mode == Mode.OAMSearch)
-                PPU.OAM.SpritesOnLine(PPU.LY);
+                SpriteAttributes = PPU.OAM.SpritesOnLine(PPU.LY);
+            if (PPU.Mode == Mode.Transfer)
+                Draw();
 
             if (currentTime > TimeUntilWhichToPause)
             {
@@ -42,6 +48,27 @@ namespace generator
                 IncrementMode();
             }
         }
+
+        private void Draw()
+        {
+            int totalCycles = 0;
+
+            GetTile();
+        }
+
+        private void GetTile()
+        {
+            for (int tile = 0; tile < 20; tile++)
+            {
+                var x = ((PPU.SCX / 8) + tile * 8) & 0x1f; //Not sure if we need the *8
+                var y = (PPU.LY + PPU.SCY) & 0xff;
+
+                var tilemap = PPU.BGAndWindowTileDataSelect;
+                var tileDataLow = PPU.VRAM[tilemap + tile * 2];
+                var tileDataHigh = PPU.VRAM[tilemap + tile * 2 + 1];
+            }
+        }
+
         private void IncrementMode()
         {
             if (!FinalStageOfFinalPrintedLine())
