@@ -95,7 +95,7 @@ namespace generator
             Mode.OAMSearch => 80,
             Mode.Transfer => 172, //Transfer can take longer than this, what matters is that  transfer and hblank add up to be 376
             Mode.HBlank => 204, //HBlank can take shorter than this
-            Mode.VBlank => 4560, //
+            Mode.VBlank => TicksPerScanline, //We are going to blank every line since otherwise it would not increment the LY register in the current design
             _ => throw new NotImplementedException(),
         };
 

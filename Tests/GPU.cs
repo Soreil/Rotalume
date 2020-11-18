@@ -68,6 +68,25 @@ namespace Tests
         }
 
         [Test]
+        public void LineRegisterGetsIncrementedDuringVBlank()
+        {
+            BootBase Proc = new BootBase(BootBase.LoadBootROM(), LoadGameROM().ToList());
+            var step = Stepper(Proc);
+
+            var oldLY = Proc.PPU.LY;
+            while (Proc.PC != 0x100)
+            {
+                step();
+                if (Proc.PPU.LY != oldLY)
+                {
+                    if (oldLY >= 144 && oldLY != 153)
+                        Assert.Greater(Proc.PPU.LY, oldLY);
+                    oldLY = Proc.PPU.LY;
+                }
+            }
+        }
+
+        [Test]
         public void GPUBoot()
         {
             BootBase Proc = new BootBase(BootBase.LoadBootROM(), LoadGameROM().ToList());
