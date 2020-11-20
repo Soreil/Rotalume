@@ -85,6 +85,32 @@ namespace Tests
                 }
             }
         }
+        [Test]
+        public void ModeIsOnlyVBlankDuringVBlank()
+        {
+            BootBase Proc = new BootBase(BootBase.LoadBootROM(), LoadGameROM().ToList());
+            var step = Stepper(Proc);
+
+            while (Proc.PC != 0x100)
+            {
+                step();
+                if (Proc.PPU.LY < 144)
+                {
+                    try { Assert.AreNotEqual(generator.Mode.VBlank, Proc.PPU.Mode); }
+                    catch (AssertionException)
+                    {
+                        System.Diagnostics.Debugger.Break();
+                    }
+                }
+                else
+                    try { Assert.AreEqual(generator.Mode.VBlank, Proc.PPU.Mode); }
+                    catch (AssertionException)
+                    {
+                        System.Diagnostics.Debugger.Break();
+                    }
+
+            }
+        }
 
         [Test]
         public void GPUBoot()

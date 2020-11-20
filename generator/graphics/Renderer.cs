@@ -44,8 +44,8 @@ namespace generator
             if (currentTime > TimeUntilWhichToPause)
             {
                 UpdateLineRegister();
-                SetNewClockTarget();
                 IncrementMode();
+                SetNewClockTarget();
             }
         }
 
@@ -71,15 +71,15 @@ namespace generator
 
         private void IncrementMode()
         {
-            if (!FinalStageOfFinalPrintedLine())
+            if (!FinalStageOrVBlanking())
             {
                 PPU.Mode = PPU.Mode switch
                 {
                     Mode.OAMSearch => Mode.Transfer,
                     Mode.Transfer => Mode.HBlank,
                     Mode.HBlank => Mode.OAMSearch,
-                    Mode.VBlank => Mode.OAMSearch, //This isn't great, we should handle VBlank a line at a time instead of a block
-                    _ => throw new NotImplementedException(),
+                    Mode.VBlank => Mode.OAMSearch, //This should only ever be hit at the moment we wrap back to line zero.
+                    _ => throw new InvalidOperationException(),
                 };
             }
             else
@@ -88,7 +88,10 @@ namespace generator
             }
         }
 
+        //This currently doesn't work since the transition to the final draw line is when increment mode sees 143 for line count and HBlank for mode
+        //We are effectively updating a register for something which has already happened?
         private bool FinalStageOfFinalPrintedLine() => (Line == DrawlinesPerFrame && PPU.Mode == Mode.HBlank);
+        private bool FinalStageOrVBlanking() => FinalStageOfFinalPrintedLine() || Line > DrawlinesPerFrame;
 
         private void SetNewClockTarget() => TimeUntilWhichToPause += PPU.Mode switch
         {
