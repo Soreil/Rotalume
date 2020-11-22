@@ -7,7 +7,10 @@ namespace generator
     {
         private readonly byte[] mem;
 
-        public OAM() => mem = new byte[0xa0];
+        public const int Start = 0xFE00;
+        public const int Size = 0xa0;
+
+        public OAM() => mem = new byte[Size];
 
         private SpriteAttributes Entry(int n) => new SpriteAttributes(mem[n * 4], mem[n * 4 + 1], mem[n * 4 + 2], mem[n * 4 + 3]);
         private IEnumerable<SpriteAttributes> Entries()
@@ -25,6 +28,6 @@ namespace generator
 
         const int maxSpritesOnLine = 10;
 
-        public List<SpriteAttributes> SpritesOnLine(int line) => Entries().Where(x => x.X == line).Take(maxSpritesOnLine).ToList();
+        public List<SpriteAttributes> SpritesOnLine(int line) => Entries().Where(s => s.Y == line).Take(maxSpritesOnLine).ToList();
     }
 }

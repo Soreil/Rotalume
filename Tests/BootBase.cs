@@ -94,8 +94,28 @@ namespace Tests
             dec = decoder;
             PPU = new PPU(() => Clock);
 
-            dec.Storage.setRanges.Add(new MMU.SetRange(controlRegisters.Start, controlRegisters.Start + controlRegisters.Size, controlRegisters.ContainsWriter, (x, v) => controlRegisters[x] = v));
-            dec.Storage.getRanges.Add(new MMU.GetRange(controlRegisters.Start, controlRegisters.Start + controlRegisters.Size, controlRegisters.ContainsReader, (x) => controlRegisters[x]));
+            dec.Storage.setRanges.Add(new MMU.SetRange(
+                controlRegisters.Start,
+                controlRegisters.Start + controlRegisters.Size,
+                controlRegisters.ContainsWriter, (x, v) => controlRegisters[x] = v)
+                );
+            dec.Storage.getRanges.Add(new MMU.GetRange(
+                controlRegisters.Start,
+                controlRegisters.Start + controlRegisters.Size,
+                controlRegisters.ContainsReader, (x) => controlRegisters[x])
+                );
+            dec.Storage.setRanges.Add(new MMU.SetRange(
+                OAM.Start,
+                OAM.Start + OAM.Size,
+                x => true,
+                (at, v) => PPU.OAM[at] = v
+                ));
+            dec.Storage.getRanges.Add(new MMU.GetRange(
+                OAM.Start,
+                OAM.Start + OAM.Size,
+                x => true,
+                (at) => PPU.OAM[at]
+                ));
         }
 
         internal void DoPPU() => PPU.Do();

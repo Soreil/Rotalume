@@ -47,7 +47,6 @@ namespace Tests
         }
 
         [Test]
-
         public void GPUFieldsGetSetDuringBoot()
         {
             BootBase Proc = new BootBase(BootBase.LoadBootROM(), LoadGameROM().ToList());
