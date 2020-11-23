@@ -58,14 +58,27 @@ namespace generator
 
         private void GetTile()
         {
-            for (int tile = 0; tile < 20; tile++)
-            {
-                var x = ((PPU.SCX / 8) + tile * 8) & 0x1f; //Not sure if we need the *8
-                var y = (PPU.LY + PPU.SCY) & 0xff;
+            var yOffset = (PPU.LY + PPU.SCY) & 0xff;
 
-                var tilemap = PPU.BGAndWindowTileDataSelect;
-                var tileDataLow = PPU.VRAM[tilemap + tile * 2];
-                var tileDataHigh = PPU.VRAM[tilemap + tile * 2 + 1];
+            var tilemap = PPU.BGTileMapDisplaySelect; //This one has the background tiles, the other similar
+            for (int tileNumber = 0; tileNumber < 20; tileNumber++)
+            {
+                var xOffset = ((PPU.SCX / 8) + tileNumber) & 0x1f;
+                //named field has the sprite tiles. We don't need sprites for the logo
+
+                var currentTileIndex = PPU.VRAM[tilemap + xOffset + (yOffset * 4)];
+
+                var tileData = PPU.BGAndWindowTileDataSelect;
+
+                var at = tileData + (currentTileIndex * 16) + (yOffset % 8 * 2);
+
+                var tileDataLow = PPU.VRAM[at];
+                var tileDataHigh = PPU.VRAM[at + 1]; //This location is incorrect
+
+                if (tileDataLow + tileDataHigh != 0)
+                {
+                    System.Diagnostics.Debugger.Break();
+                }
             }
         }
 
