@@ -116,6 +116,18 @@ namespace Tests
                 x => true,
                 (at) => PPU.OAM[at]
                 ));
+            dec.Storage.setRanges.Add(new MMU.SetRange(
+                VRAM.Start,
+                VRAM.Start + VRAM.Size,
+                x => true,
+                (at, v) => PPU.VRAM[at] = v
+                ));
+            dec.Storage.getRanges.Add(new MMU.GetRange(
+                VRAM.Start,
+                VRAM.Start + VRAM.Size,
+                x => true,
+                (at) => PPU.VRAM[at]
+                ));
         }
 
         internal void DoPPU() => PPU.Do();
