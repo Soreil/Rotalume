@@ -5,12 +5,12 @@ using System.IO;
 
 namespace generator
 {
-    internal class Renderer
+    public class Renderer
     {
         readonly PPU PPU;
         readonly Func<int> Clock;
         public int TimeUntilWhichToPause;
-        readonly StreamWriter fs;
+        //readonly StreamWriter fs;
 
         const int DrawlinesPerFrame = 144;
         const int ScanlinesPerFrame = DrawlinesPerFrame + 10;
@@ -32,7 +32,7 @@ namespace generator
             var startTime = PPU.Clock();
             Clock = () => ppu.Clock() - startTime;
 
-            fs = new(@"screens.txt");
+            //fs = new(@"screens.txt");
         }
 
         public List<SpriteAttributes> SpriteAttributes = new();
@@ -58,18 +58,18 @@ namespace generator
         private void Draw()
         {
             var line = GetLine();
-            fs.Write(line);
-            fs.Write(' ');
-            fs.Write(PPU.LY);
-            fs.Write(' ');
-            fs.Write(ClocksInFrame);
-            fs.WriteLine();
+            //fs.Write(line);
+            //fs.Write(' ');
+            //fs.Write(PPU.LY);
+            //fs.Write(' ');
+            //fs.Write(ClocksInFrame);
+            //fs.WriteLine();
         }
         private string GetLine()
         {
             var palette = GetPalette();
 
-            var pixels = new Shade[160];
+            var pixels = new List<Shade>(160);
 
             var yOffset = (PPU.LY + PPU.SCY) & 0xff;
             var tilemap = PPU.BGTileMapDisplaySelect;
@@ -78,11 +78,17 @@ namespace generator
             {
                 var curPix = TilePixelLine(palette, yOffset, tilemap, tileNumber);
                 for (int cur = 0; cur < curPix.Length; cur++)
-                    pixels[tileNumber * curPix.Length + cur] = curPix[cur];
+                    pixels.Add(curPix[cur]);
             }
 
-            char[] ScreenLine = new char[160];
-            for (var p = 0; p < pixels.Length; p++)
+            var s = MakePrintableLine(pixels);
+            return s;
+        }
+
+        private static string MakePrintableLine(List<Shade> pixels)
+        {
+            char[] ScreenLine = new char[pixels.Count];
+            for (var p = 0; p < pixels.Count; p++)
             {
                 if (pixels[p] == Shade.White) ScreenLine[p] = '.';
                 else if (pixels[p] == Shade.Black) ScreenLine[p] = '#';
@@ -97,8 +103,15 @@ namespace generator
         {
             var xOffset = ((PPU.SCX / 8) + tileNumber) & 0x1f;
 
-            var currentTileIndex = PPU.VRAM[tilemap + xOffset + (yOffset * 4)]; //Background ID map is laid out as 32x32 tiles of size 8x8
+            var TileID = PPU.VRAM[tilemap + xOffset + (yOffset * 4)]; //Background ID map is laid out as 32x32 tiles of size 8x8
 
+            var pixels = GetTileLine(palette, yOffset, TileID);
+
+            return pixels;
+        }
+
+        private Shade[] GetTileLine(Shade[] palette, int yOffset, byte currentTileIndex)
+        {
             var tileData = PPU.BGAndWindowTileDataSelect;
 
             var pixels = new Shade[8];
@@ -122,7 +135,26 @@ namespace generator
             return pixels;
         }
 
-        private Shade[] GetPalette() => new Shade[4] {
+        public string GetTile(byte tileNumber)
+        {
+            var palette = GetPalette();
+
+            var lines = new List<List<Shade>>(8);
+            for (int y = 0; y < 8; y++)
+            {
+                var line = GetTileLine(palette, y, tileNumber);
+                lines.Add(new(line));
+            }
+
+            List<string> output = new();
+            foreach (var line in lines)
+            {
+                output.Add(MakePrintableLine(line));
+            }
+            return string.Join("\r\n", output);
+        }
+
+        public Shade[] GetPalette() => new Shade[4] {
                 PPU.BackgroundColor(0),
                 PPU.BackgroundColor(1),
                 PPU.BackgroundColor(2),
@@ -145,7 +177,7 @@ namespace generator
             else
             {
                 PPU.Mode = Mode.VBlank;
-                fs.WriteLine();
+                //fs.WriteLine();
             }
         }
 
