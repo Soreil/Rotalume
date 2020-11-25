@@ -32,6 +32,15 @@ namespace generator
         public byte LCDC; //FF40
         byte STAT; //FF41
 
+        public Shade BackgroundColor(int n) => n switch
+        {
+            0 => (Shade)((BGP & 0x3) >> 0),
+            1 => (Shade)((BGP & 0xC) >> 2),
+            2 => (Shade)((BGP & 0x30) >> 4),
+            3 => (Shade)((BGP & 0xC0) >> 6),
+            _ => throw new IndexOutOfRangeException()
+        };
+
         public ushort TileMapDisplaySelect => LCDC.GetBit(6) ? 0x9C00 : 0x9800;
         public ushort BGAndWindowTileDataSelect => LCDC.GetBit(4) ? 0x8000 : 0x8800;
         public ushort BGTileMapDisplaySelect => LCDC.GetBit(3) ? 0x9c00 : 0x9800;
