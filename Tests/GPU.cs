@@ -100,6 +100,44 @@ namespace Tests
         }
 
         [Test]
+        public void GPUTileDraw()
+        {
+            string expectedEmpty = @"........
+........
+........
+........
+........
+........
+........
+........";
+
+            BootBase Proc = new(BootBase.LoadBootROM(), LoadGameROM().ToList());
+            var step = Stepper(Proc);
+
+            //Run boot so the memory is fully populated
+            while (Proc.PC != 0x100)
+                step();
+
+            var render = new generator.Renderer(Proc.PPU);
+            var tile = render.GetTile(0);
+
+            Assert.AreEqual(expectedEmpty, tile);
+
+            string expectedCopyright = @"..####..
+.#....#.
+#.###..#
+#.#..#.#
+#.###..#
+#.#..#.#
+.#....#.
+..####..";
+
+            var copyrightTile = render.GetTile(25);
+
+            Assert.AreEqual(expectedCopyright, copyrightTile);
+        }
+
+        [Test]
         public void GPUBoot()
         {
             BootBase Proc = new BootBase(BootBase.LoadBootROM(), LoadGameROM().ToList());
