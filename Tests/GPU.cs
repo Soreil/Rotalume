@@ -105,6 +105,74 @@ namespace Tests
         }
 
         [Test]
+        public void DrawScreen()
+        {
+            BootBase Proc = new(BootBase.LoadBootROM(), LoadGameROM().ToList());
+            var step = Stepper(Proc);
+
+            while (!Proc.PPU.LCDEnable)
+                step();
+
+            var render = new generator.Renderer(Proc.PPU);
+
+            var pallette = render.GetPalette();
+
+            for (byte y = 60; y < 80; y++)
+            {
+                var line = render.GetLine(pallette, y, Proc.PPU.BGTileMapDisplaySelect);
+                Console.Write(line);
+                Console.Write(y);
+                Console.WriteLine();
+            }
+
+        }
+
+        //Shows the state of the background tile ID map
+        //During boot this does not change and the nintendo logo is laid out in order aside
+        //from the copyright logo
+        [Test]
+        public void DrawTileMap()
+        {
+            BootBase Proc = new(BootBase.LoadBootROM(), LoadGameROM().ToList());
+            var step = Stepper(Proc);
+
+            while (!Proc.PPU.LCDEnable)
+                step();
+
+            var render = new generator.Renderer(Proc.PPU);
+
+            var tilemap = Proc.PPU.BGTileMapDisplaySelect;
+            for (var y = 0; y < 32; y++)
+            {
+                for (var x = 0; x < 32; x++)
+                {
+                    var TileID = Proc.PPU.VRAM[tilemap + x + (y * 32)]; //Background ID map is laid out as 32x32 tiles of size 8x8
+                    Console.Write(TileID);
+                    Console.Write('\t');
+                }
+                Console.WriteLine();
+            }
+
+        }
+
+        [Test]
+        public void DrawAllTiles()
+        {
+            BootBase Proc = new(BootBase.LoadBootROM(), LoadGameROM().ToList());
+            var step = Stepper(Proc);
+
+            while (!Proc.PPU.LCDEnable)
+                step();
+
+            var render = new generator.Renderer(Proc.PPU);
+            for (byte i = 0; i < 27; i++)
+            {
+                Console.WriteLine(render.GetTile(i));
+                Console.WriteLine();
+            }
+        }
+
+        [Test]
         public void GPUTileDraw()
         {
             string expectedEmpty = @"........
@@ -120,7 +188,7 @@ namespace Tests
             var step = Stepper(Proc);
 
             //Run boot so the memory is fully populated
-            while (Proc.PC != 0x100)
+            while (!Proc.PPU.LCDEnable)
                 step();
 
             var render = new generator.Renderer(Proc.PPU);

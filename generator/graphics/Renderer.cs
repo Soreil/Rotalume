@@ -57,7 +57,8 @@ namespace generator
 
         private void Draw()
         {
-            var line = GetLine();
+            var palette = GetPalette();
+            var line = GetLine(palette, YScrolled(PPU.LY, PPU.SCY), PPU.BGTileMapDisplaySelect);
             //fs.Write(line);
             //fs.Write(' ');
             //fs.Write(PPU.LY);
@@ -65,18 +66,14 @@ namespace generator
             //fs.Write(ClocksInFrame);
             //fs.WriteLine();
         }
-        private string GetLine()
+        public string GetLine(Shade[] palette, byte yScrolled, ushort tilemap)
         {
-            var palette = GetPalette();
 
             var pixels = new List<Shade>(160);
 
-            var yOffset = (PPU.LY + PPU.SCY) & 0xff;
-            var tilemap = PPU.BGTileMapDisplaySelect;
-
             for (int tileNumber = 0; tileNumber < 20; tileNumber++)
             {
-                var curPix = TilePixelLine(palette, yOffset, tilemap, tileNumber);
+                var curPix = TilePixelLine(palette, yScrolled, tilemap, tileNumber);
                 for (int cur = 0; cur < curPix.Length; cur++)
                     pixels.Add(curPix[cur]);
             }
@@ -84,6 +81,8 @@ namespace generator
             var s = MakePrintableLine(pixels);
             return s;
         }
+
+        private static byte YScrolled(byte LY, byte SCY) => (byte)((LY + SCY) & 0xff);
 
         private static string MakePrintableLine(List<Shade> pixels)
         {
@@ -103,14 +102,14 @@ namespace generator
         {
             var xOffset = ((PPU.SCX / 8) + tileNumber) & 0x1f;
 
-            var TileID = PPU.VRAM[tilemap + xOffset + (yOffset * 4)]; //Background ID map is laid out as 32x32 tiles of size 8x8
+            var TileID = PPU.VRAM[tilemap + xOffset + ((yOffset / 8) * 32)]; //Background ID map is laid out as 32x32 tiles of size 8x8
 
-            var pixels = GetTileLine(palette, yOffset, TileID);
+            var pixels = GetTileLine(palette, yOffset % 8, TileID);
 
             return pixels;
         }
 
-        private Shade[] GetTileLine(Shade[] palette, int yOffset, byte currentTileIndex)
+        private Shade[] GetTileLine(Shade[] palette, int line, byte currentTileIndex)
         {
             var tileData = PPU.BGAndWindowTileDataSelect;
 
@@ -119,7 +118,7 @@ namespace generator
             //16 bytes per tile so times 16 on the tileindex
             //We need the line in the 8x8 tile so we take y mod 8 to get it
             //Times 2 is needed because a tile has two bytes per line.
-            var at = tileData + (currentTileIndex * 16) + ((yOffset % 8) * 2);
+            var at = tileData + (currentTileIndex * 16) + (line * 2);
 
             var tileDataLow = PPU.VRAM[at]; //low byte of line
             var tileDataHigh = PPU.VRAM[at + 1]; //high byte of line
@@ -142,7 +141,7 @@ namespace generator
             var lines = new List<List<Shade>>(8);
             for (int y = 0; y < 8; y++)
             {
-                var line = GetTileLine(palette, y, tileNumber);
+                var line = GetTileLine(palette, y % 8, tileNumber);
                 lines.Add(new(line));
             }
 
