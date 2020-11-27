@@ -91,11 +91,16 @@ namespace Tests
             BootBase Proc = new BootBase(BootBase.LoadBootROM(), LoadGameROM().ToList());
             var step = Stepper(Proc);
 
+            var oldLY = Proc.PPU.LY;
             while (Proc.PC != 0x100)
             {
                 step();
-                if (Proc.PPU.LY < 144) Assert.AreNotEqual(generator.Mode.VBlank, Proc.PPU.Mode);
-                else Assert.AreEqual(generator.Mode.VBlank, Proc.PPU.Mode);
+                if (Proc.PPU.LY != oldLY)
+                {
+                    oldLY = Proc.PPU.LY;
+                    if (oldLY < 144) Assert.AreNotEqual(generator.Mode.VBlank, Proc.PPU.Mode);
+                    else Assert.AreEqual(generator.Mode.VBlank, Proc.PPU.Mode);
+                }
             }
         }
 
