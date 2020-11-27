@@ -16,21 +16,25 @@ namespace generator
         public readonly VRAM VRAM;
 
         //FF40 - FF4B, PPU control registers
+        public byte LCDC; //FF40
+
+        byte STAT; //FF41
+
         public byte SCY; //FF42
         public byte SCX; //FF43
+
         public byte LY; //FF44
         public byte LYC; //FF45
-        public byte WY; //FF4A
-        public byte WX; //FF4B
+
+        public byte DMA; //FF46
 
         public byte BGP; //FF47
         public byte OBP0; //FF48
         public byte OBP1; //FF49
 
-        public byte DMA; //FF46
+        public byte WY; //FF4A
+        public byte WX; //FF4B
 
-        public byte LCDC; //FF40
-        byte STAT; //FF41
 
         public Shade BackgroundColor(int n) => n switch
         {
@@ -72,10 +76,13 @@ namespace generator
         {
             LCDC = b;
             if (ScreenJustTurnedOn)
-                Renderer = new Renderer(this);
+                Renderer = new Renderer(this); //We want a new renderer so all the internal state resets including clocking
             else if (!LCDEnable && Renderer is not null)
-                Renderer = null;
+                Renderer = null; //We want to destroy the old renderer so it can't keep running after requested to turn off
         }
-        private bool ScreenJustTurnedOn => LCDEnable && Renderer is null;
+
+        //We could have more calls to SetLCDC for other bits in the LCDC register.
+        //The LCDCEnable flag is only interesting at the moment it flips and the renderer null check should mean a recent flip
+        private bool ScreenJustTurnedOn => LCDEnable && Renderer is null; 
     }
 }
