@@ -10,7 +10,7 @@ namespace generator
         readonly PPU PPU;
         readonly Func<int> Clock;
         public int TimeUntilWhichToPause;
-        //readonly StreamWriter fs;
+        readonly StreamWriter fs;
 
         const int DrawlinesPerFrame = 144;
         const int ScanlinesPerFrame = DrawlinesPerFrame + 10;
@@ -32,7 +32,7 @@ namespace generator
             var startTime = PPU.Clock();
             Clock = () => ppu.Clock() - startTime;
 
-            //fs = new(@"screens.txt");
+            fs = StreamWriter.Null;
         }
 
         public List<SpriteAttributes> SpriteAttributes = new();
@@ -59,12 +59,12 @@ namespace generator
         {
             var palette = GetPalette();
             var line = GetLine(palette, YScrolled(PPU.LY, PPU.SCY), PPU.BGTileMapDisplaySelect);
-            //fs.Write(line);
-            //fs.Write(' ');
-            //fs.Write(PPU.LY);
-            //fs.Write(' ');
-            //fs.Write(ClocksInFrame);
-            //fs.WriteLine();
+            fs.Write(line);
+            fs.Write(' ');
+            fs.Write(PPU.LY);
+            fs.Write(' ');
+            fs.Write(ClocksInFrame);
+            fs.WriteLine();
         }
         public string GetLine(Shade[] palette, byte yScrolled, ushort tilemap)
         {
@@ -176,7 +176,7 @@ namespace generator
             else
             {
                 PPU.Mode = Mode.VBlank;
-                //fs.WriteLine();
+                fs.WriteLine();
             }
         }
 
@@ -193,6 +193,5 @@ namespace generator
             Mode.VBlank => TicksPerScanline, //We are going to blank every line since otherwise it would not increment the LY register in the current design
             _ => throw new NotImplementedException(),
         };
-
     }
 }
