@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -10,62 +11,6 @@ namespace Tests
     class GPU
     {
         public static byte[] LoadGameROM() => File.ReadAllBytes(@"..\..\..\rom\Tetris (World) (Rev A).gb");
-
-
-        [Ignore("No GPU yet")]
-        public static void DoBootGPU()
-        {
-            BootBase Proc = new BootBase(BootBase.LoadBootROM(), LoadGameROM().ToList());
-            while (Proc.PC != 0x1d)
-                Proc.DoNextOP();
-            while (Proc.PC != 0x28)
-                Proc.DoNextOP();
-            while (Proc.PC != 0x98)
-                Proc.DoNextOP();
-            while (Proc.PC != 0x9c)
-                Proc.DoNextOP();
-            while (Proc.PC != 0xa1)
-                Proc.DoNextOP();
-            while (Proc.PC != 0xa3)
-                Proc.DoNextOP();
-            while (Proc.PC != 0xe0) //Start of logo check
-                Proc.DoNextOP();
-            while (Proc.PC != 0xf1) //logo checksum initialized
-                Proc.DoNextOP();
-            while (Proc.PC != 0xf9) //Past first subloop
-                Proc.DoNextOP();
-            while (Proc.PC != 0xfa) //Logo checksum validation
-                Proc.DoNextOP();
-
-            Proc.DoNextOP();
-            Assert.AreNotEqual(0xfa, Proc.PC); //Logo if logo check failed and we are stuck
-
-            while (Proc.PC != 0x100)
-                Proc.DoNextOP();
-
-            Assert.AreEqual(0x100, Proc.PC);
-        }
-
-        [Test]
-        public void GPUFieldsGetSetDuringBoot()
-        {
-            BootBase Proc = new BootBase(BootBase.LoadBootROM(), LoadGameROM().ToList());
-
-            Assert.AreEqual(Proc.PPU.LCDC, 0);
-            Assert.AreEqual(Proc.PPU.BGP, 0);
-            Assert.AreEqual(Proc.PPU.SCY, 0);
-
-            //Sets GPU to be in VBlank
-            Proc.dec.Storage.Write(0xff44, 0x90);
-            while (Proc.PC != 0x100)
-                Proc.DoNextOP();
-
-            Assert.AreEqual(0x100, Proc.PC);
-
-            Assert.AreEqual(Proc.PPU.LCDC, 0x91);
-            Assert.AreEqual(Proc.PPU.BGP, 0xFC);
-            Assert.AreEqual(Proc.PPU.SCY, 0);
-        }
 
         [Test]
         public void LineRegisterGetsIncrementedDuringVBlank()
@@ -107,6 +52,24 @@ namespace Tests
         [Test]
         public void DrawScreen()
         {
+
+            var expected = @"................................####......####..####..........................................................####................####..........................
+................................####......####..####..........................................................####...............#....#.........................
+................................######....####..####................####......................................####..............#.###..#........................
+................................######....####..####................####......................................####..............#.#..#.#........................
+................................######....####....................########....................................####..............#.###..#........................
+................................######....####....................########....................................####..............#.#..#.#........................
+................................####..##..####..####..####..####....####....########....####..####......##########....########...#....#.........................
+................................####..##..####..####..####..####....####....########....####..####......##########....########....####..........................
+................................####..##..####..####..######..####..####..####....####..######..####..####....####..####....####................................
+................................####..##..####..####..######..####..####..####....####..######..####..####....####..####....####................................
+................................####....######..####..####....####..####..############..####....####..####....####..####....####................................
+................................####....######..####..####....####..####..############..####....####..####....####..####....####................................
+................................####....######..####..####....####..####..####..........####....####..####....####..####....####................................
+................................####....######..####..####....####..####..####..........####....####..####....####..####....####................................
+................................####......####..####..####....####..####....##########..####....####....##########....########..................................
+................................####......####..####..####....####..####....##########..####....####....##########....########..................................";
+
             BootBase Proc = new(BootBase.LoadBootROM(), LoadGameROM().ToList());
             var step = Stepper(Proc);
 
@@ -117,14 +80,15 @@ namespace Tests
 
             var pallette = render.GetPalette();
 
-            for (byte y = 60; y < 80; y++)
+            List<string> lines = new();
+            for (byte y = 64; y < 80; y++)
             {
                 var line = render.GetLine(pallette, y, Proc.PPU.BGTileMapDisplaySelect);
-                Console.Write(line);
-                Console.Write(y);
-                Console.WriteLine();
+                lines.Add(line);
             }
+            var screen = string.Join("\r\n", lines);
 
+            Assert.AreEqual(expected, screen);
         }
 
         //Shows the state of the background tile ID map
