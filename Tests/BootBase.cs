@@ -46,6 +46,15 @@ namespace Tests
         }
         public BootBase(List<byte> bootROM, List<byte> gameROM)
         {
+            GetProgramCounter = () => PC;
+            SetProgramCounter = (x) => { PC = x; };
+            IncrementClock = (x) => { Clock += x; };
+            Read = () => dec.Storage[PC++];
+
+            dec = new Decoder(Read, bootROM, gameROM, GetProgramCounter, SetProgramCounter, IncrementClock, () => bootROMActive);
+
+            PPU = new PPU(() => Clock);
+
             BootROMFlagController = (byte b) =>
             {
                 bootROMField = b;
@@ -74,6 +83,7 @@ namespace Tests
             controlRegisters.Writer[0x50] += BootROMFlagController;
             controlRegisters.Reader[0x50] += ReadBootROMFlag;
 
+            //PPU registers
             controlRegisters.Writer[0x40] += LCDControlController;
             controlRegisters.Reader[0x40] += ReadLCDControl;
             controlRegisters.Writer[0x42] += ScrollYController;
@@ -85,15 +95,6 @@ namespace Tests
             controlRegisters.Writer[0x47] += PaletteController;
             controlRegisters.Reader[0x47] += ReadPalette;
 
-            GetProgramCounter = () => PC;
-            SetProgramCounter = (x) => { PC = x; };
-            IncrementClock = (x) => { Clock += x; };
-            Read = () => dec.Storage[PC++];
-            var decoder = new Decoder(Read, bootROM, gameROM, GetProgramCounter, SetProgramCounter, IncrementClock, () => bootROMActive);
-
-            dec = decoder;
-            PPU = new PPU(() => Clock);
-
             dec.Storage.setRanges.Add(new MMU.SetRange(
                 controlRegisters.Start,
                 controlRegisters.Start + controlRegisters.Size,
@@ -104,18 +105,9 @@ namespace Tests
                 controlRegisters.Start + controlRegisters.Size,
                 controlRegisters.ContainsReader, (x) => controlRegisters[x])
                 );
-            dec.Storage.setRanges.Add(new MMU.SetRange(
-                OAM.Start,
-                OAM.Start + OAM.Size,
-                x => true,
-                (at, v) => PPU.OAM[at] = v
-                ));
-            dec.Storage.getRanges.Add(new MMU.GetRange(
-                OAM.Start,
-                OAM.Start + OAM.Size,
-                x => true,
-                (at) => PPU.OAM[at]
-                ));
+
+
+            //Graphics memory ranges
             dec.Storage.setRanges.Add(new MMU.SetRange(
                 VRAM.Start,
                 VRAM.Start + VRAM.Size,
@@ -127,6 +119,18 @@ namespace Tests
                 VRAM.Start + VRAM.Size,
                 x => true,
                 (at) => PPU.VRAM[at]
+                ));
+            dec.Storage.setRanges.Add(new MMU.SetRange(
+                OAM.Start,
+                OAM.Start + OAM.Size,
+                x => true,
+                (at, v) => PPU.OAM[at] = v
+                ));
+            dec.Storage.getRanges.Add(new MMU.GetRange(
+                OAM.Start,
+                OAM.Start + OAM.Size,
+                x => true,
+                (at) => PPU.OAM[at]
                 ));
         }
 

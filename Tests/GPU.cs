@@ -116,7 +116,6 @@ namespace Tests
                 }
                 Console.WriteLine();
             }
-
         }
 
         [Test]

@@ -10,7 +10,7 @@ namespace generator
         readonly PPU PPU;
         readonly Func<int> Clock;
         public int TimeUntilWhichToPause;
-        readonly StreamWriter fs;
+        readonly StreamWriter fs = StreamWriter.Null;
 
         const int DrawlinesPerFrame = 144;
         const int ScanlinesPerFrame = DrawlinesPerFrame + 10;
@@ -26,13 +26,15 @@ namespace generator
             PPU.LYCInterrupt = PPU.LY == PPU.LYC;
         }
 
+        public Renderer(PPU ppu, StreamWriter destination) :  this(ppu)
+        {
+            fs = destination;
+        }
         public Renderer(PPU ppu)
         {
             PPU = ppu;
             var startTime = PPU.Clock();
             Clock = () => ppu.Clock() - startTime;
-
-            fs = StreamWriter.Null;
         }
 
         public List<SpriteAttributes> SpriteAttributes = new();
@@ -66,6 +68,7 @@ namespace generator
             fs.Write(ClocksInFrame);
             fs.WriteLine();
         }
+
         public string GetLine(Shade[] palette, byte yScrolled, ushort tilemap)
         {
 
