@@ -6,8 +6,8 @@ namespace generator
     //Maybe an update function which gets called on Clock write?
     public class Timers
     {
-        int Clock; //We should probably have a pair of clocks so we can reset them individually.
-                   //Currently we have to keep track of an offset when the divider and timer get reset.
+        int DividerClock;
+        int TimerClock;
 
         readonly Action EnableTimerInterrupt;
         public Timers(Action enableTimerInterrupt)
@@ -20,10 +20,27 @@ namespace generator
 
         public void Tick()
         {
-            Clock++;
+            DividerClock++;
 
-            _divider = Clock; // updates the clock
-            _Timer = Clock; // updates the clock
+            _divider = _divider = (DividerClock - initialDiv) / dividerMod;
+
+            if (TimerEnabled)
+            {
+                TimerClock++;
+
+                var current = ((TimerClock - initialClock) / TimerScale);
+                if (current > 0xff)
+                {
+                    //This is really ugly but it should work
+                    initialClock = TimerClock - (TimerDefault * TimerScale);
+                    EnableTimerInterrupt();
+                    _Timer = 0;
+                }
+                else
+                {
+                    _Timer = (byte)current;
+                }
+            }
         }
 
         public void Add(int n)
@@ -38,22 +55,16 @@ namespace generator
 
         int _divider
         {
-            get
-            {
-                return _divider % 256;
-            }
-            set
-            {
-                _divider = (value - initialDiv) / dividerMod;
-            }
+            get;
+            set;
         }
 
         public byte Divider
         {
-            get => (byte)_divider;
+            get => (byte)(_divider % 256);
             set
             {
-                initialDiv = Clock;
+                initialDiv = DividerClock;
                 _divider = initialDiv; //This is really quite stupid but it gets it to 0
             }
         }
@@ -63,7 +74,7 @@ namespace generator
         public byte TimerControl { get; set; }
 
         bool TimerEnabled => (TimerControl & 0x04) != 0;
-        int TimerClock => (TimerControl & 0x03) switch
+        int TimerScale => (TimerControl & 0x03) switch
         {
             0 => 1024,
             1 => 16,
@@ -74,25 +85,8 @@ namespace generator
 
         private int _Timer
         {
-            get
-            {
-                return _Timer;
-            }
-            set
-            {
-                var current = ((value - initialClock) / TimerClock);
-                if (current > 0xff)
-                {
-                    //This is really ugly but it should work
-                    initialClock = value - (TimerDefault * TimerClock);
-                    EnableTimerInterrupt();
-                    _Timer = 0;
-                }
-                else
-                {
-                    _Timer = (byte)current;
-                }
-            }
+            get;
+            set;
         }
 
         public byte Timer => (byte)_Timer;

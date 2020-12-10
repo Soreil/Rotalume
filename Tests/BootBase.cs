@@ -28,6 +28,7 @@ namespace Tests
         readonly ControlRegister.Read ReadPalette;
 
         public int Clock;
+
         public Action<int> IncrementClock;
 
         public Func<byte> Read;
@@ -35,6 +36,8 @@ namespace Tests
         public Decoder dec;
 
         public PPU PPU;
+        public Timers Timers;
+
         readonly ControlRegister controlRegisters = new ControlRegister(0xff00, 0x80);
 
         public BootBase(List<byte> l) : this(new List<byte>(), l)
@@ -48,12 +51,14 @@ namespace Tests
         {
             GetProgramCounter = () => PC;
             SetProgramCounter = (x) => { PC = x; };
-            IncrementClock = (x) => { Clock += x; };
+            IncrementClock = (x) => { Clock += x; Timers.Add(x); };
             Read = () => dec.Storage[PC++];
 
             dec = new Decoder(Read, bootROM, gameROM, GetProgramCounter, SetProgramCounter, IncrementClock, () => bootROMActive);
 
             PPU = new PPU(() => Clock);
+
+            Timers = new Timers(null);
 
             BootROMFlagController = (byte b) =>
             {
