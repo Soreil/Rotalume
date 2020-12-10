@@ -9,9 +9,6 @@ namespace Tests
     {
         public ushort PC;
 
-        public Func<ushort> GetProgramCounter;
-        public Action<ushort> SetProgramCounter;
-
         bool bootROMActive = true;
         private byte bootROMField = 0;
         readonly ControlRegister.Write BootROMFlagController;
@@ -29,7 +26,6 @@ namespace Tests
 
         public int Clock;
 
-        public Action<int> IncrementClock;
 
         public Func<byte> Read;
 
@@ -37,6 +33,8 @@ namespace Tests
 
         public PPU PPU;
         public Timers Timers;
+
+        public byte InterruptFireRegister { get; set; }
 
         readonly ControlRegister controlRegisters = new ControlRegister(0xff00, 0x80);
 
@@ -49,16 +47,16 @@ namespace Tests
         }
         public BootBase(List<byte> bootROM, List<byte> gameROM)
         {
-            GetProgramCounter = () => PC;
-            SetProgramCounter = (x) => { PC = x; };
-            IncrementClock = (x) => { Clock += x; Timers.Add(x); };
+            Func<ushort> GetProgramCounter = () => PC;
+            Action<ushort> SetProgramCounter = (x) => { PC = x; };
+            Action<int> IncrementClock = (x) => { Clock += x; Timers.Add(x); };
             Read = () => dec.Storage[PC++];
 
             dec = new Decoder(Read, bootROM, gameROM, GetProgramCounter, SetProgramCounter, IncrementClock, () => bootROMActive);
 
             PPU = new PPU(() => Clock);
 
-            Timers = new Timers(null);
+            Timers = new Timers(() => InterruptFireRegister.SetBit(2, true));
 
             BootROMFlagController = (byte b) =>
             {
