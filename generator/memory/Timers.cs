@@ -2,8 +2,6 @@
 
 namespace emulator
 {
-    //Timers require to be updated as soon as the clock reaches the next timestep.
-    //Maybe an update function which gets called on Clock write?
     public class Timers
     {
         int DividerClock;
@@ -13,28 +11,25 @@ namespace emulator
         public Timers(Action enableTimerInterrupt)
         {
             EnableTimerInterrupt = enableTimerInterrupt;
-
-            initialDiv = 0;
-            initialClock = 0;
         }
 
         public void Tick()
         {
             DividerClock++;
 
-            _divider = _divider = (DividerClock - initialDiv) / dividerMod;
+            _divider = DividerClock / dividerMod;
 
             if (TimerEnabled)
             {
                 TimerClock++;
 
-                var current = ((TimerClock - initialClock) / TimerScale);
+                var current = TimerClock / TimerScale;
                 if (current > 0xff)
                 {
                     //This is really ugly but it should work
-                    initialClock = TimerClock - (TimerDefault * TimerScale);
                     EnableTimerInterrupt();
-                    _Timer = 0;
+                    TimerClock = TimerDefault * TimerScale;
+                    _Timer = TimerDefault;
                 }
                 else
                 {
@@ -50,9 +45,6 @@ namespace emulator
 
         const int dividerMod = 16384;
 
-        private int initialDiv;
-        private int initialClock;
-
         int _divider
         {
             get;
@@ -64,8 +56,7 @@ namespace emulator
             get => (byte)(_divider % 256);
             set
             {
-                initialDiv = DividerClock;
-                _divider = initialDiv; //This is really quite stupid but it gets it to 0
+                DividerClock = 0;
             }
         }
 
