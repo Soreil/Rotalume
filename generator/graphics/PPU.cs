@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace generator
+namespace emulator
 {
     public class PPU
     {

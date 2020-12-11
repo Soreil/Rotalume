@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace generator
+namespace emulator
 {
     public record MMU
     {

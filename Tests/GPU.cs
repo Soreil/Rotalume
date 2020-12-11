@@ -43,8 +43,8 @@ namespace Tests
                 if (Proc.PPU.LY != oldLY)
                 {
                     oldLY = Proc.PPU.LY;
-                    if (oldLY < 144) Assert.AreNotEqual(generator.Mode.VBlank, Proc.PPU.Mode);
-                    else Assert.AreEqual(generator.Mode.VBlank, Proc.PPU.Mode);
+                    if (oldLY < 144) Assert.AreNotEqual(emulator.Mode.VBlank, Proc.PPU.Mode);
+                    else Assert.AreEqual(emulator.Mode.VBlank, Proc.PPU.Mode);
                 }
             }
         }
@@ -76,7 +76,7 @@ namespace Tests
             while (!Proc.PPU.LCDEnable)
                 step();
 
-            var render = new generator.Renderer(Proc.PPU);
+            var render = new emulator.Renderer(Proc.PPU);
 
             var pallette = render.GetPalette();
 
@@ -103,7 +103,7 @@ namespace Tests
             while (!Proc.PPU.LCDEnable)
                 step();
 
-            var render = new generator.Renderer(Proc.PPU);
+            var render = new emulator.Renderer(Proc.PPU);
 
             var tilemap = Proc.PPU.BGTileMapDisplaySelect;
             for (var y = 0; y < 32; y++)
@@ -127,7 +127,7 @@ namespace Tests
             while (!Proc.PPU.LCDEnable)
                 step();
 
-            var render = new generator.Renderer(Proc.PPU);
+            var render = new emulator.Renderer(Proc.PPU);
             for (byte i = 0; i < 27; i++)
             {
                 Console.WriteLine(render.GetTile(i));
@@ -154,7 +154,7 @@ namespace Tests
             while (!Proc.PPU.LCDEnable)
                 step();
 
-            var render = new generator.Renderer(Proc.PPU);
+            var render = new emulator.Renderer(Proc.PPU);
             var tile = render.GetTile(0);
 
             Assert.AreEqual(expectedEmpty, tile);

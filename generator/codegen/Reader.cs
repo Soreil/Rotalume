@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 
-namespace generator
+namespace emulator
 {
     public class Reader
     {

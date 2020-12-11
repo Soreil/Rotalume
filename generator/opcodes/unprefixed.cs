@@ -1,4 +1,4 @@
-﻿namespace generator
+﻿namespace emulator
 {
     public enum Unprefixed : byte
     {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace generator
+namespace emulator
 {
     //Timers require to be updated as soon as the clock reaches the next timestep.
     //Maybe an update function which gets called on Clock write?

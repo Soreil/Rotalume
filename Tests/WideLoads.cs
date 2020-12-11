@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-using generator;
+using emulator;
 
 using NUnit.Framework;
 

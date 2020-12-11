@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-namespace generator
+namespace emulator
 {
     public static class StringExtensions
     {
