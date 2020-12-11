@@ -35,8 +35,10 @@ namespace Tests
         public Timers Timers;
 
         public byte InterruptFireRegister { get; set; }
+        public byte InterruptControlRegister { get; set; }
 
         readonly ControlRegister controlRegisters = new ControlRegister(0xff00, 0x80);
+        readonly ControlRegister interruptRegisters = new ControlRegister(0xff0f, 0xF1); //This is only being used for two registers.
 
         public BootBase(List<byte> l) : this(new List<byte>(), l)
         {
@@ -97,6 +99,23 @@ namespace Tests
             controlRegisters.Reader[0x44] += ReadLine;
             controlRegisters.Writer[0x47] += PaletteController;
             controlRegisters.Reader[0x47] += ReadPalette;
+
+
+            interruptRegisters.Writer[0x0] += x => InterruptFireRegister = x;
+            interruptRegisters.Reader[0x0] += () => InterruptFireRegister;
+            interruptRegisters.Writer[0xF0] += x => InterruptControlRegister = x;
+            interruptRegisters.Reader[0xF0] += () => InterruptControlRegister;
+
+            dec.Storage.setRanges.Add(new(
+                interruptRegisters.Start,
+                interruptRegisters.Start + interruptRegisters.Size,
+                interruptRegisters.ContainsWriter,
+                (x, v) => interruptRegisters[x] = v));
+            dec.Storage.getRanges.Add(new(
+                interruptRegisters.Start,
+                interruptRegisters.Start + interruptRegisters.Size,
+                interruptRegisters.ContainsReader,
+                x => interruptRegisters[x]));
 
             dec.Storage.setRanges.Add(new MMU.SetRange(
                 controlRegisters.Start,

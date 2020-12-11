@@ -9,6 +9,7 @@
         public Read[] Reader;
         public int Start;
         public int Size;
+
         public ControlRegister(ushort startAddress, int size)
         {
             Writer = new Write[size];
