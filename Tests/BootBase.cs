@@ -38,7 +38,7 @@ namespace Tests
         public byte InterruptControlRegister { get; set; }
 
         readonly ControlRegister controlRegisters = new ControlRegister(0xff00, 0x80);
-        readonly ControlRegister interruptRegisters = new ControlRegister(0xff0f, 0xF1); //This is only being used for two registers.
+        readonly ControlRegister interruptRegisters = new ControlRegister(0xffff, 0x1); //This is only being used for two registers.
 
         public BootBase(List<byte> l) : this(new List<byte>(), l)
         {
@@ -85,6 +85,9 @@ namespace Tests
             PaletteController = (byte b) => PPU.BGP = b;
             ReadPalette = () => PPU.BGP;
 
+            controlRegisters.Writer[0xF] += x => InterruptFireRegister = x;
+            controlRegisters.Reader[0xF] += () => InterruptFireRegister;
+
             controlRegisters.Writer[0x50] += BootROMFlagController;
             controlRegisters.Reader[0x50] += ReadBootROMFlag;
 
@@ -101,10 +104,8 @@ namespace Tests
             controlRegisters.Reader[0x47] += ReadPalette;
 
 
-            interruptRegisters.Writer[0x0] += x => InterruptFireRegister = x;
-            interruptRegisters.Reader[0x0] += () => InterruptFireRegister;
-            interruptRegisters.Writer[0xF0] += x => InterruptControlRegister = x;
-            interruptRegisters.Reader[0xF0] += () => InterruptControlRegister;
+            interruptRegisters.Writer[0x00] += x => InterruptControlRegister = x;
+            interruptRegisters.Reader[0x00] += () => InterruptControlRegister;
 
             dec.Storage.setRanges.Add(new(
                 interruptRegisters.Start,
