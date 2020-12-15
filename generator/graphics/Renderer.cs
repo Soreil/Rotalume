@@ -26,7 +26,7 @@ namespace emulator
             PPU.LYCInterrupt = PPU.LY == PPU.LYC;
         }
 
-        public Renderer(PPU ppu, StreamWriter destination) :  this(ppu)
+        public Renderer(PPU ppu, StreamWriter destination) : this(ppu)
         {
             fs = destination;
         }
@@ -61,17 +61,11 @@ namespace emulator
         {
             var palette = GetPalette();
             var line = GetLine(palette, YScrolled(PPU.LY, PPU.SCY), PPU.BGTileMapDisplaySelect);
-            fs.Write(line);
-            fs.Write(' ');
-            fs.Write(PPU.LY);
-            fs.Write(' ');
-            fs.Write(ClocksInFrame);
-            fs.WriteLine();
+            fs.WriteLine(line);
         }
 
         public string GetLine(Shade[] palette, byte yScrolled, ushort tilemap)
         {
-
             var pixels = new List<Shade>(160);
 
             for (int tileNumber = 0; tileNumber < 20; tileNumber++)
@@ -179,6 +173,7 @@ namespace emulator
             else
             {
                 PPU.Mode = Mode.VBlank;
+                PPU.EnableVBlankInterrupt();
                 fs.WriteLine();
             }
         }

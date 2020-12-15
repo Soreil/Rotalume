@@ -3,29 +3,31 @@ using System.Collections.Generic;
 
 namespace emulator
 {
-    public partial class Decoder
+    public partial class CPU
     {
         private readonly Action[] StdOps;
         private readonly Action[] CbOps;
 
+        public bool IME = false;
+
         public Action Op(Unprefixed op) => StdOps[(int)op];
         public Action Op(Cbprefixed op) => CbOps[(int)op];
 
-        public Decoder(Func<byte> read) : this(read, new List<byte>(), new List<byte>(), () => 0, x => { }, x => { }, () => false)
+        public CPU(Func<byte> read) : this(read, new List<byte>(), new List<byte>(), () => 0, x => { }, x => { }, () => false)
         { }
 
-        public Decoder(Func<byte> read, List<byte> boot, List<byte> game, Func<ushort> getPC, Action<ushort> setPC, Action<int> TickClock, Func<bool> bootROMActive)
+        public CPU(Func<byte> read, List<byte> boot, List<byte> game, Func<ushort> getPC, Action<ushort> setPC, Action<int> TickClock, Func<bool> bootROMActive)
         {
             StdOps = MakeTable();
             CbOps = MakeTableCb();
             Registers = new Registers();
-            Storage = new MMU(read, boot, game, bootROMActive);
+            Memory = new MMU(read, boot, game, bootROMActive);
             SetPC = setPC;
             GetPC = getPC;
 
-            enableInterrupts = () => { };
-            disableInterrupts = () => { };
-            Tick = TickClock;
+            enableInterrupts = () => IME = true;
+            disableInterrupts = () => IME = false;
+            AddTicks = TickClock;
         }
 
         private Action[] MakeTable()

@@ -15,7 +15,7 @@ namespace Tests
         [Test]
         public void LineRegisterGetsIncrementedDuringVBlank()
         {
-            BootBase Proc = new BootBase(BootBase.LoadBootROM(), LoadGameROM().ToList());
+            Environment Proc = new Environment(Environment.LoadBootROM(), LoadGameROM().ToList());
             var step = Stepper(Proc);
 
             var oldLY = Proc.PPU.LY;
@@ -33,7 +33,7 @@ namespace Tests
         [Test]
         public void ModeIsOnlyVBlankDuringVBlank()
         {
-            BootBase Proc = new BootBase(BootBase.LoadBootROM(), LoadGameROM().ToList());
+            Environment Proc = new Environment(Environment.LoadBootROM(), LoadGameROM().ToList());
             var step = Stepper(Proc);
 
             var oldLY = Proc.PPU.LY;
@@ -70,7 +70,7 @@ namespace Tests
 ................................####......####..####..####....####..####....##########..####....####....##########....########..................................
 ................................####......####..####..####....####..####....##########..####....####....##########....########..................................";
 
-            BootBase Proc = new(BootBase.LoadBootROM(), LoadGameROM().ToList());
+            Environment Proc = new(Environment.LoadBootROM(), LoadGameROM().ToList());
             var step = Stepper(Proc);
 
             while (!Proc.PPU.LCDEnable)
@@ -97,7 +97,7 @@ namespace Tests
         [Test]
         public void DrawTileMap()
         {
-            BootBase Proc = new(BootBase.LoadBootROM(), LoadGameROM().ToList());
+            Environment Proc = new(Environment.LoadBootROM(), LoadGameROM().ToList());
             var step = Stepper(Proc);
 
             while (!Proc.PPU.LCDEnable)
@@ -121,7 +121,7 @@ namespace Tests
         [Test]
         public void DrawAllTiles()
         {
-            BootBase Proc = new(BootBase.LoadBootROM(), LoadGameROM().ToList());
+            Environment Proc = new(Environment.LoadBootROM(), LoadGameROM().ToList());
             var step = Stepper(Proc);
 
             while (!Proc.PPU.LCDEnable)
@@ -147,7 +147,7 @@ namespace Tests
 ........
 ........";
 
-            BootBase Proc = new(BootBase.LoadBootROM(), LoadGameROM().ToList());
+            Environment Proc = new(Environment.LoadBootROM(), LoadGameROM().ToList());
             var step = Stepper(Proc);
 
             //Run boot so the memory is fully populated
@@ -176,7 +176,7 @@ namespace Tests
         [Test]
         public void GPUBoot()
         {
-            BootBase Proc = new BootBase(BootBase.LoadBootROM(), LoadGameROM().ToList());
+            Environment Proc = new Environment(Environment.LoadBootROM(), LoadGameROM().ToList());
             var step = Stepper(Proc);
 
             //LCD is off
@@ -203,11 +203,12 @@ namespace Tests
             Assert.AreEqual(Proc.PPU.SCY, 0);
         }
 
-        private static Action Stepper(BootBase b)
+        private static Action Stepper(Environment b)
         {
             return () =>
             {
                 b.DoNextOP();
+                b.DoInterrupt();
                 b.DoPPU();
             };
         }

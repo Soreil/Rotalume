@@ -5,12 +5,14 @@ using emulator;
 
 namespace Tests
 {
-    public class BootBase
+    public class Environment
     {
         public ushort PC;
 
+        //Not sure where this special bit should go but it's not in memory and suposed to be hard to access
         bool bootROMActive = true;
         private byte bootROMField = 0;
+
         readonly ControlRegister.Write BootROMFlagController;
         readonly ControlRegister.Read ReadBootROMFlag;
         readonly ControlRegister.Write LCDControlController;
@@ -24,12 +26,13 @@ namespace Tests
         readonly ControlRegister.Write PaletteController;
         readonly ControlRegister.Read ReadPalette;
 
+        //Global clock from which all timing derives
         public int Clock;
 
-
+        //Opcode fetcher
         public Func<byte> Read;
 
-        public Decoder dec;
+        public CPU CPU;
 
         public PPU PPU;
         public Timers Timers;
@@ -40,25 +43,27 @@ namespace Tests
         readonly ControlRegister controlRegisters = new ControlRegister(0xff00, 0x80);
         readonly ControlRegister interruptRegisters = new ControlRegister(0xffff, 0x1); //This is only being used for two registers.
 
-        public BootBase(List<byte> l) : this(new List<byte>(), l)
+        //Constructor just for tests which don't care about a functioning bootrom
+        public Environment(List<byte> l) : this(new List<byte>(), l)
         {
             bootROMActive = false;
         }
-        public BootBase() : this(LoadBootROM(), new List<byte>())
+        public Environment() : this(LoadBootROM(), new List<byte>())
         {
         }
-        public BootBase(List<byte> bootROM, List<byte> gameROM)
+        public Environment(List<byte> bootROM, List<byte> gameROM)
         {
             Func<ushort> GetProgramCounter = () => PC;
             Action<ushort> SetProgramCounter = (x) => { PC = x; };
+            //Maybe adding to the timers should be handled by a clock object rather than just this one lambda
             Action<int> IncrementClock = (x) => { Clock += x; Timers.Add(x); };
-            Read = () => dec.Storage[PC++];
+            Read = () => CPU.Memory[PC++];
 
-            dec = new Decoder(Read, bootROM, gameROM, GetProgramCounter, SetProgramCounter, IncrementClock, () => bootROMActive);
+            CPU = new CPU(Read, bootROM, gameROM, GetProgramCounter, SetProgramCounter, IncrementClock, () => bootROMActive);
 
-            PPU = new PPU(() => Clock);
+            PPU = new PPU(() => Clock, () => InterruptFireRegister = InterruptFireRegister.SetBit(0));
 
-            Timers = new Timers(() => InterruptFireRegister.SetBit(2, true));
+            Timers = new Timers(() => InterruptFireRegister = InterruptFireRegister.SetBit(2, true));
 
             BootROMFlagController = (byte b) =>
             {
@@ -107,23 +112,23 @@ namespace Tests
             interruptRegisters.Writer[0x00] += x => InterruptControlRegister = x;
             interruptRegisters.Reader[0x00] += () => InterruptControlRegister;
 
-            dec.Storage.setRanges.Add(new(
+            CPU.Memory.setRanges.Add(new(
                 interruptRegisters.Start,
                 interruptRegisters.Start + interruptRegisters.Size,
                 interruptRegisters.ContainsWriter,
                 (x, v) => interruptRegisters[x] = v));
-            dec.Storage.getRanges.Add(new(
+            CPU.Memory.getRanges.Add(new(
                 interruptRegisters.Start,
                 interruptRegisters.Start + interruptRegisters.Size,
                 interruptRegisters.ContainsReader,
                 x => interruptRegisters[x]));
 
-            dec.Storage.setRanges.Add(new MMU.SetRange(
+            CPU.Memory.setRanges.Add(new MMU.SetRange(
                 controlRegisters.Start,
                 controlRegisters.Start + controlRegisters.Size,
                 controlRegisters.ContainsWriter, (x, v) => controlRegisters[x] = v)
                 );
-            dec.Storage.getRanges.Add(new MMU.GetRange(
+            CPU.Memory.getRanges.Add(new MMU.GetRange(
                 controlRegisters.Start,
                 controlRegisters.Start + controlRegisters.Size,
                 controlRegisters.ContainsReader, (x) => controlRegisters[x])
@@ -131,25 +136,25 @@ namespace Tests
 
 
             //Graphics memory ranges
-            dec.Storage.setRanges.Add(new MMU.SetRange(
+            CPU.Memory.setRanges.Add(new MMU.SetRange(
                 VRAM.Start,
                 VRAM.Start + VRAM.Size,
                 x => true,
                 (at, v) => PPU.VRAM[at] = v
                 ));
-            dec.Storage.getRanges.Add(new MMU.GetRange(
+            CPU.Memory.getRanges.Add(new MMU.GetRange(
                 VRAM.Start,
                 VRAM.Start + VRAM.Size,
                 x => true,
                 (at) => PPU.VRAM[at]
                 ));
-            dec.Storage.setRanges.Add(new MMU.SetRange(
+            CPU.Memory.setRanges.Add(new MMU.SetRange(
                 OAM.Start,
                 OAM.Start + OAM.Size,
                 x => true,
                 (at, v) => PPU.OAM[at] = v
                 ));
-            dec.Storage.getRanges.Add(new MMU.GetRange(
+            CPU.Memory.getRanges.Add(new MMU.GetRange(
                 OAM.Start,
                 OAM.Start + OAM.Size,
                 x => true,
@@ -164,14 +169,32 @@ namespace Tests
             var op = Read();
             if (op != 0xcb)
             {
-                dec.Op((Unprefixed)op)();
+                CPU.Op((Unprefixed)op)();
             }
             else
             {
-                var CBop = Read();
-                dec.Op((Cbprefixed)CBop)();
+                var CBop = Read(); //Because of the CB prefix we encountered in the previous case we already skipped the extra byte of a cb instruction here
+                CPU.Op((Cbprefixed)CBop)();
             }
         }
+
+        public void DoInterrupt()
+        {
+            if (!CPU.IME) return; //Interrupts have to be globally enabled to use them
+
+            byte coincidence = (byte)(InterruptControlRegister & InterruptFireRegister); //Coincidence has all the bits which have both fired AND are enabled
+            for (int bit = 0; bit < 5; bit++) //Bit 0 has highest priority, we only handle one interrupt at a time
+            {
+                if (coincidence.GetBit(bit))
+                {
+                    CPU.IME = false;
+                    coincidence.SetBit(bit, false);
+                    PC = (ushort)(0x40 + (0x8 * bit));
+                    return;
+                }
+            }
+        }
+
         public static List<byte> LoadBootROM()
         {
             byte[] bootROM = {

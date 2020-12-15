@@ -5,11 +5,13 @@ namespace emulator
     public class PPU
     {
         public readonly Func<int> Clock;
-        public PPU(Func<int> clock)
+        public readonly Action EnableVBlankInterrupt;
+        public PPU(Func<int> clock,Action enableVBlankInterrupt)
         {
             Clock = clock;
             OAM = new OAM();
             VRAM = new VRAM();
+            EnableVBlankInterrupt = enableVBlankInterrupt;
         }
 
         public readonly OAM OAM;
