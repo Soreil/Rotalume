@@ -10,7 +10,7 @@ namespace Tests
         [Test]
         public void INC_SP()
         {
-            var dec = new Decoder(() => 0);
+            var dec = new CPU(() => 0);
 
             {
                 dec.Registers.Set(WideRegister.SP, 20);
@@ -25,50 +25,50 @@ namespace Tests
         [Test]
         public void INC_AT_HL()
         {
-            var dec = new Decoder(() => 0);
+            var dec = new CPU(() => 0);
             {
-                dec.Storage.Write(0x0001, (ushort)0xFF);
+                dec.Memory.Write(0x0001, (ushort)0xFF);
                 dec.Registers.Set(WideRegister.HL, 0x0001);
 
                 dec.Op(Unprefixed.INC_AT_HL)();
 
-                Assert.AreEqual(0, dec.Storage.Read(dec.Registers.Get(WideRegister.HL)));
+                Assert.AreEqual(0, dec.Memory.Read(dec.Registers.Get(WideRegister.HL)));
 
                 Assert.IsTrue(dec.Registers.Get(Flag.NN));
                 Assert.IsTrue(dec.Registers.Get(Flag.Z));
                 Assert.IsTrue(dec.Registers.Get(Flag.H));
             }
             {
-                dec.Storage.Write(0x0001, (ushort)0xFE);
+                dec.Memory.Write(0x0001, (ushort)0xFE);
                 dec.Registers.Set(WideRegister.HL, 0x0001);
 
                 dec.Op(Unprefixed.INC_AT_HL)();
 
-                Assert.AreEqual(0xff, dec.Storage.Read(dec.Registers.Get(WideRegister.HL)));
+                Assert.AreEqual(0xff, dec.Memory.Read(dec.Registers.Get(WideRegister.HL)));
 
                 Assert.IsTrue(dec.Registers.Get(Flag.NN));
                 Assert.IsTrue(dec.Registers.Get(Flag.NZ));
                 Assert.IsTrue(dec.Registers.Get(Flag.NH));
             }
             {
-                dec.Storage.Write(0x0001, (ushort)0x0F);
+                dec.Memory.Write(0x0001, (ushort)0x0F);
                 dec.Registers.Set(WideRegister.HL, 0x0001);
 
                 dec.Op(Unprefixed.INC_AT_HL)();
 
-                Assert.AreEqual(0x10, dec.Storage.Read(dec.Registers.Get(WideRegister.HL)));
+                Assert.AreEqual(0x10, dec.Memory.Read(dec.Registers.Get(WideRegister.HL)));
 
                 Assert.IsTrue(dec.Registers.Get(Flag.NN));
                 Assert.IsTrue(dec.Registers.Get(Flag.NZ));
                 Assert.IsTrue(dec.Registers.Get(Flag.H));
             }
             {
-                dec.Storage.Write(0x0001, (ushort)0x0E);
+                dec.Memory.Write(0x0001, (ushort)0x0E);
                 dec.Registers.Set(WideRegister.HL, 0x0001);
 
                 dec.Op(Unprefixed.INC_AT_HL)();
 
-                Assert.AreEqual(0x0F, dec.Storage.Read(dec.Registers.Get(WideRegister.HL)));
+                Assert.AreEqual(0x0F, dec.Memory.Read(dec.Registers.Get(WideRegister.HL)));
 
                 Assert.IsTrue(dec.Registers.Get(Flag.NN));
                 Assert.IsTrue(dec.Registers.Get(Flag.NZ));
@@ -79,7 +79,7 @@ namespace Tests
         [Test]
         public void INC_A()
         {
-            var dec = new Decoder(() => 0);
+            var dec = new CPU(() => 0);
 
             {
                 dec.Registers.Set(Register.A, 20);
@@ -97,7 +97,7 @@ namespace Tests
         [Test]
         public void DEC_A()
         {
-            var dec = new Decoder(() => 0);
+            var dec = new CPU(() => 0);
 
             {
                 dec.Registers.Set(Register.A, 20);
@@ -136,7 +136,7 @@ namespace Tests
         [Test]
         public void ADD_A_B()
         {
-            var dec = new Decoder(() => 0);
+            var dec = new CPU(() => 0);
 
             {
                 dec.Registers.Set(Register.A, 0x73);
@@ -168,7 +168,7 @@ namespace Tests
         [Test]
         public void DAA_wrap_around()
         {
-            var dec = new Decoder(() => 0);
+            var dec = new CPU(() => 0);
 
             {
                 dec.Registers.Set(Register.A, 0x73);
@@ -187,7 +187,7 @@ namespace Tests
         [Test]
         public void DAA_99()
         {
-            var dec = new Decoder(() => 0);
+            var dec = new CPU(() => 0);
 
 
             {
@@ -208,7 +208,7 @@ namespace Tests
         [Test]
         public void DAA_83()
         {
-            var dec = new Decoder(() => 0);
+            var dec = new CPU(() => 0);
 
 
             {

@@ -68,13 +68,13 @@ namespace Tests
         [Test]
         public void LD_SP_d16_v2()
         {
-            var p = new BootBase(new List<byte>
+            var p = new Environment(new List<byte>
             { (byte)Unprefixed.LD_SP_d16, 0x12, 0x45 }
             );
 
             p.DoNextOP();
             Assert.AreEqual(3, p.PC);
-            Assert.AreEqual(0x4512, p.dec.Registers.SP);
+            Assert.AreEqual(0x4512, p.CPU.Registers.SP);
             Assert.AreEqual(12, p.Clock);
         }
 
@@ -84,12 +84,12 @@ namespace Tests
             var dec = Setup0x77BufferedDecoder();
 
             var before = dec.Registers.HL;
-            var memoryBefore = dec.Storage.Read(before);
+            var memoryBefore = dec.Memory.Read(before);
 
             dec.Op(Unprefixed.LD_AT_HL_d8)();
 
             var after = dec.Registers.HL;
-            var memoryAfter = dec.Storage.Read(after);
+            var memoryAfter = dec.Memory.Read(after);
 
             Assert.AreEqual(before, after);
             Assert.AreNotEqual(memoryBefore, memoryAfter);
@@ -100,19 +100,19 @@ namespace Tests
         [Test]
         public void LDD_AT_HL_A()
         {
-            var dec = new Decoder(() => 0);
+            var dec = new CPU(() => 0);
             dec.Registers.Set(WideRegister.HL, 10);
             dec.Registers.Set(Register.A, 0x77);
 
             var before = dec.Registers.HL;
-            var memoryBefore = dec.Storage.Read(before);
+            var memoryBefore = dec.Memory.Read(before);
 
             dec.Op(Unprefixed.LDD_AT_HL_A)();
 
             var after = dec.Registers.HL;
-            var memoryAfter = dec.Storage.Read(after);
+            var memoryAfter = dec.Memory.Read(after);
 
-            var memoryAfterButAtOldHL = dec.Storage.Read(before);
+            var memoryAfterButAtOldHL = dec.Memory.Read(before);
 
             Assert.AreEqual(before - 1, after);
             Assert.AreEqual(memoryBefore, memoryAfter);
@@ -124,19 +124,19 @@ namespace Tests
         [Test]
         public void LDI_AT_HL_A()
         {
-            var dec = new Decoder(() => 0);
+            var dec = new CPU(() => 0);
             dec.Registers.Set(WideRegister.HL, 10);
             dec.Registers.Set(Register.A, 0x77);
 
             var before = dec.Registers.HL;
-            var memoryBefore = dec.Storage.Read(before);
+            var memoryBefore = dec.Memory.Read(before);
 
             dec.Op(Unprefixed.LDI_AT_HL_A)();
 
             var after = dec.Registers.HL;
-            var memoryAfter = dec.Storage.Read(after);
+            var memoryAfter = dec.Memory.Read(after);
 
-            var memoryAfterButAtOldHL = dec.Storage.Read(before);
+            var memoryAfterButAtOldHL = dec.Memory.Read(before);
 
             Assert.AreEqual(before + 1, after);
             Assert.AreEqual(memoryBefore, memoryAfter);
@@ -152,14 +152,14 @@ namespace Tests
             dec.Registers.SP = (0x6688);
             dec.Op(Unprefixed.LD_AT_a16_SP)();
 
-            var result = dec.Storage.ReadWide(0x4020);
+            var result = dec.Memory.ReadWide(0x4020);
             Assert.AreEqual(0x6688, result);
         }
 
         [Test]
         public void ADD_HL_BC()
         {
-            var dec = new Decoder(() => 0);
+            var dec = new CPU(() => 0);
 
             dec.Registers.HL = (0x8a23);
             dec.Registers.BC = (0x0605);
@@ -174,7 +174,7 @@ namespace Tests
         [Test]
         public void ADD_HL_HL()
         {
-            var dec = new Decoder(() => 0);
+            var dec = new CPU(() => 0);
 
             dec.Registers.HL=(0x8a23);
 
@@ -189,7 +189,7 @@ namespace Tests
         [Test]
         public void LD_A_B()
         {
-            var dec = new Decoder(() => 0);
+            var dec = new CPU(() => 0);
 
             dec.Registers.B = (0x10);
 
@@ -201,22 +201,22 @@ namespace Tests
         [Test]
         public void LD_AT_C_A()
         {
-            var dec = new Decoder(() => 0);
+            var dec = new CPU(() => 0);
 
             dec.Registers.A = (0x10);
             dec.Registers.C = (0x77);
 
             dec.Op(Unprefixed.LD_AT_C_A)();
 
-            Assert.AreEqual(0x10, dec.Storage.Read(0xff77));
+            Assert.AreEqual(0x10, dec.Memory.Read(0xff77));
 
         }
         [Test]
         public void LD_A_AT_C()
         {
-            var dec = new Decoder(() => 0);
+            var dec = new CPU(() => 0);
 
-            dec.Storage.Write(0xff77, 0x10);
+            dec.Memory.Write(0xff77, 0x10);
             dec.Registers.C = (0x77);
 
 
@@ -225,22 +225,22 @@ namespace Tests
             Assert.AreEqual(0x10, dec.Registers.A);
 
         }
-        private static Decoder Setup0x4020BufferedDecoder()
+        private static CPU Setup0x4020BufferedDecoder()
         {
             var mem = new byte[] { 0x20, 0x40 }; // little endian
             int memIndex = 0;
 
-            var dec = new Decoder(() =>
+            var dec = new CPU(() =>
              mem[memIndex++]
             );
             return dec;
         }
-        private static Decoder Setup0x77BufferedDecoder()
+        private static CPU Setup0x77BufferedDecoder()
         {
             var mem = new byte[] { 0x77 }; // little endian
             int memIndex = 0;
 
-            var dec = new Decoder(() =>
+            var dec = new CPU(() =>
              mem[memIndex++]
             );
             return dec;
