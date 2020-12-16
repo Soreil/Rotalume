@@ -6,7 +6,8 @@ namespace emulator
     {
         public readonly Func<int> Clock;
         public readonly Action EnableVBlankInterrupt;
-        public PPU(Func<int> clock,Action enableVBlankInterrupt)
+        public System.IO.Stream Writer = System.IO.Stream.Null;
+        public PPU(Func<int> clock, Action enableVBlankInterrupt)
         {
             Clock = clock;
             OAM = new OAM();
@@ -78,13 +79,13 @@ namespace emulator
         {
             LCDC = b;
             if (ScreenJustTurnedOn)
-                Renderer = new Renderer(this); //We want a new renderer so all the internal state resets including clocking
+                Renderer = new Renderer(this,Writer); //We want a new renderer so all the internal state resets including clocking
             else if (!LCDEnable && Renderer is not null)
                 Renderer = null; //We want to destroy the old renderer so it can't keep running after requested to turn off
         }
 
         //We could have more calls to SetLCDC for other bits in the LCDC register.
         //The LCDCEnable flag is only interesting at the moment it flips and the renderer null check should mean a recent flip
-        private bool ScreenJustTurnedOn => LCDEnable && Renderer is null; 
+        private bool ScreenJustTurnedOn => LCDEnable && Renderer is null;
     }
 }

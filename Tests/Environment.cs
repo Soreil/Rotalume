@@ -51,6 +51,7 @@ namespace Tests
         public Environment() : this(LoadBootROM(), new List<byte>())
         {
         }
+
         public Environment(List<byte> bootROM, List<byte> gameROM)
         {
             Func<ushort> GetProgramCounter = () => PC;

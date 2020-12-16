@@ -10,12 +10,12 @@ namespace Tests
 {
     class GPU
     {
-        public static byte[] LoadGameROM() => File.ReadAllBytes(@"..\..\..\rom\Tetris (World) (Rev A).gb");
+        public static List<byte> LoadGameROM() => File.ReadAllBytes(@"..\..\..\rom\Tetris (World) (Rev A).gb").ToList();
 
         [Test]
         public void LineRegisterGetsIncrementedDuringVBlank()
         {
-            Environment Proc = new Environment(Environment.LoadBootROM(), LoadGameROM().ToList());
+            Environment Proc = new Environment(Environment.LoadBootROM(), LoadGameROM());
             var step = Stepper(Proc);
 
             var oldLY = Proc.PPU.LY;
@@ -33,7 +33,7 @@ namespace Tests
         [Test]
         public void ModeIsOnlyVBlankDuringVBlank()
         {
-            Environment Proc = new Environment(Environment.LoadBootROM(), LoadGameROM().ToList());
+            Environment Proc = new Environment(Environment.LoadBootROM(), LoadGameROM());
             var step = Stepper(Proc);
 
             var oldLY = Proc.PPU.LY;
@@ -70,7 +70,7 @@ namespace Tests
 ................................####......####..####..####....####..####....##########..####....####....##########....########..................................
 ................................####......####..####..####....####..####....##########..####....####....##########....########..................................";
 
-            Environment Proc = new(Environment.LoadBootROM(), LoadGameROM().ToList());
+            Environment Proc = new(Environment.LoadBootROM(), LoadGameROM());
             var step = Stepper(Proc);
 
             while (!Proc.PPU.LCDEnable)
@@ -97,7 +97,7 @@ namespace Tests
         [Test]
         public void DrawTileMap()
         {
-            Environment Proc = new(Environment.LoadBootROM(), LoadGameROM().ToList());
+            Environment Proc = new(Environment.LoadBootROM(), LoadGameROM());
             var step = Stepper(Proc);
 
             while (!Proc.PPU.LCDEnable)
@@ -121,7 +121,7 @@ namespace Tests
         [Test]
         public void DrawAllTiles()
         {
-            Environment Proc = new(Environment.LoadBootROM(), LoadGameROM().ToList());
+            Environment Proc = new(Environment.LoadBootROM(), LoadGameROM());
             var step = Stepper(Proc);
 
             while (!Proc.PPU.LCDEnable)
@@ -147,7 +147,7 @@ namespace Tests
 ........
 ........";
 
-            Environment Proc = new(Environment.LoadBootROM(), LoadGameROM().ToList());
+            Environment Proc = new(Environment.LoadBootROM(), LoadGameROM());
             var step = Stepper(Proc);
 
             //Run boot so the memory is fully populated
@@ -176,8 +176,11 @@ namespace Tests
         [Test]
         public void GPUBoot()
         {
-            Environment Proc = new Environment(Environment.LoadBootROM(), LoadGameROM().ToList());
+            Environment Proc = new Environment(Environment.LoadBootROM(), LoadGameROM());
+
             var step = Stepper(Proc);
+
+            Proc.PPU.Writer = new FrameSink();
 
             //LCD is off
             Assert.AreEqual(Proc.PPU.LCDC, 0);
