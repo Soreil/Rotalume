@@ -10,7 +10,7 @@ namespace emulator
         readonly PPU PPU;
         readonly Func<int> Clock;
         public int TimeUntilWhichToPause;
-        readonly StreamWriter fs = StreamWriter.Null;
+        readonly Stream fs = Stream.Null;
 
         const int DrawlinesPerFrame = 144;
         const int ScanlinesPerFrame = DrawlinesPerFrame + 10;
@@ -25,8 +25,7 @@ namespace emulator
             PPU.LY = (byte)(Line % ScanlinesPerFrame);
             PPU.LYCInterrupt = PPU.LY == PPU.LYC;
         }
-
-        public Renderer(PPU ppu, StreamWriter destination) : this(ppu)
+        public Renderer(PPU ppu, Stream destination) : this(ppu)
         {
             fs = destination;
         }
@@ -60,11 +59,28 @@ namespace emulator
         private void Draw()
         {
             var palette = GetPalette();
-            var line = GetLine(palette, YScrolled(PPU.LY, PPU.SCY), PPU.BGTileMapDisplaySelect);
-            fs.WriteLine(line);
+            var line = GetLineShades(palette, YScrolled(PPU.LY, PPU.SCY), PPU.BGTileMapDisplaySelect);
+            fs.Write(line.ConvertAll(ShadeToGray).ToArray());
         }
 
+        public static byte ShadeToGray(Shade s) => s switch
+        {
+            Shade.White => 0xff,
+            Shade.LightGray => 0xc0,
+            Shade.DarkGray => 0x40,
+            Shade.Black => 0,
+            _ => throw new Exception(),
+        };
+
         public string GetLine(Shade[] palette, byte yScrolled, ushort tilemap)
+        {
+            var pixels = GetLineShades(palette, yScrolled, tilemap);
+
+            var s = MakePrintableLine(pixels);
+            return s;
+        }
+
+        private List<Shade> GetLineShades(Shade[] palette, byte yScrolled, ushort tilemap)
         {
             var pixels = new List<Shade>(160);
 
@@ -75,8 +91,7 @@ namespace emulator
                     pixels.Add(curPix[cur]);
             }
 
-            var s = MakePrintableLine(pixels);
-            return s;
+            return pixels;
         }
 
         private static byte YScrolled(byte LY, byte SCY) => (byte)((LY + SCY) & 0xff);
@@ -170,11 +185,11 @@ namespace emulator
                     _ => throw new InvalidOperationException(),
                 };
             }
-            else
+            else if (PPU.LY == 144)
             {
                 PPU.Mode = Mode.VBlank;
                 PPU.EnableVBlankInterrupt();
-                fs.WriteLine();
+                fs.FlushAsync();
             }
         }
 
