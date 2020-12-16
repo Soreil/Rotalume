@@ -189,7 +189,7 @@ namespace emulator
             {
                 PPU.Mode = Mode.VBlank;
                 PPU.EnableVBlankInterrupt();
-                fs.FlushAsync();
+                fs.Flush();
             }
         }
 

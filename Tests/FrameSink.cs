@@ -13,6 +13,9 @@ namespace Tests
 
         public FrameSink()
         {
+            var entries = Directory.GetFileSystemEntries("frames");
+            foreach (var entry in entries) File.Delete(entry);
+
             output = Directory.CreateDirectory("frames");
             frameData = new byte[144 * 160];
             position = 0;
@@ -25,14 +28,14 @@ namespace Tests
 
         //We ought to not block while writing out a file, probably best to copy frameData and write that out Async so we can keep creating new ones and
         //not have a race condition if writing out is slow.
-        public async override void Flush()
+        public override void Flush()
         {
+            position = 0;
             byte[] tmp = (byte[])frameData.Clone();
             using (var file = File.Create(output + "\\" + "Frame" + frameCount.ToString()))
             {
                 frameCount++;
-                position = 0;
-                await file.WriteAsync(tmp);
+                file.WriteAsync(tmp);
             }
 
         }
@@ -61,7 +64,8 @@ namespace Tests
         public override void SetLength(long value) => throw new System.NotImplementedException();
         public override void Write(byte[] buffer, int offset, int count)
         {
-            buffer[offset..(offset + count)].CopyTo(frameData, position);
+            var slice = buffer[offset..(offset + count)];
+            slice.CopyTo(frameData, position);
             position += count;
         }
     }
