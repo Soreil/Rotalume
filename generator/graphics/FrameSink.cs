@@ -2,42 +2,32 @@
 using System;
 
 
-namespace Tests
+namespace emulator
 {
-    class FrameSink : Stream
+    public class FrameSink : Stream
     {
         private readonly byte[] frameData;
         private long position;
-        DirectoryInfo output;
-        int frameCount = 0;
-
-        public FrameSink()
+        private Action<byte[]> Render;
+        int frameCount { get; set; }
+        public FrameSink(Action<byte[]> render)
         {
-            var entries = Directory.GetFileSystemEntries("frames");
-            foreach (var entry in entries) File.Delete(entry);
-
-            output = Directory.CreateDirectory("frames");
             frameData = new byte[144 * 160];
             position = 0;
+            frameCount = 0;
+            Render = render;
         }
+
         public override bool CanRead { get => true; }
         public override bool CanSeek { get => true; }
         public override bool CanWrite { get => true; }
         public override long Length { get => frameData.Length; }
         public override long Position { get => position; set => position = value; }
-
-        //We ought to not block while writing out a file, probably best to copy frameData and write that out Async so we can keep creating new ones and
-        //not have a race condition if writing out is slow.
         public override void Flush()
         {
+            Render(frameData);
             position = 0;
-            byte[] tmp = (byte[])frameData.Clone();
-            using (var file = File.Create(output + "\\" + "Frame" + frameCount.ToString()))
-            {
-                frameCount++;
-                file.WriteAsync(tmp);
-            }
-
+            frameCount++;
         }
         public override int Read(byte[] buffer, int offset, int count)
         {

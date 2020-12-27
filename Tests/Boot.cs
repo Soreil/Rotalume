@@ -1,6 +1,8 @@
 ﻿using System.IO;
 using System.Linq;
 
+using emulator;
+
 using NUnit.Framework;
 
 
@@ -10,7 +12,7 @@ namespace Tests
     {
         public static byte[] LoadGameROM() => File.ReadAllBytes(@"..\..\..\rom\Tetris (World) (Rev A).gb");
 
-        private readonly Environment Proc = new Environment(Environment.LoadBootROM(), LoadGameROM().ToList());
+        private readonly Core Proc = new Core(Core.LoadBootROM(), LoadGameROM().ToList());
 
         [Test]
         public void DoBootNoGPU()

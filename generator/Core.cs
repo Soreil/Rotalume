@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 
-using emulator;
-
-namespace Tests
+namespace emulator
 {
-    public class Environment
+    public class Core
     {
         public ushort PC;
 
@@ -44,15 +42,15 @@ namespace Tests
         readonly ControlRegister interruptRegisters = new ControlRegister(0xffff, 0x1); //This is only being used for two registers.
 
         //Constructor just for tests which don't care about a functioning bootrom
-        public Environment(List<byte> l) : this(new List<byte>(), l)
+        public Core(List<byte> l) : this(new List<byte>(), l)
         {
             bootROMActive = false;
         }
-        public Environment() : this(LoadBootROM(), new List<byte>())
+        public Core() : this(LoadBootROM(), new List<byte>())
         {
         }
 
-        public Environment(List<byte> bootROM, List<byte> gameROM)
+        public Core(List<byte> bootROM, List<byte> gameROM)
         {
             Func<ushort> GetProgramCounter = () => PC;
             Action<ushort> SetProgramCounter = (x) => { PC = x; };
@@ -224,5 +222,15 @@ namespace Tests
 };
             return new List<byte>(bootROM);
         }
+        public static Action Stepper(Core b)
+        {
+            return () =>
+            {
+                b.DoNextOP();
+                b.DoInterrupt();
+                b.DoPPU();
+            };
+        }
+
     }
 }

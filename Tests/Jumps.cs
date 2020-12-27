@@ -11,7 +11,7 @@ namespace Tests
         [Test]
         public void NO_OP()
         {
-            var p = new Environment(new List<byte> {
+            var p = new Core(new List<byte> {
             (byte)Unprefixed.NOP
             });
             p.DoNextOP();
@@ -22,7 +22,7 @@ namespace Tests
         [Test]
         public void JR_NZ_r8()
         {
-            var p = new Environment(new List<byte>
+            var p = new Core(new List<byte>
             { (byte)Unprefixed.JR_NZ_r8, 0x05}
             );
 
@@ -30,7 +30,7 @@ namespace Tests
             Assert.AreEqual(7, p.PC);
             Assert.AreEqual(12, p.Clock);
 
-            p = new Environment(new List<byte>
+            p = new Core(new List<byte>
             { (byte)Unprefixed.JR_NZ_r8, 0x05}
             );
             p.CPU.Registers.Mark(Flag.Z);

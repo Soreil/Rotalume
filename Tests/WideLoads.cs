@@ -68,7 +68,7 @@ namespace Tests
         [Test]
         public void LD_SP_d16_v2()
         {
-            var p = new Environment(new List<byte>
+            var p = new emulator.Core(new List<byte>
             { (byte)Unprefixed.LD_SP_d16, 0x12, 0x45 }
             );
 
@@ -176,7 +176,7 @@ namespace Tests
         {
             var dec = new CPU(() => 0);
 
-            dec.Registers.HL=(0x8a23);
+            dec.Registers.HL = (0x8a23);
 
             dec.Op(Unprefixed.ADD_HL_HL)();
 

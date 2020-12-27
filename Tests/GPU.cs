@@ -1,10 +1,9 @@
-﻿using System;
+﻿using emulator;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
 using NUnit.Framework;
-
 
 namespace Tests
 {
@@ -15,8 +14,8 @@ namespace Tests
         [Test]
         public void LineRegisterGetsIncrementedDuringVBlank()
         {
-            Environment Proc = new Environment(Environment.LoadBootROM(), LoadGameROM());
-            var step = Stepper(Proc);
+            Core Proc = new Core(Core.LoadBootROM(), LoadGameROM());
+            var step = Core.Stepper(Proc);
 
             var oldLY = Proc.PPU.LY;
             while (Proc.PC != 0x100)
@@ -33,8 +32,8 @@ namespace Tests
         [Test]
         public void ModeIsOnlyVBlankDuringVBlank()
         {
-            Environment Proc = new Environment(Environment.LoadBootROM(), LoadGameROM());
-            var step = Stepper(Proc);
+            Core Proc = new Core(Core.LoadBootROM(), LoadGameROM());
+            var step = Core.Stepper(Proc);
 
             var oldLY = Proc.PPU.LY;
             while (Proc.PC != 0x100)
@@ -70,8 +69,8 @@ namespace Tests
 ................................####......####..####..####....####..####....##########..####....####....##########....########..................................
 ................................####......####..####..####....####..####....##########..####....####....##########....########..................................";
 
-            Environment Proc = new(Environment.LoadBootROM(), LoadGameROM());
-            var step = Stepper(Proc);
+            Core Proc = new(Core.LoadBootROM(), LoadGameROM());
+            var step = Core.Stepper(Proc);
 
             while (!Proc.PPU.LCDEnable)
                 step();
@@ -97,8 +96,8 @@ namespace Tests
         [Test]
         public void DrawTileMap()
         {
-            Environment Proc = new(Environment.LoadBootROM(), LoadGameROM());
-            var step = Stepper(Proc);
+            Core Proc = new(Core.LoadBootROM(), LoadGameROM());
+            var step = Core.Stepper(Proc);
 
             while (!Proc.PPU.LCDEnable)
                 step();
@@ -111,18 +110,18 @@ namespace Tests
                 for (var x = 0; x < 32; x++)
                 {
                     var TileID = Proc.PPU.VRAM[tilemap + x + (y * 32)]; //Background ID map is laid out as 32x32 tiles of size 8x8
-                    Console.Write(TileID);
-                    Console.Write('\t');
+                    System.Console.Write(TileID);
+                    System.Console.Write('\t');
                 }
-                Console.WriteLine();
+                System.Console.WriteLine();
             }
         }
 
         [Test]
         public void DrawAllTiles()
         {
-            Environment Proc = new(Environment.LoadBootROM(), LoadGameROM());
-            var step = Stepper(Proc);
+            Core Proc = new(Core.LoadBootROM(), LoadGameROM());
+            var step = Core.Stepper(Proc);
 
             while (!Proc.PPU.LCDEnable)
                 step();
@@ -130,8 +129,8 @@ namespace Tests
             var render = new emulator.Renderer(Proc.PPU);
             for (byte i = 0; i < 27; i++)
             {
-                Console.WriteLine(render.GetTile(i));
-                Console.WriteLine();
+                System.Console.WriteLine(render.GetTile(i));
+                System.Console.WriteLine();
             }
         }
 
@@ -147,8 +146,8 @@ namespace Tests
 ........
 ........";
 
-            Environment Proc = new(Environment.LoadBootROM(), LoadGameROM());
-            var step = Stepper(Proc);
+            Core Proc = new(Core.LoadBootROM(), LoadGameROM());
+            var step = Core.Stepper(Proc);
 
             //Run boot so the memory is fully populated
             while (!Proc.PPU.LCDEnable)
@@ -176,11 +175,11 @@ namespace Tests
         [Test]
         public void GPUBoot()
         {
-            Environment Proc = new Environment(Environment.LoadBootROM(), LoadGameROM());
+            Core Proc = new Core(Core.LoadBootROM(), LoadGameROM());
 
-            var step = Stepper(Proc);
+            var step = Core.Stepper(Proc);
 
-            Proc.PPU.Writer = new FrameSink();
+            Proc.PPU.Writer = new FrameSink(x => _ = x);
 
             //LCD is off
             Assert.AreEqual(Proc.PPU.LCDC, 0);
@@ -206,14 +205,5 @@ namespace Tests
             Assert.AreEqual(Proc.PPU.SCY, 0);
         }
 
-        private static Action Stepper(Environment b)
-        {
-            return () =>
-            {
-                b.DoNextOP();
-                b.DoInterrupt();
-                b.DoPPU();
-            };
-        }
     }
 }
