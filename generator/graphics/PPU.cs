@@ -6,7 +6,7 @@ namespace emulator
     {
         public readonly Func<int> Clock;
         public readonly Action EnableVBlankInterrupt;
-        public System.IO.Stream Writer = System.IO.Stream.Null;
+        public FrameSink Writer = new((x)=> { });
         public PPU(Func<int> clock, Action enableVBlankInterrupt)
         {
             Clock = clock;
@@ -79,7 +79,7 @@ namespace emulator
         {
             LCDC = b;
             if (ScreenJustTurnedOn)
-                Renderer = new Renderer(this,Writer); //We want a new renderer so all the internal state resets including clocking
+                Renderer = new Renderer(this, Writer); //We want a new renderer so all the internal state resets including clocking
             else if (!LCDEnable && Renderer is not null)
                 Renderer = null; //We want to destroy the old renderer so it can't keep running after requested to turn off
         }

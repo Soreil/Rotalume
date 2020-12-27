@@ -13,6 +13,7 @@
         </Grid.RowDefinitions>
         <Canvas Grid.Row="1">
             <Image Name="Display" Height="288" Margin="0,0,0,0" Width="320"/>
+            <Label Name="FPS"/>
         </Canvas>
         <Canvas Grid.Row="2">
             <Button Click="LoadROM"  Content="Open ROM" Margin="0,0,0,0"/>

@@ -23,6 +23,7 @@ namespace GUI
     {
         delegate void UpdateImageCb();
         delegate void UpdateImagePixelsCb(byte[] data);
+        delegate void UpdateLabelCb(float f);
         public MainWindow()
         {
             InitializeComponent();
@@ -30,30 +31,30 @@ namespace GUI
 
         private void Gameboy(string path)
         {
-            var gameboy = new emulator.Core(emulator.Core.LoadBootROM(), System.IO.File.ReadAllBytes(path).ToList());
+            var gameboy = new emulator.Core(emulator.Core.LoadBootROM(),
+                System.IO.File.ReadAllBytes(path).ToList());
+
             var step = emulator.Core.Stepper(gameboy);
 
             Dispatcher.BeginInvoke(new UpdateImageCb(RunGameboy),
-                System.Windows.Threading.DispatcherPriority.Render,
-                Array.Empty<object>());
+                System.Windows.Threading.DispatcherPriority.Render);
 
             void update(byte[] x)
             {
-                byte[] rgbs = new byte[x.Length * 4];
-                for (int i = 0; i < x.Length; i++)
-                {
-                    rgbs[i * 4] = x[i];
-                    rgbs[i * 4 + 1] = x[i];
-                    rgbs[i * 4 + 2] = x[i];
-                }
-
                 Dispatcher.BeginInvoke(new UpdateImagePixelsCb(UpdatePixels),
     System.Windows.Threading.DispatcherPriority.Render,
-    new object[] { rgbs });
+    new object[] { x });
             }
 
             gameboy.PPU.Writer = new emulator.FrameSink(update);
+
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             while (gameboy.PC != 0x100) step();
+            var fps = gameboy.PPU.Writer.frameCount / (float)(stopwatch.ElapsedMilliseconds / 1000f);
+            stopwatch.Stop();
+            Dispatcher.BeginInvoke(new UpdateLabelCb(UpdateLabel),
+                System.Windows.Threading.DispatcherPriority.Render,
+                new object[] { fps });
         }
 
         WriteableBitmap bmp;
@@ -62,6 +63,8 @@ namespace GUI
         {
             Display.Source = bmp;
         }
+
+        private void UpdateLabel(float f) => FPS.Content = string.Format("FPS:{0}", f);
 
         private void UpdatePixels(byte[] data)
         {
@@ -75,7 +78,7 @@ namespace GUI
             var result = ofd.ShowDialog();
             if (result == false) return;
 
-            bmp = new WriteableBitmap(160, 144, 96, 96, PixelFormats.Bgr32, null);
+            bmp = new WriteableBitmap(160, 144, 96, 96, PixelFormats.Gray8, null);
             new Thread(() =>
             {
                 Thread.CurrentThread.IsBackground = true;

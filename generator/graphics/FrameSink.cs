@@ -9,7 +9,7 @@ namespace emulator
         private readonly byte[] frameData;
         private long position;
         private Action<byte[]> Render;
-        int frameCount { get; set; }
+        public int frameCount { get; set; }
         public FrameSink(Action<byte[]> render)
         {
             frameData = new byte[144 * 160];
