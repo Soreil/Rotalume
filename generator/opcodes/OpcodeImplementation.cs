@@ -11,7 +11,7 @@ namespace emulator
         readonly public Action enableInterrupts;
         readonly public Action disableInterrupts;
         readonly private Action<int> AddTicks;
-
+        readonly public Action halt;
         private ushort Pop()
         {
             var SP = Registers.SP;
@@ -418,7 +418,7 @@ namespace emulator
             return () =>
             {
                 AddTicks(duration);
-                throw new Exception("Not implemented");
+                halt();
             };
         }
         public Action ADD((Register, Traits) p0, (Register, Traits) p1, int duration)
@@ -732,8 +732,8 @@ namespace emulator
             {
                 if (Registers.Get(p0.Item1))
                 {
-                    Push(GetPC());
                     var addr = (ushort)Memory.Fetch(p1.Item1);
+                    Push(GetPC());
                     SetPC(addr);
                     AddTicks(duration);
                 }

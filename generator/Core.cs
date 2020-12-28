@@ -7,6 +7,8 @@ namespace emulator
     {
         public ushort PC;
 
+        public Stack<(int, Unprefixed)> Unprefixeds = new();
+
         //Not sure where this special bit should go but it's not in memory and suposed to be hard to access
         bool bootROMActive = true;
         private byte bootROMField = 0;
@@ -165,9 +167,13 @@ namespace emulator
 
         public void DoNextOP()
         {
+            if (CPU.Halted) return;
+
             var op = Read();
             if (op != 0xcb)
             {
+                //if ((Unprefixed)op != Unprefixed.CPL && (Unprefixed)op != Unprefixed.NOP && (Unprefixed)op != Unprefixed.RST_38H)
+                //Unprefixeds.Push((PC - 1, (Unprefixed)op));
                 CPU.Op((Unprefixed)op)();
             }
             else
@@ -179,9 +185,11 @@ namespace emulator
 
         public void DoInterrupt()
         {
-            if (!CPU.IME) return; //Interrupts have to be globally enabled to use them
 
             byte coincidence = (byte)(InterruptControlRegister & InterruptFireRegister); //Coincidence has all the bits which have both fired AND are enabled
+            if (coincidence != 0) CPU.Halted = false;
+
+            if (!CPU.IME) return; //Interrupts have to be globally enabled to use them
             for (int bit = 0; bit < 5; bit++) //Bit 0 has highest priority, we only handle one interrupt at a time
             {
                 if (coincidence.GetBit(bit))

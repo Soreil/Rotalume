@@ -9,6 +9,7 @@ namespace emulator
         private readonly Action[] CbOps;
 
         public bool IME = false;
+        public bool Halted = false;
 
         public Action Op(Unprefixed op) => StdOps[(int)op];
         public Action Op(Cbprefixed op) => CbOps[(int)op];
@@ -27,6 +28,7 @@ namespace emulator
 
             enableInterrupts = () => IME = true;
             disableInterrupts = () => IME = false;
+            halt = () => Halted = true;
             AddTicks = TickClock;
         }
 
