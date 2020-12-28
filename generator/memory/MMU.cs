@@ -27,7 +27,7 @@ namespace emulator
             {
                 var possible = getRanges.FirstOrDefault((x) => x.Begin <= at && x.End > at && x.Exists != null && x.Exists(at));
 
-                if (BootROMActive && at < 0x100)
+                if (BootROMActive && at < 0x100) //Bootrom is read only so we don't need a corresponding function in set
                     return bootROM[at];
 
                 if (possible != null)
@@ -59,10 +59,11 @@ namespace emulator
             ReadInputWide = () => BitConverter.ToUInt16(new byte[] { ReadInput(), ReadInput() });
 
             _mem = new byte[0x10000];
-            game.CopyTo(_mem);
+            for (int i = 0; i < 0x10000; i++) _mem[i] = 0xff; //Initialize to zero
+            game.CopyTo(_mem); //Game should be at most 0x8000 in size
 
             _bootROMActive = bootROMActive;
-            bootROM = boot;
+            bootROM = boot; //Bootrom should be 256 bytes
         }
         internal object Fetch(DMGInteger arg)
         {
