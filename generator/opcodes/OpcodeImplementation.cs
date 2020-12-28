@@ -123,7 +123,8 @@ namespace emulator
                     var arg = Memory.Read(addr);
                     Registers.Set(p0.Item1, arg);
                     AddTicks(duration);
-                } else
+                }
+                else
                 {
                     var arg = (byte)Memory.Fetch(p1.Item1);
                     Registers.Set(p0.Item1, arg);
@@ -794,8 +795,8 @@ namespace emulator
         {
             return () =>
             {
-                Push(GetPC());
                 var addr = (ushort)Memory.Fetch(DMGInteger.d16);
+                Push(GetPC());
                 SetPC(addr);
                 AddTicks(duration);
             };
