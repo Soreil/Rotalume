@@ -43,18 +43,18 @@ namespace GUI
             {
                 Dispatcher.BeginInvoke(new UpdateImagePixelsCb(UpdatePixels),
     System.Windows.Threading.DispatcherPriority.Render,
-    new object[] { x });
+     x);
             }
 
             gameboy.PPU.Writer = new emulator.FrameSink(update);
 
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             while (gameboy.PC != 0x100) step();
-            var fps = gameboy.PPU.Writer.frameCount / (float)(stopwatch.ElapsedMilliseconds / 1000f);
+            var fps = gameboy.PPU.Writer.frameCount / (stopwatch.ElapsedMilliseconds / 1000f);
             stopwatch.Stop();
             Dispatcher.BeginInvoke(new UpdateLabelCb(UpdateLabel),
                 System.Windows.Threading.DispatcherPriority.Render,
-                new object[] { fps });
+                 fps);
         }
 
         WriteableBitmap bmp;

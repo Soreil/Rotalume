@@ -13,6 +13,7 @@ namespace emulator
         public OAM() => mem = new byte[Size];
 
         private SpriteAttributes Entry(int n) => new SpriteAttributes(mem[n * 4], mem[n * 4 + 1], mem[n * 4 + 2], mem[n * 4 + 3]);
+        
         private IEnumerable<SpriteAttributes> Entries()
         {
             List<SpriteAttributes> res = new List<SpriteAttributes>(mem.Length / 4);
@@ -20,10 +21,11 @@ namespace emulator
                 res[i] = Entry(i);
             return res;
         }
+
         public byte this[int n]
         {
-            get => mem[n];
-            set => mem[n] = value;
+            get => mem[n - Start];
+            set => mem[n - Start] = value;
         }
 
         const int maxSpritesOnLine = 10;
