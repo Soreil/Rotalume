@@ -172,8 +172,19 @@ namespace emulator
             var op = Read();
             if (op != 0xcb)
             {
-                //if ((Unprefixed)op != Unprefixed.CPL && (Unprefixed)op != Unprefixed.NOP && (Unprefixed)op != Unprefixed.RST_38H)
-                //Unprefixeds.Push((PC - 1, (Unprefixed)op));
+                if (PC == 0x2799) System.Diagnostics.Debugger.Break(); //We should make it past the JR at some point
+                /*2798 - 27ac (HL = 9bff)
+                 * Load 0x400 in to BC
+                 * while BC is not 0:
+                 * Load 2F in to (HL) and decrement HL
+                 * decrement BC
+                 * 
+                 * return
+                 */
+
+
+                if ((Unprefixed)op != Unprefixed.CPL && (Unprefixed)op != Unprefixed.NOP && (Unprefixed)op != Unprefixed.RST_38H)
+                    Unprefixeds.Push((PC - 1, (Unprefixed)op));
                 CPU.Op((Unprefixed)op)();
             }
             else
@@ -187,7 +198,8 @@ namespace emulator
         {
 
             byte coincidence = (byte)(InterruptControlRegister & InterruptFireRegister); //Coincidence has all the bits which have both fired AND are enabled
-            if (coincidence != 0) CPU.Halted = false;
+            if (coincidence != 0)
+                CPU.Halted = false;
 
             if (!CPU.IME) return; //Interrupts have to be globally enabled to use them
             for (int bit = 0; bit < 5; bit++) //Bit 0 has highest priority, we only handle one interrupt at a time

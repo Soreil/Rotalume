@@ -49,7 +49,7 @@ namespace GUI
             gameboy.PPU.Writer = new emulator.FrameSink(update);
 
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            while (gameboy.PC != 0x100) step();
+            while (true) step();
             var fps = gameboy.PPU.Writer.frameCount / (stopwatch.ElapsedMilliseconds / 1000f);
             stopwatch.Stop();
             Dispatcher.BeginInvoke(new UpdateLabelCb(UpdateLabel),
