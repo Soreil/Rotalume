@@ -57,13 +57,13 @@ namespace emulator
 
                 switch (p0.Item2.Postfix)
                 {
-                    default:
-                        break;
                     case Postfix.increment:
                         Registers.Set(p0.Item1, (ushort)(address + 1));
                         break;
                     case Postfix.decrement:
                         Registers.Set(p0.Item1, (ushort)(address - 1));
+                        break;
+                    default:
                         break;
                 }
                 AddTicks(duration);

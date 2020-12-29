@@ -100,6 +100,14 @@ namespace Tests
             Assert.AreEqual(12, p.Clock);
 
             p = new Core(new List<byte>
+            { (byte)Unprefixed.JR_NZ_r8, unchecked((byte)-2)}
+            );
+
+            p.DoNextOP();
+            Assert.AreEqual(0, p.PC);
+            Assert.AreEqual(12, p.Clock);
+
+            p = new Core(new List<byte>
             { (byte)Unprefixed.JR_NZ_r8, 0x05}
             );
             p.CPU.Registers.Mark(Flag.Z);
@@ -107,6 +115,28 @@ namespace Tests
             p.DoNextOP();
             Assert.AreEqual(2, p.PC);
             Assert.AreEqual(8, p.Clock);
+        }
+
+        [Test]
+        public void JR_r8()
+        {
+            var p = new Core(new List<byte>
+            { (byte)Unprefixed.JR_r8, 0x05}
+            );
+
+            p.DoNextOP();
+            Assert.AreEqual(7, p.PC);
+            Assert.AreEqual(12, p.Clock);
+
+            p = new Core(new List<byte>
+            { (byte)Unprefixed.JR_r8, unchecked((byte)-2)}
+            );
+
+            p.DoNextOP();
+            Assert.AreEqual(0, p.PC);
+            Assert.AreEqual(12, p.Clock);
+
+
         }
     }
 }
