@@ -195,6 +195,61 @@ namespace Tests
             //We have scrolled to the top of the screen
             Assert.AreEqual(Proc.PPU.SCY, 0);
         }
+        [Test]
+        public void TetrisHangs()
+        {
+            Core Proc = new Core(Core.LoadBootROM(), LoadGameROM());
+
+            Proc.PPU.Writer = new FrameSink(x => _ = x);
+            while (Proc.PC != 0x100)
+                Proc.Step();
+
+            Assert.AreEqual(0x100, Proc.PC);
+
+            //LCD is on and a layer is being drawn
+            Assert.AreEqual(Proc.PPU.LCDC, 0x91);
+            //Palette has a value so we can see white and black
+            Assert.AreEqual(Proc.PPU.BGP, 0xFC);
+            //We have scrolled to the top of the screen
+            Assert.AreEqual(Proc.PPU.SCY, 0);
+
+            //We should make it past the JR at some point
+            /*2798 - 27ac (HL = 9bff)
+             * Load 0x400 in to BC
+             * while BC is not 0:
+             * Load 2F in to (HL) and decrement HL
+             * decrement BC
+             * 
+             * return
+             */
+            while (Proc.PC != 0x2798) Proc.Step();
+            //while (Proc.PC < 0x27a1) Proc.Step();
+            //Proc.CPU.Registers.Mark(Flag.Z);
+            //Proc.Step();
+
+            Proc.Step();
+            System.Console.WriteLine("BC:{0:X}", Proc.CPU.Registers.BC);
+            System.Console.WriteLine("HL:{0:X}", Proc.CPU.Registers.HL);
+
+            while (Proc.PC < 0x27a3)
+            {
+                Proc.Step();
+                System.Console.WriteLine("Load 2f in to A:{0:X}", Proc.CPU.Registers.A);
+                System.Console.WriteLine("HL before:{0:X}", Proc.CPU.Registers.HL);
+                Proc.Step();
+                System.Console.WriteLine("HL after:{0:X}", Proc.CPU.Registers.HL);
+                Proc.Step();
+                System.Console.WriteLine("BC:{0:X}", Proc.CPU.Registers.BC);
+                Proc.Step();
+                System.Console.WriteLine("Loaded B in to A:{0:X}", Proc.CPU.Registers.A);
+                Proc.Step();
+                System.Console.WriteLine("OR C and A, C:{0:X} Zero:{1}", Proc.CPU.Registers.C, Proc.CPU.Registers.Get(Flag.Z));
+                Proc.Step();
+                System.Console.WriteLine();
+            }
+
+            Assert.AreEqual(0x27a3, Proc.PC);
+        }
 
     }
 }
