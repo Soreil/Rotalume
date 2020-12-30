@@ -163,8 +163,6 @@ namespace emulator
                 ));
         }
 
-        internal void DoPPU() => PPU.Do();
-
         public void DoNextOP()
         {
             if (CPU.Halted) return;
@@ -242,14 +240,11 @@ namespace emulator
 };
             return new List<byte>(bootROM);
         }
-        public static Action Stepper(Core b)
+        public void Step()
         {
-            return () =>
-            {
-                b.DoNextOP();
-                b.DoInterrupt();
-                b.DoPPU();
-            };
+            DoNextOP();
+            DoInterrupt();
+            PPU.Do();
         }
 
     }

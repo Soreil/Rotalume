@@ -34,8 +34,6 @@ namespace GUI
             var gameboy = new emulator.Core(emulator.Core.LoadBootROM(),
                 System.IO.File.ReadAllBytes(path).ToList());
 
-            var step = emulator.Core.Stepper(gameboy);
-
             Dispatcher.BeginInvoke(new UpdateImageCb(RunGameboy),
                 System.Windows.Threading.DispatcherPriority.Render);
 
@@ -49,7 +47,7 @@ namespace GUI
             gameboy.PPU.Writer = new emulator.FrameSink(update);
 
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            while (true) step();
+            while (true) gameboy.Step();
             var fps = gameboy.PPU.Writer.frameCount / (stopwatch.ElapsedMilliseconds / 1000f);
             stopwatch.Stop();
             Dispatcher.BeginInvoke(new UpdateLabelCb(UpdateLabel),

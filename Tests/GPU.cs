@@ -15,12 +15,11 @@ namespace Tests
         public void LineRegisterGetsIncrementedDuringVBlank()
         {
             Core Proc = new Core(Core.LoadBootROM(), LoadGameROM());
-            var step = Core.Stepper(Proc);
 
             var oldLY = Proc.PPU.LY;
             while (Proc.PC != 0x100)
             {
-                step();
+                Proc.Step();
                 if (Proc.PPU.LY != oldLY)
                 {
                     if (oldLY >= 144 && oldLY != 153)
@@ -33,12 +32,10 @@ namespace Tests
         public void ModeIsOnlyVBlankDuringVBlank()
         {
             Core Proc = new Core(Core.LoadBootROM(), LoadGameROM());
-            var step = Core.Stepper(Proc);
-
             var oldLY = Proc.PPU.LY;
             while (Proc.PC != 0x100)
             {
-                step();
+                Proc.Step();
                 if (Proc.PPU.LY != oldLY)
                 {
                     oldLY = Proc.PPU.LY;
@@ -70,10 +67,9 @@ namespace Tests
 ................................####......####..####..####....####..####....##########..####....####....##########....########..................................";
 
             Core Proc = new(Core.LoadBootROM(), LoadGameROM());
-            var step = Core.Stepper(Proc);
 
             while (!Proc.PPU.LCDEnable)
-                step();
+                Proc.Step();
 
             var render = new emulator.Renderer(Proc.PPU);
 
@@ -97,10 +93,9 @@ namespace Tests
         public void DrawTileMap()
         {
             Core Proc = new(Core.LoadBootROM(), LoadGameROM());
-            var step = Core.Stepper(Proc);
 
             while (!Proc.PPU.LCDEnable)
-                step();
+                Proc.Step();
 
             var render = new emulator.Renderer(Proc.PPU);
 
@@ -121,10 +116,9 @@ namespace Tests
         public void DrawAllTiles()
         {
             Core Proc = new(Core.LoadBootROM(), LoadGameROM());
-            var step = Core.Stepper(Proc);
 
             while (!Proc.PPU.LCDEnable)
-                step();
+                Proc.Step();
 
             var render = new emulator.Renderer(Proc.PPU);
             for (byte i = 0; i < 27; i++)
@@ -147,11 +141,10 @@ namespace Tests
 ........";
 
             Core Proc = new(Core.LoadBootROM(), LoadGameROM());
-            var step = Core.Stepper(Proc);
 
             //Run boot so the memory is fully populated
             while (!Proc.PPU.LCDEnable)
-                step();
+                Proc.Step();
 
             var render = new emulator.Renderer(Proc.PPU);
             var tile = render.GetTile(0);
@@ -177,8 +170,6 @@ namespace Tests
         {
             Core Proc = new Core(Core.LoadBootROM(), LoadGameROM());
 
-            var step = Core.Stepper(Proc);
-
             Proc.PPU.Writer = new FrameSink(x => _ = x);
 
             //LCD is off
@@ -190,10 +181,10 @@ namespace Tests
 
             //Happy location where we check the value of 0xff44
             while (Proc.PC != 0x64)
-                step();
+                Proc.Step();
 
             while (Proc.PC != 0x100)
-                step();
+                Proc.Step();
 
             Assert.AreEqual(0x100, Proc.PC);
 
