@@ -211,17 +211,13 @@ namespace emulator
         {
             //Wide registers do not use flags for INC and DEC
             if (p0.Item2.Immediate)
-                Registers.Set(p0.Item1, (ushort)(Registers.Get(p0.Item1) + 1));
+                Registers.Set(p0.Item1, (ushort)(Registers.Get(p0.Item1) - 1));
             else
             {
                 var addr = Registers.Get(p0.Item1);
                 var before = Memory.Read(addr);
-                var arg = (byte)(before + 1);
+                var arg = (byte)(before - 1);
                 Memory.Write(addr, arg);
-
-                Registers.Set(Flag.Z, arg == 0);
-                Registers.Mark(Flag.NN);
-                Registers.Set(Flag.H, before.IsHalfCarryAdd(1));
             }
             AddTicks(duration);
         };
