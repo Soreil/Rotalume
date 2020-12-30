@@ -256,6 +256,9 @@ namespace Tests
             var SPOnCall = 0;
             var SPBefore = 0;
             var SPAfter = 0;
+
+            //When we hit 0x17a7 we have pushed the stack pointer up so far it gets in to the DMA register write range.
+            //The very fact we are getting above 0x4000 is a bug!
             while (dmaCount != 0x17a7)
             {
                 //while (Proc.PC != 0x01d5) Proc.Step();
@@ -303,6 +306,8 @@ namespace Tests
             //Our stack pointer it set to a position in FFxx where LDH is going to write to execute
             //The DMA transfer. This happens to overwrite our stack. BGB has a stackpointer in WRAM
             //At CFF3. Our stack pointer should be somewhere there as well.
+            //Tetris at some point sets the SP to CFFF and then doesn't write to it again until we crash so only push/pop
+            //And similar instructions are pushing us up somehow. Maybe recursion at work because of a bug?
             Proc.Step();
             System.Console.WriteLine("Stack value at ffb8:{0:X}", Proc.CPU.Memory.ReadWide(Proc.CPU.Registers.SP));
             System.Console.WriteLine("PC at ffb8:{0:X}", Proc.PC);
