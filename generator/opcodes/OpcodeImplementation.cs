@@ -12,18 +12,27 @@ namespace emulator
         readonly public Action disableInterrupts;
         readonly private Action<int> AddTicks;
         readonly public Action halt;
+        public ushort StackBase = 0xFFFF;
+        public int popcount = 0;
+        public int pushcount = 0;
+
         private ushort Pop()
         {
             var SP = Registers.SP;
             var popped = Memory.ReadWide(SP);
             SP += 2;
             Registers.SP = SP;
+
+            if (Registers.SP > StackBase) throw new Exception("Stack underflow");
+            else popcount++;
+
             return popped;
         }
         private void Push(ushort s)
         {
             Registers.SP = ((ushort)(Registers.SP - 2));
             Memory.Write(Registers.SP, s);
+            pushcount++;
         }
         public Action NOP(int duration)
         {
@@ -41,6 +50,7 @@ namespace emulator
                 }
                 else
                 {
+                    if (p0.Item1 == WideRegister.SP) StackBase = (ushort)arg;
                     Registers.Set(p0.Item1, (ushort)arg);
                 }
                 AddTicks(duration);
@@ -697,6 +707,9 @@ namespace emulator
                 Registers.Set(p0.Item1, Memory.ReadWide(SP));
                 SP += 2;
                 Registers.SP = (SP);
+
+                if (Registers.SP > StackBase) throw new Exception("Stack underflow");
+                else popcount++;
                 AddTicks(duration);
             };
         }
@@ -774,7 +787,8 @@ namespace emulator
         {
             return () =>
             {
-                SetPC(Pop());
+                var addr = Pop();
+                SetPC(addr);
                 AddTicks(duration);
             };
         }
