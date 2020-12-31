@@ -171,7 +171,7 @@ namespace emulator
             if (op != 0xcb)
             {
                 //if ((Unprefixed)op != Unprefixed.CPL && (Unprefixed)op != Unprefixed.NOP && (Unprefixed)op != Unprefixed.RST_38H)
-                    //Unprefixeds.Push((PC - 1, (Unprefixed)op));
+                //Unprefixeds.Push((PC - 1, (Unprefixed)op));
                 CPU.Op((Unprefixed)op)();
             }
             else
@@ -195,7 +195,10 @@ namespace emulator
                 {
                     CPU.IME = false;
                     coincidence.SetBit(bit, false);
-                    PC = (ushort)(0x40 + (0x8 * bit));
+
+                    var addr = (ushort)(0x40 + (0x8 * bit));
+                    CPU.Call(24, addr); //We need a cleaner way to call functions without fetching
+
                     return;
                 }
             }

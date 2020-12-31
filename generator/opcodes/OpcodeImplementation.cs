@@ -806,11 +806,17 @@ namespace emulator
             return () =>
             {
                 var addr = (ushort)Memory.Fetch(DMGInteger.d16);
-                Push(GetPC());
-                SetPC(addr);
-                AddTicks(duration);
+                Call(duration, addr);
             };
         }
+
+        public void Call(int duration, ushort addr)
+        {
+            Push(GetPC());
+            SetPC(addr);
+            AddTicks(duration);
+        }
+
         public Action ADC((Register, Traits) p0, (DMGInteger, Traits) p1, int duration)
         {
             return () =>

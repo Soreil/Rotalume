@@ -331,12 +331,12 @@ namespace Tests
 
 
             SPBefore = Proc.CPU.Registers.SP;
+            Assert.AreEqual(0x01d8, Proc.PC);
             Proc.Step();
             System.Console.WriteLine("Stack value after returning:{0:X}", Proc.CPU.Memory.ReadWide(Proc.CPU.Registers.SP));
             SPAfter = Proc.CPU.Registers.SP;
             //0x17a8 here for some reason. If SP was 1 different we would have gotten expected 01d8
             //Something is changing the stackpointer in between the call to DMA function and return?
-            Assert.AreEqual(0x01d8, Proc.PC);
             Assert.AreEqual(SPOnCall, SPBefore);
         }
     }
