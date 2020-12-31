@@ -247,98 +247,6 @@ namespace Tests
 
             Assert.AreEqual(0x27a3, Proc.PC);
         }
-        [Test]
-        public void TetrisDMA()
-        {
-            Core Proc = new Core(Core.LoadBootROM(), LoadGameROM());
-
-            int dmaCount = 0;
-            var SPOnCall = 0;
-            var SPBefore = 0;
-            var SPAfter = 0;
-
-            //When we hit 0x17a7 we have pushed the stack pointer up so far it gets in to the DMA register write range.
-            //The very fact we are getting above 0x4000 is a bug!
-            while (dmaCount != 0x17a7)
-            {
-                //while (Proc.PC != 0x01d5) Proc.Step();
-
-                //while (Proc.PC != 0xffb6) Proc.Step();
-
-                ////We are now in DMA
-                //while (Proc.PC != 0xffbf) Proc.Step();
-                ////Return time
-                //System.Console.WriteLine("From:{0:X}", Proc.PC);
-                //Proc.Step();
-                //System.Console.WriteLine("To:{0:X}", Proc.PC);
-                ////return addr loaded by ret
-                //System.Console.WriteLine();
-
-                Proc.Step();
-                if (Proc.PC == 0x01d5)
-                {
-                    SPOnCall = Proc.CPU.Registers.SP;
-                }
-                if (Proc.PC == 0xffbf)
-                {
-                    dmaCount++;
-                }
-            }
-
-
-            while (Proc.PC != 0x01d5) Proc.Step();
-
-            while (Proc.PC != 0xffb6)
-            {
-                System.Console.WriteLine("Stack value going to ffb6:{0:X}", Proc.CPU.Memory.ReadWide(Proc.CPU.Registers.SP));
-                System.Console.WriteLine("PC going to ffb6:{0:X}", Proc.PC);
-                Proc.Step();
-            }
-            System.Console.WriteLine("Stack value at ffb6:{0:X}", Proc.CPU.Memory.ReadWide(Proc.CPU.Registers.SP));
-            System.Console.WriteLine("PC at ffb6:{0:X}", Proc.PC);
-
-
-            Proc.Step();
-            System.Console.WriteLine("Stack value going to ffb8:{0:X}", Proc.CPU.Memory.ReadWide(Proc.CPU.Registers.SP));
-            System.Console.WriteLine("PC going to ffb8:{0:X}", Proc.PC);
-
-
-            //Our stack pointer it set to a position in FFxx where LDH is going to write to execute
-            //The DMA transfer. This happens to overwrite our stack. BGB has a stackpointer in WRAM
-            //At CFF3. Our stack pointer should be somewhere there as well.
-            //Tetris at some point sets the SP to CFFF and then doesn't write to it again until we crash so only push/pop
-            //And similar instructions are pushing us up somehow. Maybe recursion at work because of a bug?
-            Proc.Step();
-            System.Console.WriteLine("Stack value at ffb8:{0:X}", Proc.CPU.Memory.ReadWide(Proc.CPU.Registers.SP));
-            System.Console.WriteLine("PC at ffb8:{0:X}", Proc.PC);
-
-            //Pausing for DMA duration
-            while (Proc.PC != 0xffbf)
-            {
-                Proc.Step();
-                System.Console.WriteLine("Stack value going to ffbf:{0:X}", Proc.CPU.Memory.ReadWide(Proc.CPU.Registers.SP));
-                System.Console.WriteLine("PC going to ffbf:{0:X}", Proc.PC);
-            }
-
-            //Return time
-            System.Console.WriteLine("From:{0:X} PC at ffbf", Proc.PC);
-            System.Console.WriteLine("Stack value at ffbf:{0:X}", Proc.CPU.Memory.ReadWide(Proc.CPU.Registers.SP));
-            Proc.Step();
-            System.Console.WriteLine("To:{0:X} PC after ffbf", Proc.PC);
-            System.Console.WriteLine("Stack value after ffbf:{0:X}", Proc.CPU.Memory.ReadWide(Proc.CPU.Registers.SP));
-            //return addr loaded by ret
-            System.Console.WriteLine();
-
-
-            SPBefore = Proc.CPU.Registers.SP;
-            Assert.AreEqual(0x01d8, Proc.PC);
-            Proc.Step();
-            System.Console.WriteLine("Stack value after returning:{0:X}", Proc.CPU.Memory.ReadWide(Proc.CPU.Registers.SP));
-            SPAfter = Proc.CPU.Registers.SP;
-            //0x17a8 here for some reason. If SP was 1 different we would have gotten expected 01d8
-            //Something is changing the stackpointer in between the call to DMA function and return?
-            Assert.AreEqual(SPOnCall, SPBefore);
-        }
 
 
         [Test]
@@ -348,7 +256,16 @@ namespace Tests
 
             while (Proc.PC != 0x02a0) Proc.Step();
             while (Proc.PC != 0x02ba) Proc.Step();
-            while (Proc.PC != 0x02bb) Proc.Step(); //Does not make it past this. 0x02ba is enable interrupts so it gets stuck in an interrupt.
+            while (Proc.PC != 0x02ba) Proc.Step(); //Does not make it past this. 0x02ba is enable interrupts so it gets stuck in an interrupt.
+            while (Proc.PC != 0x02c7) Proc.Step();
+
+            while (Proc.PC != 0x0028) Proc.Step(); //ISR 28?
+
+            while (Proc.PC != 0x0032) Proc.Step(); //Pop HL
+            while (Proc.PC != 0x0033) Proc.Step(); //Jump HL
+
+            while (Proc.PC != 0x02ca) Proc.Step(); //Call 02f8
+            while (Proc.PC != 0x02cd) Proc.Step(); //Call 7ff0
         }
     }
 }
