@@ -109,6 +109,20 @@ namespace emulator
             controlRegisters.Writer[0x47] += PaletteController;
             controlRegisters.Reader[0x47] += ReadPalette;
 
+            //DMA
+            controlRegisters.Writer[0x46] += (x) =>
+            {
+                ushort baseAddr = (ushort)(x << 8);
+                ushort destinationBaseAddr = 0xFE00;
+                for (int i = 0; i < 0xa0; i++)
+                {
+                    var r = CPU.Memory.Read((ushort)(baseAddr + i));
+                    CPU.Memory.Write((ushort)(destinationBaseAddr + i), r);
+                }
+
+            };
+
+            controlRegisters.Reader[0x46] += () => throw new Exception("DMAREAD");
 
             interruptRegisters.Writer[0x00] += x => InterruptControlRegister = x;
             interruptRegisters.Reader[0x00] += () => InterruptControlRegister;
