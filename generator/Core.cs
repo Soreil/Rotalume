@@ -62,9 +62,10 @@ namespace emulator
 
             CPU = new CPU(Read, bootROM, gameROM, GetProgramCounter, SetProgramCounter, IncrementClock, () => bootROMActive);
 
-            PPU = new PPU(() => Clock, () => InterruptFireRegister = InterruptFireRegister.SetBit(0));
+            PPU = new PPU(() => Clock, () => InterruptFireRegister = InterruptFireRegister.SetBit(0),
+                                       () => InterruptFireRegister = InterruptFireRegister.SetBit(1));
 
-            Timers = new Timers(() => InterruptFireRegister = InterruptFireRegister.SetBit(2, true));
+            Timers = new Timers(() => InterruptFireRegister = InterruptFireRegister.SetBit(2));
 
             BootROMFlagController = (byte b) =>
             {
@@ -208,7 +209,7 @@ namespace emulator
                 if (coincidence.GetBit(bit))
                 {
                     CPU.IME = false;
-                    coincidence.SetBit(bit, false);
+                    InterruptFireRegister = InterruptFireRegister.SetBit(bit, false);
 
                     var addr = (ushort)(0x40 + (0x8 * bit));
                     CPU.Call(24, addr); //We need a cleaner way to call functions without fetching
