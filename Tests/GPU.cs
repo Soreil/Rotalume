@@ -339,5 +339,16 @@ namespace Tests
             //Something is changing the stackpointer in between the call to DMA function and return?
             Assert.AreEqual(SPOnCall, SPBefore);
         }
+
+
+        [Test]
+        public void TetrisDraw()
+        {
+            Core Proc = new Core(Core.LoadBootROM(), LoadGameROM());
+
+            while (Proc.PC != 0x02a0) Proc.Step();
+            while (Proc.PC != 0x02ba) Proc.Step();
+            while (Proc.PC != 0x02bb) Proc.Step(); //Does not make it past this. 0x02ba is enable interrupts so it gets stuck in an interrupt.
+        }
     }
 }

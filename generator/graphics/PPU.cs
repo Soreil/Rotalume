@@ -6,13 +6,15 @@ namespace emulator
     {
         public readonly Func<int> Clock;
         public readonly Action EnableVBlankInterrupt;
-        public FrameSink Writer = new((x)=> { });
-        public PPU(Func<int> clock, Action enableVBlankInterrupt)
+        public readonly Action EnableLCDCStatusInterrupt;
+        public FrameSink Writer = new((x) => { });
+        public PPU(Func<int> clock, Action enableVBlankInterrupt, Action enableLCDCStatusInterrupt)
         {
             Clock = clock;
             OAM = new OAM();
             VRAM = new VRAM();
             EnableVBlankInterrupt = enableVBlankInterrupt;
+            EnableLCDCStatusInterrupt = enableLCDCStatusInterrupt;
         }
 
         public readonly OAM OAM;
@@ -66,7 +68,11 @@ namespace emulator
         public bool LYCInterrupt
         {
             get => STAT.GetBit(2);
-            set => STAT.SetBit(2, value);
+            set
+            {
+                STAT.SetBit(2, value);
+                EnableLCDCStatusInterrupt();
+            }
         }
 
         private Renderer Renderer;

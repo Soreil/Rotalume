@@ -13,7 +13,7 @@ namespace emulator
         public OAM() => mem = new byte[Size];
 
         private SpriteAttributes Entry(int n) => new SpriteAttributes(mem[n * 4], mem[n * 4 + 1], mem[n * 4 + 2], mem[n * 4 + 3]);
-        
+
         private IEnumerable<SpriteAttributes> Entries()
         {
             List<SpriteAttributes> res = new List<SpriteAttributes>(mem.Length / 4);
@@ -30,6 +30,7 @@ namespace emulator
 
         const int maxSpritesOnLine = 10;
 
-        public List<SpriteAttributes> SpritesOnLine(int line) => Entries().Where(s => s.Y == line).Take(maxSpritesOnLine).ToList();
+        //Supposedly X = 0 sprites are still relevant for the 10 sprite limit so we have to match them.
+        public List<SpriteAttributes> SpritesOnLine(int line, int spriteHeight) => Entries().Where(s => line >= s.Y + 16 && line < s.Y + 16 + spriteHeight).Take(maxSpritesOnLine).ToList();
     }
 }

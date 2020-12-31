@@ -45,7 +45,7 @@ namespace emulator
             if (currentTime >= TimeUntilWhichToPause)
             {
                 if (PPU.Mode == Mode.OAMSearch)
-                    SpriteAttributes = PPU.OAM.SpritesOnLine(PPU.LY);
+                    SpriteAttributes = PPU.OAM.SpritesOnLine(PPU.LY,PPU.SpriteHeight);
                 if (PPU.Mode == Mode.Transfer)
                     Draw();
 
