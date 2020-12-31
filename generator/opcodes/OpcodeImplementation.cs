@@ -779,8 +779,7 @@ namespace emulator
         {
             return () =>
             {
-                SetPC(p0.Item1);
-                AddTicks(duration);
+                Call(duration, p0.Item1);
             };
         }
         public Action RET(int duration)
