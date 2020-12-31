@@ -112,6 +112,8 @@ namespace emulator
             //DMA
             controlRegisters.Writer[0x46] += (x) =>
             {
+                if (x > 0xf1) throw new Exception("Illegal DMA start adress");
+
                 ushort baseAddr = (ushort)(x << 8);
                 ushort destinationBaseAddr = 0xFE00;
                 for (int i = 0; i < 0xa0; i++)
