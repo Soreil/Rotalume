@@ -17,6 +17,8 @@ namespace emulator
         readonly ControlRegister.Read ReadBootROMFlag;
         readonly ControlRegister.Write LCDControlController;
         readonly ControlRegister.Read ReadLCDControl;
+        readonly ControlRegister.Write LCDStatController;
+        readonly ControlRegister.Read ReadLCDStat;
         readonly ControlRegister.Write ScrollYController;
         readonly ControlRegister.Read ReadScrollY;
         readonly ControlRegister.Write ScrollXController;
@@ -82,6 +84,9 @@ namespace emulator
             LCDControlController = (byte b) => PPU.SetLCDC(b);
             ReadLCDControl = () => PPU.LCDC;
 
+            LCDStatController = (byte b) => PPU.STAT = b;
+            ReadLCDStat = () => PPU.STAT;
+
             ScrollYController = (byte b) => PPU.SCY = b;
             ReadScrollY = () => PPU.SCY;
             ScrollXController = (byte b) => PPU.SCX = b;
@@ -101,6 +106,8 @@ namespace emulator
             //PPU registers
             controlRegisters.Writer[0x40] += LCDControlController;
             controlRegisters.Reader[0x40] += ReadLCDControl;
+            controlRegisters.Writer[0x41] += LCDStatController;
+            controlRegisters.Reader[0x41] += ReadLCDStat;
             controlRegisters.Writer[0x42] += ScrollYController;
             controlRegisters.Reader[0x42] += ReadScrollY;
             controlRegisters.Writer[0x43] += ScrollXController;

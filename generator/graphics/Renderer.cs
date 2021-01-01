@@ -45,7 +45,7 @@ namespace emulator
             if (currentTime >= TimeUntilWhichToPause)
             {
                 if (PPU.Mode == Mode.OAMSearch)
-                    SpriteAttributes = PPU.OAM.SpritesOnLine(PPU.LY,PPU.SpriteHeight);
+                    SpriteAttributes = PPU.OAM.SpritesOnLine(PPU.LY, PPU.SpriteHeight);
                 if (PPU.Mode == Mode.Transfer)
                     Draw();
 
@@ -115,7 +115,7 @@ namespace emulator
             var xOffset = ((PPU.SCX / 8) + tileNumber) & 0x1f;
 
             var TileID = PPU.VRAM[tilemap + xOffset + ((yOffset / 8) * 32)]; //Background ID map is laid out as 32x32 tiles of size 8x8
-
+            //if (TileID > 26) System.Diagnostics.Debugger.Break();
             var pixels = GetTileLine(palette, yOffset % 8, TileID);
 
             return pixels;

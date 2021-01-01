@@ -23,7 +23,7 @@ namespace emulator
         //FF40 - FF4B, PPU control registers
         public byte LCDC; //FF40
 
-        byte STAT; //FF41
+        public byte STAT; //FF41
 
         public byte SCY; //FF42
         public byte SCX; //FF43
@@ -51,6 +51,8 @@ namespace emulator
         };
 
         public ushort TileMapDisplaySelect => LCDC.GetBit(6) ? 0x9C00 : 0x9800;
+        //For some reason this is set to 8800 while writing the Tetris copyright screen
+        //It should be 8000
         public ushort BGAndWindowTileDataSelect => LCDC.GetBit(4) ? 0x8000 : 0x8800;
         public ushort BGTileMapDisplaySelect => LCDC.GetBit(3) ? 0x9c00 : 0x9800;
         public int SpriteHeight => LCDC.GetBit(2) ? 16 : 8;
@@ -70,7 +72,7 @@ namespace emulator
             get => STAT.GetBit(2);
             set
             {
-                STAT.SetBit(2, value);
+                STAT = STAT.SetBit(2, value);
                 EnableLCDCStatusInterrupt();
             }
         }
