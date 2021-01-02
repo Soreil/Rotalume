@@ -6,7 +6,11 @@
 
         public const int Start = 0x8000;
         public const int Size = 0x2000;
-        public VRAM() => mem = new byte[Size];
+        public VRAM()
+        {
+            mem = new byte[Size];
+            for (int i = 0; i < Size; i++) mem[i] = 0xff;
+        }
         public byte this[int n]
         {
             get => mem[n - Start];

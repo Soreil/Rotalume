@@ -10,7 +10,7 @@ namespace emulator
         public const int Start = 0xFE00;
         public const int Size = 0xa0;
 
-        public OAM() => mem = new byte[Size];
+        public OAM() { mem = new byte[Size]; for (int i = 0; i < Size; i++) mem[i] = 0xff; }
 
         private SpriteAttributes Entry(int n) => new SpriteAttributes(mem[n * 4], mem[n * 4 + 1], mem[n * 4 + 2], mem[n * 4 + 3]);
 

@@ -33,9 +33,9 @@ namespace emulator
 
         public byte DMA; //FF46
 
-        public byte BGP; //FF47
-        public byte OBP0; //FF48
-        public byte OBP1; //FF49
+        public byte BGP = 0xff; //FF47
+        public byte OBP0 = 0xff; //FF48
+        public byte OBP1 = 0xff; //FF49
 
         public byte WY; //FF4A
         public byte WX; //FF4B
