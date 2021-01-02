@@ -25,8 +25,14 @@ namespace emulator
         readonly ControlRegister.Read ReadScrollX;
         readonly ControlRegister.Write LCDLineController;
         readonly ControlRegister.Read ReadLine;
+        readonly ControlRegister.Write LYCController;
+        readonly ControlRegister.Read ReadLYC;
         readonly ControlRegister.Write PaletteController;
         readonly ControlRegister.Read ReadPalette;
+        readonly ControlRegister.Write OBP0Controller;
+        readonly ControlRegister.Read ReadOBP0;
+        readonly ControlRegister.Write OBP1Controller;
+        readonly ControlRegister.Read ReadOBP1;
 
         //Global clock from which all timing derives
         public int Clock;
@@ -62,8 +68,6 @@ namespace emulator
             Action<int> IncrementClock = (x) => { Clock += x; Timers.Add(x); };
             Read = () => CPU.Memory[PC++];
 
-            CPU = new CPU(Read, bootROM, gameROM, GetProgramCounter, SetProgramCounter, IncrementClock, () => bootROMActive);
-
             PPU = new PPU(() => Clock, () => InterruptFireRegister = InterruptFireRegister.SetBit(0),
                                        () => InterruptFireRegister = InterruptFireRegister.SetBit(1));
 
@@ -97,6 +101,18 @@ namespace emulator
             PaletteController = (byte b) => PPU.BGP = b;
             ReadPalette = () => PPU.BGP;
 
+            OBP0Controller = (byte b) => PPU.OBP0 = b;
+            ReadOBP0 = () => PPU.OBP0;
+
+            OBP1Controller = (byte b) => PPU.OBP1 = b;
+            ReadOBP1 = () => PPU.OBP1;
+
+            PaletteController = (byte b) => PPU.BGP = b;
+            ReadPalette = () => PPU.BGP;
+
+            LYCController = (byte b) => PPU.LYC = b;
+            ReadLYC = () => PPU.LYC;
+
             controlRegisters.Writer[0xF] += x => InterruptFireRegister = x;
             controlRegisters.Reader[0xF] += () => InterruptFireRegister;
 
@@ -114,8 +130,8 @@ namespace emulator
             controlRegisters.Reader[0x43] += ReadScrollX;
             controlRegisters.Writer[0x44] += LCDLineController;
             controlRegisters.Reader[0x44] += ReadLine;
-            controlRegisters.Writer[0x47] += PaletteController;
-            controlRegisters.Reader[0x47] += ReadPalette;
+            controlRegisters.Writer[0x45] += LYCController;
+            controlRegisters.Reader[0x45] += ReadLYC;
 
             //DMA
             controlRegisters.Writer[0x46] += (x) =>
@@ -132,26 +148,36 @@ namespace emulator
 
             controlRegisters.Reader[0x46] += () => throw new Exception("DMAREAD");
 
+            controlRegisters.Writer[0x47] += PaletteController;
+            controlRegisters.Reader[0x47] += ReadPalette;
+            controlRegisters.Writer[0x48] += OBP0Controller;
+            controlRegisters.Reader[0x48] += ReadOBP0;
+            controlRegisters.Writer[0x49] += OBP1Controller;
+            controlRegisters.Reader[0x49] += ReadOBP1;
+
             interruptRegisters.Writer[0x00] += x => InterruptControlRegister = x;
             interruptRegisters.Reader[0x00] += () => InterruptControlRegister;
 
-            CPU.Memory.setRanges.Add(new(
+            List<MMU.SetRange> setRanges = new();
+            List<MMU.GetRange> getRanges = new();
+
+            setRanges.Add(new(
                 interruptRegisters.Start,
                 interruptRegisters.Start + interruptRegisters.Size,
                 interruptRegisters.ContainsWriter,
                 (x, v) => interruptRegisters[x] = v));
-            CPU.Memory.getRanges.Add(new(
+            getRanges.Add(new(
                 interruptRegisters.Start,
                 interruptRegisters.Start + interruptRegisters.Size,
                 interruptRegisters.ContainsReader,
                 x => interruptRegisters[x]));
 
-            CPU.Memory.setRanges.Add(new MMU.SetRange(
+            setRanges.Add(new MMU.SetRange(
                 controlRegisters.Start,
                 controlRegisters.Start + controlRegisters.Size,
                 controlRegisters.ContainsWriter, (x, v) => controlRegisters[x] = v)
                 );
-            CPU.Memory.getRanges.Add(new MMU.GetRange(
+            getRanges.Add(new MMU.GetRange(
                 controlRegisters.Start,
                 controlRegisters.Start + controlRegisters.Size,
                 controlRegisters.ContainsReader, (x) => controlRegisters[x])
@@ -159,41 +185,56 @@ namespace emulator
 
 
             //Graphics memory ranges
-            CPU.Memory.setRanges.Add(new MMU.SetRange(
+            setRanges.Add(new MMU.SetRange(
                 VRAM.Start,
                 VRAM.Start + VRAM.Size,
                 x => true,
                 (at, v) => PPU.VRAM[at] = v
                 ));
-            CPU.Memory.getRanges.Add(new MMU.GetRange(
+            getRanges.Add(new MMU.GetRange(
                 VRAM.Start,
                 VRAM.Start + VRAM.Size,
                 x => true,
                 (at) => PPU.VRAM[at]
                 ));
-            CPU.Memory.setRanges.Add(new MMU.SetRange(
+            setRanges.Add(new MMU.SetRange(
                 OAM.Start,
                 OAM.Start + OAM.Size,
                 x => true,
                 (at, v) => PPU.OAM[at] = v
                 ));
-            CPU.Memory.getRanges.Add(new MMU.GetRange(
+            getRanges.Add(new MMU.GetRange(
                 OAM.Start,
                 OAM.Start + OAM.Size,
                 x => true,
                 (at) => PPU.OAM[at]
                 ));
+
+            var memory = new MMU(Read,
+    bootROM,
+    gameROM,
+    () => bootROMActive,
+    getRanges,
+    setRanges);
+
+            CPU = new CPU(GetProgramCounter, SetProgramCounter, IncrementClock, memory);
+
         }
 
         public void DoNextOP()
         {
-            if (CPU.Halted) return;
+            if (CPU.Halted)
+            {
+                Clock += 4; //Just take some time so the interrupt handling and gpu keep going otherwise
+                //We can never get to a situation where the halt state stops.
+                return;
+            }
 
             var op = Read();
             if (op != 0xcb)
             {
                 //if ((Unprefixed)op != Unprefixed.CPL && (Unprefixed)op != Unprefixed.NOP && (Unprefixed)op != Unprefixed.RST_38H)
-                //Unprefixeds.Push((PC - 1, (Unprefixed)op));
+                Unprefixeds.Push((PC - 1, (Unprefixed)op));
                 CPU.Op((Unprefixed)op)();
             }
             else

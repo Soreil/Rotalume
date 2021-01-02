@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace emulator
 {
-    public record MMU
+    public class MMU
     {
         private readonly byte[] _mem;
 
@@ -18,8 +18,8 @@ namespace emulator
         public record GetRange(int Begin, int End, Func<int, bool> Exists, Func<int, byte> At) : Range(Begin, End, Exists);
         public record SetRange(int Begin, int End, Func<int, bool> Exists, Action<int, byte> At) : Range(Begin, End, Exists);
 
-        public List<GetRange> getRanges = new List<GetRange>();
-        public List<SetRange> setRanges = new List<SetRange>();
+        private List<GetRange> getRanges;
+        private List<SetRange> setRanges;
 
         public byte this[int at]
         {
@@ -53,10 +53,30 @@ namespace emulator
         private readonly Func<byte> ReadInput;
         private readonly Func<ushort> ReadInputWide;
 
-        public MMU(Func<byte> readInput, List<byte> boot, List<byte> game, Func<bool> bootROMActive)
+        public MMU(Func<byte> readInput)
         {
             ReadInput = readInput;
             ReadInputWide = () => BitConverter.ToUInt16(new byte[] { ReadInput(), ReadInput() });
+
+            getRanges = new();
+            setRanges = new();
+
+            _mem = new byte[0x10000];
+            for (int i = 0; i < 0x10000; i++) _mem[i] = 0xff; //Initialize to zero
+            _bootROMActive = () => false;
+        }
+        public MMU(Func<byte> readInput,
+            List<byte> boot,
+            List<byte> game,
+            Func<bool> bootROMActive,
+            List<GetRange> _getRanges,
+            List<SetRange> _setRanges)
+        {
+            ReadInput = readInput;
+            ReadInputWide = () => BitConverter.ToUInt16(new byte[] { ReadInput(), ReadInput() });
+
+            getRanges = _getRanges;
+            setRanges = _setRanges;
 
             _mem = new byte[0x10000];
             for (int i = 0; i < 0x10000; i++) _mem[i] = 0xff; //Initialize to zero
