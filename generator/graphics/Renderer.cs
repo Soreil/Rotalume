@@ -42,7 +42,7 @@ namespace emulator
         {
             var currentTime = Clock();
 
-            if (currentTime >= TimeUntilWhichToPause)
+            if (currentTime > TimeUntilWhichToPause)
             {
                 if (PPU.Mode == Mode.OAMSearch)
                     SpriteAttributes = PPU.OAM.SpritesOnLine(PPU.LY, PPU.SpriteHeight);
@@ -54,7 +54,6 @@ namespace emulator
                 SetNewClockTarget();
             }
         }
-
 
         private void Draw()
         {
@@ -130,7 +129,15 @@ namespace emulator
             //16 bytes per tile so times 16 on the tileindex
             //We need the line in the 8x8 tile so we take y mod 8 to get it
             //Times 2 is needed because a tile has two bytes per line.
-            var at = tileData + (currentTileIndex * 16) + (line * 2);
+            int at = 0;
+            if (tileData == 0x8000)
+            {
+                at = tileData + (currentTileIndex * 16) + (line * 2);
+            }
+            else
+            {
+                at = 0x9000 + (((sbyte)currentTileIndex) * 16) + (line * 2);
+            }
 
             var tileDataLow = PPU.VRAM[at]; //low byte of line
             var tileDataHigh = PPU.VRAM[at + 1]; //high byte of line
