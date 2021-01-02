@@ -173,10 +173,6 @@ namespace Tests
 
             //LCD is off
             Assert.AreEqual(Proc.PPU.LCDC, 0);
-            //No palette
-            Assert.AreEqual(Proc.PPU.BGP, 0);
-            //No scroll
-            Assert.AreEqual(Proc.PPU.SCY, 0);
 
             //Happy location where we check the value of 0xff44
             while (Proc.PC != 0x64)
@@ -292,7 +288,7 @@ namespace Tests
         {
             Core Proc = new Core(Core.LoadBootROM(), LoadCPUTestROM());
             while (Proc.PC != 0x100) Proc.Step();
-            while (Proc.PC != 0xc18a) Proc.Step(); //Done checking first instruction
+            while (Proc.PC != 0xc2f5) Proc.Step(); //Done checking first instruction
             while (true) Proc.Step();
         }
     }

@@ -35,6 +35,41 @@ namespace Tests
             Assert.AreEqual(0x3020, p.CPU.Registers.AF);
         }
 
+        /*set_test 5,"POP AF"
+          ld   bc,$1200
+     -    push bc
+          pop  af
+          push af
+          pop  de
+          ld   a,c
+          and  $F0
+          cp   e
+          jp   nz,test_failed
+          inc  b
+          inc  c
+          jr   nz,-*/
+        [Test]
+        public void POP_AF()
+        {
+            var inst = new List<byte> {
+            (byte)Unprefixed.LD_BC_d16,00,0x12,
+                (byte)Unprefixed.PUSH_BC,
+                (byte)Unprefixed.POP_AF,
+                (byte)Unprefixed.PUSH_AF,
+                (byte)Unprefixed.POP_DE,
+                (byte)Unprefixed.LD_A_C,
+                (byte)Unprefixed.AND_d8,0xf0,
+                (byte)Unprefixed.CP_E,
+            };
+            var p = new Core(inst);
+            p.CPU.Registers.SP = 0x100;
+
+            while (p.PC != inst.Count)
+                p.DoNextOP();
+            Assert.AreEqual(11, p.PC);
+            Assert.IsTrue(p.CPU.Registers.Get(Flag.Z));
+        }
+
         [Test]
         public void PUSH()
         {
