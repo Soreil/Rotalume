@@ -4,19 +4,10 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="MainWindow">
-    <Grid ShowGridLines="true">
-        <Grid.RowDefinitions>
-            <RowDefinition />
-            <RowDefinition />
-            <RowDefinition />
-        </Grid.RowDefinitions>
-        <Canvas Grid.Row="1">
-            <Image Name="Display" Height="288" Margin="0,0,0,0" Width="320"/>
-            <Label Name="FPS"/>
-        </Canvas>
-        <Canvas Grid.Row="2">
-            <Button Click="LoadROM"  Content="Open ROM" Margin="0,0,0,0"/>
-        </Canvas>
+        Title="MainWindow" ResizeMode="NoResize" Height="450" Width="450">
+    <Grid>
+        <Label Name="FPS" Margin="0,0,0,333"/>
+        <Image Name="Display" Height="288" Margin="0,0,0,0" Width="320"/>
+        <Button Click="LoadROM"  Content="Open ROM" Margin="0,352,0,0"/>
     </Grid>
 </Window>

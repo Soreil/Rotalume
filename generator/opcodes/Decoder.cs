@@ -14,15 +14,15 @@ namespace emulator
         public Action Op(Unprefixed op) => StdOps[(int)op];
         public Action Op(Cbprefixed op) => CbOps[(int)op];
 
-        public CPU(Func<byte> read) : this(read, new List<byte>(), new List<byte>(), () => 0, x => { }, x => { }, () => false)
+        public CPU(Func<byte> read) : this(() => 0, x => { }, x => { }, new MMU(read))
         { }
 
-        public CPU(Func<byte> read, List<byte> boot, List<byte> game, Func<ushort> getPC, Action<ushort> setPC, Action<int> TickClock, Func<bool> bootROMActive)
+        public CPU(Func<ushort> getPC, Action<ushort> setPC, Action<int> TickClock, MMU memory)
         {
             StdOps = MakeTable();
             CbOps = MakeTableCb();
             Registers = new Registers();
-            Memory = new MMU(read, boot, game, bootROMActive);
+            Memory = memory;
             SetPC = setPC;
             GetPC = getPC;
 

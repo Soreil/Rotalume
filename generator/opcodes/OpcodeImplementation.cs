@@ -30,7 +30,7 @@ namespace emulator
         }
         private void Push(ushort s)
         {
-            Registers.SP = ((ushort)(Registers.SP - 2));
+            Registers.SP = (ushort)(Registers.SP - 2);
             Memory.Write(Registers.SP, s);
             pushcount++;
         }
@@ -706,7 +706,7 @@ namespace emulator
                 var SP = Registers.SP;
                 Registers.Set(p0.Item1, Memory.ReadWide(SP));
                 SP += 2;
-                Registers.SP = (SP);
+                Registers.SP = SP;
 
                 if (Registers.SP > StackBase) throw new Exception("Stack underflow");
                 else popcount++;
@@ -739,12 +739,10 @@ namespace emulator
         {
             return () =>
             {
+                var addr = (ushort)Memory.Fetch(p1.Item1);
                 if (Registers.Get(p0.Item1))
                 {
-                    var addr = (ushort)Memory.Fetch(p1.Item1);
-                    Push(GetPC());
-                    SetPC(addr);
-                    AddTicks(duration);
+                    Call(duration, addr);
                 }
                 else AddTicks(alternativeDuration);
             };

@@ -10,6 +10,7 @@ namespace Tests
     class GPU
     {
         public static List<byte> LoadGameROM() => File.ReadAllBytes(@"..\..\..\rom\Tetris (World) (Rev A).gb").ToList();
+        public static List<byte> LoadCPUTestROM() => File.ReadAllBytes(@"..\..\..\rom\cpu_instrs.gb").ToList();
 
         [Test]
         public void LineRegisterGetsIncrementedDuringVBlank()
@@ -192,7 +193,25 @@ namespace Tests
             Assert.AreEqual(Proc.PPU.BGP, 0xFC);
             //We have scrolled to the top of the screen
             Assert.AreEqual(Proc.PPU.SCY, 0);
+            Assert.AreEqual(Proc.PPU.LYC, 0);
+
+
+            Assert.AreEqual(Proc.InterruptControlRegister, 0);
+
+            Assert.AreEqual(0x01b0, Proc.CPU.Registers.AF);
+            Assert.AreEqual(0x0013, Proc.CPU.Registers.BC);
+            Assert.AreEqual(0x00d8, Proc.CPU.Registers.DE);
+            Assert.AreEqual(0x014d, Proc.CPU.Registers.HL);
+            Assert.AreEqual(0xfffe, Proc.CPU.Registers.SP);
+
+            Assert.AreEqual(0x0000, Proc.Timers.TimerControl);
+            Assert.AreEqual(0x0000, Proc.Timers.Timer);
+            Assert.AreEqual(0x0000, Proc.Timers.TimerDefault);
+
+            Assert.AreEqual(Proc.PPU.OBP0, 0xff);
+            Assert.AreEqual(Proc.PPU.OBP1, 0xff);
         }
+
         [Test]
         public void TetrisHangs()
         {
@@ -266,6 +285,15 @@ namespace Tests
 
             while (Proc.PC != 0x02ca) Proc.Step(); //Call 02f8
             while (Proc.PC != 0x02cd) Proc.Step(); //Call 7ff0
+        }
+
+        [Test]
+        public void CPUTestSPRunaway()
+        {
+            Core Proc = new Core(Core.LoadBootROM(), LoadCPUTestROM());
+            while (Proc.PC != 0x100) Proc.Step();
+            while (Proc.PC != 0xc18a) Proc.Step(); //Done checking first instruction
+            while (true) Proc.Step();
         }
     }
 }
