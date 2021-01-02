@@ -56,9 +56,6 @@ namespace emulator
         {
             bootROMActive = false;
         }
-        public Core() : this(LoadBootROM(), new List<byte>())
-        {
-        }
 
         public Core(List<byte> bootROM, List<byte> gameROM)
         {
