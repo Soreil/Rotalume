@@ -59,7 +59,7 @@ namespace emulator
         public bool LCDEnable => LCDC.GetBit(7);
         public bool WindowDisplayEnable => LCDC.GetBit(5);
         public bool OBJDisplayEnable => LCDC.GetBit(1);
-        public bool BGOrWindowDisplayOrPriority => LCDC.GetBit(0);
+        public bool BGDisplayEnable => LCDC.GetBit(0);
 
         public Mode Mode
         {
@@ -88,7 +88,7 @@ namespace emulator
             LCDC = b;
             if (ScreenJustTurnedOn)
                 Renderer = new Renderer(this, Writer); //We want a new renderer so all the internal state resets including clocking
-            else if (!LCDEnable && Renderer is not null)
+            else if ((!LCDEnable) && Renderer is not null)
                 Renderer = null; //We want to destroy the old renderer so it can't keep running after requested to turn off
         }
 
