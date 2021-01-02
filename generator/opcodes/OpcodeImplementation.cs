@@ -717,9 +717,9 @@ namespace emulator
         {
             return () =>
             {
+                var addr = (ushort)Memory.Fetch(p1.Item1);
                 if (Registers.Get(p0.Item1))
                 {
-                    var addr = (ushort)Memory.Fetch(p1.Item1);
                     SetPC(addr);
                     AddTicks(duration);
                 }
