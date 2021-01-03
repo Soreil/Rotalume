@@ -57,7 +57,7 @@ namespace emulator
             bootROMActive = false;
         }
 
-        public Core(List<byte> bootROM, List<byte> gameROM)
+        public Core(List<byte> bootROM, List<byte> gameROM, ControlRegister.Write SetJoyPad, ControlRegister.Read GetJoyPad)
         {
             Func<ushort> GetProgramCounter = () => PC;
             Action<ushort> SetProgramCounter = (x) => { PC = x; };
@@ -109,6 +109,9 @@ namespace emulator
 
             LYCController = (byte b) => PPU.LYC = b;
             ReadLYC = () => PPU.LYC;
+
+            controlRegisters.Writer[0] += SetJoyPad;
+            controlRegisters.Reader[0] += GetJoyPad;
 
             controlRegisters.Writer[0xF] += x => InterruptFireRegister = x;
             controlRegisters.Reader[0xF] += () => InterruptFireRegister;
@@ -216,6 +219,11 @@ namespace emulator
 
             CPU = new CPU(GetProgramCounter, SetProgramCounter, IncrementClock, memory);
 
+
+        }
+
+        public Core(List<byte> bootROM, List<byte> gameROM) : this(bootROM, gameROM, null, null)
+        {
         }
 
         public void DoNextOP()
@@ -231,7 +239,7 @@ namespace emulator
             if (op != 0xcb)
             {
                 //if ((Unprefixed)op != Unprefixed.CPL && (Unprefixed)op != Unprefixed.NOP && (Unprefixed)op != Unprefixed.RST_38H)
-                Unprefixeds.Push((PC - 1, (Unprefixed)op));
+                //Unprefixeds.Push((PC - 1, (Unprefixed)op));
                 CPU.Op((Unprefixed)op)();
             }
             else
