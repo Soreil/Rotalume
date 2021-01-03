@@ -4,10 +4,10 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="MainWindow" ResizeMode="NoResize" Height="450" Width="450">
+        Title="MainWindow" ResizeMode="NoResize" Height="450" Width="450" KeyDown="Window_KeyDown">
     <Grid>
         <Label Name="FPS" Margin="0,0,0,333"/>
-        <Image Name="Display" Height="288" Margin="0,0,0,0" Width="320"/>
+        <Image Name="Display" Height="288" Margin="65,54,65,92" Width="320"/>
         <Button Click="LoadROM"  Content="Open ROM" Margin="0,352,0,0"/>
     </Grid>
 </Window>
