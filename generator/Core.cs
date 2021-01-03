@@ -45,6 +45,8 @@ namespace emulator
         public PPU PPU;
         public Timers Timers;
 
+        byte keypadFlags = 0x30;
+
         public byte InterruptFireRegister { get; set; }
         public byte InterruptControlRegister { get; set; }
 
@@ -57,7 +59,7 @@ namespace emulator
             bootROMActive = false;
         }
 
-        public Core(List<byte> bootROM, List<byte> gameROM, ControlRegister.Write SetJoyPad, ControlRegister.Read GetJoyPad)
+        public Core(List<byte> bootROM, List<byte> gameROM, Func<byte, byte> GetJoyPad)
         {
             Func<ushort> GetProgramCounter = () => PC;
             Action<ushort> SetProgramCounter = (x) => { PC = x; };
@@ -110,8 +112,8 @@ namespace emulator
             LYCController = (byte b) => PPU.LYC = b;
             ReadLYC = () => PPU.LYC;
 
-            controlRegisters.Writer[0] += SetJoyPad;
-            controlRegisters.Reader[0] += GetJoyPad;
+            controlRegisters.Writer[0] += x => keypadFlags = x;
+            controlRegisters.Reader[0] += () => GetJoyPad(keypadFlags);
 
             controlRegisters.Writer[0xF] += x => InterruptFireRegister = x;
             controlRegisters.Reader[0xF] += () => InterruptFireRegister;
@@ -222,7 +224,7 @@ namespace emulator
 
         }
 
-        public Core(List<byte> bootROM, List<byte> gameROM) : this(bootROM, gameROM, null, null)
+        public Core(List<byte> bootROM, List<byte> gameROM) : this(bootROM, gameROM, null)
         {
         }
 
