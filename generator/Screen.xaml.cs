@@ -24,8 +24,7 @@ namespace GUI
     public partial class MainWindow : Window
     {
         delegate void UpdateImageCb();
-        delegate void UpdateJoypadCb(byte b);
-        delegate byte GetJoypadCb();
+        delegate byte UpdateJoypadCb(byte b);
         delegate void UpdateImagePixelsCb(byte[] data);
         delegate void UpdateLabelCb(float f);
         public MainWindow()
@@ -36,19 +35,15 @@ namespace GUI
 
         private void Gameboy(string path)
         {
-            void updateJoyPadSelection(byte x)
+            byte updateJoyPad(byte x)
             {
-                Dispatcher.BeginInvoke(new UpdateJoypadCb(UpdateJoypadBackingRegister),
-    System.Windows.Threading.DispatcherPriority.Render,
-     x);
-            }
-            byte updateJoyPad()
-            {
-                return (byte)Dispatcher.Invoke(new GetJoypadCb(GetJoypadBackingRegister));
+                return (byte)Dispatcher.Invoke(new UpdateJoypadCb(GetJoypadBackingRegister),
+                    System.Windows.Threading.DispatcherPriority.Input,
+                    x);
             }
 
             var gameboy = new emulator.Core(emulator.Core.LoadBootROM(),
-                System.IO.File.ReadAllBytes(path).ToList(), updateJoyPadSelection, updateJoyPad);
+                System.IO.File.ReadAllBytes(path).ToList(), updateJoyPad);
 
             Dispatcher.BeginInvoke(new UpdateImageCb(RunGameboy),
                 System.Windows.Threading.DispatcherPriority.Render);
@@ -103,20 +98,13 @@ namespace GUI
             GameThread.Start();
         }
 
-        byte Flags = 0;
-        private void UpdateJoypadBackingRegister(byte flags)
+        private byte GetJoypadBackingRegister(byte flags)
         {
-            Flags = flags;
-        }
+            return UpdateJoypadPresses(flags);
 
-        private byte GetJoypadBackingRegister()
-        {
-            UpdateJoypadPresses();
-            return joypad;
         }
 
         Action TriggerKeyboardInterrupt = () => { };
-        volatile byte joypad = 0x0F;
 
         Dictionary<Key, bool> Pressed = new Dictionary<Key, bool> {
             { Key.A,    false },
@@ -129,28 +117,22 @@ namespace GUI
             { Key.K,    false },
         };
 
-        private void UpdateJoypadPresses()
+        private byte UpdateJoypadPresses(byte Flags)
         {
-            var selectButtons = Flags.GetBit(5);
-            var selectArrows = Flags.GetBit(4);
+            var selectButtons = !Flags.GetBit(5);
+            var selectArrows = !Flags.GetBit(4);
 
-            joypad = 0x0f;
+            byte joypad = 0xf;
+            if (!selectButtons && !selectArrows) return joypad;
 
-            if (selectArrows && selectButtons)
-            {
-                if (Pressed[Key.H] && Pressed[Key.A]) joypad = joypad.SetBit(0, false);
-                if (Pressed[Key.J] && Pressed[Key.S]) joypad = joypad.SetBit(1, false);
-                if (Pressed[Key.K] && Pressed[Key.D]) joypad = joypad.SetBit(2, false);
-                if (Pressed[Key.L] && Pressed[Key.F]) joypad = joypad.SetBit(3, false);
-            }
-            else if (selectArrows)
+            if (selectArrows)
             {
                 if (Pressed[Key.H]) joypad = joypad.SetBit(0, false);
                 if (Pressed[Key.J]) joypad = joypad.SetBit(1, false);
                 if (Pressed[Key.K]) joypad = joypad.SetBit(2, false);
                 if (Pressed[Key.L]) joypad = joypad.SetBit(3, false);
             }
-            else if (selectButtons)
+            if (selectButtons)
             {
                 if (Pressed[Key.A]) joypad = joypad.SetBit(0, false);
                 if (Pressed[Key.S]) joypad = joypad.SetBit(1, false);
@@ -160,8 +142,9 @@ namespace GUI
 
 
             if ((joypad & 0xF) != 0xf) TriggerKeyboardInterrupt();
-
+            return joypad;
         }
+
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
             Pressed[e.Key] = true;
