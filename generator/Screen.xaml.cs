@@ -103,10 +103,10 @@ namespace GUI
             GameThread.Start();
         }
 
-
+        byte Flags = 0;
         private void UpdateJoypadBackingRegister(byte flags)
         {
-            joypad = (byte)((joypad & 0xf) | (flags & 0x30));
+            Flags = flags;
         }
 
         private byte GetJoypadBackingRegister()
@@ -116,68 +116,63 @@ namespace GUI
         }
 
         Action TriggerKeyboardInterrupt = () => { };
-        volatile byte joypad = 0x3F;
+        volatile byte joypad = 0x0F;
 
-        Dictionary<Key, DateTime> LastSeen = new Dictionary<Key, DateTime> {
-            { Key.A,    DateTime.MinValue },
-            { Key.S,    DateTime.MinValue },
-            { Key.D,    DateTime.MinValue },
-            { Key.F,    DateTime.MinValue },
-            { Key.L,DateTime.MinValue },
-            { Key.H, DateTime.MinValue },
-            { Key.J,   DateTime.MinValue },
-            { Key.K, DateTime.MinValue },
+        Dictionary<Key, bool> Pressed = new Dictionary<Key, bool> {
+            { Key.A,    false },
+            { Key.S,    false },
+            { Key.D,    false },
+            { Key.F,    false },
+            { Key.L,    false },
+            { Key.H,    false },
+            { Key.J,    false },
+            { Key.K,    false },
         };
 
         private void UpdateJoypadPresses()
         {
-            var selectButtons = joypad.GetBit(4);
-            var selectArrows = joypad.GetBit(5);
+            var selectButtons = Flags.GetBit(5);
+            var selectArrows = Flags.GetBit(4);
 
-            joypad = (byte)(joypad & 0x30);
-            joypad |= 0xf;
-            const int keyTimeOut = 100;
-            DateTime now = DateTime.Now;
+            joypad = 0x0f;
 
-            if (selectArrows && !selectButtons)
+            if (selectArrows && selectButtons)
             {
-                var Adiff = now - LastSeen[Key.L];
-                if (Adiff.TotalMilliseconds < keyTimeOut)
-                    joypad = joypad.SetBit(0, false);
-                var Bdiff = now - LastSeen[Key.H];
-                if (Bdiff.TotalMilliseconds < keyTimeOut)
-                    joypad = joypad.SetBit(1, false);
-                var Selectdiff = now - LastSeen[Key.J];
-                if (Selectdiff.TotalMilliseconds < keyTimeOut)
-                    joypad = joypad.SetBit(2, false);
-                var Startdiff = now - LastSeen[Key.K];
-                if (Startdiff.TotalMilliseconds < keyTimeOut)
-                    joypad = joypad.SetBit(3, false);
+                if (Pressed[Key.H] && Pressed[Key.A]) joypad = joypad.SetBit(0, false);
+                if (Pressed[Key.J] && Pressed[Key.S]) joypad = joypad.SetBit(1, false);
+                if (Pressed[Key.K] && Pressed[Key.D]) joypad = joypad.SetBit(2, false);
+                if (Pressed[Key.L] && Pressed[Key.F]) joypad = joypad.SetBit(3, false);
             }
-            if (selectButtons && !selectArrows)
+            else if (selectArrows)
             {
-                var Adiff = now - LastSeen[Key.A];
-                if (Adiff.TotalMilliseconds < keyTimeOut)
-                    joypad = joypad.SetBit(0, false);
-                var Bdiff = now - LastSeen[Key.S];
-                if (Bdiff.TotalMilliseconds < keyTimeOut)
-                    joypad = joypad.SetBit(1, false);
-                var Selectdiff = now - LastSeen[Key.D];
-                if (Selectdiff.TotalMilliseconds < keyTimeOut)
-                    joypad = joypad.SetBit(2, false);
-                var Startdiff = now - LastSeen[Key.F];
-                if (Startdiff.TotalMilliseconds < keyTimeOut)
-                    joypad = joypad.SetBit(3, false);
+                if (Pressed[Key.H]) joypad = joypad.SetBit(0, false);
+                if (Pressed[Key.J]) joypad = joypad.SetBit(1, false);
+                if (Pressed[Key.K]) joypad = joypad.SetBit(2, false);
+                if (Pressed[Key.L]) joypad = joypad.SetBit(3, false);
             }
+            else if (selectButtons)
+            {
+                if (Pressed[Key.A]) joypad = joypad.SetBit(0, false);
+                if (Pressed[Key.S]) joypad = joypad.SetBit(1, false);
+                if (Pressed[Key.D]) joypad = joypad.SetBit(2, false);
+                if (Pressed[Key.F]) joypad = joypad.SetBit(3, false);
+            }
+
 
             if ((joypad & 0xF) != 0xf) TriggerKeyboardInterrupt();
 
         }
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
-            if (LastSeen.ContainsKey(e.Key))
-                LastSeen[e.Key] = DateTime.Now;
+            Pressed[e.Key] = true;
+        }
+
+        private void Window_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (Pressed.ContainsKey(e.Key))
+            {
+                Pressed[e.Key] = false;
+            }
         }
     }
-
 }
