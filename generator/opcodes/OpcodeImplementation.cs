@@ -12,10 +12,9 @@ namespace emulator
         readonly public Action disableInterrupts;
         readonly private Action<int> AddTicks;
         readonly public Action halt;
-        public ushort StackBase = 0xFFFF;
+        //public ushort StackBase = 0xFFFF;
         public int popcount = 0;
         public int pushcount = 0;
-
         private ushort Pop()
         {
             var SP = Registers.SP;
@@ -23,8 +22,8 @@ namespace emulator
             SP += 2;
             Registers.SP = SP;
 
-            if (Registers.SP > StackBase) throw new Exception("Stack underflow");
-            else popcount++;
+            //if (Registers.SP > StackBase) throw new Exception("Stack underflow");
+            //else popcount++;
 
             return popped;
         }
@@ -50,7 +49,7 @@ namespace emulator
                 }
                 else
                 {
-                    if (p0.Item1 == WideRegister.SP) StackBase = (ushort)arg;
+                    //if (p0.Item1 == WideRegister.SP) StackBase = (ushort)arg;
                     Registers.Set(p0.Item1, (ushort)arg);
                 }
                 AddTicks(duration);
@@ -705,11 +704,10 @@ namespace emulator
             {
                 var SP = Registers.SP;
                 Registers.Set(p0.Item1, Memory.ReadWide(SP));
-                SP += 2;
-                Registers.SP = SP;
+                Registers.SP = (ushort)(SP + 2);
 
-                if (Registers.SP > StackBase) throw new Exception("Stack underflow");
-                else popcount++;
+                //if (Registers.SP > StackBase) throw new Exception("Stack underflow");
+                //else popcount++;
                 AddTicks(duration);
             };
         }
@@ -1037,7 +1035,9 @@ namespace emulator
             {
                 return () =>
                 {
-                    Registers.Set(p0.Item1, Registers.Get(p1.Item1));
+                    var newSPValue = Registers.Get(p1.Item1);
+                    //StackBase = newSPValue;
+                    Registers.Set(p0.Item1, newSPValue);
                     AddTicks(duration);
                 };
             }
