@@ -25,6 +25,8 @@ namespace emulator
         {
             get
             {
+                //if (at == 0xff00) System.Diagnostics.Debugger.Break();
+
                 var possible = getRanges.FirstOrDefault((x) => x.Begin <= at && x.End > at && x.Exists != null && x.Exists(at));
 
                 if (BootROMActive && at < 0x100) //Bootrom is read only so we don't need a corresponding function in set

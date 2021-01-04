@@ -47,6 +47,8 @@ namespace emulator
 
         byte keypadFlags = 0x30;
 
+        Func<bool> GetKeyboardInterrupt;
+
         public byte InterruptFireRegister { get; set; }
         public byte InterruptControlRegister { get; set; }
 
@@ -59,7 +61,7 @@ namespace emulator
             bootROMActive = false;
         }
 
-        public Core(List<byte> bootROM, List<byte> gameROM, Func<byte, byte> GetJoyPad)
+        public Core(List<byte> bootROM, List<byte> gameROM, Func<byte, byte> GetJoyPad, Func<bool> getKeyboardInterrupt)
         {
             Func<ushort> GetProgramCounter = () => PC;
             Action<ushort> SetProgramCounter = (x) => { PC = x; };
@@ -111,6 +113,8 @@ namespace emulator
 
             LYCController = (byte b) => PPU.LYC = b;
             ReadLYC = () => PPU.LYC;
+
+            GetKeyboardInterrupt = getKeyboardInterrupt;
 
             controlRegisters.Writer[0] += x => keypadFlags = x;
             controlRegisters.Reader[0] += () => GetJoyPad(keypadFlags);
@@ -224,7 +228,7 @@ namespace emulator
 
         }
 
-        public Core(List<byte> bootROM, List<byte> gameROM) : this(bootROM, gameROM, null)
+        public Core(List<byte> bootROM, List<byte> gameROM) : this(bootROM, gameROM, null, null)
         {
         }
 
@@ -305,6 +309,13 @@ namespace emulator
         public void Step()
         {
             DoNextOP();
+            //We really should have the GUI thread somehow do this logic but polling like this should work
+            //if (GetKeyboardInterrupt())
+            //{
+            //    var interrupts = CPU.Memory.Read(0xff0f);
+            //    interrupts = interrupts.SetBit(4);
+            //    CPU.Memory.Write(0xff0f, interrupts);
+            //}
             DoInterrupt();
             PPU.Do();
         }
