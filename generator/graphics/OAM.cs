@@ -31,6 +31,13 @@ namespace emulator
         const int maxSpritesOnLine = 10;
 
         //Supposedly X = 0 sprites are still relevant for the 10 sprite limit so we have to match them.
-        public List<SpriteAttributes> SpritesOnLine(int line, int spriteHeight) => Entries().Where(s => line >= s.Y + 16 && line < s.Y + 16 + spriteHeight).Take(maxSpritesOnLine).ToList();
+        public List<SpriteAttributes> SpritesOnLine(int line, int spriteHeight) => Entries().
+            Where(s => (s.Y + spriteHeight) > 15 &&
+            s.X != 0 &&
+            s.Y < 160 &&
+            s.X < 168 &&
+            line >= s.Y &&
+            line < s.Y + spriteHeight).
+            Take(maxSpritesOnLine).ToList();
     }
 }
