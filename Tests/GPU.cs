@@ -74,7 +74,7 @@ namespace Tests
 
             var render = new emulator.Renderer(Proc.PPU);
 
-            var pallette = render.GetPalette();
+            var pallette = render.GetBackgroundPalette();
 
             List<string> lines = new();
             for (byte y = 64; y < 80; y++)

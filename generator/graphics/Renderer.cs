@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 
 namespace emulator
@@ -45,7 +46,7 @@ namespace emulator
             if (currentTime > TimeUntilWhichToPause)
             {
                 if (PPU.Mode == Mode.OAMSearch)
-                    SpriteAttributes = PPU.OAM.SpritesOnLine(PPU.LY, PPU.SpriteHeight);
+                    SpriteAttributes = PPU.OAM.SpritesOnLine(PPU.LY+16, PPU.SpriteHeight);
                 if (PPU.Mode == Mode.Transfer)
                     Draw();
 
@@ -57,9 +58,44 @@ namespace emulator
 
         private void Draw()
         {
-            var palette = GetPalette();
-            var line = GetLineShades(palette, YScrolled(PPU.LY, PPU.SCY), PPU.BGTileMapDisplaySelect);
+            List<Shade>? background = null;
+            List<Shade>? sprites = null;
+            if (PPU.BGDisplayEnable)
+            {
+                var palette = GetBackgroundPalette();
+                background = GetBackgroundLineShades(palette, YScrolled(PPU.LY, PPU.SCY), PPU.BGTileMapDisplaySelect);
+            }
+            if (PPU.OBJDisplayEnable)
+            {
+                sprites = GetSpriteLineShades();
+            }
+
+            List<Shade> line;
+            if (background is not null && sprites is not null)
+                line = Merge(background, sprites);
+            else
+            {
+                if (background is not null)
+                    line = background;
+                else if (sprites is not null)
+                    line = sprites;
+                else
+                {
+                    line = new List<Shade>();
+                    for (int i = 0; i < 160; i++) line.Add(Shade.White);
+                }
+            }
             fs.Write(line.ConvertAll(ShadeToGray).ToArray());
+        }
+        private List<Shade> Merge(List<Shade> background, List<Shade> sprites)
+        {
+            var pixels = new List<Shade>(160);
+            for (int i = 0; i < 160; i++)
+            {
+                if (sprites[i] == Shade.Transparant) pixels.Add(background[i]);
+                else pixels.Add(sprites[i]);
+            }
+            return pixels;
         }
 
         public static byte ShadeToGray(Shade s) => s switch
@@ -73,24 +109,35 @@ namespace emulator
 
         public string GetLine(Shade[] palette, byte yScrolled, ushort tilemap)
         {
-            var pixels = GetLineShades(palette, yScrolled, tilemap);
+            var pixels = GetBackgroundLineShades(palette, yScrolled, tilemap);
 
             var s = MakePrintableLine(pixels);
             return s;
         }
 
-        private List<Shade> GetLineShades(Shade[] palette, byte yScrolled, ushort tilemap)
+        private List<Shade> GetBackgroundLineShades(Shade[] palette, byte yScrolled, ushort tilemap)
         {
-            var pixels = new List<Shade>(160);
+            var pixelsBG = new List<Shade>(160);
 
             for (int tileNumber = 0; tileNumber < 20; tileNumber++)
             {
                 var curPix = TilePixelLine(palette, yScrolled, tilemap, tileNumber);
                 for (int cur = 0; cur < curPix.Length; cur++)
-                    pixels.Add(curPix[cur]);
+                    pixelsBG.Add(curPix[cur]);
             }
 
-            return pixels;
+            return pixelsBG;
+        }
+        private List<Shade> GetSpriteLineShades()
+        {
+            var pixelsSprite = new List<Shade>(160);
+
+            for (int x = 0; x < 160; x++)
+            {
+                pixelsSprite.Add(GetSpritePixel(x));
+            }
+
+            return pixelsSprite;
         }
 
         private static byte YScrolled(byte LY, byte SCY) => (byte)((LY + SCY) & 0xff);
@@ -114,10 +161,30 @@ namespace emulator
             var xOffset = ((PPU.SCX / 8) + tileNumber) & 0x1f;
 
             var TileID = PPU.VRAM[tilemap + xOffset + ((yOffset / 8) * 32)]; //Background ID map is laid out as 32x32 tiles of size 8x8
-            //if (TileID > 26) System.Diagnostics.Debugger.Break();
+                                                                             //if (TileID > 26) System.Diagnostics.Debugger.Break();
             var pixels = GetTileLine(palette, yOffset % 8, TileID);
 
             return pixels;
+        }
+
+        private Shade GetSpritePixel(int xPos)
+        {
+            xPos += 8;
+            if (!PPU.OBJDisplayEnable) throw new Exception("Sprites disabled");
+            if (!SpriteAttributes.Any(s => s.X >= xPos && (s.X < xPos + 8))) return Shade.Transparant;
+
+            var sprite = SpriteAttributes.First(s => s.X >= xPos && (s.X < xPos + 8));
+            var index = sprite.X - xPos;
+            var palette = sprite.Palette == 1 ? GetSpritePalette1() : GetSpritePalette0();
+
+            var at = 0x8000 + (sprite.ID * 16) + ((PPU.LY - sprite.Y) * 2);
+            var tileDataLow = PPU.VRAM[at]; //low byte of line
+            var tileDataHigh = PPU.VRAM[at + 1]; //high byte of line
+
+            var paletteIndex = tileDataLow.GetBit(index) ? 1 : 0;
+            paletteIndex += tileDataHigh.GetBit(index) ? 2 : 0;
+
+            return palette[paletteIndex];
         }
 
         private Shade[] GetTileLine(Shade[] palette, int line, byte currentTileIndex)
@@ -130,7 +197,7 @@ namespace emulator
             //We need the line in the 8x8 tile so we take y mod 8 to get it
             //Times 2 is needed because a tile has two bytes per line.
             int at = 0;
-            if (tileData == 0x8000)
+            if (tileData != 0x8800)
             {
                 at = tileData + (currentTileIndex * 16) + (line * 2);
             }
@@ -155,7 +222,7 @@ namespace emulator
 
         public string GetTile(byte tileNumber)
         {
-            var palette = GetPalette();
+            var palette = GetBackgroundPalette();
 
             var lines = new List<List<Shade>>(8);
             for (int y = 0; y < 8; y++)
@@ -172,11 +239,23 @@ namespace emulator
             return string.Join("\r\n", output);
         }
 
-        public Shade[] GetPalette() => new Shade[4] {
+        public Shade[] GetBackgroundPalette() => new Shade[4] {
                 PPU.BackgroundColor(0),
                 PPU.BackgroundColor(1),
                 PPU.BackgroundColor(2),
                 PPU.BackgroundColor(3)
+            };
+        public Shade[] GetSpritePalette0() => new Shade[4] {
+                Shade.Transparant,
+                PPU.SpritePalette0(1),
+                PPU.SpritePalette0(2),
+                PPU.SpritePalette0(3)
+            };
+        public Shade[] GetSpritePalette1() => new Shade[4] {
+                Shade.Transparant,
+                PPU.SpritePalette1(1),
+                PPU.SpritePalette1(2),
+                PPU.SpritePalette1(3)
             };
 
         private void IncrementMode()

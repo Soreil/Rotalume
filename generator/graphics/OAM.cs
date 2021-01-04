@@ -17,8 +17,8 @@ namespace emulator
         private IEnumerable<SpriteAttributes> Entries()
         {
             List<SpriteAttributes> res = new List<SpriteAttributes>(mem.Length / 4);
-            for (int i = 0; i < res.Count; i++)
-                res[i] = Entry(i);
+            for (int i = 0; i < mem.Length / 4; i++)
+                res.Add(Entry(i));
             return res;
         }
 
