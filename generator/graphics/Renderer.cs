@@ -46,7 +46,7 @@ namespace emulator
             if (currentTime > TimeUntilWhichToPause)
             {
                 if (PPU.Mode == Mode.OAMSearch)
-                    SpriteAttributes = PPU.OAM.SpritesOnLine(PPU.LY+16, PPU.SpriteHeight);
+                    SpriteAttributes = PPU.OAM.SpritesOnLine(PPU.LY, PPU.SpriteHeight);
                 if (PPU.Mode == Mode.Transfer)
                     Draw();
 
@@ -171,13 +171,21 @@ namespace emulator
         {
             xPos += 8;
             if (!PPU.OBJDisplayEnable) throw new Exception("Sprites disabled");
-            if (!SpriteAttributes.Any(s => s.X >= xPos && (s.X < xPos + 8))) return Shade.Transparant;
+            if (!SpriteAttributes.Any(s => s.X >= xPos && (s.X < xPos + 7))) return Shade.Transparant;
 
-            var sprite = SpriteAttributes.First(s => s.X >= xPos && (s.X < xPos + 8));
+            var sprite = SpriteAttributes.First(s => s.X >= xPos && (s.X < xPos + 7));
+
+            //if (sprite.X == 0x18 && sprite.Y == 0x78 && sprite.XFlipped == false && sprite.YFlipped == true && sprite.ID == 0x92) 
+            //    System.Diagnostics.Debugger.Break();
+
             var index = sprite.X - xPos;
+            if (sprite.XFlipped) index = 7 - index;
+
+            var line = sprite.YFlipped ? (PPU.LY - (7 - sprite.Y)) : (PPU.LY - sprite.Y);
+
             var palette = sprite.Palette == 1 ? GetSpritePalette1() : GetSpritePalette0();
 
-            var at = 0x8000 + (sprite.ID * 16) + ((PPU.LY - sprite.Y) * 2);
+            var at = 0x8000 + (sprite.ID * 16) + (line * 2);
             var tileDataLow = PPU.VRAM[at]; //low byte of line
             var tileDataHigh = PPU.VRAM[at + 1]; //high byte of line
 
