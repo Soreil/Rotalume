@@ -40,6 +40,22 @@ namespace emulator
         public byte WY; //FF4A
         public byte WX; //FF4B
 
+        public Shade SpritePalette0(int n) => n switch
+        {
+            0 => throw new Exception("Unused"),
+            1 => (Shade)((OBP0 & 0xC) >> 2),
+            2 => (Shade)((OBP0 & 0x30) >> 4),
+            3 => (Shade)((OBP0 & 0xC0) >> 6),
+            _ => throw new IndexOutOfRangeException()
+        };
+        public Shade SpritePalette1(int n) => n switch
+        {
+            0 => throw new Exception("Unused"),
+            1 => (Shade)((OBP1 & 0xC) >> 2),
+            2 => (Shade)((OBP1 & 0x30) >> 4),
+            3 => (Shade)((OBP1 & 0xC0) >> 6),
+            _ => throw new IndexOutOfRangeException()
+        };
 
         public Shade BackgroundColor(int n) => n switch
         {
