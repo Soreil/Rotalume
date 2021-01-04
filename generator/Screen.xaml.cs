@@ -37,13 +37,24 @@ namespace GUI
         {
             byte updateJoyPad(byte x)
             {
-                return (byte)Dispatcher.Invoke(new UpdateJoypadCb(GetJoypadBackingRegister),
+                return (byte)Dispatcher.Invoke(new UpdateJoypadCb(UpdateJoypadPresses),
                     System.Windows.Threading.DispatcherPriority.Input,
                     x);
             }
 
+            bool keyBoardInterruptFired()
+            {
+                return Dispatcher.Invoke(() =>
+                {
+                    var res = keyboardInterruptReady;
+                    keyboardInterruptReady = false;
+                    return res;
+                });
+            }
+
+
             var gameboy = new emulator.Core(emulator.Core.LoadBootROM(),
-                System.IO.File.ReadAllBytes(path).ToList(), updateJoyPad);
+                System.IO.File.ReadAllBytes(path).ToList(), updateJoyPad, keyBoardInterruptFired);
 
             Dispatcher.BeginInvoke(new UpdateImageCb(RunGameboy),
                 System.Windows.Threading.DispatcherPriority.Render);
@@ -54,6 +65,8 @@ namespace GUI
     System.Windows.Threading.DispatcherPriority.Render,
      x);
             }
+
+
 
             gameboy.PPU.Writer = new emulator.FrameSink(update);
 
@@ -98,13 +111,7 @@ namespace GUI
             GameThread.Start();
         }
 
-        private byte GetJoypadBackingRegister(byte flags)
-        {
-            return UpdateJoypadPresses(flags);
-
-        }
-
-        Action TriggerKeyboardInterrupt = () => { };
+        volatile bool keyboardInterruptReady = false;
 
         Dictionary<Key, bool> Pressed = new Dictionary<Key, bool> {
             { Key.A,    false },
@@ -140,14 +147,17 @@ namespace GUI
                 if (Pressed[Key.F]) joypad = joypad.SetBit(3, false);
             }
 
-
-            if ((joypad & 0xF) != 0xf) TriggerKeyboardInterrupt();
             return joypad;
         }
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
-            Pressed[e.Key] = true;
+            if (Pressed.ContainsKey(e.Key) && Pressed[e.Key] == false)
+            {
+                Pressed[e.Key] = true;
+                if (GameThread is not null)
+                    keyboardInterruptReady = true;
+            }
         }
 
         private void Window_KeyUp(object sender, KeyEventArgs e)
