@@ -84,6 +84,7 @@ namespace GUI
         private void RunGameboy()
         {
             Display.Source = bmp;
+            RenderOptions.SetBitmapScalingMode(Display, BitmapScalingMode.NearestNeighbor);
         }
 
         private void UpdateLabel(float f) => FPS.Content = string.Format("FPS:{0}", f);
