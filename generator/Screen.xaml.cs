@@ -118,10 +118,10 @@ namespace GUI
             { Key.S,    false },
             { Key.D,    false },
             { Key.F,    false },
-            { Key.L,    false },
-            { Key.H,    false },
-            { Key.J,    false },
-            { Key.K,    false },
+            { Key.Right,    false },
+            { Key.Left,    false },
+            { Key.Up,    false },
+            { Key.Down,    false },
         };
 
         private byte UpdateJoypadPresses(byte Flags)
@@ -134,10 +134,10 @@ namespace GUI
 
             if (selectArrows)
             {
-                if (Pressed[Key.H]) joypad = joypad.SetBit(0, false);
-                if (Pressed[Key.J]) joypad = joypad.SetBit(1, false);
-                if (Pressed[Key.K]) joypad = joypad.SetBit(2, false);
-                if (Pressed[Key.L]) joypad = joypad.SetBit(3, false);
+                if (Pressed[Key.Right]) joypad = joypad.SetBit(0, false);
+                if (Pressed[Key.Left]) joypad = joypad.SetBit(1, false);
+                if (Pressed[Key.Up]) joypad = joypad.SetBit(2, false);
+                if (Pressed[Key.Down]) joypad = joypad.SetBit(3, false);
             }
             if (selectButtons)
             {

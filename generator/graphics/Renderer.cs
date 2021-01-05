@@ -58,8 +58,8 @@ namespace emulator
 
         private void Draw()
         {
-            List<Shade>? background = null;
-            List<Shade>? sprites = null;
+            List<Shade> background = null;
+            List<Shade> sprites = null;
             if (PPU.BGDisplayEnable)
             {
                 var palette = GetBackgroundPalette();
@@ -169,7 +169,6 @@ namespace emulator
 
         private Shade GetSpritePixel(int xPos)
         {
-            xPos += 8;
             if (!PPU.OBJDisplayEnable) throw new Exception("Sprites disabled");
             if (!SpriteAttributes.Any(s => s.X >= xPos && (s.X < xPos + 7))) return Shade.Transparant;
 
@@ -181,7 +180,8 @@ namespace emulator
             var index = sprite.X - xPos;
             if (sprite.XFlipped) index = 7 - index;
 
-            var line = sprite.YFlipped ? (PPU.LY - (7 - sprite.Y)) : (PPU.LY - sprite.Y);
+            var line = PPU.LY - sprite.Y;
+            if (sprite.YFlipped) line = 7 - line;
 
             var palette = sprite.Palette == 1 ? GetSpritePalette1() : GetSpritePalette0();
 
