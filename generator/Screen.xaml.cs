@@ -38,7 +38,7 @@ namespace GUI
             byte updateJoyPad(byte x)
             {
                 return (byte)Dispatcher.Invoke(new UpdateJoypadCb(UpdateJoypadPresses),
-                    System.Windows.Threading.DispatcherPriority.Input,
+                    System.Windows.Threading.DispatcherPriority.Render,
                     x);
             }
 
