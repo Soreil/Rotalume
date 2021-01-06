@@ -26,7 +26,7 @@ namespace GUI
         delegate void UpdateImageCb();
         delegate byte UpdateJoypadCb(byte b);
         delegate void UpdateImagePixelsCb(byte[] data);
-        delegate void UpdateLabelCb(float f);
+        delegate void UpdateLabelCb();
         public MainWindow()
         {
             InitializeComponent();
@@ -65,19 +65,15 @@ namespace GUI
                 Dispatcher.BeginInvoke(new UpdateImagePixelsCb(UpdatePixels),
     System.Windows.Threading.DispatcherPriority.Render,
      x);
+                Dispatcher.BeginInvoke(new UpdateLabelCb(UpdateLabel),
+                    System.Windows.Threading.DispatcherPriority.Render);
             }
-
-
 
             gameboy.PPU.Writer = new emulator.FrameSink(update);
 
-            //var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            StartTime = DateTime.Now;
+
             while (true) gameboy.Step();
-            //var fps = gameboy.PPU.Writer.frameCount / (stopwatch.ElapsedMilliseconds / 1000f);
-            //stopwatch.Stop();
-            //Dispatcher.BeginInvoke(new UpdateLabelCb(UpdateLabel),
-            //    System.Windows.Threading.DispatcherPriority.Render,
-            //     fps);
         }
 
         WriteableBitmap bmp;
@@ -88,7 +84,16 @@ namespace GUI
             RenderOptions.SetBitmapScalingMode(Display, BitmapScalingMode.NearestNeighbor);
         }
 
-        private void UpdateLabel(float f) => FPS.Content = string.Format("FPS:{0}", f);
+        int frameNumber = 0;
+
+        DateTime StartTime = new();
+        private void UpdateLabel()
+        {
+            frameNumber++;
+            var frameTime = (DateTime.Now - StartTime) / frameNumber;
+            var fps = 1000 / frameTime.TotalMilliseconds;
+            FPS.Content = string.Format("Frame:{0} FrameTime:{1} FPS:{2}", frameNumber, frameTime.TotalMilliseconds, fps);
+        }
 
         private void UpdatePixels(byte[] data)
         {
