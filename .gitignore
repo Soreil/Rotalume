@@ -339,3 +339,5 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 /Tests/rom/Tetris (World) (Rev A).gb
+*.gb
+*.txt
