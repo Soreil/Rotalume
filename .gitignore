@@ -341,3 +341,4 @@ healthchecksdb
 /Tests/rom/Tetris (World) (Rev A).gb
 *.gb
 *.txt
+/generator/bootrom/DMG_ROM_BOOT.bin
