@@ -37,19 +37,20 @@ namespace GUI
         {
             byte updateJoyPad(byte x)
             {
-                return (byte)Dispatcher.Invoke(new UpdateJoypadCb(UpdateJoypadPresses),
+                var inv = Dispatcher.BeginInvoke(new UpdateJoypadCb(UpdateJoypadPresses),
                     System.Windows.Threading.DispatcherPriority.Render,
                     x);
+                inv.Wait();
+                //TODO: Find a more clean way to handle program exit mid Invoke
+                if (inv.Status == System.Windows.Threading.DispatcherOperationStatus.Aborted) return 0x0f;
+                return (byte)inv.Result;
             }
 
             bool keyBoardInterruptFired()
             {
-                return Dispatcher.Invoke(() =>
-                {
-                    var res = keyboardInterruptReady;
-                    keyboardInterruptReady = false;
-                    return res;
-                });
+                var res = keyboardInterruptReady;
+                keyboardInterruptReady = false;
+                return res;
             }
 
 
@@ -113,8 +114,7 @@ namespace GUI
         }
 
         volatile bool keyboardInterruptReady = false;
-
-        Dictionary<Key, bool> Pressed = new Dictionary<Key, bool> {
+        readonly Dictionary<Key, bool> Pressed = new Dictionary<Key, bool> {
             { Key.A,    false },
             { Key.S,    false },
             { Key.D,    false },

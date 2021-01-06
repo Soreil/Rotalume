@@ -310,12 +310,12 @@ namespace emulator
         {
             DoNextOP();
             //We really should have the GUI thread somehow do this logic but polling like this should work
-            //if (GetKeyboardInterrupt())
-            //{
-            //    var interrupts = CPU.Memory.Read(0xff0f);
-            //    interrupts = interrupts.SetBit(4);
-            //    CPU.Memory.Write(0xff0f, interrupts);
-            //}
+            if (!InterruptControlRegister.GetBit(4) && GetKeyboardInterrupt())
+            {
+                var interrupts = CPU.Memory.Read(0xff0f);
+                interrupts = interrupts.SetBit(4);
+                CPU.Memory.Write(0xff0f, interrupts);
+            }
             DoInterrupt();
             PPU.Do();
         }
