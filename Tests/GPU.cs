@@ -282,14 +282,5 @@ namespace Tests
             while (Proc.PC != 0x02ca) Proc.Step(); //Call 02f8
             while (Proc.PC != 0x02cd) Proc.Step(); //Call 7ff0
         }
-
-        [Test]
-        public void CPUTestSPRunaway()
-        {
-            Core Proc = new Core(Core.LoadBootROM(), LoadCPUTestROM());
-            while (Proc.PC != 0x100) Proc.Step();
-            while (Proc.PC != 0xc2f5) Proc.Step(); //Done checking first instruction
-            while (true) Proc.Step();
-        }
     }
 }

@@ -104,6 +104,7 @@ namespace emulator
             Shade.LightGray => 0xc0,
             Shade.DarkGray => 0x40,
             Shade.Black => 0,
+            Shade.Transparant => 0xff, //We shouldn't hit this one but white is the default
             _ => throw new Exception(),
         };
 
