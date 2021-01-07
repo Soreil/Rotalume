@@ -13,8 +13,12 @@ namespace emulator
         public int TimeUntilWhichToPause;
         readonly Stream fs = Stream.Null;
 
-        const int DrawlinesPerFrame = 144;
-        const int ScanlinesPerFrame = DrawlinesPerFrame + 10;
+
+        const int TileWidth = 8;
+        const int DisplayWidth = 160;
+        const int TilesPerLine = DisplayWidth / TileWidth;
+        const int DisplayHeight = 144;
+        const int ScanlinesPerFrame = DisplayHeight + 10;
 
         const int TicksPerScanline = 456;
         const int TicksPerFrame = ScanlinesPerFrame * TicksPerScanline;
@@ -82,15 +86,15 @@ namespace emulator
                 else
                 {
                     line = new List<Shade>();
-                    for (int i = 0; i < 160; i++) line.Add(Shade.White);
+                    for (int i = 0; i < DisplayWidth; i++) line.Add(Shade.White);
                 }
             }
             fs.Write(line.ConvertAll(ShadeToGray).ToArray());
         }
-        private List<Shade> Merge(List<Shade> background, List<Shade> sprites)
+        private static List<Shade> Merge(List<Shade> background, List<Shade> sprites)
         {
-            var pixels = new List<Shade>(160);
-            for (int i = 0; i < 160; i++)
+            var pixels = new List<Shade>(DisplayWidth);
+            for (int i = 0; i < DisplayWidth; i++)
             {
                 if (sprites[i] == Shade.Transparant) pixels.Add(background[i]);
                 else pixels.Add(sprites[i]);
@@ -118,9 +122,9 @@ namespace emulator
 
         private List<Shade> GetBackgroundLineShades(Shade[] palette, byte yScrolled, ushort tilemap)
         {
-            var pixelsBG = new List<Shade>(160);
+            var pixelsBG = new List<Shade>(DisplayWidth);
 
-            for (int tileNumber = 0; tileNumber < 20; tileNumber++)
+            for (int tileNumber = 0; tileNumber < TilesPerLine; tileNumber++)
             {
                 var curPix = TilePixelLine(palette, yScrolled, tilemap, tileNumber);
                 for (int cur = 0; cur < curPix.Length; cur++)
@@ -131,9 +135,9 @@ namespace emulator
         }
         private List<Shade> GetSpriteLineShades()
         {
-            var pixelsSprite = new List<Shade>(160);
+            var pixelsSprite = new List<Shade>(DisplayWidth);
 
-            for (int x = 0; x < 160; x++)
+            for (int x = 0; x < DisplayWidth; x++)
             {
                 pixelsSprite.Add(GetSpritePixel(x));
             }
@@ -159,11 +163,11 @@ namespace emulator
 
         private Shade[] TilePixelLine(Shade[] palette, int yOffset, ushort tilemap, int tileNumber)
         {
-            var xOffset = ((PPU.SCX / 8) + tileNumber) & 0x1f;
+            var xOffset = ((PPU.SCX / TileWidth) + tileNumber) & 0x1f;
 
-            var TileID = PPU.VRAM[tilemap + xOffset + ((yOffset / 8) * 32)]; //Background ID map is laid out as 32x32 tiles of size 8x8
-                                                                             //if (TileID > 26) System.Diagnostics.Debugger.Break();
-            var pixels = GetTileLine(palette, yOffset % 8, TileID);
+            var TileID = PPU.VRAM[tilemap + xOffset + ((yOffset / TileWidth) * 32)]; //Background ID map is laid out as 32x32 tiles of size TileWidthxTileWidth
+                                                                                     //if (TileID > 26) System.Diagnostics.Debugger.Break();
+            var pixels = GetTileLine(palette, yOffset % TileWidth, TileID);
 
             return pixels;
         }
@@ -200,30 +204,24 @@ namespace emulator
         {
             var tileData = PPU.BGAndWindowTileDataSelect;
 
-            var pixels = new Shade[8];
+            var pixels = new Shade[TileWidth];
 
             //16 bytes per tile so times 16 on the tileindex
-            //We need the line in the 8x8 tile so we take y mod 8 to get it
+            //We need the line in the TileWidthxTileWidth tile so we take y mod TileWidth to get it
             //Times 2 is needed because a tile has two bytes per line.
-            int at = 0;
-            if (tileData != 0x8800)
-            {
-                at = tileData + (currentTileIndex * 16) + (line * 2);
-            }
-            else
-            {
-                at = 0x9000 + (((sbyte)currentTileIndex) * 16) + (line * 2);
-            }
+            int at;
+            if (tileData != 0x8800) at = tileData + (currentTileIndex * 16) + (line * 2);
+            else at = 0x9000 + (((sbyte)currentTileIndex) * 16) + (line * 2);
 
             var tileDataLow = PPU.VRAM[at]; //low byte of line
             var tileDataHigh = PPU.VRAM[at + 1]; //high byte of line
 
-            for (int i = 7; i >= 0; i--) //tilesIDs are stored with the first pixel at MSB
+            for (int i = TileWidth; i > 0; i--) //tilesIDs are stored with the first pixel at MSB
             {
-                var paletteIndex = tileDataLow.GetBit(i) ? 1 : 0;
-                paletteIndex += tileDataHigh.GetBit(i) ? 2 : 0;
+                var paletteIndex = tileDataLow.GetBit(i - 1) ? 1 : 0;
+                paletteIndex += tileDataHigh.GetBit(i - 1) ? 2 : 0;
 
-                pixels[7 - i] = palette[paletteIndex]; //We want the leftmost bit on the left
+                pixels[TileWidth - i - 1] = palette[paletteIndex]; //We want the leftmost bit on the left
             }
 
             return pixels;
@@ -233,10 +231,10 @@ namespace emulator
         {
             var palette = GetBackgroundPalette();
 
-            var lines = new List<List<Shade>>(8);
-            for (int y = 0; y < 8; y++)
+            var lines = new List<List<Shade>>(TileWidth);
+            for (int y = 0; y < TileWidth; y++)
             {
-                var line = GetTileLine(palette, y % 8, tileNumber);
+                var line = GetTileLine(palette, y % TileWidth, tileNumber);
                 lines.Add(new(line));
             }
 
@@ -280,7 +278,7 @@ namespace emulator
                     _ => throw new InvalidOperationException(),
                 };
             }
-            else if (PPU.LY == 144)
+            else if (PPU.LY == DisplayHeight)
             {
                 PPU.Mode = Mode.VBlank;
                 PPU.EnableVBlankInterrupt();
@@ -290,8 +288,8 @@ namespace emulator
 
         //This currently doesn't work since the transition to the final draw line is when increment mode sees 143 for line count and HBlank for mode
         //We are effectively updating a register for something which has already happened?
-        private bool FinalStageOfFinalPrintedLine() => (Line == DrawlinesPerFrame && PPU.Mode == Mode.HBlank);
-        private bool FinalStageOrVBlanking() => FinalStageOfFinalPrintedLine() || Line > DrawlinesPerFrame;
+        private bool FinalStageOfFinalPrintedLine() => (Line == DisplayHeight && PPU.Mode == Mode.HBlank);
+        private bool FinalStageOrVBlanking() => FinalStageOfFinalPrintedLine() || Line > DisplayHeight;
 
         private void SetNewClockTarget() => TimeUntilWhichToPause += PPU.Mode switch
         {
