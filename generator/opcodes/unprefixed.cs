@@ -250,7 +250,7 @@
         PUSH_AF = 0xF5,
         OR_d8 = 0xF6,
         RST_30H = 0xF7,
-        LD_HLI_SP = 0xF8,
+        LD_HL_SP_i8 = 0xF8,
         LD_SP_HL = 0xF9,
         LD_A_AT_a16 = 0xFA,
         EI = 0xFB,

@@ -1020,27 +1020,26 @@ namespace emulator
                 AddTicks(duration);
             };
         }
+
+        public Action LD((WideRegister, Traits) p0, (WideRegister, Traits) p1, (DMGInteger, Traits) p2, int duration)
+        {
+            return () =>
+            {
+                var offset = (sbyte)Memory.Fetch(DMGInteger.r8);
+                var SP = Registers.SP;
+                Registers.Set(WideRegister.HL, (ushort)(SP + offset));
+                AddTicks(duration);
+            };
+        }
+
         public Action LD((WideRegister, Traits) p0, (WideRegister, Traits) p1, int duration)
         {
-            if (p1.Item2.Postfix == Postfix.increment)
+            return () =>
             {
-                return () =>
-                {
-                    Registers.Set(p0.Item1, Registers.Get(p1.Item1));
-                    Registers.Set(p1.Item1, (ushort)(Registers.Get(p1.Item1) + 1));
-                    AddTicks(duration);
-                };
-            }
-            else
-            {
-                return () =>
-                {
-                    var newSPValue = Registers.Get(p1.Item1);
-                    //StackBase = newSPValue;
-                    Registers.Set(p0.Item1, newSPValue);
-                    AddTicks(duration);
-                };
-            }
+                var newSPValue = Registers.Get(p1.Item1);
+                Registers.Set(p0.Item1, newSPValue);
+                AddTicks(duration);
+            };
 
         }
         public Action EI(int duration)
