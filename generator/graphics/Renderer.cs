@@ -13,7 +13,6 @@ namespace emulator
         public int TimeUntilWhichToPause;
         readonly Stream fs = Stream.Null;
 
-
         const int TileWidth = 8;
         const int DisplayWidth = 160;
         const int TilesPerLine = DisplayWidth / TileWidth;
@@ -221,7 +220,7 @@ namespace emulator
                 var paletteIndex = tileDataLow.GetBit(i - 1) ? 1 : 0;
                 paletteIndex += tileDataHigh.GetBit(i - 1) ? 2 : 0;
 
-                pixels[TileWidth - i - 1] = palette[paletteIndex]; //We want the leftmost bit on the left
+                pixels[TileWidth - i] = palette[paletteIndex]; //We want the leftmost bit on the left
             }
 
             return pixels;
