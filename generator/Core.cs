@@ -263,7 +263,7 @@ namespace emulator
             if (coincidence != 0)
                 CPU.Halted = false;
 
-            if (!CPU.IME) return; //Interrupts have to be globally enabled to use them
+            if (!CPU.IME || coincidence == 0) return; //Interrupts have to be globally enabled to use them
             for (int bit = 0; bit < 5; bit++) //Bit 0 has highest priority, we only handle one interrupt at a time
             {
                 if (coincidence.GetBit(bit))

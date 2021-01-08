@@ -67,6 +67,16 @@ namespace emulator
             {
                 var palette = GetBackgroundPalette();
                 background = GetBackgroundLineShades(palette, YScrolled(PPU.LY, PPU.SCY), PPU.BGTileMapDisplaySelect);
+
+                List<Shade> window = null;
+                if (PPU.WindowDisplayEnable)
+                {
+                    window = GetWindowLineShades();
+                }
+                if (window is not null)
+                {
+                    background = Merge(background, window);
+                }
             }
             if (PPU.OBJDisplayEnable)
             {
@@ -90,6 +100,29 @@ namespace emulator
             }
             fs.Write(line.ConvertAll(ShadeToGray).ToArray());
         }
+
+        private List<Shade> GetWindowLineShades()
+        {
+            if (PPU.WY > PPU.LY) return null;
+
+            List<Shade> line = new(DisplayWidth);
+
+            //if (PPU.WX < 7) throw new Exception("Not handled");
+            var windowStartX = PPU.WX - 7;
+            if (windowStartX < 0) windowStartX = 0;
+            for (int tile = 0; tile < TilesPerLine; tile++)
+            {
+                var curPix = TilePixelLine(GetBackgroundPalette(), YScrolled(PPU.LY, PPU.SCY), PPU.TileMapDisplaySelect, tile);
+                for (int cur = 0; cur < curPix.Length; cur++)
+                {
+                    if (tile * 8 + cur >= windowStartX)
+                        line.Add(curPix[cur]);
+                    else line.Add(Shade.Transparant);
+                }
+            }
+            return line;
+        }
+
         private static List<Shade> Merge(List<Shade> background, List<Shade> sprites)
         {
             var pixels = new List<Shade>(DisplayWidth);
@@ -165,7 +198,7 @@ namespace emulator
             var xOffset = ((PPU.SCX / TileWidth) + tileNumber) & 0x1f;
 
             var TileID = PPU.VRAM[tilemap + xOffset + ((yOffset / TileWidth) * 32)]; //Background ID map is laid out as 32x32 tiles of size TileWidthxTileWidth
-                                                                                     //if (TileID > 26) System.Diagnostics.Debugger.Break();
+
             var pixels = GetTileLine(palette, yOffset % TileWidth, TileID);
 
             return pixels;
