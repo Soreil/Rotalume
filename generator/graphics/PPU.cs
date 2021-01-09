@@ -4,11 +4,11 @@ namespace emulator
 {
     public class PPU
     {
-        public readonly Func<int> Clock;
+        public readonly Func<long> Clock;
         public readonly Action EnableVBlankInterrupt;
         public readonly Action EnableLCDCStatusInterrupt;
         public FrameSink Writer = new((x) => { });
-        public PPU(Func<int> clock, Action enableVBlankInterrupt, Action enableLCDCStatusInterrupt)
+        public PPU(Func<long> clock, Action enableVBlankInterrupt, Action enableLCDCStatusInterrupt)
         {
             Clock = clock;
             OAM = new OAM();
@@ -28,7 +28,17 @@ namespace emulator
         public byte SCY; //FF42
         public byte SCX; //FF43
 
-        public byte LY; //FF44
+        private byte _ly;
+        //FF44
+        public byte LY
+        {
+            get => _ly;
+            set
+            {
+                if (value > 154) throw new Exception("monkas");
+                _ly = value;
+            }
+        }
         public byte LYC; //FF45
 
         public byte DMA; //FF46

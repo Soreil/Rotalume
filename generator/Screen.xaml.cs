@@ -53,7 +53,6 @@ namespace GUI
                 return res;
             }
 
-
             var gameboy = new emulator.Core(emulator.Core.LoadBootROM(),
                 System.IO.File.ReadAllBytes(path).ToList(), updateJoyPad, keyBoardInterruptFired);
 

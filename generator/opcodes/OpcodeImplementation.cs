@@ -10,7 +10,7 @@ namespace emulator
         readonly public Func<ushort> GetPC;
         readonly public Action enableInterrupts;
         readonly public Action disableInterrupts;
-        readonly private Action<int> AddTicks;
+        readonly private Action<long> AddTicks;
         readonly public Action halt;
         //public ushort StackBase = 0xFFFF;
         public int popcount = 0;

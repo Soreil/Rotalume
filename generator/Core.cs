@@ -36,7 +36,7 @@ namespace emulator
         readonly ControlRegister.Read ReadOBP1;
 
         //Global clock from which all timing derives
-        public int Clock;
+        public long Clock;
 
         //Opcode fetcher
         public Func<byte> Read;
@@ -67,7 +67,7 @@ namespace emulator
             Func<ushort> GetProgramCounter = () => PC;
             Action<ushort> SetProgramCounter = (x) => { PC = x; };
             //Maybe adding to the timers should be handled by a clock object rather than just this one lambda
-            Action<int> IncrementClock = (x) => { Clock += x; Timers.Add(x); };
+            Action<long> IncrementClock = (x) => { Clock += x; Timers.Add(x); };
             Read = () => CPU.Memory[PC++];
 
             PPU = new PPU(() => Clock, () => InterruptFireRegister = InterruptFireRegister.SetBit(0),
@@ -289,11 +289,8 @@ namespace emulator
             DoNextOP();
             //We really should have the GUI thread somehow do this logic but polling like this should work
             if (!InterruptControlRegister.GetBit(4) && GetKeyboardInterrupt())
-            {
-                var interrupts = CPU.Memory.Read(0xff0f);
-                interrupts = interrupts.SetBit(4);
-                CPU.Memory.Write(0xff0f, interrupts);
-            }
+                InterruptFireRegister = InterruptFireRegister.SetBit(4);
+
             DoInterrupt();
             PPU.Do();
         }

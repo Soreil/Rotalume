@@ -9,7 +9,7 @@ namespace emulator
     public class Renderer
     {
         readonly PPU PPU;
-        readonly Func<int> Clock;
+        readonly Func<long> Clock;
         public int TimeUntilWhichToPause;
         readonly Stream fs = Stream.Null;
 
@@ -21,12 +21,15 @@ namespace emulator
 
         const int TicksPerScanline = 456;
         const int TicksPerFrame = ScanlinesPerFrame * TicksPerScanline;
-        int ClocksInFrame => Clock() % TicksPerFrame;
-        int Line => ClocksInFrame / TicksPerScanline;
-        int ClockInScanline => ClocksInFrame % TicksPerScanline;
+        long ClocksInFrame => Clock() % TicksPerFrame;
+        int Line()
+        {
+            return (int)(ClocksInFrame / TicksPerScanline);
+        }
+        int ClockInScanline => (int)(ClocksInFrame % TicksPerScanline);
         private void UpdateLineRegister()
         {
-            PPU.LY = (byte)(Line % ScanlinesPerFrame);
+            PPU.LY = (byte)(Line() % ScanlinesPerFrame);
             PPU.LYCInterrupt = PPU.LY == PPU.LYC;
         }
         public Renderer(PPU ppu, Stream destination) : this(ppu)
@@ -94,7 +97,7 @@ namespace emulator
                     line = sprites;
                 else
                 {
-                    line = new List<Shade>();
+                    line = new List<Shade>(DisplayWidth);
                     for (int i = 0; i < DisplayWidth; i++) line.Add(Shade.White);
                 }
             }
@@ -115,7 +118,7 @@ namespace emulator
                 var curPix = TilePixelLine(GetBackgroundPalette(), YScrolled(PPU.LY, PPU.SCY), PPU.TileMapDisplaySelect, tile);
                 for (int cur = 0; cur < curPix.Length; cur++)
                 {
-                    if (tile * 8 + cur >= windowStartX)
+                    if (tile * TileWidth + cur >= windowStartX)
                         line.Add(curPix[cur]);
                     else line.Add(Shade.Transparant);
                 }
@@ -320,8 +323,8 @@ namespace emulator
 
         //This currently doesn't work since the transition to the final draw line is when increment mode sees 143 for line count and HBlank for mode
         //We are effectively updating a register for something which has already happened?
-        private bool FinalStageOfFinalPrintedLine() => (Line == DisplayHeight && PPU.Mode == Mode.HBlank);
-        private bool FinalStageOrVBlanking() => FinalStageOfFinalPrintedLine() || Line > DisplayHeight;
+        private bool FinalStageOfFinalPrintedLine() => (Line() == DisplayHeight && PPU.Mode == Mode.HBlank);
+        private bool FinalStageOrVBlanking() => FinalStageOfFinalPrintedLine() || Line() > DisplayHeight;
 
         private void SetNewClockTarget() => TimeUntilWhichToPause += PPU.Mode switch
         {

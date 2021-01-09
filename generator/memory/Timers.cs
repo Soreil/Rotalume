@@ -4,8 +4,8 @@ namespace emulator
 {
     public class Timers
     {
-        int DividerClock;
-        int TimerClock;
+        long DividerClock;
+        long TimerClock;
 
         readonly Action EnableTimerInterrupt;
         public Timers(Action enableTimerInterrupt)
@@ -17,7 +17,7 @@ namespace emulator
         {
             DividerClock++;
 
-            _divider = DividerClock / dividerMod;
+            _divider = (int)(DividerClock / dividerMod);
 
             if (TimerEnabled)
             {
@@ -38,12 +38,12 @@ namespace emulator
             }
         }
 
-        public void Add(int n)
+        public void Add(long n)
         {
-            for (int i = 0; i < n; i++) Tick();
+            for (long i = 0; i < n; i++) Tick();
         }
 
-        const int dividerMod = 16384;
+        const long dividerMod = 16384;
 
         int _divider
         {
