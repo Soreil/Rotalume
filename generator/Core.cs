@@ -246,7 +246,7 @@ namespace emulator
             if (op != 0xcb)
             {
                 //if ((Unprefixed)op != Unprefixed.CPL && (Unprefixed)op != Unprefixed.NOP && (Unprefixed)op != Unprefixed.RST_38H)
-                Unprefixeds.Push((PC - 1, (Unprefixed)op));
+                //Unprefixeds.Push((PC - 1, (Unprefixed)op));
                 CPU.Op((Unprefixed)op)();
             }
             else
@@ -288,7 +288,7 @@ namespace emulator
         {
             DoNextOP();
             //We really should have the GUI thread somehow do this logic but polling like this should work
-            if (!InterruptControlRegister.GetBit(4) && GetKeyboardInterrupt())
+            if (!InterruptFireRegister.GetBit(4) && GetKeyboardInterrupt())
                 InterruptFireRegister = InterruptFireRegister.SetBit(4);
 
             DoInterrupt();
