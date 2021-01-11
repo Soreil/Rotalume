@@ -2,14 +2,15 @@
 
 namespace emulator
 {
-    public record Registers
+    public class Registers
     {
         private static byte Low(ushort s) => (byte)(s & 0x00ff);
         private static byte High(ushort s) => (byte)((s & 0xff00) >> 8);
         private static ushort SetLow(ushort s, byte b) => (ushort)((s & 0xff00) | b);
         private static ushort SetHigh(ushort s, byte b) => (ushort)((s & 0x00ff) | (b << 8));
 
-        public ushort AF;
+        private ushort _AF;
+        public ushort AF { get => _AF; set => _AF = (ushort)(value & 0xFFF0); }
         public byte A
         {
             get => High(AF);
