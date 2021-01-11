@@ -83,7 +83,11 @@ namespace emulator
         {
             //Wide registers do not use flags for INC and DEC
             if (p0.Item2.Immediate)
-                Registers.Set(p0.Item1, (ushort)(Registers.Get(p0.Item1) + 1));
+            {
+                var hl = Registers.Get(p0.Item1);
+                var target = (ushort)(hl + 1);
+                Registers.Set(p0.Item1, target);
+            }
             else
             {
                 var addr = Registers.Get(p0.Item1);
@@ -335,29 +339,37 @@ namespace emulator
         {
             return () =>
             {
-                Registers.Mark(Flag.NH);
 
                 var wasSub = Registers.Get(Flag.N);
 
-                var A = (ushort)Registers.A;
                 if (!wasSub)
                 {
-                    var low = A & 0xf;
-                    if (low > 9 || Registers.Get(Flag.H)) A += 0x06;
-                    var high = (A >> 4) & 0xf;
-                    if (high > 9 || Registers.Get(Flag.C)) A += 0x60;
+                    if (Registers.Get(Flag.C) || Registers.A > 0x99)
+                    {
+                        Registers.A += 0x60;
+                        Registers.Mark(Flag.C);
+                    }
+                    if (Registers.Get(Flag.H) || (Registers.A & 0x0f) > 0x09)
+                    {
+                        Registers.A += 0x06;
+                    }
                 }
                 else
                 {
-                    var low = A & 0xf;
-                    if (low > 9 || Registers.Get(Flag.H)) A -= 0x06;
-                    var high = (A >> 4) & 0xf;
-                    if (high > 9 || Registers.Get(Flag.C)) A -= 0x60;
+                    if (Registers.Get(Flag.C))
+                    {
+                        Registers.A -= 0x60;
+                        Registers.Mark(Flag.C);
+                    }
+                    if (Registers.Get(Flag.H))
+                    {
+                        Registers.A -= 0x06;
+                    }
                 }
-                Registers.Set(Flag.Z, A == 0);
-                Registers.Set(Flag.C, A > 0x99);
 
-                Registers.A = ((byte)A);
+                Registers.Set(Flag.Z, Registers.A == 0);
+                Registers.Mark(Flag.NH);
+
                 AddTicks(duration);
             };
         }
@@ -706,8 +718,6 @@ namespace emulator
                 Registers.Set(p0.Item1, Memory.ReadWide(SP));
                 Registers.SP = (ushort)(SP + 2);
 
-                //if (Registers.SP > StackBase) throw new Exception("Stack underflow");
-                //else popcount++;
                 AddTicks(duration);
             };
         }
@@ -927,10 +937,16 @@ namespace emulator
         {
             return () =>
             {
-                Registers.A = ((byte)(Registers.A & (byte)Memory.Fetch(p0.Item1)));
+                var andWith = (byte)Memory.Fetch(DMGInteger.d8);
+                Registers.A &= andWith;
+                Registers.Set(Flag.Z, Registers.A == 0);
+                Registers.Set(Flag.N, false);
+                Registers.Set(Flag.H, true);
+                Registers.Set(Flag.C, false);
                 AddTicks(duration);
             };
         }
+
         public Action ADD((WideRegister, Traits) p0, (DMGInteger, Traits) p1, int duration)
         {
             return () =>
