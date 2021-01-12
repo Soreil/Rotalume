@@ -34,6 +34,10 @@ namespace emulator
         readonly ControlRegister.Read ReadOBP0;
         readonly ControlRegister.Write OBP1Controller;
         readonly ControlRegister.Read ReadOBP1;
+        readonly ControlRegister.Write WYController;
+        readonly ControlRegister.Read ReadWY;
+        readonly ControlRegister.Write WXController;
+        readonly ControlRegister.Read ReadWX;
 
         //Global clock from which all timing derives
         public long Clock;
@@ -45,6 +49,9 @@ namespace emulator
 
         public PPU PPU;
         public Timers Timers;
+        public HRAM HRAM;
+        public WRAM WRAM;
+        public UnusableMEM UnusableMEM;
 
         byte keypadFlags = 0x30;
 
@@ -75,6 +82,10 @@ namespace emulator
                                        () => InterruptFireRegister = InterruptFireRegister.SetBit(1));
 
             Timers = new Timers(() => InterruptFireRegister = InterruptFireRegister.SetBit(2));
+
+            HRAM = new HRAM();
+            WRAM = new WRAM();
+            UnusableMEM = new UnusableMEM();
 
             BootROMFlagController = (byte b) =>
             {
@@ -110,6 +121,12 @@ namespace emulator
             OBP1Controller = (byte b) => PPU.OBP1 = b;
             ReadOBP1 = () => PPU.OBP1;
 
+            WYController = (byte b) => PPU.WY = b;
+            ReadWY = () => PPU.WY;
+
+            WXController = (byte b) => PPU.WX = b;
+            ReadWX = () => PPU.WX;
+
             PaletteController = (byte b) => PPU.BGP = b;
             ReadPalette = () => PPU.BGP;
 
@@ -123,6 +140,18 @@ namespace emulator
 
             controlRegisters.Writer[0xF] += x => InterruptFireRegister = x;
             controlRegisters.Reader[0xF] += () => InterruptFireRegister;
+
+            controlRegisters.Writer[0x04] += x => Timers.Divider = x;
+            controlRegisters.Reader[0x04] += () => Timers.Divider;
+
+            controlRegisters.Writer[0x05] += x => Timers.Timer = x;
+            controlRegisters.Reader[0x05] += () => Timers.Timer;
+
+            controlRegisters.Writer[0x06] += x => Timers.TimerDefault = x;
+            controlRegisters.Reader[0x06] += () => Timers.TimerDefault;
+
+            controlRegisters.Writer[0x07] += x => Timers.TimerControl = x;
+            controlRegisters.Reader[0x07] += () => Timers.TimerControl;
 
             controlRegisters.Writer[0x50] += BootROMFlagController;
             controlRegisters.Reader[0x50] += ReadBootROMFlag;
@@ -163,8 +192,38 @@ namespace emulator
             controlRegisters.Writer[0x49] += OBP1Controller;
             controlRegisters.Reader[0x49] += ReadOBP1;
 
+            controlRegisters.Writer[0x4A] += WYController;
+            controlRegisters.Reader[0x4A] += ReadWY;
+            controlRegisters.Writer[0x4B] += WXController;
+            controlRegisters.Reader[0x4B] += ReadWX;
+
             interruptRegisters.Writer[0x00] += x => InterruptControlRegister = x;
             interruptRegisters.Reader[0x00] += () => InterruptControlRegister;
+
+            for (ushort SoundRegister = 0xff10; SoundRegister <= 0xff26; SoundRegister++)
+            {
+                controlRegisters.Writer[SoundRegister & 0xff] += (x) => { };
+                controlRegisters.Reader[SoundRegister & 0xff] += () => 0xff;
+            }
+
+            for (ushort SoundWave = 0xff30; SoundWave <= 0xff3f; SoundWave++)
+            {
+                controlRegisters.Writer[SoundWave & 0xff] += (x) => { };
+                controlRegisters.Reader[SoundWave & 0xff] += () => 0xff;
+            }
+
+            for (ushort Serial = 0xff01; Serial <= 0xff02; Serial++)
+            {
+                controlRegisters.Writer[Serial & 0xff] += (x) => { };
+                controlRegisters.Reader[Serial & 0xff] += () => 0xff;
+            }
+            for (ushort Unused = 0xff4c; Unused < 0xff80; Unused++)
+            {
+                if (Unused == 0xff50) continue;
+                controlRegisters.Writer[Unused & 0xff] += (x) => { };
+                controlRegisters.Reader[Unused & 0xff] += () => 0xff;
+            }
+
 
             List<MMU.SetRange> setRanges = new();
             List<MMU.GetRange> getRanges = new();
@@ -172,49 +231,90 @@ namespace emulator
             setRanges.Add(new(
                 interruptRegisters.Start,
                 interruptRegisters.Start + interruptRegisters.Size,
-                interruptRegisters.ContainsWriter,
                 (x, v) => interruptRegisters[x] = v));
             getRanges.Add(new(
                 interruptRegisters.Start,
                 interruptRegisters.Start + interruptRegisters.Size,
-                interruptRegisters.ContainsReader,
                 x => interruptRegisters[x]));
 
             setRanges.Add(new MMU.SetRange(
                 controlRegisters.Start,
                 controlRegisters.Start + controlRegisters.Size,
-                controlRegisters.ContainsWriter, (x, v) => controlRegisters[x] = v)
+                (x, v) => controlRegisters[x] = v)
                 );
             getRanges.Add(new MMU.GetRange(
                 controlRegisters.Start,
                 controlRegisters.Start + controlRegisters.Size,
-                controlRegisters.ContainsReader, (x) => controlRegisters[x])
+                (x) => controlRegisters[x])
                 );
+
+            //HRAM memory range
+            setRanges.Add(new MMU.SetRange(
+                HRAM.Start,
+                HRAM.Start + HRAM.Size,
+                (at, v) => HRAM[at] = v
+                ));
+            getRanges.Add(new MMU.GetRange(
+                HRAM.Start,
+                HRAM.Start + HRAM.Size,
+                (at) => HRAM[at]
+                ));
+
+            //Work RAM memory range
+            setRanges.Add(new MMU.SetRange(
+                WRAM.Start,
+                WRAM.Start + WRAM.Size,
+                (at, v) => WRAM[at] = v
+                ));
+            getRanges.Add(new MMU.GetRange(
+                WRAM.Start,
+                WRAM.Start + WRAM.Size,
+                (at) => WRAM[at]
+                ));
+            //Mirror of Work RAM
+            setRanges.Add(new MMU.SetRange(
+                WRAM.MirrorStart,
+                WRAM.MirrorStart + WRAM.Size,
+                (at, v) => WRAM[at] = v
+                ));
+            getRanges.Add(new MMU.GetRange(
+                WRAM.MirrorStart,
+                WRAM.MirrorStart + WRAM.Size,
+                (at) => WRAM[at]
+                ));
+
+            //Illegal memory range (used by tetris though?)
+            setRanges.Add(new MMU.SetRange(
+                UnusableMEM.Start,
+                UnusableMEM.Start + UnusableMEM.Size,
+                (at, v) => UnusableMEM[at] = v
+                ));
+            getRanges.Add(new MMU.GetRange(
+                UnusableMEM.Start,
+                UnusableMEM.Start + UnusableMEM.Size,
+                (at) => UnusableMEM[at]
+                ));
 
 
             //Graphics memory ranges
             setRanges.Add(new MMU.SetRange(
                 VRAM.Start,
                 VRAM.Start + VRAM.Size,
-                x => true,
                 (at, v) => PPU.VRAM[at] = v
                 ));
             getRanges.Add(new MMU.GetRange(
                 VRAM.Start,
                 VRAM.Start + VRAM.Size,
-                x => true,
                 (at) => PPU.VRAM[at]
                 ));
             setRanges.Add(new MMU.SetRange(
                 OAM.Start,
                 OAM.Start + OAM.Size,
-                x => true,
                 (at, v) => PPU.OAM[at] = v
                 ));
             getRanges.Add(new MMU.GetRange(
                 OAM.Start,
                 OAM.Start + OAM.Size,
-                x => true,
                 (at) => PPU.OAM[at]
                 ));
 
@@ -240,6 +340,7 @@ namespace emulator
             {
                 Clock += 4; //Just take some time so the interrupt handling and gpu keep going otherwise
                 //We can never get to a situation where the halt state stops.
+                Timers.Add(4);
                 return;
             }
 

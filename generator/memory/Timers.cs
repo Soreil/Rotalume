@@ -80,6 +80,10 @@ namespace emulator
             set;
         }
 
-        public byte Timer => (byte)_Timer;
+        public byte Timer
+        {
+            get => (byte)_Timer;
+            set => _Timer = value;
+        }
     }
 }

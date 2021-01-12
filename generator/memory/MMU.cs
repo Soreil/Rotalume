@@ -14,9 +14,9 @@ namespace emulator
             get => _bootROMActive();
         }
 
-        public abstract record Range(int Begin, int End, Func<int, bool> Exists);
-        public record GetRange(int Begin, int End, Func<int, bool> Exists, Func<int, byte> At) : Range(Begin, End, Exists);
-        public record SetRange(int Begin, int End, Func<int, bool> Exists, Action<int, byte> At) : Range(Begin, End, Exists);
+        public abstract record Range(int Begin, int End);
+        public record GetRange(int Begin, int End, Func<int, byte> At) : Range(Begin, End);
+        public record SetRange(int Begin, int End, Action<int, byte> At) : Range(Begin, End);
 
         private List<GetRange> getRanges;
         private List<SetRange> setRanges;
@@ -25,29 +25,18 @@ namespace emulator
         {
             get
             {
-                //if (at == 0xff00) System.Diagnostics.Debugger.Break();
-
-                var possible = getRanges.FirstOrDefault((x) => x.Begin <= at && x.End > at && x.Exists != null && x.Exists(at));
 
                 if (BootROMActive && at < 0x100) //Bootrom is read only so we don't need a corresponding function in set
                     return bootROM[at];
 
-                if (possible != null)
-                {
-                    return possible.At(at);
-                }
-                else return _mem[at];
+                var possible = getRanges.First((x) => x.Begin <= at && x.End > at);
+                return possible.At(at);
             }
 
             set
             {
-                var possible = setRanges.FirstOrDefault((x) => x.Begin <= at && x.End > at && x.Exists != null && x.Exists(at));
-
-                if (possible != null)
-                {
-                    possible.At(at, value);
-                }
-                else _mem[at] = value;
+                var possible = setRanges.First((x) => x.Begin <= at && x.End > at);
+                possible.At(at, value);
             }
         }
         private readonly List<byte> bootROM;
@@ -62,9 +51,6 @@ namespace emulator
 
             getRanges = new();
             setRanges = new();
-
-            _mem = new byte[0x10000];
-            for (int i = 0; i < 0x10000; i++) _mem[i] = 0xff; //Initialize to zero
             _bootROMActive = () => false;
         }
         public MMU(Func<byte> readInput,
@@ -80,9 +66,9 @@ namespace emulator
             getRanges = _getRanges;
             setRanges = _setRanges;
 
-            _mem = new byte[0x10000];
-            for (int i = 0; i < 0x10000; i++) _mem[i] = 0xff; //Initialize to zero
-            getRanges.Add(new GetRange(0, 0x8000, (x) => true, (x) => game[x]));
+            _mem = Array.Empty<byte>();
+            getRanges.Add(new GetRange(0, 0x8000, (x) => game[x]));
+            setRanges.Add(new SetRange(0, 0x8000, (x, v) => { }));
 
             _bootROMActive = bootROMActive;
             bootROM = boot; //Bootrom should be 256 bytes
