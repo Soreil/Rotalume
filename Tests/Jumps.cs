@@ -26,13 +26,13 @@ namespace Tests
             (byte)Unprefixed.POP_AF
             });
 
-            p.CPU.Memory.Write(0x0fe, (ushort)0x3020);
-            p.CPU.Registers.SP = 0xfe;
+            p.CPU.Memory.Write(0x0fffd, 0x8020);
+            p.CPU.Registers.SP = 0xfffd;
             p.DoNextOP();
             Assert.AreEqual(1, p.PC);
             Assert.AreEqual(12, p.Clock);
-            Assert.AreEqual(0x100, p.CPU.Registers.SP);
-            Assert.AreEqual(0x3020, p.CPU.Registers.AF);
+            Assert.AreEqual(0xffff, p.CPU.Registers.SP);
+            Assert.AreEqual(0x8020, p.CPU.Registers.AF);
         }
 
         /*set_test 5,"POP AF"
@@ -62,7 +62,7 @@ namespace Tests
                 (byte)Unprefixed.CP_E,
             };
             var p = new Core(inst);
-            p.CPU.Registers.SP = 0x100;
+            p.CPU.Registers.SP = 0xffff;
 
             while (p.PC != inst.Count)
                 p.DoNextOP();
@@ -77,17 +77,17 @@ namespace Tests
             (byte)Unprefixed.PUSH_AF
             });
 
-            p.CPU.Registers.SP = 0x100;
-            p.CPU.Registers.AF = 0x1234;
+            p.CPU.Registers.SP = 0xfffe;
+            p.CPU.Registers.AF = 0x12f0;
 
             p.DoNextOP();
-            var read = p.CPU.Memory.ReadWide(0x0fe);
+            var read = p.CPU.Memory.ReadWide(0x0fffc);
 
             Assert.AreEqual(1, p.PC);
             Assert.AreEqual(16, p.Clock);
-            Assert.AreEqual(0xfe, p.CPU.Registers.SP);
+            Assert.AreEqual(0xfffc, p.CPU.Registers.SP);
 
-            Assert.AreEqual(0x1234, read);
+            Assert.AreEqual(0x12f0, read);
         }
 
         [Test]
@@ -97,14 +97,14 @@ namespace Tests
             (byte)Unprefixed.RET
             });
 
-            p.CPU.Registers.SP = 0x100;
-            p.CPU.Memory.Write(0x100, 0xfedc);
+            p.CPU.Registers.SP = 0xfffd;
+            p.CPU.Memory.Write(0xfffd, 0xfedc);
 
             p.DoNextOP();
 
             Assert.AreEqual(0xfedc, p.PC);
             Assert.AreEqual(16, p.Clock);
-            Assert.AreEqual(0x102, p.CPU.Registers.SP);
+            Assert.AreEqual(0xffff, p.CPU.Registers.SP);
         }
 
         [Test]
@@ -114,13 +114,13 @@ namespace Tests
             (byte)Unprefixed.CALL_a16,(byte)0xab,(byte)0xcd
             });
 
-            p.CPU.Registers.SP = 0x100;
+            p.CPU.Registers.SP = 0xffff;
             p.DoNextOP();
 
             Assert.AreEqual(0xcdab, p.PC);
             Assert.AreEqual(24, p.Clock);
-            Assert.AreEqual(0xfe, p.CPU.Registers.SP);
-            Assert.AreEqual(0x3, p.CPU.Memory.ReadWide(0xfe));
+            Assert.AreEqual(0xfffd, p.CPU.Registers.SP);
+            Assert.AreEqual(0x3, p.CPU.Memory.ReadWide(0xfffd));
         }
 
         [Test]
