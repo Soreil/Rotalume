@@ -82,7 +82,7 @@ namespace emulator
 
             _mem = new byte[0x10000];
             for (int i = 0; i < 0x10000; i++) _mem[i] = 0xff; //Initialize to zero
-            game.CopyTo(_mem); //Game should be at most 0x8000 in size
+            getRanges.Add(new GetRange(0, 0x8000, (x) => true, (x) => game[x]));
 
             _bootROMActive = bootROMActive;
             bootROM = boot; //Bootrom should be 256 bytes

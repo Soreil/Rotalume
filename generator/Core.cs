@@ -51,6 +51,7 @@ namespace emulator
         Func<bool> GetKeyboardInterrupt = () => false;
 
         public byte InterruptFireRegister { get; set; }
+
         public byte InterruptControlRegister { get; set; }
 
         readonly ControlRegister controlRegisters = new ControlRegister(0xff00, 0x80);
@@ -259,7 +260,7 @@ namespace emulator
         public void DoInterrupt()
         {
 
-            byte coincidence = (byte)(InterruptControlRegister & InterruptFireRegister); //Coincidence has all the bits which have both fired AND are enabled
+            byte coincidence = (byte)((InterruptControlRegister & InterruptFireRegister) & 0x1f); //Coincidence has all the bits which have both fired AND are enabled
             if (coincidence != 0)
                 CPU.Halted = false;
 
