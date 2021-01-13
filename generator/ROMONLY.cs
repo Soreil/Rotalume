@@ -13,6 +13,6 @@ namespace emulator
             this.gameROM = gameROM;
         }
 
-        public override byte this[int n] { get => gameROM[n]; set => _ = value; }
+        public override byte this[int n] { get => n > RAMStart && n < RAMStart + RAMSize ? 0xff : gameROM[n]; set => _ = value; }
     }
 }

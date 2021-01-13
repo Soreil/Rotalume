@@ -319,14 +319,26 @@ namespace emulator
 
             CartHeader Header = new CartHeader(gameROM);
             MBC Card = MakeMBC(Header, gameROM);
+
             setRanges.Add(new MMU.SetRange(
-                MBC.Start,
-                MBC.Start + MBC.Size,
+                MBC.ROMStart,
+                MBC.ROMStart + MBC.ROMSize,
                 (at, v) => Card[at] = v
                 ));
             getRanges.Add(new MMU.GetRange(
-                MBC.Start,
-                MBC.Start + MBC.Size,
+                MBC.ROMStart,
+                MBC.ROMStart + MBC.ROMSize,
+                (at) => Card[at]
+                ));
+
+            setRanges.Add(new MMU.SetRange(
+                MBC.RAMStart,
+                MBC.RAMStart + MBC.RAMSize,
+                (at, v) => Card[at] = v
+                ));
+            getRanges.Add(new MMU.GetRange(
+                MBC.RAMStart,
+                MBC.RAMStart + MBC.RAMSize,
                 (at) => Card[at]
                 ));
 
