@@ -6,8 +6,6 @@ namespace emulator
 {
     public class MMU
     {
-        private readonly byte[] _mem;
-
         private readonly Func<bool> _bootROMActive;
         private bool BootROMActive
         {
@@ -25,7 +23,6 @@ namespace emulator
         {
             get
             {
-
                 if (BootROMActive && at < 0x100) //Bootrom is read only so we don't need a corresponding function in set
                     return bootROM[at];
 
@@ -55,7 +52,6 @@ namespace emulator
         }
         public MMU(Func<byte> readInput,
             List<byte> boot,
-            List<byte> game,
             Func<bool> bootROMActive,
             List<GetRange> _getRanges,
             List<SetRange> _setRanges)
@@ -65,10 +61,6 @@ namespace emulator
 
             getRanges = _getRanges;
             setRanges = _setRanges;
-
-            _mem = Array.Empty<byte>();
-            getRanges.Add(new GetRange(0, 0x8000, (x) => game[x]));
-            setRanges.Add(new SetRange(0, 0x8000, (x, v) => { }));
 
             _bootROMActive = bootROMActive;
             bootROM = boot; //Bootrom should be 256 bytes

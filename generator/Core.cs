@@ -224,7 +224,6 @@ namespace emulator
                 controlRegisters.Reader[Unused & 0xff] += () => 0xff;
             }
 
-
             List<MMU.SetRange> setRanges = new();
             List<MMU.GetRange> getRanges = new();
 
@@ -318,17 +317,34 @@ namespace emulator
                 (at) => PPU.OAM[at]
                 ));
 
+            CartHeader Header = new CartHeader(gameROM);
+            MBC Card = MakeMBC(Header, gameROM);
+            setRanges.Add(new MMU.SetRange(
+                MBC.Start,
+                MBC.Start + MBC.Size,
+                (at, v) => Card[at] = v
+                ));
+            getRanges.Add(new MMU.GetRange(
+                MBC.Start,
+                MBC.Start + MBC.Size,
+                (at) => Card[at]
+                ));
+
             var memory = new MMU(Read,
     bootROM,
-    gameROM,
     () => bootROMActive,
     getRanges,
     setRanges);
 
             CPU = new CPU(GetProgramCounter, SetProgramCounter, IncrementClock, memory);
-
-
         }
+
+        private static MBC MakeMBC(CartHeader header, List<byte> gameROM) => header.Type switch
+        {
+            CartType.ROM_ONLY => new ROMONLY(header, gameROM),
+
+            _ => throw new NotImplementedException(),
+        };
 
         public Core(List<byte> bootROM, List<byte> gameROM) : this(bootROM, gameROM, (x) => 0x0f, () => false)
         {
@@ -360,7 +376,6 @@ namespace emulator
 
         public void DoInterrupt()
         {
-
             byte coincidence = (byte)((InterruptControlRegister & InterruptFireRegister) & 0x1f); //Coincidence has all the bits which have both fired AND are enabled
             if (coincidence != 0)
                 CPU.Halted = false;
