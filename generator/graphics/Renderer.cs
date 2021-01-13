@@ -73,15 +73,11 @@ namespace emulator
 
                 List<Shade> window = null;
                 if (PPU.WindowDisplayEnable)
-                {
                     window = GetWindowLineShades();
-                }
                 if (window is not null)
-                {
                     background = Merge(background, window);
-                }
             }
-            if (PPU.OBJDisplayEnable)
+            if (PPU.OBJDisplayEnable && SpriteAttributes.Any())
             {
                 sprites = GetSpriteLineShades();
             }
@@ -213,9 +209,6 @@ namespace emulator
             if (!SpriteAttributes.Any(s => s.X >= xPos && (s.X < xPos + 7))) return Shade.Transparant;
 
             var sprite = SpriteAttributes.First(s => s.X >= xPos && (s.X < xPos + 7));
-
-            //if (sprite.X == 0x18 && sprite.Y == 0x78 && sprite.XFlipped == false && sprite.YFlipped == true && sprite.ID == 0x92) 
-            //    System.Diagnostics.Debugger.Break();
 
             var index = sprite.X - xPos;
             if (sprite.XFlipped) index = 7 - index;

@@ -32,7 +32,8 @@ namespace emulator
 
         //Supposedly X = 0 sprites are still relevant for the 10 sprite limit so we have to match them.
         public List<SpriteAttributes> SpritesOnLine(int line, int spriteHeight) => Entries().
-            Where(s => (s.Y + spriteHeight) >= 16 &&
+            Where(
+            s => (s.Y + spriteHeight) > 16 &&
             s.X != 0 &&
             s.Y < 160 &&
             s.X < 168 &&
