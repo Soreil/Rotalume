@@ -53,6 +53,7 @@ namespace GUI
                 return res;
             }
 
+
             var gameboy = new emulator.Core(emulator.Core.LoadBootROM(),
                 System.IO.File.ReadAllBytes(path).ToList(), updateJoyPad, keyBoardInterruptFired);
 
@@ -108,25 +109,27 @@ namespace GUI
             if (result == false) return;
 
             bmp = new WriteableBitmap(160, 144, 96, 96, PixelFormats.Gray8, null);
+
             GameThread = new Task(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
                 Thread.CurrentThread.Name = "Gaming";
                 Gameboy(ofd.FileName);
             });
+
             GameThread.Start();
         }
 
         volatile bool keyboardInterruptReady = false;
         readonly Dictionary<Key, bool> Pressed = new Dictionary<Key, bool> {
-            { Key.A,    false },
-            { Key.S,    false },
-            { Key.D,    false },
-            { Key.F,    false },
-            { Key.Right,    false },
-            { Key.Left,    false },
-            { Key.Up,    false },
-            { Key.Down,    false },
+            {Key.A,    false},
+            {Key.S,    false},
+            {Key.D,    false},
+            {Key.F,    false},
+            {Key.Right,false},
+            {Key.Left, false},
+            {Key.Up,   false},
+            {Key.Down, false},
         };
 
         private byte UpdateJoypadPresses(byte Flags)
@@ -168,9 +171,7 @@ namespace GUI
         private void Window_KeyUp(object sender, KeyEventArgs e)
         {
             if (Pressed.ContainsKey(e.Key))
-            {
                 Pressed[e.Key] = false;
-            }
         }
     }
 }
