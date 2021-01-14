@@ -7,10 +7,6 @@ namespace emulator
     public class MMU
     {
         private readonly Func<bool> _bootROMActive;
-        private bool BootROMActive
-        {
-            get => _bootROMActive();
-        }
 
         public abstract record Range(int Begin, int End);
         public record GetRange(int Begin, int End, Func<int, byte> At) : Range(Begin, End);
@@ -23,7 +19,7 @@ namespace emulator
         {
             get
             {
-                if (BootROMActive && at < 0x100) //Bootrom is read only so we don't need a corresponding function in set
+                if (_bootROMActive() && at < 0x100) //Bootrom is read only so we don't need a corresponding function in set
                     return bootROM[at];
 
                 var possible = getRanges.First((x) => x.Begin <= at && x.End > at);

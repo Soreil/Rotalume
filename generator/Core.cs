@@ -317,7 +317,7 @@ namespace emulator
                 (at) => PPU.OAM[at]
                 ));
 
-            CartHeader Header = new CartHeader(gameROM);
+            CartHeader Header = gameROM.Count < 0x8000 ? null : new CartHeader(gameROM);
             MBC Card = MakeMBC(Header, gameROM);
 
             setRanges.Add(new MMU.SetRange(
