@@ -354,7 +354,8 @@ namespace emulator
         private static MBC MakeMBC(CartHeader header, List<byte> gameROM) => header.Type switch
         {
             CartType.ROM_ONLY => new ROMONLY(header, gameROM),
-            CartType.MBC1 => new MBC1(header,gameROM),
+            CartType.MBC1 => new MBC1(header, gameROM),
+            CartType.MBC1_RAM_BATTERY => new MBC1(header, gameROM),
             _ => throw new NotImplementedException(),
         };
 

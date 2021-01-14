@@ -342,3 +342,4 @@ healthchecksdb
 *.gb
 *.txt
 /generator/bootrom/DMG_ROM_BOOT.bin
+*.sav
