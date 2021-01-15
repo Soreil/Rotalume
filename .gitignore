@@ -338,8 +338,7 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
-/Tests/rom/Tetris (World) (Rev A).gb
 *.gb
 *.txt
-/generator/bootrom/DMG_ROM_BOOT.bin
+/emulator/bootrom/DMG_ROM_BOOT.bin
 *.sav

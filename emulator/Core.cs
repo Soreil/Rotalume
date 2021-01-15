@@ -414,7 +414,7 @@ namespace emulator
 
         public static List<byte> LoadBootROM()
         {
-            return System.IO.File.ReadAllBytes(@"..\..\..\..\generator\bootrom\DMG_ROM_BOOT.bin").ToList();
+            return System.IO.File.ReadAllBytes(@"..\..\..\..\emulator\bootrom\DMG_ROM_BOOT.bin").ToList();
         }
 
         public void Step()

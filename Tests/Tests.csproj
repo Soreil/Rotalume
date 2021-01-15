@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\generator\generator.csproj" />
+    <ProjectReference Include="..\emulator\emulator.csproj" />
   </ItemGroup>
 
 </Project>

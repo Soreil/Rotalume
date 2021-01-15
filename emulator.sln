@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30309.148
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "generator", "generator\generator.csproj", "{D0E33ACE-C9B2-49C1-AFA6-4695763119C7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "emulator", "emulator\emulator.csproj", "{D0E33ACE-C9B2-49C1-AFA6-4695763119C7}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "Tests\Tests.csproj", "{3E1EBC43-F18D-47CC-B2AD-A1687796CB19}"
 	ProjectSection(ProjectDependencies) = postProject
