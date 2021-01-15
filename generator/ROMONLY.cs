@@ -5,12 +5,21 @@ namespace emulator
     internal class ROMONLY : MBC
     {
         private readonly List<byte> gameROM;
+        private byte[] EXT_RAM;
 
         public ROMONLY(List<byte> gameROM)
         {
             this.gameROM = gameROM;
+            EXT_RAM = new byte[0x2000];
         }
 
-        public override byte this[int n] { get => n > RAMStart && n < RAMStart + RAMSize ? 0xff : gameROM[n]; set => _ = value; }
+        public override byte this[int n]
+        {
+            get => n >= RAMStart && n < RAMStart + RAMSize ? EXT_RAM[n - RAMStart] : gameROM[n];
+            set
+            {
+                if (n >= RAMStart && n < RAMStart + RAMSize) EXT_RAM[n - RAMStart] = value;
+            }
+        }
     }
 }

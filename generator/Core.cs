@@ -65,9 +65,12 @@ namespace emulator
         readonly ControlRegister interruptRegisters = new ControlRegister(0xffff, 0x1); //This is only being used for two registers.
 
         //Constructor just for tests which don't care about a functioning bootrom
-        public Core(List<byte> l) : this(l, null, (x) => 0x01f, () => false)
+        public Core(List<byte> l, List<byte> bootrom = null) : this(l, bootrom, (x) => 0x01f, () => false)
         {
-            bootROMActive = false;
+            if (bootrom == null)
+            {
+                bootROMActive = false;
+            }
         }
 
         public Core(List<byte> gameROM, List<byte> bootROM, Func<byte, byte> GetJoyPad, Func<bool> getKeyboardInterrupt)
@@ -377,7 +380,7 @@ namespace emulator
             if (op != 0xcb)
             {
                 //if ((Unprefixed)op != Unprefixed.CPL && (Unprefixed)op != Unprefixed.NOP && (Unprefixed)op != Unprefixed.RST_38H)
-                //Unprefixeds.Push((PC - 1, (Unprefixed)op));
+                Unprefixeds.Push((PC - 1, (Unprefixed)op));
                 CPU.Op((Unprefixed)op)();
             }
             else

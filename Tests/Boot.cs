@@ -14,7 +14,7 @@ namespace Tests
 
         private readonly Core Proc = new Core(LoadGameROM().ToList());
 
-        [Test]
+        [Ignore("We don't have just a core anymore to test")]
         public void DoBootNoGPU()
         {
             //Temporary write which sets the VBlank to always be the current GPU stage. 
