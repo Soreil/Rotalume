@@ -14,9 +14,6 @@ namespace emulator
         public Action Op(Unprefixed op) => StdOps[(int)op];
         public Action Op(Cbprefixed op) => CbOps[(int)op];
 
-        public CPU(Func<byte> read) : this(() => 0, x => { }, x => { }, new MMU(read))
-        { }
-
         public CPU(Func<ushort> getPC, Action<ushort> setPC, Action<long> TickClock, MMU memory)
         {
             StdOps = MakeTable();

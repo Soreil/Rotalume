@@ -12,7 +12,7 @@ namespace Tests
     {
         public static byte[] LoadGameROM() => File.ReadAllBytes(@"..\..\..\rom\Tetris (World) (Rev A).gb");
 
-        private readonly Core Proc = new Core(Core.LoadBootROM(), LoadGameROM().ToList());
+        private readonly Core Proc = new Core(LoadGameROM().ToList());
 
         [Test]
         public void DoBootNoGPU()

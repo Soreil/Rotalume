@@ -65,12 +65,12 @@ namespace emulator
         readonly ControlRegister interruptRegisters = new ControlRegister(0xffff, 0x1); //This is only being used for two registers.
 
         //Constructor just for tests which don't care about a functioning bootrom
-        public Core(List<byte> l) : this(new List<byte>(), l)
+        public Core(List<byte> l) : this(l, null, (x) => 0x01f, () => false)
         {
             bootROMActive = false;
         }
 
-        public Core(List<byte> bootROM, List<byte> gameROM, Func<byte, byte> GetJoyPad, Func<bool> getKeyboardInterrupt)
+        public Core(List<byte> gameROM, List<byte> bootROM, Func<byte, byte> GetJoyPad, Func<bool> getKeyboardInterrupt)
         {
             Func<ushort> GetProgramCounter = () => PC;
             Action<ushort> SetProgramCounter = (x) => { PC = x; };
@@ -318,7 +318,9 @@ namespace emulator
                 ));
 
             CartHeader Header = gameROM.Count < 0x8000 ? null : new CartHeader(gameROM);
-            MBC Card = MakeMBC(Header, gameROM);
+            MBC Card;
+            if (Header is not null) Card = MakeMBC(Header, gameROM);
+            else Card = MakeFakeMBC(gameROM);
 
             setRanges.Add(new MMU.SetRange(
                 MBC.ROMStart,
@@ -351,17 +353,15 @@ namespace emulator
             CPU = new CPU(GetProgramCounter, SetProgramCounter, IncrementClock, memory);
         }
 
+        private MBC MakeFakeMBC(List<byte> gameROM) => new ROMONLY(gameROM);
+
         private static MBC MakeMBC(CartHeader header, List<byte> gameROM) => header.Type switch
         {
-            CartType.ROM_ONLY => new ROMONLY(header, gameROM),
+            CartType.ROM_ONLY => new ROMONLY(gameROM),
             CartType.MBC1 => new MBC1(header, gameROM),
             CartType.MBC1_RAM_BATTERY => new MBC1(header, gameROM),
             _ => throw new NotImplementedException(),
         };
-
-        public Core(List<byte> bootROM, List<byte> gameROM) : this(bootROM, gameROM, (x) => 0x0f, () => false)
-        {
-        }
 
         public void DoNextOP()
         {

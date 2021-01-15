@@ -10,7 +10,8 @@ namespace Tests
         [Test]
         public void RLCA()
         {
-            var dec = new CPU(() => 0);
+            var core = new Core(new System.Collections.Generic.List<byte> { });
+            var dec = core.CPU;
 
             {
                 dec.Registers.Set(Register.A, 0x80);
@@ -43,7 +44,8 @@ namespace Tests
         [Test]
         public void RRCA()
         {
-            var dec = new CPU(() => 0);
+            var core = new Core(new System.Collections.Generic.List<byte> { });
+            var dec = core.CPU;
 
             {
                 dec.Registers.Set(Register.A, 0x01);
@@ -76,7 +78,8 @@ namespace Tests
         [Test]
         public void CPL()
         {
-            var dec = new CPU(() => 0);
+            var core = new Core(new System.Collections.Generic.List<byte> { });
+            var dec = core.CPU;
 
             dec.Registers.A = (0xff);
             dec.Op(Unprefixed.CPL)();
@@ -86,7 +89,8 @@ namespace Tests
         [Test]
         public void SCF()
         {
-            var dec = new CPU(() => 0);
+            var core = new Core(new System.Collections.Generic.List<byte> { });
+            var dec = core.CPU;
 
             dec.Op(Unprefixed.SCF)();
 
@@ -95,7 +99,8 @@ namespace Tests
         [Test]
         public void CCF()
         {
-            var dec = new CPU(() => 0);
+            var core = new Core(new System.Collections.Generic.List<byte> { });
+            var dec = core.CPU;
 
             dec.Op(Unprefixed.CCF)();
             Assert.IsTrue(dec.Registers.Get(Flag.C));

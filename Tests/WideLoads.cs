@@ -100,7 +100,8 @@ namespace Tests
         [Test]
         public void LDD_AT_HL_A()
         {
-            var dec = new CPU(() => 0);
+            var core = new Core(new System.Collections.Generic.List<byte> { });
+            var dec = core.CPU;
             dec.Registers.Set(WideRegister.HL, 10);
             dec.Registers.Set(Register.A, 0x77);
 
@@ -124,7 +125,8 @@ namespace Tests
         [Test]
         public void LDI_AT_HL_A()
         {
-            var dec = new CPU(() => 0);
+            var core = new Core(new System.Collections.Generic.List<byte> { });
+            var dec = core.CPU;
             dec.Registers.Set(WideRegister.HL, 10);
             dec.Registers.Set(Register.A, 0x77);
 
@@ -159,7 +161,8 @@ namespace Tests
         [Test]
         public void ADD_HL_BC()
         {
-            var dec = new CPU(() => 0);
+            var core = new Core(new System.Collections.Generic.List<byte> { });
+            var dec = core.CPU;
 
             dec.Registers.HL = (0x8a23);
             dec.Registers.BC = (0x0605);
@@ -174,7 +177,8 @@ namespace Tests
         [Test]
         public void ADD_HL_HL()
         {
-            var dec = new CPU(() => 0);
+            var core = new Core(new System.Collections.Generic.List<byte> { });
+            var dec = core.CPU;
 
             dec.Registers.HL = (0x8a23);
 
@@ -189,7 +193,8 @@ namespace Tests
         [Test]
         public void LD_A_B()
         {
-            var dec = new CPU(() => 0);
+            var core = new Core(new System.Collections.Generic.List<byte> { });
+            var dec = core.CPU;
 
             dec.Registers.B = (0x10);
 
@@ -201,7 +206,8 @@ namespace Tests
         [Test]
         public void LD_AT_C_A()
         {
-            var dec = new CPU(() => 0);
+            var core = new Core(new System.Collections.Generic.List<byte> { });
+            var dec = core.CPU;
 
             dec.Registers.A = (0x10);
             dec.Registers.C = (0x77);
@@ -214,7 +220,8 @@ namespace Tests
         [Test]
         public void LD_A_AT_C()
         {
-            var dec = new CPU(() => 0);
+            var core = new Core(new System.Collections.Generic.List<byte> { });
+            var dec = core.CPU;
 
             dec.Memory.Write(0xff77, 0x10);
             dec.Registers.C = (0x77);
@@ -224,26 +231,6 @@ namespace Tests
 
             Assert.AreEqual(0x10, dec.Registers.A);
 
-        }
-        private static CPU Setup0x4020BufferedDecoder()
-        {
-            var mem = new byte[] { 0x20, 0x40 }; // little endian
-            int memIndex = 0;
-
-            var dec = new CPU(() =>
-             mem[memIndex++]
-            );
-            return dec;
-        }
-        private static CPU Setup0x77BufferedDecoder()
-        {
-            var mem = new byte[] { 0x77 }; // little endian
-            int memIndex = 0;
-
-            var dec = new CPU(() =>
-             mem[memIndex++]
-            );
-            return dec;
         }
     }
 }

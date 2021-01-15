@@ -4,12 +4,10 @@ namespace emulator
 {
     internal class ROMONLY : MBC
     {
-        private readonly CartHeader header;
         private readonly List<byte> gameROM;
 
-        public ROMONLY(CartHeader header, List<byte> gameROM)
+        public ROMONLY(List<byte> gameROM)
         {
-            this.header = header;
             this.gameROM = gameROM;
         }
 

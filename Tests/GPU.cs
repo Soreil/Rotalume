@@ -15,7 +15,7 @@ namespace Tests
         [Test]
         public void LineRegisterGetsIncrementedDuringVBlank()
         {
-            Core Proc = new Core(Core.LoadBootROM(), LoadGameROM());
+            Core Proc = new Core(LoadGameROM());
 
             var oldLY = Proc.PPU.LY;
             while (Proc.PC != 0x100)
@@ -32,7 +32,7 @@ namespace Tests
         [Test]
         public void ModeIsOnlyVBlankDuringVBlank()
         {
-            Core Proc = new Core(Core.LoadBootROM(), LoadGameROM());
+            Core Proc = new Core(LoadGameROM());
             var oldLY = Proc.PPU.LY;
             while (Proc.PC != 0x100)
             {
@@ -67,7 +67,7 @@ namespace Tests
 ................................####......####..####..####....####..####....##########..####....####....##########....########..................................
 ................................####......####..####..####....####..####....##########..####....####....##########....########..................................";
 
-            Core Proc = new(Core.LoadBootROM(), LoadGameROM());
+            Core Proc = new(LoadGameROM());
 
             while (!Proc.PPU.LCDEnable)
                 Proc.Step();
@@ -93,7 +93,7 @@ namespace Tests
         [Test]
         public void DrawTileMap()
         {
-            Core Proc = new(Core.LoadBootROM(), LoadGameROM());
+            Core Proc = new(LoadGameROM());
 
             while (!Proc.PPU.LCDEnable)
                 Proc.Step();
@@ -116,7 +116,7 @@ namespace Tests
         [Test]
         public void DrawAllTiles()
         {
-            Core Proc = new(Core.LoadBootROM(), LoadGameROM());
+            Core Proc = new(LoadGameROM());
 
             while (!Proc.PPU.LCDEnable)
                 Proc.Step();
@@ -141,7 +141,7 @@ namespace Tests
 ........
 ........";
 
-            Core Proc = new(Core.LoadBootROM(), LoadGameROM());
+            Core Proc = new(LoadGameROM());
 
             //Run boot so the memory is fully populated
             while (!Proc.PPU.LCDEnable)
@@ -169,7 +169,7 @@ namespace Tests
         [Test]
         public void GPUBoot()
         {
-            Core Proc = new Core(Core.LoadBootROM(), LoadGameROM());
+            Core Proc = new Core(LoadGameROM());
 
             //LCD is off
             Assert.AreEqual(Proc.PPU.LCDC, 0);
@@ -211,7 +211,7 @@ namespace Tests
         [Test]
         public void TetrisHangs()
         {
-            Core Proc = new Core(Core.LoadBootROM(), LoadGameROM());
+            Core Proc = new Core(LoadGameROM());
 
             while (Proc.PC != 0x100)
                 Proc.Step();
@@ -267,7 +267,7 @@ namespace Tests
         [Test]
         public void TetrisDraw()
         {
-            Core Proc = new Core(Core.LoadBootROM(), LoadGameROM());
+            Core Proc = new Core(LoadGameROM());
 
             while (Proc.PC != 0x02a0) Proc.Step();
             while (Proc.PC != 0x02ba) Proc.Step();

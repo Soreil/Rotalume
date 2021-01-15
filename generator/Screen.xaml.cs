@@ -54,8 +54,8 @@ namespace GUI
             }
 
 
-            var gameboy = new emulator.Core(emulator.Core.LoadBootROM(),
-                System.IO.File.ReadAllBytes(path).ToList(), updateJoyPad, keyBoardInterruptFired);
+            var gameboy = new emulator.Core(System.IO.File.ReadAllBytes(path).ToList(),
+                emulator.Core.LoadBootROM(), updateJoyPad, keyBoardInterruptFired);
 
             Dispatcher.BeginInvoke(new UpdateImageCb(RunGameboy),
                 System.Windows.Threading.DispatcherPriority.Render);
