@@ -382,7 +382,7 @@ namespace emulator
             }
         }
 
-        private MBC MakeFakeMBC(List<byte> gameROM) => new ROMONLY(gameROM);
+        private static MBC MakeFakeMBC(List<byte> gameROM) => new ROMONLY(gameROM);
 
         private static MBC MakeMBC(CartHeader header, List<byte> gameROM) => header.Type switch
         {
