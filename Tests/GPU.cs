@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 
 using NUnit.Framework;
+using System;
 
 namespace Tests
 {
@@ -15,7 +16,7 @@ namespace Tests
         [Test]
         public void LineRegisterGetsIncrementedDuringVBlank()
         {
-            Core Proc = new Core(LoadGameROM(),Core.LoadBootROM());
+            Core Proc = new Core(LoadGameROM(), Core.LoadBootROM());
 
             var oldLY = Proc.PPU.LY;
             while (Proc.PC != 0x100)
@@ -32,7 +33,7 @@ namespace Tests
         [Test]
         public void ModeIsOnlyVBlankDuringVBlank()
         {
-            Core Proc = new Core(LoadGameROM(),Core.LoadBootROM());
+            Core Proc = new Core(LoadGameROM(), Core.LoadBootROM());
             var oldLY = Proc.PPU.LY;
             while (Proc.PC != 0x100)
             {
@@ -67,7 +68,7 @@ namespace Tests
 ................................####......####..####..####....####..####....##########..####....####....##########....########..................................
 ................................####......####..####..####....####..####....##########..####....####....##########....########..................................";
 
-            Core Proc = new(LoadGameROM(),Core.LoadBootROM());
+            Core Proc = new(LoadGameROM(), Core.LoadBootROM());
 
             while (!Proc.PPU.LCDEnable)
                 Proc.Step();
@@ -79,12 +80,53 @@ namespace Tests
             List<string> lines = new();
             for (byte y = 64; y < 80; y++)
             {
-                var line = render.GetLine(pallette, y, Proc.PPU.BGTileMapDisplaySelect);
+                var line = GetLine(pallette, y, Proc.PPU.BGTileMapDisplaySelect, render);
                 lines.Add(line);
             }
             var screen = string.Join("\r\n", lines);
 
             Assert.AreEqual(expected, screen);
+        }
+
+        private static string MakePrintableLine(List<Shade> pixels)
+        {
+            char[] ScreenLine = new char[pixels.Count];
+            for (var p = 0; p < pixels.Count; p++)
+            {
+                if (pixels[p] == Shade.White) ScreenLine[p] = '.';
+                else if (pixels[p] == Shade.Black) ScreenLine[p] = '#';
+                else throw new ArgumentException("Expected a white or black pixel only in the boot up screen");
+            }
+
+            var s = new string(ScreenLine);
+            return s;
+        }
+
+        public string GetTile(byte tileNumber, Renderer r)
+        {
+            var palette = r.GetBackgroundPalette();
+
+            var lines = new List<List<Shade>>(Renderer.TileWidth);
+            for (int y = 0; y < Renderer.TileWidth; y++)
+            {
+                var line = r.GetTileLine(palette, y % Renderer.TileWidth, tileNumber);
+                lines.Add(new(line));
+            }
+
+            List<string> output = new();
+            foreach (var line in lines)
+            {
+                output.Add(MakePrintableLine(line));
+            }
+            return string.Join("\r\n", output);
+        }
+
+        public string GetLine(Shade[] palette, byte yScrolled, ushort tilemap, Renderer r)
+        {
+            var pixels = r.GetBackgroundLineShades(palette, yScrolled, tilemap);
+
+            var s = MakePrintableLine(pixels);
+            return s;
         }
 
         //Shows the state of the background tile ID map
@@ -124,7 +166,7 @@ namespace Tests
             var render = new emulator.Renderer(Proc.PPU);
             for (byte i = 0; i < 27; i++)
             {
-                System.Console.WriteLine(render.GetTile(i));
+                System.Console.WriteLine(GetTile(i, render));
                 System.Console.WriteLine();
             }
         }
@@ -141,14 +183,14 @@ namespace Tests
 ........
 ........";
 
-            Core Proc = new(LoadGameROM(),Core.LoadBootROM());
+            Core Proc = new(LoadGameROM(), Core.LoadBootROM());
 
             //Run boot so the memory is fully populated
             while (!Proc.PPU.LCDEnable)
                 Proc.Step();
 
             var render = new emulator.Renderer(Proc.PPU);
-            var tile = render.GetTile(0);
+            var tile = GetTile(0, render);
 
             Assert.AreEqual(expectedEmpty, tile);
 
@@ -161,7 +203,7 @@ namespace Tests
 .#....#.
 ..####..";
 
-            var copyrightTile = render.GetTile(25);
+            var copyrightTile = GetTile(25, render);
 
             Assert.AreEqual(expectedCopyright, copyrightTile);
         }
@@ -211,7 +253,7 @@ namespace Tests
         [Test]
         public void TetrisHangs()
         {
-            Core Proc = new Core(LoadGameROM(),Core.LoadBootROM());
+            Core Proc = new Core(LoadGameROM(), Core.LoadBootROM());
 
             while (Proc.PC != 0x100)
                 Proc.Step();
@@ -267,7 +309,7 @@ namespace Tests
         [Test]
         public void TetrisDraw()
         {
-            Core Proc = new Core(LoadGameROM(),Core.LoadBootROM());
+            Core Proc = new Core(LoadGameROM(), Core.LoadBootROM());
 
             while (Proc.PC != 0x02a0) Proc.Step();
             while (Proc.PC != 0x02ba) Proc.Step();

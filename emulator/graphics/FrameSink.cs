@@ -51,9 +51,11 @@ namespace emulator
             }
             return position;
         }
-        public override void SetLength(long value) => throw new System.NotImplementedException();
+        public override void SetLength(long value) => throw new NotImplementedException();
         public override void Write(byte[] buffer, int offset, int count)
         {
+            if (position + count > frameData.Length) return; //This shouldn't ever happen!
+
             var slice = buffer[offset..(offset + count)];
             slice.CopyTo(frameData, position);
             position += count;

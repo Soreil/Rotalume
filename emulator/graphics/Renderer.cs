@@ -13,14 +13,14 @@ namespace emulator
         public int TimeUntilWhichToPause;
         readonly Stream fs = Stream.Null;
 
-        const int TileWidth = 8;
-        const int DisplayWidth = 160;
-        const int TilesPerLine = DisplayWidth / TileWidth;
-        const int DisplayHeight = 144;
-        const int ScanlinesPerFrame = DisplayHeight + 10;
+        public const int TileWidth = 8;
+        public const int DisplayWidth = 160;
+        public const int TilesPerLine = DisplayWidth / TileWidth;
+        public const int DisplayHeight = 144;
+        public const int ScanlinesPerFrame = DisplayHeight + 10;
 
-        const int TicksPerScanline = 456;
-        const int TicksPerFrame = ScanlinesPerFrame * TicksPerScanline;
+        public const int TicksPerScanline = 456;
+        public const int TicksPerFrame = ScanlinesPerFrame * TicksPerScanline;
         long ClocksInFrame => Clock() % TicksPerFrame;
         int Line()
         {
@@ -32,12 +32,9 @@ namespace emulator
             PPU.LY = (byte)(Line() % ScanlinesPerFrame);
             PPU.LYCInterrupt = PPU.LY == PPU.LYC;
         }
-        public Renderer(PPU ppu, Stream destination) : this(ppu)
+        public Renderer(PPU ppu, Stream destination = null)
         {
-            fs = destination;
-        }
-        public Renderer(PPU ppu)
-        {
+            fs = destination == null ? Stream.Null : destination;
             PPU = ppu;
             var startTime = PPU.Clock();
             Clock = () => ppu.Clock() - startTime;
@@ -47,9 +44,8 @@ namespace emulator
 
         public void Render()
         {
-            var currentTime = Clock();
 
-            if (currentTime > TimeUntilWhichToPause)
+            if (Clock() > TimeUntilWhichToPause)
             {
                 if (PPU.Mode == Mode.OAMSearch)
                     SpriteAttributes = PPU.OAM.SpritesOnLine(PPU.LY, PPU.SpriteHeight);
@@ -143,15 +139,7 @@ namespace emulator
             _ => throw new Exception(),
         };
 
-        public string GetLine(Shade[] palette, byte yScrolled, ushort tilemap)
-        {
-            var pixels = GetBackgroundLineShades(palette, yScrolled, tilemap);
-
-            var s = MakePrintableLine(pixels);
-            return s;
-        }
-
-        private List<Shade> GetBackgroundLineShades(Shade[] palette, byte yScrolled, ushort tilemap)
+        public List<Shade> GetBackgroundLineShades(Shade[] palette, byte yScrolled, ushort tilemap)
         {
             var pixelsBG = new List<Shade>(DisplayWidth);
 
@@ -177,20 +165,6 @@ namespace emulator
         }
 
         private static byte YScrolled(byte LY, byte SCY) => (byte)((LY + SCY) & 0xff);
-
-        private static string MakePrintableLine(List<Shade> pixels)
-        {
-            char[] ScreenLine = new char[pixels.Count];
-            for (var p = 0; p < pixels.Count; p++)
-            {
-                if (pixels[p] == Shade.White) ScreenLine[p] = '.';
-                else if (pixels[p] == Shade.Black) ScreenLine[p] = '#';
-                else throw new ArgumentException("Expected a white or black pixel only in the boot up screen");
-            }
-
-            var s = new string(ScreenLine);
-            return s;
-        }
 
         private Shade[] TilePixelLine(Shade[] palette, int yOffset, ushort tilemap, int tileNumber)
         {
@@ -228,7 +202,7 @@ namespace emulator
             return palette[paletteIndex];
         }
 
-        private Shade[] GetTileLine(Shade[] palette, int line, byte currentTileIndex)
+        public Shade[] GetTileLine(Shade[] palette, int line, byte currentTileIndex)
         {
             var tileData = PPU.BGAndWindowTileDataSelect;
 
@@ -253,25 +227,6 @@ namespace emulator
             }
 
             return pixels;
-        }
-
-        public string GetTile(byte tileNumber)
-        {
-            var palette = GetBackgroundPalette();
-
-            var lines = new List<List<Shade>>(TileWidth);
-            for (int y = 0; y < TileWidth; y++)
-            {
-                var line = GetTileLine(palette, y % TileWidth, tileNumber);
-                lines.Add(new(line));
-            }
-
-            List<string> output = new();
-            foreach (var line in lines)
-            {
-                output.Add(MakePrintableLine(line));
-            }
-            return string.Join("\r\n", output);
         }
 
         public Shade[] GetBackgroundPalette() => new Shade[4] {
