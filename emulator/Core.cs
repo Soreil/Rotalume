@@ -67,10 +67,6 @@ namespace emulator
         //Constructor just for tests which don't care about a functioning bootrom
         public Core(List<byte> l, List<byte> bootrom = null) : this(l, bootrom, (x) => 0x01f, () => false)
         {
-            if (bootrom == null)
-            {
-                bootROMActive = false;
-            }
         }
 
         public Core(List<byte> gameROM, List<byte> bootROM, Func<byte, byte> GetJoyPad, Func<bool> getKeyboardInterrupt)
@@ -102,7 +98,7 @@ namespace emulator
 
             ReadBootROMFlag = () => bootROMField;
 
-            LCDControlController = (byte b) => PPU.SetLCDC(b);
+            LCDControlController = (byte b) => PPU.LCDC = b;
             ReadLCDControl = () => PPU.LCDC;
 
             LCDStatController = (byte b) => PPU.STAT = b;
@@ -354,6 +350,36 @@ namespace emulator
     setRanges);
 
             CPU = new CPU(GetProgramCounter, SetProgramCounter, IncrementClock, memory);
+
+            if (bootROM == null)
+            {
+                bootROMActive = false;
+                PC = 0x100;
+                CPU.Registers.AF = 0x01b0;
+                CPU.Registers.BC = 0x0013;
+                CPU.Registers.DE = 0x00d8;
+                CPU.Registers.HL = 0x014d;
+                CPU.Registers.SP = 0xfffe;
+
+                Timers.Timer = 0;
+                Timers.TimerControl = 0;
+                Timers.TimerDefault = 0;
+
+                PPU.LCDC = 0x91;
+
+                PPU.SCY = 0;
+                PPU.SCX = 0;
+                PPU.LYC = 0;
+
+                PPU.BGP = 0xfc;
+                PPU.OBP0 = 0xff;
+                PPU.OBP1 = 0xff;
+
+                PPU.SCY = 0;
+                PPU.SCX = 0;
+
+                CPU.IME = true;
+            }
         }
 
         private MBC MakeFakeMBC(List<byte> gameROM) => new ROMONLY(gameROM);
