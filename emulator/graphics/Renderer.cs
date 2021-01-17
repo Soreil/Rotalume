@@ -107,7 +107,7 @@ namespace emulator
             if (windowStartX < 0) windowStartX = 0;
             for (int tile = 0; tile < TilesPerLine; tile++)
             {
-                var curPix = TilePixelLine(GetBackgroundPalette(), PPU.LY-PPU.WY, PPU.TileMapDisplaySelect, tile);
+                var curPix = TilePixelLine(GetBackgroundPalette(), PPU.LY - PPU.WY, PPU.TileMapDisplaySelect, tile);
                 for (int cur = 0; cur < curPix.Length; cur++)
                 {
                     if (tile * TileWidth + cur >= windowStartX)
@@ -190,8 +190,6 @@ namespace emulator
             var line = PPU.LY - sprite.Y;
             if (sprite.YFlipped) line = 7 - line;
 
-            var palette = sprite.Palette == 1 ? GetSpritePalette1() : GetSpritePalette0();
-
             var at = 0x8000 + (sprite.ID * 16) + (line * 2);
             var tileDataLow = PPU.VRAM[at]; //low byte of line
             var tileDataHigh = PPU.VRAM[at + 1]; //high byte of line
@@ -199,6 +197,7 @@ namespace emulator
             var paletteIndex = tileDataLow.GetBit(index) ? 1 : 0;
             paletteIndex += tileDataHigh.GetBit(index) ? 2 : 0;
 
+            var palette = sprite.Palette == 1 ? GetSpritePalette1() : GetSpritePalette0();
             return palette[paletteIndex];
         }
 

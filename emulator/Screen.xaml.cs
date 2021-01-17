@@ -33,6 +33,7 @@ namespace GUI
 
         }
 
+        volatile bool paused = false;
         private void Gameboy(string path)
         {
             byte updateJoyPad(byte x)
@@ -73,7 +74,12 @@ namespace GUI
 
             StartTime = DateTime.Now;
 
-            while (true) gameboy.Step();
+            while (true)
+            {
+                if (!paused)
+                    gameboy.Step();
+                else Thread.Sleep(10);
+            }
         }
 
         WriteableBitmap bmp;
@@ -166,6 +172,7 @@ namespace GUI
                 if (GameThread is not null)
                     keyboardInterruptReady = true;
             }
+            if (e.Key == Key.P) paused = !paused;
         }
 
         private void Window_KeyUp(object sender, KeyEventArgs e)
