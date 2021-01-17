@@ -107,7 +107,7 @@ namespace emulator
             if (windowStartX < 0) windowStartX = 0;
             for (int tile = 0; tile < TilesPerLine; tile++)
             {
-                var curPix = TilePixelLine(GetBackgroundPalette(), YScrolled(PPU.LY, PPU.SCY), PPU.TileMapDisplaySelect, tile);
+                var curPix = TilePixelLine(GetBackgroundPalette(), PPU.LY-PPU.WY, PPU.TileMapDisplaySelect, tile);
                 for (int cur = 0; cur < curPix.Length; cur++)
                 {
                     if (tile * TileWidth + cur >= windowStartX)
