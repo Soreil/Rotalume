@@ -272,7 +272,7 @@ namespace emulator
             //Mirror of Work RAM
             setRanges.Add(new MMU.SetRange(
                 WRAM.MirrorStart,
-                WRAM.MirrorStart + WRAM.Size,
+                WRAM.MirrorEnd,
                 (at, v) => WRAM[at] = v
                 ));
             getRanges.Add(new MMU.GetRange(
