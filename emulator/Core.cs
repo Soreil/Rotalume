@@ -14,31 +14,6 @@ namespace emulator
         bool bootROMActive = true;
         private byte bootROMField = 0;
 
-        readonly ControlRegister.Write BootROMFlagController;
-        readonly ControlRegister.Read ReadBootROMFlag;
-        readonly ControlRegister.Write LCDControlController;
-        readonly ControlRegister.Read ReadLCDControl;
-        readonly ControlRegister.Write LCDStatController;
-        readonly ControlRegister.Read ReadLCDStat;
-        readonly ControlRegister.Write ScrollYController;
-        readonly ControlRegister.Read ReadScrollY;
-        readonly ControlRegister.Write ScrollXController;
-        readonly ControlRegister.Read ReadScrollX;
-        readonly ControlRegister.Write LCDLineController;
-        readonly ControlRegister.Read ReadLine;
-        readonly ControlRegister.Write LYCController;
-        readonly ControlRegister.Read ReadLYC;
-        readonly ControlRegister.Write PaletteController;
-        readonly ControlRegister.Read ReadPalette;
-        readonly ControlRegister.Write OBP0Controller;
-        readonly ControlRegister.Read ReadOBP0;
-        readonly ControlRegister.Write OBP1Controller;
-        readonly ControlRegister.Read ReadOBP1;
-        readonly ControlRegister.Write WYController;
-        readonly ControlRegister.Read ReadWY;
-        readonly ControlRegister.Write WXController;
-        readonly ControlRegister.Read ReadWX;
-
         //Global clock from which all timing derives
         public long Clock;
 
@@ -49,9 +24,6 @@ namespace emulator
 
         public PPU PPU;
         public Timers Timers;
-        public HRAM HRAM;
-        public WRAM WRAM;
-        public UnusableMEM UnusableMEM;
 
         byte keypadFlags = 0x30;
 
@@ -64,12 +36,14 @@ namespace emulator
         readonly ControlRegister controlRegisters = new ControlRegister(0xff00, 0x80);
         readonly ControlRegister interruptRegisters = new ControlRegister(0xffff, 0x1); //This is only being used for two registers.
 
+        public Core(List<byte> bwah) : this(bwah.ToArray())
+        { }
         //Constructor just for tests which don't care about a functioning bootrom
-        public Core(List<byte> l, List<byte> bootrom = null) : this(l, bootrom, (x) => 0x01f, () => false)
+        public Core(byte[] l, byte[] bootrom = null) : this(l, bootrom, (x) => 0x01f, () => false)
         {
         }
 
-        public Core(List<byte> gameROM, List<byte> bootROM, Func<byte, byte> GetJoyPad, Func<bool> getKeyboardInterrupt)
+        public Core(byte[] gameROM, byte[] bootROM, Func<byte, byte> GetJoyPad, Func<bool> getKeyboardInterrupt)
         {
             Func<ushort> GetProgramCounter = () => PC;
             Action<ushort> SetProgramCounter = (x) => { PC = x; };
@@ -82,272 +56,28 @@ namespace emulator
 
             Timers = new Timers(() => InterruptFireRegister = InterruptFireRegister.SetBit(2));
 
-            HRAM = new HRAM();
-            WRAM = new WRAM();
-            UnusableMEM = new UnusableMEM();
-
-            BootROMFlagController = (byte b) =>
-            {
-                bootROMField = b;
-                if (b == 1)
-                {
-                    controlRegisters.Writer[0x50] -= BootROMFlagController;
-                    bootROMActive = false;
-                }
-            };
-
-            ReadBootROMFlag = () => bootROMField;
-
-            LCDControlController = (byte b) => PPU.LCDC = b;
-            ReadLCDControl = () => PPU.LCDC;
-
-            LCDStatController = (byte b) => PPU.STAT = (byte)((b & 0xf8) | (PPU.STAT & 0x7));
-            ReadLCDStat = () => PPU.STAT;
-
-            ScrollYController = (byte b) => PPU.SCY = b;
-            ReadScrollY = () => PPU.SCY;
-            ScrollXController = (byte b) => PPU.SCX = b;
-            ReadScrollX = () => PPU.SCX;
-            LCDLineController = (byte b) => PPU.LY = b;
-            ReadLine = () => PPU.LY;
-
-            PaletteController = (byte b) => PPU.BGP = b;
-            ReadPalette = () => PPU.BGP;
-
-            OBP0Controller = (byte b) => PPU.OBP0 = b;
-            ReadOBP0 = () => PPU.OBP0;
-
-            OBP1Controller = (byte b) => PPU.OBP1 = b;
-            ReadOBP1 = () => PPU.OBP1;
-
-            WYController = (byte b) => PPU.WY = b;
-            ReadWY = () => PPU.WY;
-
-            WXController = (byte b) => PPU.WX = b;
-            ReadWX = () => PPU.WX;
-
-            PaletteController = (byte b) => PPU.BGP = b;
-            ReadPalette = () => PPU.BGP;
-
-            LYCController = (byte b) => PPU.LYC = b;
-            ReadLYC = () => PPU.LYC;
-
+            Func<byte> ReadBootROMFlag = () => bootROMField;
             GetKeyboardInterrupt = getKeyboardInterrupt;
 
-            controlRegisters.Writer[0] += x => keypadFlags = x;
-            controlRegisters.Reader[0] += () => GetJoyPad(keypadFlags);
+            interruptRegisters.Writer[0x00] = x => InterruptControlRegister = x;
+            interruptRegisters.Reader[0x00] = () => InterruptControlRegister;
 
-            controlRegisters.Writer[0xF] += x => InterruptFireRegister = x;
-            controlRegisters.Reader[0xF] += () => InterruptFireRegister;
+            var ioRegisters = SetupControlRegisters(GetJoyPad, ReadBootROMFlag);
 
-            controlRegisters.Writer[0x04] += x => Timers.Divider = x;
-            controlRegisters.Reader[0x04] += () => Timers.Divider;
-
-            controlRegisters.Writer[0x05] += x => Timers.Timer = x;
-            controlRegisters.Reader[0x05] += () => Timers.Timer;
-
-            controlRegisters.Writer[0x06] += x => Timers.TimerDefault = x;
-            controlRegisters.Reader[0x06] += () => Timers.TimerDefault;
-
-            controlRegisters.Writer[0x07] += x => Timers.TimerControl = x;
-            controlRegisters.Reader[0x07] += () => Timers.TimerControl;
-
-            controlRegisters.Writer[0x50] += BootROMFlagController;
-            controlRegisters.Reader[0x50] += ReadBootROMFlag;
-
-            //PPU registers
-            controlRegisters.Writer[0x40] += LCDControlController;
-            controlRegisters.Reader[0x40] += ReadLCDControl;
-            controlRegisters.Writer[0x41] += LCDStatController;
-            controlRegisters.Reader[0x41] += ReadLCDStat;
-            controlRegisters.Writer[0x42] += ScrollYController;
-            controlRegisters.Reader[0x42] += ReadScrollY;
-            controlRegisters.Writer[0x43] += ScrollXController;
-            controlRegisters.Reader[0x43] += ReadScrollX;
-            controlRegisters.Writer[0x44] += LCDLineController;
-            controlRegisters.Reader[0x44] += ReadLine;
-            controlRegisters.Writer[0x45] += LYCController;
-            controlRegisters.Reader[0x45] += ReadLYC;
-
-            //DMA
-            controlRegisters.Writer[0x46] += (x) =>
-            {
-                if (x > 0xf1) throw new Exception("Illegal DMA start adress");
-
-                ushort baseAddr = (ushort)(x << 8);
-                for (int i = 0; i < OAM.Size; i++)
-                {
-                    var r = CPU.Memory.Read((ushort)(baseAddr + i));
-                    PPU.OAM[OAM.Start + i] = r;
-                }
-            };
-
-            controlRegisters.Reader[0x46] += () => throw new Exception("DMAREAD");
-
-            controlRegisters.Writer[0x47] += PaletteController;
-            controlRegisters.Reader[0x47] += ReadPalette;
-            controlRegisters.Writer[0x48] += OBP0Controller;
-            controlRegisters.Reader[0x48] += ReadOBP0;
-            controlRegisters.Writer[0x49] += OBP1Controller;
-            controlRegisters.Reader[0x49] += ReadOBP1;
-
-            controlRegisters.Writer[0x4A] += WYController;
-            controlRegisters.Reader[0x4A] += ReadWY;
-            controlRegisters.Writer[0x4B] += WXController;
-            controlRegisters.Reader[0x4B] += ReadWX;
-
-            interruptRegisters.Writer[0x00] += x => InterruptControlRegister = x;
-            interruptRegisters.Reader[0x00] += () => InterruptControlRegister;
-
-            for (ushort SoundRegister = 0xff10; SoundRegister <= 0xff26; SoundRegister++)
-            {
-                controlRegisters.Writer[SoundRegister & 0xff] += (x) => { };
-                controlRegisters.Reader[SoundRegister & 0xff] += () => 0xff;
-            }
-
-            for (ushort SoundWave = 0xff30; SoundWave <= 0xff3f; SoundWave++)
-            {
-                controlRegisters.Writer[SoundWave & 0xff] += (x) => { };
-                controlRegisters.Reader[SoundWave & 0xff] += () => 0xff;
-            }
-
-            for (ushort Serial = 0xff01; Serial <= 0xff02; Serial++)
-            {
-                controlRegisters.Writer[Serial & 0xff] += (x) => { };
-                controlRegisters.Reader[Serial & 0xff] += () => 0xff;
-            }
-            for (ushort Unused = 0xff4c; Unused < 0xff80; Unused++)
-            {
-                if (Unused == 0xff50) continue;
-                controlRegisters.Writer[Unused & 0xff] += (x) => { };
-                controlRegisters.Reader[Unused & 0xff] += () => 0xff;
-            }
-
-            List<MMU.SetRange> setRanges = new();
-            List<MMU.GetRange> getRanges = new();
-
-            setRanges.Add(new(
-                interruptRegisters.Start,
-                interruptRegisters.Start + interruptRegisters.Size,
-                (x, v) => interruptRegisters[x] = v));
-            getRanges.Add(new(
-                interruptRegisters.Start,
-                interruptRegisters.Start + interruptRegisters.Size,
-                x => interruptRegisters[x]));
-
-            setRanges.Add(new MMU.SetRange(
-                controlRegisters.Start,
-                controlRegisters.Start + controlRegisters.Size,
-                (x, v) => controlRegisters[x] = v)
-                );
-            getRanges.Add(new MMU.GetRange(
-                controlRegisters.Start,
-                controlRegisters.Start + controlRegisters.Size,
-                (x) => controlRegisters[x])
-                );
-
-            //HRAM memory range
-            setRanges.Add(new MMU.SetRange(
-                HRAM.Start,
-                HRAM.Start + HRAM.Size,
-                (at, v) => HRAM[at] = v
-                ));
-            getRanges.Add(new MMU.GetRange(
-                HRAM.Start,
-                HRAM.Start + HRAM.Size,
-                (at) => HRAM[at]
-                ));
-
-            //Work RAM memory range
-            setRanges.Add(new MMU.SetRange(
-                WRAM.Start,
-                WRAM.Start + WRAM.Size,
-                (at, v) => WRAM[at] = v
-                ));
-            getRanges.Add(new MMU.GetRange(
-                WRAM.Start,
-                WRAM.Start + WRAM.Size,
-                (at) => WRAM[at]
-                ));
-            //Mirror of Work RAM
-            setRanges.Add(new MMU.SetRange(
-                WRAM.MirrorStart,
-                WRAM.MirrorEnd,
-                (at, v) => WRAM[at] = v
-                ));
-            getRanges.Add(new MMU.GetRange(
-                WRAM.MirrorStart,
-                WRAM.MirrorStart + WRAM.Size,
-                (at) => WRAM[at]
-                ));
-
-            //Illegal memory range (used by tetris though?)
-            setRanges.Add(new MMU.SetRange(
-                UnusableMEM.Start,
-                UnusableMEM.Start + UnusableMEM.Size,
-                (at, v) => UnusableMEM[at] = v
-                ));
-            getRanges.Add(new MMU.GetRange(
-                UnusableMEM.Start,
-                UnusableMEM.Start + UnusableMEM.Size,
-                (at) => UnusableMEM[at]
-                ));
-
-
-            //Graphics memory ranges
-            setRanges.Add(new MMU.SetRange(
-                VRAM.Start,
-                VRAM.Start + VRAM.Size,
-                (at, v) => PPU.VRAM[at] = v
-                ));
-            getRanges.Add(new MMU.GetRange(
-                VRAM.Start,
-                VRAM.Start + VRAM.Size,
-                (at) => PPU.VRAM[at]
-                ));
-            setRanges.Add(new MMU.SetRange(
-                OAM.Start,
-                OAM.Start + OAM.Size,
-                (at, v) => PPU.OAM[at] = v
-                ));
-            getRanges.Add(new MMU.GetRange(
-                OAM.Start,
-                OAM.Start + OAM.Size,
-                (at) => PPU.OAM[at]
-                ));
-
-            CartHeader Header = gameROM.Count < 0x8000 ? null : new CartHeader(gameROM);
+            CartHeader Header = gameROM.Length < 0x8000 ? null : new CartHeader(gameROM);
             MBC Card;
             if (Header is not null) Card = MakeMBC(Header, gameROM);
             else Card = MakeFakeMBC(gameROM);
 
-            setRanges.Add(new MMU.SetRange(
-                MBC.ROMStart,
-                MBC.ROMStart + MBC.ROMSize,
-                (at, v) => Card[at] = v
-                ));
-            getRanges.Add(new MMU.GetRange(
-                MBC.ROMStart,
-                MBC.ROMStart + MBC.ROMSize,
-                (at) => Card[at]
-                ));
-
-            setRanges.Add(new MMU.SetRange(
-                MBC.RAMStart,
-                MBC.RAMStart + MBC.RAMSize,
-                (at, v) => Card[at] = v
-                ));
-            getRanges.Add(new MMU.GetRange(
-                MBC.RAMStart,
-                MBC.RAMStart + MBC.RAMSize,
-                (at) => Card[at]
-                ));
-
             var memory = new MMU(Read,
     bootROM,
     () => bootROMActive,
-    getRanges,
-    setRanges);
+    Card,
+    PPU.VRAM,
+    PPU.OAM,
+    ioRegisters,
+    interruptRegisters
+    );
 
             CPU = new CPU(GetProgramCounter, SetProgramCounter, IncrementClock, memory);
 
@@ -382,9 +112,141 @@ namespace emulator
             }
         }
 
-        private static MBC MakeFakeMBC(List<byte> gameROM) => new ROMONLY(gameROM);
+        private ControlRegister SetupControlRegisters(Func<byte, byte> GetJoyPad, Func<byte> ReadBootROMFlag)
+        {
+            ControlRegister controlRegisters = new ControlRegister(0xff00, 0x80);
 
-        private static MBC MakeMBC(CartHeader header, List<byte> gameROM) => header.Type switch
+            Action<byte> BootROMFlagController = (byte b) =>
+            {
+                if (b == 1)
+                {
+                    bootROMActive = false;
+                }
+            };
+
+            Action<byte> LCDControlController = (byte b) => PPU.LCDC = b;
+            Func<byte> ReadLCDControl = () => PPU.LCDC;
+
+            Action<byte> LCDStatController = (byte b) => PPU.STAT = (byte)((b & 0xf8) | (PPU.STAT & 0x7));
+            Func<byte> ReadLCDStat = () => PPU.STAT;
+
+            Action<byte> ScrollYController = (byte b) => PPU.SCY = b;
+            Func<byte> ReadScrollY = () => PPU.SCY;
+            Action<byte> ScrollXController = (byte b) => PPU.SCX = b;
+            Func<byte> ReadScrollX = () => PPU.SCX;
+            Action<byte> LCDLineController = (byte b) => PPU.LY = b;
+            Func<byte> ReadLine = () => PPU.LY;
+
+            Action<byte> PaletteController = (byte b) => PPU.BGP = b;
+            Func<byte> ReadPalette = () => PPU.BGP;
+
+            Action<byte> OBP0Controller = (byte b) => PPU.OBP0 = b;
+            Func<byte> ReadOBP0 = () => PPU.OBP0;
+
+            Action<byte> OBP1Controller = (byte b) => PPU.OBP1 = b;
+            Func<byte> ReadOBP1 = () => PPU.OBP1;
+
+            Action<byte> WYController = (byte b) => PPU.WY = b;
+            Func<byte> ReadWY = () => PPU.WY;
+
+            Action<byte> WXController = (byte b) => PPU.WX = b;
+            Func<byte> ReadWX = () => PPU.WX;
+
+            Action<byte> LYCController = (byte b) => PPU.LYC = b;
+            Func<byte> ReadLYC = () => PPU.LYC;
+
+
+            controlRegisters.Writer[0] = x => keypadFlags = x;
+            controlRegisters.Reader[0] = () => GetJoyPad(keypadFlags);
+
+            controlRegisters.Writer[0xF] = x => InterruptFireRegister = x;
+            controlRegisters.Reader[0xF] = () => InterruptFireRegister;
+
+            controlRegisters.Writer[0x04] = x => Timers.Divider = x;
+            controlRegisters.Reader[0x04] = () => Timers.Divider;
+
+            controlRegisters.Writer[0x05] = x => Timers.Timer = x;
+            controlRegisters.Reader[0x05] = () => Timers.Timer;
+
+            controlRegisters.Writer[0x06] = x => Timers.TimerDefault = x;
+            controlRegisters.Reader[0x06] = () => Timers.TimerDefault;
+
+            controlRegisters.Writer[0x07] = x => Timers.TimerControl = x;
+            controlRegisters.Reader[0x07] = () => Timers.TimerControl;
+
+            controlRegisters.Writer[0x50] = BootROMFlagController;
+            controlRegisters.Reader[0x50] = ReadBootROMFlag;
+
+            //PPU registers
+            controlRegisters.Writer[0x40] = LCDControlController;
+            controlRegisters.Reader[0x40] = ReadLCDControl;
+            controlRegisters.Writer[0x41] = LCDStatController;
+            controlRegisters.Reader[0x41] = ReadLCDStat;
+            controlRegisters.Writer[0x42] = ScrollYController;
+            controlRegisters.Reader[0x42] = ReadScrollY;
+            controlRegisters.Writer[0x43] = ScrollXController;
+            controlRegisters.Reader[0x43] = ReadScrollX;
+            controlRegisters.Writer[0x44] = LCDLineController;
+            controlRegisters.Reader[0x44] = ReadLine;
+            controlRegisters.Writer[0x45] = LYCController;
+            controlRegisters.Reader[0x45] = ReadLYC;
+
+            //DMA
+            controlRegisters.Writer[0x46] = (x) =>
+            {
+                if (x > 0xf1) throw new Exception("Illegal DMA start adress");
+
+                ushort baseAddr = (ushort)(x << 8);
+                for (int i = 0; i < OAM.Size; i++)
+                {
+                    var r = CPU.Memory.Read((ushort)(baseAddr + i));
+                    PPU.OAM[OAM.Start + i] = r;
+                }
+            };
+
+            controlRegisters.Reader[0x46] = () => throw new Exception("DMAREAD");
+
+            controlRegisters.Writer[0x47] = PaletteController;
+            controlRegisters.Reader[0x47] = ReadPalette;
+            controlRegisters.Writer[0x48] = OBP0Controller;
+            controlRegisters.Reader[0x48] = ReadOBP0;
+            controlRegisters.Writer[0x49] = OBP1Controller;
+            controlRegisters.Reader[0x49] = ReadOBP1;
+
+            controlRegisters.Writer[0x4A] = WYController;
+            controlRegisters.Reader[0x4A] = ReadWY;
+            controlRegisters.Writer[0x4B] = WXController;
+            controlRegisters.Reader[0x4B] = ReadWX;
+
+            for (ushort SoundRegister = 0xff10; SoundRegister <= 0xff26; SoundRegister++)
+            {
+                controlRegisters.Writer[SoundRegister & 0xff] = (x) => { };
+                controlRegisters.Reader[SoundRegister & 0xff] = () => 0xff;
+            }
+
+            for (ushort SoundWave = 0xff30; SoundWave <= 0xff3f; SoundWave++)
+            {
+                controlRegisters.Writer[SoundWave & 0xff] = (x) => { };
+                controlRegisters.Reader[SoundWave & 0xff] = () => 0xff;
+            }
+
+            for (ushort Serial = 0xff01; Serial <= 0xff02; Serial++)
+            {
+                controlRegisters.Writer[Serial & 0xff] = (x) => { };
+                controlRegisters.Reader[Serial & 0xff] = () => 0xff;
+            }
+            for (ushort Unused = 0xff4c; Unused < 0xff80; Unused++)
+            {
+                if (Unused == 0xff50) continue;
+                controlRegisters.Writer[Unused & 0xff] = (x) => { };
+                controlRegisters.Reader[Unused & 0xff] = () => 0xff;
+            }
+            return controlRegisters;
+        }
+
+        private static MBC MakeFakeMBC(byte[] gameROM) => new ROMONLY(gameROM);
+
+        private static MBC MakeMBC(CartHeader header, byte[] gameROM) => header.Type switch
         {
             CartType.ROM_ONLY => new ROMONLY(gameROM),
             CartType.MBC1 => new MBC1(header, gameROM),
@@ -438,9 +300,9 @@ namespace emulator
             }
         }
 
-        public static List<byte> LoadBootROM()
+        public static byte[] LoadBootROM()
         {
-            return System.IO.File.ReadAllBytes(@"..\..\..\..\emulator\bootrom\DMG_ROM_BOOT.bin").ToList();
+            return System.IO.File.ReadAllBytes(@"..\..\..\..\emulator\bootrom\DMG_ROM_BOOT.bin");
         }
 
         public void Step()

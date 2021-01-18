@@ -8,12 +8,14 @@ namespace emulator
     {
         private readonly Func<bool> _bootROMActive;
 
-        public abstract record Range(int Begin, int End);
-        public record GetRange(int Begin, int End, Func<int, byte> At) : Range(Begin, End);
-        public record SetRange(int Begin, int End, Action<int, byte> At) : Range(Begin, End);
-
-        private List<GetRange> getRanges;
-        private List<SetRange> setRanges;
+        readonly MBC Card;
+        readonly VRAM VRAM;
+        readonly WRAM WRAM;
+        readonly OAM OAM;
+        readonly ControlRegister IORegisters;
+        readonly HRAM HRAM;
+        readonly ControlRegister InterruptEnable;
+        readonly UnusableMEM UnusableMEM;
 
         public byte this[int at]
         {
@@ -22,17 +24,66 @@ namespace emulator
                 if (_bootROMActive() && at < 0x100) //Bootrom is read only so we don't need a corresponding function in set
                     return bootROM[at];
 
-                var possible = getRanges.First((x) => x.Begin <= at && x.End > at);
-                return possible.At(at);
+                return at switch
+                {
+                    >= 0 and < 0x4000 => Card[at],//bank0
+                    >= 0x4000 and < 0x8000 => Card[at],//bank1
+                    >= 0x8000 and < 0xa000 => VRAM[at],
+                    >= 0xa000 and < 0xc000 => Card[at],//ext_ram
+                    >= 0xc000 and < 0xe000 => WRAM[at],//wram
+                    >= 0xe000 and < 0xFE00 => WRAM[at],//wram mirror
+                    >= 0xfe00 and < 0xfea0 => OAM[at],
+                    >= 0xfea0 and < 0xff00 => UnusableMEM[at],//This should be illegal?
+                    >= 0xff00 and < 0xff80 => IORegisters[at],
+                    >= 0xff80 and < 0xffff => HRAM[at],
+                    0xffff => InterruptEnable[at],
+                    _ => throw new Exception("Unhandled address read"),
+                };
             }
 
             set
             {
-                var possible = setRanges.First((x) => x.Begin <= at && x.End > at);
-                possible.At(at, value);
+                switch (at)
+                {
+                    case >= 0 and < 0x4000:
+                        Card[at] = value;//bank0
+                        break;
+                    case >= 0x4000 and < 0x8000:
+                        Card[at] = value;//bank1
+                        break;
+                    case >= 0x8000 and < 0xa000:
+                        VRAM[at] = value;
+                        break;
+                    case >= 0xa000 and < 0xc000:
+                        Card[at] = value;//ext_ram
+                        break;
+                    case >= 0xc000 and < 0xe000:
+                        WRAM[at] = value;//wram
+                        break;
+                    case >= 0xe000 and < 0xFE00:
+                        WRAM[at] = value;//wram mirror
+                        break;
+                    case >= 0xfe00 and < 0xfea0:
+                        OAM[at] = value;
+                        break;
+                    case >= 0xfea0 and < 0xff00:
+                        UnusableMEM[at] = value; //This should be illegal?
+                        break;
+                    case >= 0xff00 and < 0xff80:
+                        IORegisters[at] = value;
+                        break;
+                    case >= 0xff80 and < 0xffff:
+                        HRAM[at] = value;
+                        break;
+                    case 0xffff:
+                        InterruptEnable[at] = value;
+                        break;
+                    default:
+                        throw new Exception("Unhandled address write");
+                }
             }
         }
-        private readonly List<byte> bootROM;
+        private readonly byte[] bootROM;
 
         private readonly Func<byte> ReadInput;
         private readonly Func<ushort> ReadInputWide;
@@ -42,25 +93,36 @@ namespace emulator
             ReadInput = readInput;
             ReadInputWide = () => BitConverter.ToUInt16(new byte[] { ReadInput(), ReadInput() });
 
-            getRanges = new();
-            setRanges = new();
             _bootROMActive = () => false;
         }
         public MMU(Func<byte> readInput,
-            List<byte> boot,
+            byte[] boot,
             Func<bool> bootROMActive,
-            List<GetRange> _getRanges,
-            List<SetRange> _setRanges)
+            MBC card,
+            VRAM vram,
+            OAM oam,
+            ControlRegister ioRegisters,
+            ControlRegister interruptEnable)
         {
             ReadInput = readInput;
             ReadInputWide = () => BitConverter.ToUInt16(new byte[] { ReadInput(), ReadInput() });
 
-            getRanges = _getRanges;
-            setRanges = _setRanges;
-
             _bootROMActive = bootROMActive;
             bootROM = boot; //Bootrom should be 256 bytes
+
+            var wram = new WRAM();
+            var hram = new HRAM();
+
+            Card = card;
+            VRAM = vram;
+            WRAM = wram;
+            OAM = oam;
+            IORegisters = ioRegisters;
+            HRAM = hram;
+            InterruptEnable = interruptEnable;
+            UnusableMEM = new UnusableMEM();
         }
+
         internal object Fetch(DMGInteger arg)
         {
             return arg switch

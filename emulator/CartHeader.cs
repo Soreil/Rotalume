@@ -69,7 +69,7 @@ namespace emulator
 
         public int ROM_Size { get; init; }
         public int RAM_Size { get; init; }
-        public CartHeader(List<byte> gameROM)
+        public CartHeader(byte[] gameROM)
         {
             char[] t = new char[16];
             for (int i = 0; i < 16; i++)

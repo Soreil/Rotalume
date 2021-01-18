@@ -10,8 +10,8 @@ namespace Tests
 {
     class GPU
     {
-        public static List<byte> LoadGameROM() => File.ReadAllBytes(@"..\..\..\rom\Tetris (World) (Rev A).gb").ToList();
-        public static List<byte> LoadCPUTestROM() => File.ReadAllBytes(@"..\..\..\rom\cpu_instrs.gb").ToList();
+        public static byte[] LoadGameROM() => File.ReadAllBytes(@"..\..\..\rom\Tetris (World) (Rev A).gb");
+        public static byte[] LoadCPUTestROM() => File.ReadAllBytes(@"..\..\..\rom\cpu_instrs.gb");
 
         [Test]
         public void LineRegisterGetsIncrementedDuringVBlank()

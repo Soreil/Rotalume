@@ -6,7 +6,7 @@ namespace emulator
     //MBC1 does not currently do multicart detection and as such won't work correctly since multicarts have different wiring
     internal class MBC1 : MBC
     {
-        private readonly List<byte> gameROM;
+        private readonly byte[] gameROM;
         private readonly List<byte[]> RAMBanks;
 
         private bool RAMEnabled = false;
@@ -30,10 +30,10 @@ namespace emulator
         int LowerBitsOfROMBank = 0;
         int UpperBitsOfROMBank = 0;
         int BankingMode = 0;
-        public MBC1(CartHeader header, List<byte> gameROM)
+        public MBC1(CartHeader header, byte[] gameROM)
         {
             this.gameROM = gameROM;
-            ROMBankCount = this.gameROM.Count / 0x4000;
+            ROMBankCount = this.gameROM.Length / 0x4000;
 
             RAMBankCount = Math.Max(1, header.RAM_Size / RAMBankSize);
             RAMBanks = new List<byte[]>(RAMBankCount);

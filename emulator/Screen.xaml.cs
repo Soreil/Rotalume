@@ -55,7 +55,7 @@ namespace GUI
             }
 
 
-            var gameboy = new Core(System.IO.File.ReadAllBytes(path).ToList(),
+            var gameboy = new Core(System.IO.File.ReadAllBytes(path),
                 null, updateJoyPad, keyBoardInterruptFired);
 
             Dispatcher.BeginInvoke(new UpdateImageCb(RunGameboy),

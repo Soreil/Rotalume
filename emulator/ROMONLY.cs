@@ -4,10 +4,10 @@ namespace emulator
 {
     internal class ROMONLY : MBC
     {
-        private readonly List<byte> gameROM;
+        private readonly byte[] gameROM;
         private byte[] EXT_RAM;
 
-        public ROMONLY(List<byte> gameROM)
+        public ROMONLY(byte[] gameROM)
         {
             this.gameROM = gameROM;
             EXT_RAM = new byte[0x2000];
