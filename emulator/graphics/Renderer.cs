@@ -164,7 +164,7 @@ namespace emulator
         {
             var pixelsSprite = new List<Shade>(DisplayWidth);
 
-            for (int x = 0; x < DisplayWidth; x++)
+            for (int x = 1; x <= DisplayWidth; x++)
             {
                 pixelsSprite.Add(GetSpritePixel(x));
             }
