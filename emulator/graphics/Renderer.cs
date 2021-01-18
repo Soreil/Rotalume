@@ -195,7 +195,7 @@ namespace emulator
             var index = sprite.X - xPos;
             if (sprite.XFlipped) index = 7 - index;
 
-            var line = PPU.LY - sprite.Y;
+            var line = PPU.LY - sprite.Y + 16;
             if (sprite.YFlipped) line = 7 - line;
 
             var at = 0x8000 + (sprite.ID * 16) + (line * 2);
