@@ -101,7 +101,7 @@ namespace emulator
             LCDControlController = (byte b) => PPU.LCDC = b;
             ReadLCDControl = () => PPU.LCDC;
 
-            LCDStatController = (byte b) => PPU.STAT = b;
+            LCDStatController = (byte b) => PPU.STAT = (byte)((b & 0xf8) | (PPU.STAT & 0x7));
             ReadLCDStat = () => PPU.STAT;
 
             ScrollYController = (byte b) => PPU.SCY = b;
@@ -406,7 +406,7 @@ namespace emulator
             if (op != 0xcb)
             {
                 //if ((Unprefixed)op != Unprefixed.CPL && (Unprefixed)op != Unprefixed.NOP && (Unprefixed)op != Unprefixed.RST_38H)
-                Unprefixeds.Push((PC - 1, (Unprefixed)op));
+                //Unprefixeds.Push((PC - 1, (Unprefixed)op));
                 CPU.Op((Unprefixed)op)();
             }
             else

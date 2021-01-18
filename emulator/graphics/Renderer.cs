@@ -54,8 +54,16 @@ namespace emulator
 
                 UpdateLineRegister();
                 IncrementMode();
+                SetStatInterruptForMode();
                 SetNewClockTarget();
             }
+        }
+
+        private void SetStatInterruptForMode()
+        {
+            if (PPU.Mode == Mode.OAMSearch && PPU.STAT.GetBit(5)) PPU.EnableLCDCStatusInterrupt();
+            else if (PPU.Mode == Mode.VBlank && PPU.STAT.GetBit(4)) PPU.EnableLCDCStatusInterrupt();
+            else if (PPU.Mode == Mode.HBlank && PPU.STAT.GetBit(3)) PPU.EnableLCDCStatusInterrupt();
         }
 
         private void Draw()

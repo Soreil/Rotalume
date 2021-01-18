@@ -43,7 +43,7 @@ namespace emulator
         }
 
 
-        public byte STAT; //FF41
+        public byte STAT { get; set; } //FF41
 
         public byte SCY; //FF42
         public byte SCX; //FF43
@@ -117,7 +117,8 @@ namespace emulator
             set
             {
                 STAT = STAT.SetBit(2, value);
-                EnableLCDCStatusInterrupt();
+                if (STAT.GetBit(6))
+                    EnableLCDCStatusInterrupt();
             }
         }
 
