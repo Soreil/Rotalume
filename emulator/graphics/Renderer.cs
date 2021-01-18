@@ -188,9 +188,9 @@ namespace emulator
         private Shade GetSpritePixel(int xPos)
         {
             if (!PPU.OBJDisplayEnable) throw new Exception("Sprites disabled");
-            if (!SpriteAttributes.Any(s => s.X >= xPos && (s.X < xPos + 7))) return Shade.Transparant;
+            if (!SpriteAttributes.Any(s => s.X >= xPos && (s.X <= xPos + 7))) return Shade.Transparant;
 
-            var sprite = SpriteAttributes.First(s => s.X >= xPos && (s.X < xPos + 7));
+            var sprite = SpriteAttributes.First(s => s.X >= xPos && (s.X <= xPos + 7));
 
             var index = sprite.X - xPos;
             if (sprite.XFlipped) index = 7 - index;
