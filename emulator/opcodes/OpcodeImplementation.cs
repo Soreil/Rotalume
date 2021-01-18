@@ -12,9 +12,6 @@ namespace emulator
         readonly public Action disableInterrupts;
         readonly private Action<long> AddTicks;
         readonly public Action halt;
-        //public ushort StackBase = 0xFFFF;
-        public int popcount = 0;
-        public int pushcount = 0;
         private ushort Pop()
         {
             var SP = Registers.SP;
@@ -22,16 +19,12 @@ namespace emulator
             SP += 2;
             Registers.SP = SP;
 
-            //if (Registers.SP > StackBase) throw new Exception("Stack underflow");
-            //else popcount++;
-
             return popped;
         }
         private void Push(ushort s)
         {
-            Registers.SP = (ushort)(Registers.SP - 2);
+            Registers.SP -= 2;
             Memory.Write(Registers.SP, s);
-            pushcount++;
         }
         public Action NOP(int duration)
         {
@@ -49,7 +42,6 @@ namespace emulator
                 }
                 else
                 {
-                    //if (p0.Item1 == WideRegister.SP) StackBase = (ushort)arg;
                     Registers.Set(p0.Item1, (ushort)arg);
                 }
                 AddTicks(duration);
@@ -118,7 +110,7 @@ namespace emulator
         => () =>
         {
             var before = Registers.Get(p0.Item1);
-            var arg = (byte)(before - 1);
+            var arg = before == 0 ? (byte)0xff : (byte)(before - 1);
             Registers.Set(p0.Item1, arg);
 
             Registers.Set(Flag.Z, arg == 0);
@@ -129,7 +121,6 @@ namespace emulator
         public Action LD((Register, Traits) p0, (DMGInteger, Traits) p1, int duration)
             => () =>
             {
-
                 if (p1.Item1 == DMGInteger.a16 && !p1.Item2.Immediate)
                 {
                     var addr = (ushort)Memory.Fetch(p1.Item1);
@@ -170,30 +161,30 @@ namespace emulator
 
         //This op is a litle weird, we should have generate
         //lefthandsided shorts as being a different type.
-        public Action LD((DMGInteger, Traits) p0, (WideRegister, Traits) p1, int duration)
+        public Action WriteSPToMem(int duration)
             => () =>
             {
                 var addr = (ushort)Memory.Fetch(DMGInteger.d16);
-                var arg = Registers.Get(p1.Item1);
+                var arg = Registers.SP;
 
                 Memory.Write(addr, arg);
                 AddTicks(duration);
             };
 
-        public Action ADD((WideRegister, Traits) p0, (WideRegister, Traits) p1, int duration)
+        public Action ADD(WideRegister rhs, int duration)
         {
             return () =>
             {
 
-                var target = Registers.Get(p0.Item1);
-                var arg = Registers.Get(p1.Item1);
-
-                var result = (ushort)(target + arg);
-                Registers.Set(p0.Item1, result);
+                var target = Registers.Get(WideRegister.HL);
+                var arg = Registers.Get(rhs);
 
                 Registers.Set(Flag.N, false);
                 Registers.Set(Flag.H, target.IsHalfCarryAdd(arg));
                 Registers.Set(Flag.C, target + arg > 0xFFFF);
+
+                Registers.HL += arg;
+
                 AddTicks(duration);
             };
         }
@@ -224,13 +215,16 @@ namespace emulator
         {
             //Wide registers do not use flags for INC and DEC
             if (p0.Item2.Immediate)
-                Registers.Set(p0.Item1, (ushort)(Registers.Get(p0.Item1) - 1));
+            {
+                var v = Registers.Get(p0.Item1);
+                ushort result = v == 0 ? 0xffff : (ushort)(v - 1);
+                Registers.Set(p0.Item1, result);
+            }
             else
             {
-                var addr = Registers.Get(p0.Item1);
-                var before = Memory.Read(addr);
-                var arg = (byte)(before - 1);
-                Memory.Write(addr, arg);
+                var read = Memory.Read(Registers.HL);
+                ushort result = read == 0 ? 0xffff : (ushort)(read - 1);
+                Memory.Write(Registers.HL, result);
             }
             AddTicks(duration);
         };
@@ -289,11 +283,11 @@ namespace emulator
             return A;
         }
 
-        public Action JR((DMGInteger, Traits) p0, int duration)
+        public Action JR(int duration)
         {
             return () =>
             {
-                var offset = (sbyte)Memory.Fetch(p0.Item1);
+                var offset = (sbyte)Memory.Fetch(DMGInteger.r8);
                 SetPC((ushort)(GetPC() + offset));
                 AddTicks(duration);
             };
@@ -322,11 +316,11 @@ namespace emulator
             return A;
         }
 
-        public Action JR((Flag, Traits) p0, (DMGInteger, Traits) p1, int duration, int alternativeDuration)
+        public Action JR((Flag, Traits) p0, int duration, int alternativeDuration)
         {
             return () =>
             {
-                var offset = (sbyte)Memory.Fetch(p1.Item1);
+                var offset = (sbyte)Memory.Fetch(DMGInteger.r8);
                 if (Registers.Get(p0.Item1))
                 {
                     SetPC((ushort)(GetPC() + offset));
@@ -519,7 +513,7 @@ namespace emulator
                 var lhs = Registers.A;
                 var rhs = Registers.Get(p0.Item1);
 
-                Registers.A = (SUB(lhs, rhs));
+                Registers.A = SUB(lhs, rhs);
                 AddTicks(duration);
             };
         }
@@ -527,11 +521,10 @@ namespace emulator
         {
             return () =>
             {
-
                 var lhs = Registers.A;
                 var rhs = Memory.Read(Registers.Get(p0.Item1));
 
-                Registers.A = (SUB(lhs, rhs));
+                Registers.A = SUB(lhs, rhs);
                 AddTicks(duration);
             };
         }
@@ -539,9 +532,9 @@ namespace emulator
         private byte SUB(byte lhs, byte rhs)
         {
             Registers.Mark(Flag.N);
-            var sum = lhs - rhs;
+            byte sum = lhs < rhs ? (byte)(0xff - (rhs - lhs)) : (byte)(lhs - rhs);
 
-            Registers.Set(Flag.Z, ((byte)sum) == 0);
+            Registers.Set(Flag.Z, sum == 0);
             Registers.Set(Flag.C, lhs < rhs);
             Registers.Set(Flag.H, lhs.IsHalfCarrySub(rhs));
             return (byte)sum;
@@ -573,7 +566,8 @@ namespace emulator
         private byte SBC(byte lhs, byte rhs)
         {
             Registers.Mark(Flag.N);
-            var sum = lhs - rhs - (Registers.Get(Flag.C) ? 1 : 0);
+            byte sum = lhs < rhs ? (byte)(0xff - (rhs - lhs)) : (byte)(lhs - rhs);
+            sum -= (Registers.Get(Flag.C) ? 1 : 0);
 
             Registers.Set(Flag.Z, ((byte)sum) == 0);
             Registers.Set(Flag.H, lhs.IsHalfCarrySub((byte)(rhs - (Registers.Get(Flag.C) ? 1 : 0))));
@@ -848,21 +842,21 @@ namespace emulator
                 throw new Exception("illegal");
             };
         }
-        public Action SUB((DMGInteger, Traits) p0, int duration)
+        public Action SUB(int duration)
         {
             return () =>
             {
                 Registers.Mark(Flag.N);
 
                 var lhs = Registers.A;
-                var rhs = (byte)Memory.Fetch(p0.Item1);
-                var sum = lhs - rhs;
+                var rhs = (byte)Memory.Fetch(DMGInteger.d8);
+                byte sum = lhs < rhs ? (byte)(0xff - (rhs - lhs)) : (byte)(lhs - rhs);
 
-                Registers.Set(Flag.Z, ((byte)sum) == 0);
+                Registers.Set(Flag.Z, sum == 0);
                 Registers.Set(Flag.C, lhs < rhs);
                 Registers.Set(Flag.H, lhs.IsHalfCarrySub(rhs));
 
-                Registers.A = ((byte)sum);
+                Registers.A = sum;
                 AddTicks(duration);
             };
         }
@@ -891,14 +885,14 @@ namespace emulator
                 throw new Exception("illegal");
             };
         }
-        public Action SBC((Register, Traits) p0, (DMGInteger, Traits) p1, int duration)
+        public Action SBC((Register, Traits) p0, int duration)
         {
             return () =>
             {
                 Registers.Mark(Flag.N);
 
                 var lhs = Registers.Get(p0.Item1);
-                var rhs = (byte)Memory.Fetch(p1.Item1);
+                var rhs = (byte)Memory.Fetch(DMGInteger.d8);
                 var sum = lhs - rhs - (Registers.Get(Flag.C) ? 1 : 0);
 
                 Registers.Set(Flag.Z, ((byte)sum) == 0);
@@ -909,11 +903,11 @@ namespace emulator
                 AddTicks(duration);
             };
         }
-        public Action LDH((DMGInteger, Traits) p0, (Register, Traits) p1, int duration)
+        public Action LDH(int duration)
         {
             return () =>
             {
-                Memory.Write(p0.Item1, Registers.Get(p1.Item1));
+                Memory.Write(DMGInteger.a8, Registers.Get(Register.A));
                 AddTicks(duration);
             };
         }
