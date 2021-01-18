@@ -4,11 +4,11 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="MainWindow" ResizeMode="NoResize" Height="670" Width="680" KeyDown="Window_KeyDown" KeyUp="Window_KeyUp" Background="BurlyWood">
+        Title="MainWindow" ResizeMode="NoResize" Height="700" Width="680" KeyDown="Window_KeyDown" KeyUp="Window_KeyUp" Background="BurlyWood">
     <StackPanel>
         <Label Name="FPS"/>
-        <Image Name="Display" Height="574" Width="640"/>
+        <Image Name="Display" Height="574" Width="640" Margin="8"/>
         
-        <Button Click="LoadROM"  Content="Open ROM"/>
+        <Button Click="LoadROM"  Content="Open ROM" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,10,10,10"/>
     </StackPanel>
 </Window>
