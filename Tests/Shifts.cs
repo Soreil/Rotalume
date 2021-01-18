@@ -101,6 +101,7 @@ namespace Tests
         {
             var core = new Core(new System.Collections.Generic.List<byte> { });
             var dec = core.CPU;
+            dec.Registers.Mark(Flag.NC);
 
             dec.Op(Unprefixed.CCF)();
             Assert.IsTrue(dec.Registers.Get(Flag.C));

@@ -15,7 +15,7 @@ namespace Tests
             (byte)Unprefixed.NOP
             });
             p.DoNextOP();
-            Assert.AreEqual(1, p.PC);
+            Assert.AreEqual(0x101, p.PC);
             Assert.AreEqual(4, p.Clock);
         }
 
@@ -29,7 +29,7 @@ namespace Tests
             p.CPU.Memory.Write(0x0fffd, 0x8020);
             p.CPU.Registers.SP = 0xfffd;
             p.DoNextOP();
-            Assert.AreEqual(1, p.PC);
+            Assert.AreEqual(0x101, p.PC);
             Assert.AreEqual(12, p.Clock);
             Assert.AreEqual(0xffff, p.CPU.Registers.SP);
             Assert.AreEqual(0x8020, p.CPU.Registers.AF);
@@ -64,9 +64,9 @@ namespace Tests
             var p = new Core(inst);
             p.CPU.Registers.SP = 0xffff;
 
-            while (p.PC != inst.Count)
+            while (p.PC != 0x100+inst.Count)
                 p.DoNextOP();
-            Assert.AreEqual(11, p.PC);
+            Assert.AreEqual(0x10b, p.PC);
             Assert.IsTrue(p.CPU.Registers.Get(Flag.Z));
         }
 
@@ -83,7 +83,7 @@ namespace Tests
             p.DoNextOP();
             var read = p.CPU.Memory.ReadWide(0x0fffc);
 
-            Assert.AreEqual(1, p.PC);
+            Assert.AreEqual(0x101, p.PC);
             Assert.AreEqual(16, p.Clock);
             Assert.AreEqual(0xfffc, p.CPU.Registers.SP);
 
@@ -120,26 +120,29 @@ namespace Tests
             Assert.AreEqual(0xcdab, p.PC);
             Assert.AreEqual(24, p.Clock);
             Assert.AreEqual(0xfffd, p.CPU.Registers.SP);
-            Assert.AreEqual(0x3, p.CPU.Memory.ReadWide(0xfffd));
+            Assert.AreEqual(0x103, p.CPU.Memory.ReadWide(0xfffd));
         }
 
         [Test]
         public void JR_NZ_r8()
         {
             var p = new Core(new List<byte>
-            { (byte)Unprefixed.JR_NZ_r8, 0x05}
+            {
+                (byte)Unprefixed.JR_NZ_r8, 0x05}
             );
+            p.CPU.Registers.Set(Flag.Z, false);
 
             p.DoNextOP();
-            Assert.AreEqual(7, p.PC);
+            Assert.AreEqual(0x107, p.PC);
             Assert.AreEqual(12, p.Clock);
 
             p = new Core(new List<byte>
             { (byte)Unprefixed.JR_NZ_r8, unchecked((byte)-2)}
             );
+            p.CPU.Registers.Mark(Flag.NZ);
 
             p.DoNextOP();
-            Assert.AreEqual(0, p.PC);
+            Assert.AreEqual(0x100, p.PC);
             Assert.AreEqual(12, p.Clock);
 
             p = new Core(new List<byte>
@@ -148,7 +151,7 @@ namespace Tests
             p.CPU.Registers.Mark(Flag.Z);
 
             p.DoNextOP();
-            Assert.AreEqual(2, p.PC);
+            Assert.AreEqual(0x102, p.PC);
             Assert.AreEqual(8, p.Clock);
         }
 
@@ -160,7 +163,7 @@ namespace Tests
             );
 
             p.DoNextOP();
-            Assert.AreEqual(7, p.PC);
+            Assert.AreEqual(0x107, p.PC);
             Assert.AreEqual(12, p.Clock);
 
             p = new Core(new List<byte>
@@ -168,7 +171,7 @@ namespace Tests
             );
 
             p.DoNextOP();
-            Assert.AreEqual(0, p.PC);
+            Assert.AreEqual(0x100, p.PC);
             Assert.AreEqual(12, p.Clock);
 
 

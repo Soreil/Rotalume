@@ -39,8 +39,15 @@ namespace emulator
         public Core(List<byte> bwah) : this(bwah.ToArray())
         { }
         //Constructor just for tests which don't care about a functioning bootrom
-        public Core(byte[] l, byte[] bootrom = null) : this(l, bootrom, (x) => 0x01f, () => false)
+        public Core(byte[] l, byte[] bootrom = null) : this(l.Length < 0x8000 ? PadAndMoveTo0x100(l) : l, bootrom, (x) => 0x01f, () => false)
+        { }
+
+        private static byte[] PadAndMoveTo0x100(byte[] l)
         {
+            byte[] buffer = new byte[0x8000];
+
+            l.CopyTo(buffer, 0x100);
+            return buffer;
         }
 
         public Core(byte[] gameROM, byte[] bootROM, Func<byte, byte> GetJoyPad, Func<bool> getKeyboardInterrupt)
