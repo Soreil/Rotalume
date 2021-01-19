@@ -34,6 +34,7 @@ namespace GUI
         }
 
         volatile bool paused = false;
+        volatile bool CancelRequested = false;
         private void Gameboy(string path)
         {
             byte updateJoyPad(byte x)
@@ -74,7 +75,7 @@ namespace GUI
 
             StartTime = DateTime.Now;
 
-            while (true)
+            while (!CancelRequested)
             {
                 if (!paused)
                     gameboy.Step();
@@ -113,6 +114,13 @@ namespace GUI
             var ofd = new Microsoft.Win32.OpenFileDialog() { DefaultExt = ".gb", Filter = "ROM Files (.gb)|*.gb" };
             var result = ofd.ShowDialog();
             if (result == false) return;
+
+            if (GameThread is not null)
+            {
+                CancelRequested = true;
+                GameThread.Wait();
+                CancelRequested = false;
+            }
 
             bmp = new WriteableBitmap(160, 144, 96, 96, PixelFormats.Gray8, null);
 
