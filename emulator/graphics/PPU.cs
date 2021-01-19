@@ -38,6 +38,8 @@ namespace emulator
                                     //there already being data written to the output buffer
 
                     Renderer = null; //We want to destroy the old renderer so it can't keep running after requested to turn off
+                    LY = 0;
+                    Mode = Mode.HBlank;
                 }
             }
         }

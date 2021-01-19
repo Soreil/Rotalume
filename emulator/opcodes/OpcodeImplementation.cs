@@ -256,7 +256,7 @@ namespace emulator
             return () =>
             {
                 AddTicks(duration);
-                throw new Exception("Yea we ain't stopping clean partner");
+                //throw new Exception("Yea we ain't stopping clean partner");
             };
         }
         public Action RLA(int duration)
@@ -1002,7 +1002,7 @@ namespace emulator
         {
             return () =>
             {
-                Registers.Set(p0.Item1, (byte)Memory.Fetch(p1.Item1));
+                Registers.A = (byte)Memory.Fetch(DMGInteger.a8);
                 AddTicks(duration);
             };
         }
