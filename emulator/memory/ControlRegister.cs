@@ -16,6 +16,8 @@ namespace emulator
             Reader = new Func<byte>[size];
             Start = startAddress;
             Size = size;
+
+            for (int i = 0; i < size; i++) Writer[i] = (x) => { };
         }
         public byte this[int at]
         {
