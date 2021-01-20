@@ -271,9 +271,12 @@ namespace emulator
                 return;
             }
 
+            //if (PC == 0x904) System.Diagnostics.Debugger.Break();
+
             var op = Read();
             if (op != 0xcb)
             {
+                //Unprefixeds.Push((PC - 1, (Unprefixed)op));
                 CPU.Op((Unprefixed)op)();
             }
             else
@@ -318,6 +321,11 @@ namespace emulator
                 InterruptFireRegister = InterruptFireRegister.SetBit(4);
 
             DoInterrupt();
+            if (CPU.InterruptEnableSceduled)
+            {
+                CPU.IME = true;
+                CPU.InterruptEnableSceduled = false;
+            }
             PPU.Do();
         }
 

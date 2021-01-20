@@ -8,6 +8,7 @@ namespace emulator
         readonly public MMU Memory;
         readonly public Action<ushort> SetPC;
         readonly public Func<ushort> GetPC;
+        readonly public Action enableInterruptsDelayed;
         readonly public Action enableInterrupts;
         readonly public Action disableInterrupts;
         readonly private Action<long> AddTicks;
@@ -1061,7 +1062,7 @@ namespace emulator
         {
             return () =>
             {
-                enableInterrupts();
+                enableInterruptsDelayed();
                 AddTicks(duration);
             };
         }
