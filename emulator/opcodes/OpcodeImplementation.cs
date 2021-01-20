@@ -508,8 +508,6 @@ namespace emulator
         {
             return () =>
             {
-                Registers.Mark(Flag.N);
-
                 var lhs = Registers.A;
                 var rhs = Registers.Get(p0.Item1);
 
@@ -537,7 +535,7 @@ namespace emulator
             Registers.Set(Flag.Z, sum == 0);
             Registers.Set(Flag.C, lhs < rhs);
             Registers.Set(Flag.H, lhs.IsHalfCarrySub(rhs));
-            return (byte)sum;
+            return sum;
         }
 
         public Action SBC((Register, Traits) p0, (Register, Traits) p1, int duration)
