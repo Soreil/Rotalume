@@ -334,37 +334,27 @@ namespace emulator
         {
             return () =>
             {
-
                 var wasSub = Registers.Get(Flag.N);
 
-                if (!wasSub)
-                {
-                    if (Registers.Get(Flag.C) || Registers.A > 0x99)
-                    {
-                        Registers.A += 0x60;
-                        Registers.Mark(Flag.C);
-                    }
-                    if (Registers.Get(Flag.H) || (Registers.A & 0x0f) > 0x09)
-                    {
-                        Registers.A += 0x06;
-                    }
-                }
+                if (!wasSub && Registers.A >= 0x9a) Registers.Set(Flag.C, true);
+                if (!wasSub && (Registers.A & 0x0f) >= 0x0a) Registers.Set(Flag.H, true);
+
+                byte adjustment = (byte)(
+                (Registers.Get(Flag.H) ? 0x06 : 0x00) |
+                (Registers.Get(Flag.C) ? 0x60 : 0x00)
+                );
+
+                if (wasSub) Registers.A -= adjustment;
                 else
                 {
-                    if (Registers.Get(Flag.C))
-                    {
-                        Registers.A -= 0x60;
-                        Registers.Mark(Flag.C);
-                    }
-                    if (Registers.Get(Flag.H))
-                    {
-                        Registers.A -= 0x06;
-                    }
+                    if (adjustment + Registers.A > 0xff) Registers.Set(Flag.C, true);
+                    Registers.A += adjustment;
                 }
 
-                Registers.Set(Flag.Z, Registers.A == 0);
-                Registers.Mark(Flag.NH);
 
+                Registers.Set(Flag.Z, Registers.A == 0);
+
+                Registers.Set(Flag.H, false);
                 AddTicks(duration);
             };
         }
@@ -473,8 +463,6 @@ namespace emulator
         {
             return () =>
             {
-                Registers.Mark(Flag.NN);
-
                 var lhs = Registers.Get(p0.Item1);
                 var rhs = Registers.Get(p1.Item1);
 
@@ -531,9 +519,9 @@ namespace emulator
         private byte SUB(byte lhs, byte rhs)
         {
             Registers.Mark(Flag.N);
-            byte sum = lhs < rhs ? (byte)(0xff - (rhs - lhs)) : (byte)(lhs - rhs);
+            byte sum = (byte)(lhs - rhs);
 
-            Registers.Set(Flag.Z, sum == 0);
+            Registers.Set(Flag.Z, lhs == rhs);
             Registers.Set(Flag.C, lhs < rhs);
             Registers.Set(Flag.H, lhs.IsHalfCarrySub(rhs));
             return sum;
@@ -565,13 +553,14 @@ namespace emulator
         private byte SBC(byte lhs, byte rhs)
         {
             Registers.Mark(Flag.N);
-            byte sum = lhs < rhs ? (byte)(0xff - (rhs - lhs)) : (byte)(lhs - rhs);
+            byte sum = (byte)(lhs - rhs);
+
             sum -= (Registers.Get(Flag.C) ? 1 : 0);
 
             Registers.Set(Flag.Z, ((byte)sum) == 0);
             Registers.Set(Flag.H, lhs.IsHalfCarrySub((byte)(rhs - (Registers.Get(Flag.C) ? 1 : 0))));
             Registers.Set(Flag.C, lhs < rhs);
-            return (byte)sum;
+            return sum;
         }
         public Action AND((Register, Traits) p0, int duration)
         {

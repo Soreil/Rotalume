@@ -90,6 +90,8 @@ namespace emulator
 
             if (bootROM == null)
             {
+                Timers.DividerClock = 0xabcc;
+
                 bootROMActive = false;
                 PC = 0x100;
                 CPU.Registers.AF = 0x01b0;

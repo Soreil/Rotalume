@@ -234,6 +234,83 @@ namespace Tests
 
         }
         [Test]
+
+        public void DAA_0109()
+        {
+            var core = new Core(new System.Collections.Generic.List<byte>
+            {
+                (byte)Unprefixed.ADD_A_B,
+                (byte)Unprefixed.DAA,
+            });
+
+            var dec = core.CPU;
+
+            dec.Registers.Set(Register.A, 0x01);
+            dec.Registers.Set(Register.B, 0x09);
+
+            core.DoNextOP();
+
+            Assert.AreEqual(0x0a, dec.Registers.Get(Register.A));
+
+            core.DoNextOP();
+
+            Assert.AreEqual(0x10, dec.Registers.Get(Register.A));
+        }
+        [Test]
+        public void DAA_00()
+        {
+            var core = new Core(new System.Collections.Generic.List<byte>
+            {
+                (byte)Unprefixed.ADD_A_B,
+                (byte)Unprefixed.DAA,
+            });
+
+            var dec = core.CPU;
+
+            dec.Registers.Set(Register.A, 0x99);
+            dec.Registers.Set(Register.B, 0x01);
+
+            core.DoNextOP();
+
+            Assert.AreEqual(0x9a, dec.Registers.Get(Register.A));
+            Assert.True(dec.Registers.Get(Flag.NH));
+            Assert.True(dec.Registers.Get(Flag.NN));
+
+            core.DoNextOP();
+
+            Assert.AreEqual(0, dec.Registers.Get(Register.A));
+
+            Assert.True(dec.Registers.Get(Flag.C));
+            Assert.True(dec.Registers.Get(Flag.NH));
+            Assert.True(dec.Registers.Get(Flag.Z));
+        }
+
+        [Test]
+        public void DAA_SUB_1009()
+        {
+            var core = new Core(new System.Collections.Generic.List<byte>
+            {
+                (byte)Unprefixed.SUB_B,
+                (byte)Unprefixed.DAA,
+            });
+
+            var dec = core.CPU;
+
+            {
+                dec.Registers.Set(Register.A, 0x10);
+                dec.Registers.Set(Register.B, 0x01);
+
+                core.DoNextOP();
+
+                Assert.AreEqual(0x0f, dec.Registers.Get(Register.A));
+
+                core.DoNextOP();
+
+                Assert.AreEqual(0x09, dec.Registers.Get(Register.A));
+            }
+
+        }
+        [Test]
         public void DAA_83()
         {
             var core = new Core(new System.Collections.Generic.List<byte>

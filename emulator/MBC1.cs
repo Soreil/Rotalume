@@ -81,7 +81,7 @@ namespace emulator
         private byte ReadHighBank(int n) => gameROM[highBank * ROMBankSize + (n - ROMBankSize)];
         private bool IsUpperBank(int n) => n >=  ROMBankSize;
 
-        public byte GetRAM(int n) => RAMBanks[ramBank][n - RAMStart];
+        public byte GetRAM(int n) => RAMEnabled ? RAMBanks[ramBank][n - RAMStart] : 0xff;
         public byte SetRAM(int n, byte v) => RAMBanks[ramBank][n - RAMStart] = v;
     }
 }

@@ -4,8 +4,8 @@ namespace emulator
 {
     public class Timers
     {
-        long DividerClock;
-        long TimerClock;
+        public ushort DividerClock;
+        ushort TimerClock;
 
         readonly Action EnableTimerInterrupt;
         public Timers(Action enableTimerInterrupt)
@@ -13,11 +13,9 @@ namespace emulator
             EnableTimerInterrupt = enableTimerInterrupt;
         }
 
-        public void Tick()
+        private void Tick()
         {
             DividerClock++;
-
-            _divider = (int)(DividerClock / dividerMod);
 
             if (TimerEnabled)
             {
@@ -28,7 +26,7 @@ namespace emulator
                 {
                     //This is really ugly but it should work
                     EnableTimerInterrupt();
-                    TimerClock = TimerDefault * TimerScale;
+                    TimerClock = (ushort)(TimerDefault * TimerScale);
                     _Timer = TimerDefault;
                 }
                 else
@@ -42,18 +40,9 @@ namespace emulator
         {
             for (long i = 0; i < n; i++) Tick();
         }
-
-        const long dividerMod = 16384;
-
-        int _divider
-        {
-            get;
-            set;
-        }
-
         public byte Divider
         {
-            get => (byte)(_divider % 256);
+            get => (byte)((DividerClock % 0xff00) >> 8);
             set
             {
                 DividerClock = 0;
