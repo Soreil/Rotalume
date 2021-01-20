@@ -242,9 +242,9 @@ namespace Tests
             Assert.AreEqual(0x014d, Proc.CPU.Registers.HL);
             Assert.AreEqual(0xfffe, Proc.CPU.Registers.SP);
 
-            Assert.AreEqual(0x0000, Proc.Timers.TimerControl);
-            Assert.AreEqual(0x0000, Proc.Timers.Timer);
-            Assert.AreEqual(0x0000, Proc.Timers.TimerDefault);
+            Assert.AreEqual(0x0000, Proc.Timers.TAC);
+            Assert.AreEqual(0x0000, Proc.Timers.TIMA);
+            Assert.AreEqual(0x0000, Proc.Timers.TMA);
 
             Assert.AreEqual(Proc.PPU.OBP0, 0xff);
             Assert.AreEqual(Proc.PPU.OBP1, 0xff);

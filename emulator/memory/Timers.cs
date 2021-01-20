@@ -4,8 +4,7 @@ namespace emulator
 {
     public class Timers
     {
-        public ushort DividerClock;
-        ushort TimerClock;
+        public ushort InternalCounter;
 
         readonly Action EnableTimerInterrupt;
         public Timers(Action enableTimerInterrupt)
@@ -15,24 +14,12 @@ namespace emulator
 
         private void Tick()
         {
-            DividerClock++;
-
-            if (TimerEnabled)
+            var before = (InternalCounter & (1 << TACBitSelected)) == 0;
+            InternalCounter++;
+            var overflow = (InternalCounter & (1 << TACBitSelected)) == 0;
+            if (before == false && overflow == true && TimerEnabled)
             {
-                TimerClock++;
-
-                var current = TimerClock / TimerScale;
-                if (current > 0xff)
-                {
-                    //This is really ugly but it should work
-                    EnableTimerInterrupt();
-                    TimerClock = (ushort)(TimerDefault * TimerScale);
-                    _Timer = TimerDefault;
-                }
-                else
-                {
-                    _Timer = (byte)current;
-                }
+                IncrementTIMA();
             }
         }
 
@@ -40,39 +27,46 @@ namespace emulator
         {
             for (long i = 0; i < n; i++) Tick();
         }
-        public byte Divider
+        public byte DIV
         {
-            get => (byte)((DividerClock % 0xff00) >> 8);
+            get => (byte)((InternalCounter & 0xff00) >> 8);
             set
             {
-                DividerClock = 0;
+                InternalCounter = 0;
             }
         }
 
-        public byte TimerDefault { get; set; }
+        public byte TMA { get; set; }
 
-        public byte TimerControl { get; set; }
+        public byte TAC { get; set; }
 
-        bool TimerEnabled => (TimerControl & 0x04) != 0;
-        int TimerScale => (TimerControl & 0x03) switch
+        bool TimerEnabled => TAC.GetBit(2);
+        int TACBitSelected => (TAC & 0x03) switch
         {
-            0 => 1024,
-            1 => 16,
-            2 => 64,
-            3 => 256,
+            0 => 9,
+            1 => 3,
+            2 => 5,
+            3 => 7,
             _ => throw new NotImplementedException(),
         };
 
-        private int _Timer
+        private byte _tima;
+        public byte TIMA
         {
-            get;
-            set;
+            get => _tima;
+            set
+            {
+                _tima = value;
+            }
         }
-
-        public byte Timer
+        private void IncrementTIMA()
         {
-            get => (byte)_Timer;
-            set => _Timer = value;
+            if (_tima == 0xff)
+            {
+                _tima = TMA;
+                EnableTimerInterrupt();
+            }
+            else _tima++;
         }
     }
 }

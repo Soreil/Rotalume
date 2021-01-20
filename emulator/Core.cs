@@ -90,7 +90,7 @@ namespace emulator
 
             if (bootROM == null)
             {
-                Timers.DividerClock = 0xabcc;
+                Timers.InternalCounter = 0xabcc;
 
                 bootROMActive = false;
                 PC = 0x100;
@@ -100,9 +100,9 @@ namespace emulator
                 CPU.Registers.HL = 0x014d;
                 CPU.Registers.SP = 0xfffe;
 
-                Timers.Timer = 0;
-                Timers.TimerControl = 0;
-                Timers.TimerDefault = 0;
+                Timers.TIMA = 0;
+                Timers.TAC = 0;
+                Timers.TMA = 0;
 
                 PPU.LCDC = 0x91;
 
@@ -171,17 +171,17 @@ namespace emulator
             controlRegisters.Writer[0xF] = x => InterruptFireRegister = x;
             controlRegisters.Reader[0xF] = () => InterruptFireRegister;
 
-            controlRegisters.Writer[0x04] = x => Timers.Divider = x;
-            controlRegisters.Reader[0x04] = () => Timers.Divider;
+            controlRegisters.Writer[0x04] = x => Timers.DIV = x;
+            controlRegisters.Reader[0x04] = () => Timers.DIV;
 
-            controlRegisters.Writer[0x05] = x => Timers.Timer = x;
-            controlRegisters.Reader[0x05] = () => Timers.Timer;
+            controlRegisters.Writer[0x05] = x => Timers.TIMA = x;
+            controlRegisters.Reader[0x05] = () => Timers.TIMA;
 
-            controlRegisters.Writer[0x06] = x => Timers.TimerDefault = x;
-            controlRegisters.Reader[0x06] = () => Timers.TimerDefault;
+            controlRegisters.Writer[0x06] = x => Timers.TMA = x;
+            controlRegisters.Reader[0x06] = () => Timers.TMA;
 
-            controlRegisters.Writer[0x07] = x => Timers.TimerControl = x;
-            controlRegisters.Reader[0x07] = () => Timers.TimerControl;
+            controlRegisters.Writer[0x07] = x => Timers.TAC = x;
+            controlRegisters.Reader[0x07] = () => Timers.TAC;
 
             controlRegisters.Writer[0x50] = BootROMFlagController;
             controlRegisters.Reader[0x50] = ReadBootROMFlag;
