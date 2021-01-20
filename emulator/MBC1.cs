@@ -79,7 +79,7 @@ namespace emulator
         public byte GetROM(int n) => IsUpperBank(n) ? ReadHighBank(n) : ReadLowBank(n);
         private byte ReadLowBank(int n) => gameROM[lowBank * ROMBankSize + n];
         private byte ReadHighBank(int n) => gameROM[highBank * ROMBankSize + (n - ROMBankSize)];
-        private bool IsUpperBank(int n) => n >= highBank * ROMBankSize;
+        private bool IsUpperBank(int n) => n >=  ROMBankSize;
 
         public byte GetRAM(int n) => RAMBanks[ramBank][n - RAMStart];
         public byte SetRAM(int n, byte v) => RAMBanks[ramBank][n - RAMStart] = v;
