@@ -1037,7 +1037,14 @@ namespace emulator
             {
                 var offset = (sbyte)Memory.Fetch(DMGInteger.r8);
                 var SP = Registers.SP;
+
+                Registers.Set(Flag.Z, false);
+                Registers.Set(Flag.N, false);
+                Registers.Set(Flag.H, SP.IsHalfCarryAdd((ushort)offset));
+                Registers.Set(Flag.C, offset + SP > 0xFFFF);
+
                 Registers.Set(WideRegister.HL, (ushort)(SP + offset));
+
                 AddTicks(duration);
             };
         }
