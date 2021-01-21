@@ -223,9 +223,14 @@ namespace emulator
             }
             else
             {
-                var read = Memory.Read(Registers.HL);
-                ushort result = read == 0 ? 0xffff : (ushort)(read - 1);
+
+                var before = Memory.Read(Registers.HL);
+                ushort result = before == 0 ? 0xffff : (ushort)(before - 1);
                 Memory.Write(Registers.HL, result);
+
+                Registers.Set(Flag.Z, result == 0);
+                Registers.Mark(Flag.N);
+                Registers.Set(Flag.H, before.IsHalfCarrySub(1));
             }
             AddTicks(duration);
         };
@@ -1019,7 +1024,7 @@ namespace emulator
             };
         }
 
-        public Action LD((WideRegister, Traits) p0, (WideRegister, Traits) p1, (DMGInteger, Traits) p2, int duration)
+        public Action LD_HL_SP_i8(int duration)
         {
             return () =>
             {
@@ -1037,12 +1042,11 @@ namespace emulator
             };
         }
 
-        public Action LD((WideRegister, Traits) p0, (WideRegister, Traits) p1, int duration)
+        public Action LD_SP_HL(int duration)
         {
             return () =>
             {
-                var newSPValue = Registers.Get(p1.Item1);
-                Registers.Set(p0.Item1, newSPValue);
+                Registers.SP = Registers.HL;
                 AddTicks(duration);
             };
 
