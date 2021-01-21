@@ -12,7 +12,6 @@ namespace emulator
 
         //Not sure where this special bit should go but it's not in memory and suposed to be hard to access
         bool bootROMActive = true;
-        private byte bootROMField = 0;
 
         //Global clock from which all timing derives
         public long Clock;
@@ -247,11 +246,11 @@ namespace emulator
                 controlRegisters.Reader[SoundWave & 0xff] = () => 0xff;
             }
 
-            controlRegisters.Writer[0] = (x) => { };
-            controlRegisters.Reader[0] = () => 0;
-
             controlRegisters.Writer[1] = (x) => { };
             controlRegisters.Reader[1] = () => 0;
+
+            controlRegisters.Writer[2] = (x) => { };
+            controlRegisters.Reader[2] = () => 0;
 
             for (ushort Unused = 0xff4c; Unused < 0xff80; Unused++)
             {
