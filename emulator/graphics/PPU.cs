@@ -44,8 +44,13 @@ namespace emulator
             }
         }
 
-
-        public byte STAT { get; set; } //FF41
+        private byte _stat = 0x80;
+        //FF41      
+        public byte STAT
+        {
+            get => _stat;
+            set => _stat = (byte)((value & 0x7f) | 0x80);
+        } 
 
         public byte SCY; //FF42
         public byte SCX; //FF43

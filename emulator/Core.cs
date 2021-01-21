@@ -29,7 +29,14 @@ namespace emulator
 
         Func<bool> GetKeyboardInterrupt = () => false;
 
-        public byte InterruptFireRegister { get; set; }
+        private byte _IE = 0xe0;
+        public byte InterruptFireRegister
+        {
+            get => _IE;
+            set => _IE = (byte)((value & 0x1f) | 0xe0);
+        }
+
+        private byte _dma = 0xff;
 
         public byte InterruptControlRegister { get; set; }
 
@@ -63,7 +70,7 @@ namespace emulator
 
             Timers = new Timers(() => InterruptFireRegister = InterruptFireRegister.SetBit(2));
 
-            Func<byte> ReadBootROMFlag = () => bootROMField;
+            Func<byte> ReadBootROMFlag = () => 0xff;
             GetKeyboardInterrupt = getKeyboardInterrupt;
 
             interruptRegisters.Writer[0x00] = x => InterruptControlRegister = x;
@@ -165,7 +172,7 @@ namespace emulator
             Func<byte> ReadLYC = () => PPU.LYC;
 
 
-            controlRegisters.Writer[0] = x => keypadFlags = x;
+            controlRegisters.Writer[0] = x => keypadFlags = (byte)(x & 0xf0);
             controlRegisters.Reader[0] = () => GetJoyPad(keypadFlags);
 
             controlRegisters.Writer[0xF] = x => InterruptFireRegister = x;
@@ -204,6 +211,7 @@ namespace emulator
             controlRegisters.Writer[0x46] = (x) =>
             {
                 if (x > 0xf1) throw new Exception("Illegal DMA start adress");
+                _dma = x;
 
                 ushort baseAddr = (ushort)(x << 8);
                 for (int i = 0; i < OAM.Size; i++)
@@ -213,7 +221,7 @@ namespace emulator
                 }
             };
 
-            controlRegisters.Reader[0x46] = () => throw new Exception("DMAREAD");
+            controlRegisters.Reader[0x46] = () => _dma;
 
             controlRegisters.Writer[0x47] = PaletteController;
             controlRegisters.Reader[0x47] = ReadPalette;

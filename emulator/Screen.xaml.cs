@@ -152,7 +152,7 @@ namespace GUI
             var selectArrows = !Flags.GetBit(4);
 
             byte joypad = 0xf;
-            if (!selectButtons && !selectArrows) return joypad;
+            if (!selectButtons && !selectArrows) return (byte)((joypad & 0xf) | 0xc0);
 
             if (selectArrows)
             {
@@ -169,7 +169,7 @@ namespace GUI
                 if (Pressed[Key.F]) joypad = joypad.SetBit(3, false);
             }
 
-            return joypad;
+            return (byte)((joypad & 0xf) | 0xc0);
         }
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
