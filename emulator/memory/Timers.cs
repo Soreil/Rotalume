@@ -76,7 +76,7 @@ namespace emulator
         bool TimerEnabled => TAC.GetBit(2);
         int TACBitSelected => BitPosition(TAC);
 
-        private byte BitPosition(byte b) => (b & 0x03) switch
+        private static byte BitPosition(byte b) => (b & 0x03) switch
         {
             0 => 9,
             1 => 3,

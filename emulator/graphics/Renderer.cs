@@ -192,8 +192,6 @@ namespace emulator
 
             var sprite = SpriteAttributes.First(s => s.X >= xPos && (s.X <= xPos + 7));
 
-            var index = sprite.X - xPos;
-            if (sprite.XFlipped) index = 7 - index;
 
             var line = PPU.LY - sprite.Y + 16;
             if (sprite.YFlipped) line = 7 - line;
@@ -201,6 +199,10 @@ namespace emulator
             var at = 0x8000 + (sprite.ID * 16) + (line * 2);
             var tileDataLow = PPU.VRAM[at]; //low byte of line
             var tileDataHigh = PPU.VRAM[at + 1]; //high byte of line
+
+            var index = sprite.X - xPos;
+            if (sprite.XFlipped)
+                index = 7 - index;
 
             var paletteIndex = tileDataLow.GetBit(index) ? 1 : 0;
             paletteIndex += tileDataHigh.GetBit(index) ? 2 : 0;
