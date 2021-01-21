@@ -247,11 +247,12 @@ namespace emulator
                 controlRegisters.Reader[SoundWave & 0xff] = () => 0xff;
             }
 
-            for (ushort Serial = 0xff01; Serial <= 0xff02; Serial++)
-            {
-                controlRegisters.Writer[Serial & 0xff] = (x) => { };
-                controlRegisters.Reader[Serial & 0xff] = () => 0xff;
-            }
+            controlRegisters.Writer[0] = (x) => { };
+            controlRegisters.Reader[0] = () => 0;
+
+            controlRegisters.Writer[1] = (x) => { };
+            controlRegisters.Reader[1] = () => 0;
+
             for (ushort Unused = 0xff4c; Unused < 0xff80; Unused++)
             {
                 if (Unused == 0xff50) continue;
@@ -312,7 +313,7 @@ namespace emulator
                     InterruptFireRegister = InterruptFireRegister.SetBit(bit, false);
 
                     var addr = (ushort)(0x40 + (0x8 * bit));
-                    CPU.Call(24, addr); //We need a cleaner way to call functions without fetching
+                    CPU.Call(20, addr); //We need a cleaner way to call functions without fetching
 
                     return;
                 }
