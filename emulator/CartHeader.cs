@@ -34,7 +34,7 @@ namespace emulator
         HuC3 = 0xFE,
         HuC1_RAM_BATTERY = 0xFF,
     }
-    internal class CartHeader
+    internal record CartHeader
     {
         public string Title { get; init; }
         public CartType Type { get; init; }

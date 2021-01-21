@@ -260,6 +260,7 @@ namespace emulator
             CartType.ROM_ONLY => new ROMONLY(gameROM),
             CartType.MBC1 => new MBC1(header, gameROM),
             CartType.MBC1_RAM_BATTERY => new MBC1(header, gameROM),
+            CartType.MBC1_RAM => new MBC1(header, gameROM),
             _ => throw new NotImplementedException(),
         };
 

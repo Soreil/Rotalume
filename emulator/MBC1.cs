@@ -16,12 +16,12 @@ namespace emulator
         int lowBank => BankingMode == 0 ? 0 : GetLowBankNumber();
 
         //This can return 0/20/40/60h
-        private int GetLowBankNumber() => UpperBitsOfROMBank * 0x20;
+        private int GetLowBankNumber() => RAMBanks.Count > 4 ? UpperBitsOfROMBank * 0x20 : 0;
 
         //We should really be masking here but maybe just checking if it stays in bounds is sufficient.
         //5 should be parameterizable depending on if it's a multicart rom or not.
-        private int HighBank() => Math.Min(ROMBankCount, (UpperBitsOfROMBank << 5) + LowerBitsOfROMBank);
-        int highBank => (HighBank() & 0x0F) == 0 ? HighBank() + 1 : HighBank();
+        private int HighBank() => LowerBitsOfROMBank & (ROMBankCount - 1);
+        int highBank => (HighBank() & 0x1F) == 0 ? HighBank() + 1 : HighBank();
 
         int ramBank => RAMBankCount == 1 ? 0 : (BankingMode == 1 ? UpperBitsOfROMBank : 0);
         int RAMBankCount;
@@ -34,7 +34,7 @@ namespace emulator
         {
             this.gameROM = gameROM;
             ROMBankCount = this.gameROM.Length / 0x4000;
-
+            if (header.Type == CartType.MBC1_RAM && header.RAM_Size == 0) header = header with { RAM_Size = 0x2000 };
             RAMBankCount = Math.Max(1, header.RAM_Size / RAMBankSize);
             RAMBanks = new List<byte[]>(RAMBankCount);
 
@@ -79,7 +79,7 @@ namespace emulator
         public byte GetROM(int n) => IsUpperBank(n) ? ReadHighBank(n) : ReadLowBank(n);
         private byte ReadLowBank(int n) => gameROM[lowBank * ROMBankSize + n];
         private byte ReadHighBank(int n) => gameROM[highBank * ROMBankSize + (n - ROMBankSize)];
-        private bool IsUpperBank(int n) => n >=  ROMBankSize;
+        private bool IsUpperBank(int n) => n >= ROMBankSize;
 
         public byte GetRAM(int n) => RAMEnabled ? RAMBanks[ramBank][n - RAMStart] : 0xff;
         public byte SetRAM(int n, byte v) => RAMBanks[ramBank][n - RAMStart] = v;
