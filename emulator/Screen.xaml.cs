@@ -35,7 +35,7 @@ namespace GUI
 
         volatile bool paused = false;
         volatile bool CancelRequested = false;
-        private void Gameboy(string path)
+        private void Gameboy(string path, bool bootromEnabled)
         {
             byte updateJoyPad(byte x)
             {
@@ -55,9 +55,10 @@ namespace GUI
                 return res;
             }
 
+            byte[] bootrom = bootromEnabled ? Core.LoadBootROM() : null;
 
             var gameboy = new Core(System.IO.File.ReadAllBytes(path),
-                null, updateJoyPad, keyBoardInterruptFired);
+                bootrom, updateJoyPad, keyBoardInterruptFired);
 
             Dispatcher.BeginInvoke(new UpdateImageCb(RunGameboy),
                 System.Windows.Threading.DispatcherPriority.Render);
@@ -111,6 +112,8 @@ namespace GUI
         Task GameThread;
         private void LoadROM(object sender, RoutedEventArgs e)
         {
+            bool br = (bool)bootromCheckbox.IsChecked;
+
             var ofd = new Microsoft.Win32.OpenFileDialog() { DefaultExt = ".gb", Filter = "ROM Files (.gb)|*.gb" };
             var result = ofd.ShowDialog();
             if (result == false) return;
@@ -128,7 +131,7 @@ namespace GUI
             {
                 Thread.CurrentThread.IsBackground = true;
                 Thread.CurrentThread.Name = "Gaming";
-                Gameboy(ofd.FileName);
+                Gameboy(ofd.FileName, br);
             });
 
             GameThread.Start();
