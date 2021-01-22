@@ -18,6 +18,7 @@ namespace emulator
 
         //Opcode fetcher
         public Func<byte> Read;
+        public Func<byte> ReadHaltBug;
 
         public CPU CPU;
 
@@ -28,16 +29,9 @@ namespace emulator
 
         Func<bool> GetKeyboardInterrupt = () => false;
 
-        private byte _IE = 0xe0;
-        public byte InterruptFireRegister
-        {
-            get => _IE;
-            set => _IE = (byte)((value & 0x1f) | 0xe0);
-        }
-
         private byte _dma = 0xff;
+        private byte serialControl = 0x7e;
 
-        public byte InterruptControlRegister { get; set; }
 
         readonly ControlRegister controlRegisters = new ControlRegister(0xff00, 0x80);
         readonly ControlRegister interruptRegisters = new ControlRegister(0xffff, 0x1); //This is only being used for two registers.
@@ -63,17 +57,22 @@ namespace emulator
             //Maybe adding to the timers should be handled by a clock object rather than just this one lambda
             Action<long> IncrementClock = (x) => { Clock += x; Timers.Add(x); };
             Read = () => CPU.Memory[PC++];
+            ReadHaltBug = () =>
+            {
+                CPU.Halted = HaltState.off;
+                return CPU.Memory[PC];
+            };
 
-            PPU = new PPU(() => Clock, () => InterruptFireRegister = InterruptFireRegister.SetBit(0),
-                                       () => InterruptFireRegister = InterruptFireRegister.SetBit(1));
+            PPU = new PPU(() => Clock, () => CPU.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(0),
+                                       () => CPU.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(1));
 
-            Timers = new Timers(() => InterruptFireRegister = InterruptFireRegister.SetBit(2));
+            Timers = new Timers(() => CPU.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(2));
 
             Func<byte> ReadBootROMFlag = () => 0xff;
             GetKeyboardInterrupt = getKeyboardInterrupt;
 
-            interruptRegisters.Writer[0x00] = x => InterruptControlRegister = x;
-            interruptRegisters.Reader[0x00] = () => InterruptControlRegister;
+            interruptRegisters.Writer[0x00] = x => CPU.InterruptControlRegister = x;
+            interruptRegisters.Reader[0x00] = () => CPU.InterruptControlRegister;
 
             var ioRegisters = SetupControlRegisters(GetJoyPad, ReadBootROMFlag);
 
@@ -174,8 +173,8 @@ namespace emulator
             controlRegisters.Writer[0] = x => keypadFlags = (byte)(x & 0xf0);
             controlRegisters.Reader[0] = () => GetJoyPad(keypadFlags);
 
-            controlRegisters.Writer[0xF] = x => InterruptFireRegister = x;
-            controlRegisters.Reader[0xF] = () => InterruptFireRegister;
+            controlRegisters.Writer[0xF] = x => CPU.InterruptFireRegister = x;
+            controlRegisters.Reader[0xF] = () => CPU.InterruptFireRegister;
 
             controlRegisters.Writer[0x04] = x => Timers.DIV = x;
             controlRegisters.Reader[0x04] = () => Timers.DIV;
@@ -222,6 +221,7 @@ namespace emulator
 
             controlRegisters.Reader[0x46] = () => _dma;
 
+            //PPU registers
             controlRegisters.Writer[0x47] = PaletteController;
             controlRegisters.Reader[0x47] = ReadPalette;
             controlRegisters.Writer[0x48] = OBP0Controller;
@@ -234,6 +234,7 @@ namespace emulator
             controlRegisters.Writer[0x4B] = WXController;
             controlRegisters.Reader[0x4B] = ReadWX;
 
+            //Sound
             for (ushort SoundRegister = 0xff10; SoundRegister <= 0xff26; SoundRegister++)
             {
                 controlRegisters.Writer[SoundRegister & 0xff] = (x) => { };
@@ -246,12 +247,14 @@ namespace emulator
                 controlRegisters.Reader[SoundWave & 0xff] = () => 0xff;
             }
 
+            //Serial
             controlRegisters.Writer[1] = (x) => { };
             controlRegisters.Reader[1] = () => 0;
 
-            controlRegisters.Writer[2] = (x) => { };
-            controlRegisters.Reader[2] = () => 0;
+            controlRegisters.Writer[2] = (x) => serialControl = (byte)((x & 0x81) | 0x7e);
+            controlRegisters.Reader[2] = () => serialControl;
 
+            //Not used on the DMG
             for (ushort Unused = 0xff4c; Unused < 0xff80; Unused++)
             {
                 if (Unused == 0xff50) continue;
@@ -274,17 +277,17 @@ namespace emulator
 
         public void DoNextOP()
         {
-            if (CPU.Halted)
+            if (CPU.Halted != HaltState.off)
             {
                 Clock += 4; //Just take some time so the interrupt handling and gpu keep going otherwise
                 //We can never get to a situation where the halt state stops.
                 Timers.Add(4);
-                return;
+
+                if (CPU.Halted != HaltState.haltbug)
+                    return;
             }
 
-            //if (PC == 0x904) System.Diagnostics.Debugger.Break();
-
-            var op = Read();
+            var op = CPU.Halted == HaltState.haltbug ? ReadHaltBug() : Read();
             if (op != 0xcb)
             {
                 //Unprefixeds.Push((PC - 1, (Unprefixed)op));
@@ -297,28 +300,6 @@ namespace emulator
             }
         }
 
-        public void DoInterrupt()
-        {
-            byte coincidence = (byte)((InterruptControlRegister & InterruptFireRegister) & 0x1f); //Coincidence has all the bits which have both fired AND are enabled
-            if (coincidence != 0)
-                CPU.Halted = false;
-
-            if (!CPU.IME || coincidence == 0) return; //Interrupts have to be globally enabled to use them
-            for (int bit = 0; bit < 5; bit++) //Bit 0 has highest priority, we only handle one interrupt at a time
-            {
-                if (coincidence.GetBit(bit))
-                {
-                    CPU.IME = false;
-                    InterruptFireRegister = InterruptFireRegister.SetBit(bit, false);
-
-                    var addr = (ushort)(0x40 + (0x8 * bit));
-                    CPU.Call(20, addr); //We need a cleaner way to call functions without fetching
-
-                    return;
-                }
-            }
-        }
-
         public static byte[] LoadBootROM()
         {
             return System.IO.File.ReadAllBytes(@"..\..\..\..\emulator\bootrom\DMG_ROM_BOOT.bin");
@@ -328,10 +309,10 @@ namespace emulator
         {
             DoNextOP();
             //We really should have the GUI thread somehow do this logic but polling like this should work
-            if (!InterruptFireRegister.GetBit(4) && GetKeyboardInterrupt())
-                InterruptFireRegister = InterruptFireRegister.SetBit(4);
+            if (!CPU.InterruptFireRegister.GetBit(4) && GetKeyboardInterrupt())
+                CPU.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(4);
 
-            DoInterrupt();
+            CPU.DoInterrupt();
             if (CPU.InterruptEnableSceduled)
             {
                 CPU.IME = true;

@@ -9,7 +9,7 @@ namespace emulator
         private readonly Action[] CbOps;
 
         public bool IME = false;
-        public bool Halted = false;
+        public HaltState Halted = HaltState.off;
 
         public bool InterruptEnableSceduled = false;
 
@@ -28,7 +28,17 @@ namespace emulator
             enableInterruptsDelayed = () => InterruptEnableSceduled = true;
             enableInterrupts = () => IME = true;
             disableInterrupts = () => IME = false;
-            halt = () => Halted = true;
+            halt = () =>
+            {
+                if (IME)
+                    Halted = HaltState.normal;
+                else
+                {
+                    if ((InterruptFireRegister & InterruptControlRegister & 0x1f) == 0)
+                        Halted = HaltState.normalIME0;
+                    else Halted = HaltState.haltbug;
+                }
+            };
             AddTicks = TickClock;
         }
 
