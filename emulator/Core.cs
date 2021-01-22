@@ -21,7 +21,7 @@ namespace emulator
         public Func<byte> ReadHaltBug;
 
         public CPU CPU;
-
+        public APU APU;
         public PPU PPU;
         public Timers Timers;
 
@@ -63,6 +63,7 @@ namespace emulator
                 return CPU.Memory[PC];
             };
 
+            APU = new APU();
             PPU = new PPU(() => Clock, () => CPU.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(0),
                                        () => CPU.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(1));
 
@@ -95,32 +96,58 @@ namespace emulator
 
             if (bootROM == null)
             {
-                Timers.InternalCounter = 0xabcc;
 
                 bootROMActive = false;
+
+                //registers
                 PC = 0x100;
-                CPU.Registers.AF = 0x01b0;
-                CPU.Registers.BC = 0x0013;
-                CPU.Registers.DE = 0x00d8;
-                CPU.Registers.HL = 0x014d;
+                CPU.Registers.AF = 0x0100;
+                CPU.Registers.BC = 0xff13;
+                CPU.Registers.DE = 0x00c1;
+                CPU.Registers.HL = 0x8403;
                 CPU.Registers.SP = 0xfffe;
 
+                //timers
                 Timers.TIMA = 0;
                 Timers.TAC = 0;
                 Timers.TMA = 0;
+                //Timers.InternalCounter = 0xabcc;
+                Timers.InternalCounter = 0x1800;
 
+                CPU.InterruptFireRegister = 0xe1;
+
+                //sound
+                APU.NR10 = 0x80;
+                APU.NR12 = 0xf3;
+                APU.NR14 = 0xbf;
+                APU.NR21 = 0x3f;
+                APU.NR22 = 0x00;
+                APU.NR24 = 0xbf;
+                APU.NR30 = 0x7f;
+                APU.NR32 = 0x9f;
+                APU.NR34 = 0xbf;
+                APU.NR42 = 0x00;
+                APU.NR43 = 0x00;
+                APU.NR44 = 0xbf;
+                APU.NR50 = 0x77;
+                APU.NR51 = 0xf3;
+                APU.NR52 = 0xf1;
+
+                //graphics TODO: we can't really set up the graphics environment correctly
+                //because we will have to also initialize the internal renderer state correctly
                 PPU.LCDC = 0x91;
+                PPU.STAT = 0x83;
 
                 PPU.SCY = 0;
                 PPU.SCX = 0;
+                PPU.WY = 0;
+                PPU.WX = 0;
                 PPU.LYC = 0;
+                PPU.LY = 1;
 
                 PPU.BGP = 0xfc;
                 PPU.OBP0 = 0xff;
                 PPU.OBP1 = 0xff;
-
-                PPU.SCY = 0;
-                PPU.SCX = 0;
 
                 CPU.IME = true;
             }
@@ -235,8 +262,56 @@ namespace emulator
             controlRegisters.Reader[0x4B] = ReadWX;
 
             //Sound
-            for (ushort SoundRegister = 0xff10; SoundRegister <= 0xff26; SoundRegister++)
+            controlRegisters.Writer[0x10] = (x) => APU.NR10 = x;
+            controlRegisters.Reader[0x10] = () => APU.NR10;
+            controlRegisters.Writer[0x11] = (x) => APU.NR11 = x;
+            controlRegisters.Reader[0x11] = () => APU.NR11;
+            controlRegisters.Writer[0x12] = (x) => APU.NR12 = x;
+            controlRegisters.Reader[0x12] = () => APU.NR12;
+            controlRegisters.Writer[0x14] = (x) => APU.NR14 = x;
+            controlRegisters.Reader[0x14] = () => APU.NR14;
+            controlRegisters.Writer[0x16] = (x) => APU.NR21 = x;
+            controlRegisters.Reader[0x16] = () => APU.NR21;
+            controlRegisters.Writer[0x17] = (x) => APU.NR22 = x;
+            controlRegisters.Reader[0x17] = () => APU.NR22;
+            controlRegisters.Writer[0x19] = (x) => APU.NR24 = x;
+            controlRegisters.Reader[0x19] = () => APU.NR24;
+            controlRegisters.Writer[0x1a] = (x) => APU.NR30 = x;
+            controlRegisters.Reader[0x1a] = () => APU.NR30;
+            controlRegisters.Writer[0x1c] = (x) => APU.NR32 = x;
+            controlRegisters.Reader[0x1c] = () => APU.NR32;
+            controlRegisters.Writer[0x1e] = (x) => APU.NR34 = x;
+            controlRegisters.Reader[0x1e] = () => APU.NR34;
+            controlRegisters.Writer[0x21] = (x) => APU.NR42 = x;
+            controlRegisters.Reader[0x21] = () => APU.NR42;
+            controlRegisters.Writer[0x22] = (x) => APU.NR43 = x;
+            controlRegisters.Reader[0x22] = () => APU.NR43;
+            controlRegisters.Writer[0x23] = (x) => APU.NR44 = x;
+            controlRegisters.Reader[0x23] = () => APU.NR44;
+            controlRegisters.Writer[0x24] = (x) => APU.NR50 = x;
+            controlRegisters.Reader[0x24] = () => APU.NR50;
+            controlRegisters.Writer[0x25] = (x) => APU.NR51 = x;
+            controlRegisters.Reader[0x25] = () => APU.NR51;
+            controlRegisters.Writer[0x26] = (x) => APU.NR52 = x;
+            controlRegisters.Reader[0x26] = () => APU.NR52;
+
+            for (ushort SoundRegister = 0xff13; SoundRegister <= 0xff26; SoundRegister++)
             {
+                if (SoundRegister == 0xff14 ||
+                    SoundRegister == 0xff16 ||
+                    SoundRegister == 0xff17 ||
+                    SoundRegister == 0xff19 ||
+                    SoundRegister == 0xff1a ||
+                    SoundRegister == 0xff1c ||
+                    SoundRegister == 0xff1e ||
+                    SoundRegister == 0xff21 ||
+                    SoundRegister == 0xff22 ||
+                    SoundRegister == 0xff23 ||
+                    SoundRegister == 0xff24 ||
+                    SoundRegister == 0xff25 ||
+                    SoundRegister == 0xff26
+                    ) continue;
+
                 controlRegisters.Writer[SoundRegister & 0xff] = (x) => { };
                 controlRegisters.Reader[SoundRegister & 0xff] = () => 0xff;
             }
