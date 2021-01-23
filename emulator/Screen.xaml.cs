@@ -42,9 +42,9 @@ namespace GUI
                 var inv = Dispatcher.BeginInvoke(new UpdateJoypadCb(UpdateJoypadPresses),
                     System.Windows.Threading.DispatcherPriority.Render,
                     x);
-                inv.Wait();
+                inv.Wait(new TimeSpan(10000));
                 //TODO: Find a more clean way to handle program exit mid Invoke
-                if (inv.Status == System.Windows.Threading.DispatcherOperationStatus.Aborted) return 0x0f;
+                if (inv.Status != System.Windows.Threading.DispatcherOperationStatus.Completed) return 0x0f;
                 return (byte)inv.Result;
             }
 
