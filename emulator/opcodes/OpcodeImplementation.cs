@@ -100,13 +100,14 @@ namespace emulator
         {
             var before = Registers.Get(p0.Item1);
             var arg = (byte)(before + 1);
-            Registers.Set(p0.Item1, arg);
 
             Registers.Set(Flag.Z, arg == 0);
             Registers.Mark(Flag.NN);
             Registers.Set(Flag.H, before.IsHalfCarryAdd(1));
+            Registers.Set(p0.Item1, (byte)(Registers.Get(p0.Item1) + 1));
             AddTicks(duration);
         };
+
         public Action DEC((Register, Traits) p0, int duration)
         => () =>
         {
@@ -573,7 +574,7 @@ namespace emulator
             byte sum = (byte)(lhs - rhs);
 
             Registers.Set(Flag.Z, lhs == rhs);
-            Registers.Set(Flag.C, lhs < rhs);
+            Registers.Set(Flag.C, rhs > lhs);
             Registers.Set(Flag.H, lhs.IsHalfCarrySub(rhs));
             return sum;
         }
@@ -610,7 +611,7 @@ namespace emulator
 
             Registers.Set(Flag.Z, ((byte)sum) == 0);
             Registers.Set(Flag.H, lhs.IsHalfCarrySub((byte)(rhs - (Registers.Get(Flag.C) ? 1 : 0))));
-            Registers.Set(Flag.C, lhs < rhs);
+            Registers.Set(Flag.C, rhs > lhs);
             return sum;
         }
         public Action AND((Register, Traits) p0, int duration)
@@ -674,6 +675,7 @@ namespace emulator
             var result = lhs ^ rhs;
             Registers.Mark(Flag.NH);
             Registers.Mark(Flag.NN);
+            Registers.Mark(Flag.NC);
             Registers.Set(Flag.Z, result == 0);
 
             Registers.A = ((byte)result);
@@ -804,13 +806,8 @@ namespace emulator
 
                 var lhs = Registers.Get(p0.Item1);
                 var rhs = (byte)Memory.Fetch(p1.Item1);
-                var sum = lhs + rhs;
 
-                Registers.Set(Flag.Z, ((byte)sum) == 0);
-                Registers.Set(Flag.C, sum > 0xff);
-                Registers.Set(Flag.H, lhs.IsHalfCarryAdd(rhs));
-
-                Registers.Set(p0.Item1, (byte)sum);
+                Registers.Set(p0.Item1, ADD(lhs, rhs));
                 AddTicks(duration);
             };
         }
@@ -855,21 +852,16 @@ namespace emulator
             AddTicks(duration);
         }
 
-        public Action ADC((Register, Traits) p0, (DMGInteger, Traits) p1, int duration)
+        public Action ADC(int duration)
         {
             return () =>
             {
                 Registers.Mark(Flag.NN);
 
-                var lhs = Registers.Get(p0.Item1);
-                var rhs = (byte)Memory.Fetch(p1.Item1);
-                var sum = lhs + rhs + (Registers.Get(Flag.C) ? 1 : 0);
+                var lhs = Registers.A;
+                var rhs = (byte)Memory.Fetch(DMGInteger.r8);
 
-                Registers.Set(Flag.Z, ((byte)sum) == 0);
-                Registers.Set(Flag.H, lhs.IsHalfCarryAdd((byte)(rhs + (Registers.Get(Flag.C) ? 1 : 0))));
-                Registers.Set(Flag.C, sum > 0xff);
-
-                Registers.Set(p0.Item1, (byte)sum);
+                Registers.A = ADC(lhs, rhs);
                 AddTicks(duration);
             };
         }
@@ -889,13 +881,8 @@ namespace emulator
 
                 var lhs = Registers.A;
                 var rhs = (byte)Memory.Fetch(DMGInteger.d8);
-                byte sum = lhs < rhs ? (byte)(0xff - (rhs - lhs)) : (byte)(lhs - rhs);
 
-                Registers.Set(Flag.Z, sum == 0);
-                Registers.Set(Flag.C, lhs < rhs);
-                Registers.Set(Flag.H, lhs.IsHalfCarrySub(rhs));
-
-                Registers.A = sum;
+                Registers.A = SUB(lhs, rhs);
                 AddTicks(duration);
             };
         }
@@ -924,21 +911,16 @@ namespace emulator
                 throw new Exception("illegal");
             };
         }
-        public Action SBC((Register, Traits) p0, int duration)
+        public Action SBC(int duration)
         {
             return () =>
             {
                 Registers.Mark(Flag.N);
 
-                var lhs = Registers.Get(p0.Item1);
+                var lhs = Registers.A;
                 var rhs = (byte)Memory.Fetch(DMGInteger.d8);
-                var sum = lhs - rhs - (Registers.Get(Flag.C) ? 1 : 0);
 
-                Registers.Set(Flag.Z, ((byte)sum) == 0);
-                Registers.Set(Flag.H, lhs.IsHalfCarrySub((byte)(rhs - (Registers.Get(Flag.C) ? 1 : 0))));
-                Registers.Set(Flag.C, lhs < rhs);
-
-                Registers.Set(p0.Item1, ((byte)sum));
+                Registers.A = SBC(lhs, rhs);
                 AddTicks(duration);
             };
         }
@@ -966,25 +948,41 @@ namespace emulator
                 throw new Exception("illegal");
             };
         }
-        public Action AND((DMGInteger, Traits) p0, int duration)
+        public Action AND(int duration)
         {
             return () =>
             {
                 var andWith = (byte)Memory.Fetch(DMGInteger.d8);
-                Registers.A &= andWith;
-                Registers.Set(Flag.Z, Registers.A == 0);
-                Registers.Set(Flag.N, false);
-                Registers.Set(Flag.H, true);
-                Registers.Set(Flag.C, false);
+
+                AND(Registers.A, andWith);
                 AddTicks(duration);
             };
         }
 
-        public Action ADD((WideRegister, Traits) p0, (DMGInteger, Traits) p1, int duration)
+        public Action ADD_SP_R8(int duration)
         {
             return () =>
             {
-                Registers.Set(p0.Item1, (ushort)(Registers.Get(p0.Item1) + (sbyte)Memory.Fetch(p1.Item1)));
+                var offset = (sbyte)Memory.Fetch(DMGInteger.r8);
+                var sum = Registers.SP + offset;
+
+                Registers.Mark(Flag.NZ);
+                Registers.Mark(Flag.NN);
+
+                if (offset >= 0)
+                {
+                    Registers.Set(Flag.C, ((Registers.SP & 0xff) + offset) > 0xff);
+                    Registers.Set(Flag.H, ((Registers.SP & 0x0f) + (offset & 0xf)) > 0xf);
+                }
+                else
+                {
+                    if (offset == -128) throw new Exception("Can't abs this");
+
+                    Registers.Set(Flag.C, (sum & 0xff) <= (Registers.SP & 0xff));
+                    Registers.Set(Flag.H, (sum & 0xf) <= (Registers.SP & 0xf));
+                }
+
+                Registers.SP = (ushort)sum;
                 AddTicks(duration);
             };
         }
@@ -1029,11 +1027,11 @@ namespace emulator
                 throw new Exception("illegal");
             };
         }
-        public Action XOR((DMGInteger, Traits) p0, int duration)
+        public Action XOR(int duration)
         {
             return () =>
             {
-                Registers.A = ((byte)(Registers.A ^ (byte)Memory.Fetch(p0.Item1)));
+                XOR(Registers.A, (byte)Memory.Fetch(DMGInteger.d8));
                 AddTicks(duration);
             };
         }
@@ -1061,11 +1059,11 @@ namespace emulator
                 throw new Exception("illegal");
             };
         }
-        public Action OR((DMGInteger, Traits) p0, int duration)
+        public Action OR(int duration)
         {
             return () =>
             {
-                Registers.A = ((byte)(Registers.A | (byte)Memory.Fetch(p0.Item1)));
+                OR(Registers.A, (byte)Memory.Fetch(DMGInteger.d8));
                 AddTicks(duration);
             };
         }
@@ -1075,14 +1073,32 @@ namespace emulator
             return () =>
             {
                 var offset = (sbyte)Memory.Fetch(DMGInteger.r8);
-                var SP = Registers.SP;
-
+                var sum = Registers.SP + offset;
                 Registers.Set(Flag.Z, false);
                 Registers.Set(Flag.N, false);
-                Registers.Set(Flag.H, SP.IsHalfCarryAdd((ushort)offset));
-                Registers.Set(Flag.C, offset + SP > 0xFFFF);
 
-                Registers.Set(WideRegister.HL, (ushort)(SP + offset));
+                if (offset >= 0)
+                {
+                    Registers.Set(Flag.C, ((Registers.SP & 0xff) + offset) > 0xff);
+                    Registers.Set(Flag.H, ((Registers.SP & 0x0f) + (offset & 0xf)) > 0xf);
+                }
+                else
+                {
+                    if (offset == -128) throw new Exception("Can't abs this");
+
+                    Registers.Set(Flag.C, (sum & 0xff) <= (Registers.SP & 0xff));
+                    Registers.Set(Flag.H, (sum & 0xf) <= (Registers.SP & 0xf));
+                }
+
+                //var offset = (sbyte)Memory.Fetch(DMGInteger.r8);
+                //var SP = Registers.SP;
+
+                //Registers.Set(Flag.Z, false);
+                //Registers.Set(Flag.N, false);
+                //Registers.Set(Flag.H, SP.IsHalfCarryAdd((ushort)offset));
+                //Registers.Set(Flag.C, offset + SP > 0xFFFF);
+
+                Registers.Set(WideRegister.HL, (ushort)sum);
 
                 AddTicks(duration);
             };
@@ -1121,12 +1137,12 @@ namespace emulator
                 throw new Exception("illegal");
             };
         }
-        public Action CP((DMGInteger, Traits) p0, int duration)
+        public Action CP(int duration)
         {
             return () =>
             {
                 var lhs = Registers.A;
-                var rhs = (byte)Memory.Fetch(p0.Item1);
+                var rhs = (byte)Memory.Fetch(DMGInteger.d8);
                 CP(lhs, rhs);
                 AddTicks(duration);
             };
@@ -1134,10 +1150,9 @@ namespace emulator
         private void CP(byte lhs, byte rhs)
         {
             Registers.Mark(Flag.N);
-            var sum = lhs - rhs;
 
-            Registers.Set(Flag.Z, ((byte)sum) == 0);
-            Registers.Set(Flag.C, lhs < rhs);
+            Registers.Set(Flag.Z, lhs == rhs);
+            Registers.Set(Flag.C, rhs > lhs);
             Registers.Set(Flag.H, lhs.IsHalfCarrySub(rhs));
         }
 

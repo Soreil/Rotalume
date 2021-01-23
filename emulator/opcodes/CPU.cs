@@ -277,7 +277,7 @@ namespace emulator
             m[(int)Unprefixed.PUSH_HL] = PUSH((WideRegister.HL, new Traits(true, Postfix.unchanged)), 16);
             m[(int)Unprefixed.AND_d8] = AND((DMGInteger.d8, new Traits(true, Postfix.unchanged)), 8);
             m[(int)Unprefixed.RST_20H] = RST((0x20, new Traits(true, Postfix.unchanged)), 16);
-            m[(int)Unprefixed.ADD_SP_r8] = ADD((WideRegister.SP, new Traits(true, Postfix.unchanged)), (DMGInteger.r8, new Traits(true, Postfix.unchanged)), 16);
+            m[(int)Unprefixed.ADD_SP_r8] = ADD_SP_R8(16);
             m[(int)Unprefixed.JP_HL] = JP((WideRegister.HL, new Traits(true, Postfix.unchanged)), 4);
             m[(int)Unprefixed.LD_AT_a16_A] = LD((DMGInteger.a16, new Traits(false, Postfix.unchanged)), (Register.A, new Traits(true, Postfix.unchanged)), 16);
             m[(int)Unprefixed.ILLEGAL_EB] = ILLEGAL_EB(4);
