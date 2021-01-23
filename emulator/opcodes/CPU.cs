@@ -251,7 +251,7 @@ namespace emulator
             m[(int)Unprefixed.PREFIX] = PREFIX(4);
             m[(int)Unprefixed.CALL_Zero_a16] = CALL((Flag.Z, new Traits(true, Postfix.unchanged)), (DMGInteger.a16, new Traits(true, Postfix.unchanged)), 24, 12);
             m[(int)Unprefixed.CALL_a16] = CALL((DMGInteger.a16, new Traits(true, Postfix.unchanged)), 24);
-            m[(int)Unprefixed.ADC_A_d8] = ADC((Register.A, new Traits(true, Postfix.unchanged)), (DMGInteger.d8, new Traits(true, Postfix.unchanged)), 8);
+            m[(int)Unprefixed.ADC_A_d8] = ADC(8);
             m[(int)Unprefixed.RST_08H] = RST((0x08, new Traits(true, Postfix.unchanged)), 16);
             m[(int)Unprefixed.RET_NC] = RET((Flag.NC, new Traits(true, Postfix.unchanged)), 20, 8);
             m[(int)Unprefixed.POP_DE] = POP((WideRegister.DE, new Traits(true, Postfix.unchanged)), 12);
@@ -267,7 +267,7 @@ namespace emulator
             m[(int)Unprefixed.ILLEGAL_DB] = ILLEGAL_DB(4);
             m[(int)Unprefixed.CALL_Carry_a16] = CALL((Flag.C, new Traits(true, Postfix.unchanged)), (DMGInteger.a16, new Traits(true, Postfix.unchanged)), 24, 12);
             m[(int)Unprefixed.ILLEGAL_DD] = ILLEGAL_DD(4);
-            m[(int)Unprefixed.SBC_A_d8] = SBC((Register.A, new Traits(true, Postfix.unchanged)), 8);
+            m[(int)Unprefixed.SBC_A_d8] = SBC(8);
             m[(int)Unprefixed.RST_18H] = RST((0x18, new Traits(true, Postfix.unchanged)), 16);
             m[(int)Unprefixed.LDH_AT_a8_A] = LDH(12);
             m[(int)Unprefixed.POP_HL] = POP((WideRegister.HL, new Traits(true, Postfix.unchanged)), 12);
@@ -275,7 +275,7 @@ namespace emulator
             m[(int)Unprefixed.ILLEGAL_E3] = ILLEGAL_E3(4);
             m[(int)Unprefixed.ILLEGAL_E4] = ILLEGAL_E4(4);
             m[(int)Unprefixed.PUSH_HL] = PUSH((WideRegister.HL, new Traits(true, Postfix.unchanged)), 16);
-            m[(int)Unprefixed.AND_d8] = AND((DMGInteger.d8, new Traits(true, Postfix.unchanged)), 8);
+            m[(int)Unprefixed.AND_d8] = AND(8);
             m[(int)Unprefixed.RST_20H] = RST((0x20, new Traits(true, Postfix.unchanged)), 16);
             m[(int)Unprefixed.ADD_SP_r8] = ADD_SP_R8(16);
             m[(int)Unprefixed.JP_HL] = JP((WideRegister.HL, new Traits(true, Postfix.unchanged)), 4);
@@ -283,7 +283,7 @@ namespace emulator
             m[(int)Unprefixed.ILLEGAL_EB] = ILLEGAL_EB(4);
             m[(int)Unprefixed.ILLEGAL_EC] = ILLEGAL_EC(4);
             m[(int)Unprefixed.ILLEGAL_ED] = ILLEGAL_ED(4);
-            m[(int)Unprefixed.XOR_d8] = XOR((DMGInteger.d8, new Traits(true, Postfix.unchanged)), 8);
+            m[(int)Unprefixed.XOR_d8] = XOR(8);
             m[(int)Unprefixed.RST_28H] = RST((0x28, new Traits(true, Postfix.unchanged)), 16);
             m[(int)Unprefixed.LDH_A_AT_a8] = LDH((Register.A, new Traits(true, Postfix.unchanged)), (DMGInteger.a8, new Traits(false, Postfix.unchanged)), 12);
             m[(int)Unprefixed.POP_AF] = POP((WideRegister.AF, new Traits(true, Postfix.unchanged)), 12);
@@ -291,7 +291,7 @@ namespace emulator
             m[(int)Unprefixed.DI] = DI(4);
             m[(int)Unprefixed.ILLEGAL_F4] = ILLEGAL_F4(4);
             m[(int)Unprefixed.PUSH_AF] = PUSH((WideRegister.AF, new Traits(true, Postfix.unchanged)), 16);
-            m[(int)Unprefixed.OR_d8] = OR((DMGInteger.d8, new Traits(true, Postfix.unchanged)), 8);
+            m[(int)Unprefixed.OR_d8] = OR(8);
             m[(int)Unprefixed.RST_30H] = RST((0x30, new Traits(true, Postfix.unchanged)), 16);
             m[(int)Unprefixed.LD_HL_SP_i8] = LD_HL_SP_i8(12);
             m[(int)Unprefixed.LD_SP_HL] = LD_SP_HL(8);
@@ -299,7 +299,7 @@ namespace emulator
             m[(int)Unprefixed.EI] = EI(4);
             m[(int)Unprefixed.ILLEGAL_FC] = ILLEGAL_FC(4);
             m[(int)Unprefixed.ILLEGAL_FD] = ILLEGAL_FD(4);
-            m[(int)Unprefixed.CP_d8] = CP((DMGInteger.d8, new Traits(true, Postfix.unchanged)), 8);
+            m[(int)Unprefixed.CP_d8] = CP(8);
             m[(int)Unprefixed.RST_38H] = RST((0x38, new Traits(true, Postfix.unchanged)), 16);
             return m;
         }

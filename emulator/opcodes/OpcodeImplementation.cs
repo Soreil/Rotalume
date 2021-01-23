@@ -859,12 +859,13 @@ namespace emulator
                 Registers.Mark(Flag.NN);
 
                 var lhs = Registers.A;
-                var rhs = (byte)Memory.Fetch(DMGInteger.r8);
+                var rhs = (byte)Memory.Fetch(DMGInteger.d8);
 
                 Registers.A = ADC(lhs, rhs);
                 AddTicks(duration);
             };
         }
+
         public Action ILLEGAL_D3(int duration)
         {
             return () =>
@@ -873,6 +874,7 @@ namespace emulator
                 throw new Exception("illegal");
             };
         }
+
         public Action SUB(int duration)
         {
             return () =>
