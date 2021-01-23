@@ -1296,10 +1296,18 @@ namespace emulator
         {
             return () =>
             {
-                var reg = Registers.Get(p0.Item1);
-                var res = SR(reg);
+                var lhs = Registers.Get(p0.Item1);
+                byte bit7 = (byte)(lhs & 0x80);
 
-                Registers.Set(p0.Item1, res);
+                Registers.Mark(Flag.NN);
+                Registers.Mark(Flag.NH);
+                Registers.Set(Flag.C, lhs.GetBit(0));
+
+                lhs = (byte)((lhs >> 1) | bit7);
+                Registers.Set(p0.Item1, lhs);
+
+                Registers.Set(Flag.Z, lhs == 0);
+
                 AddTicks(duration);
             };
         }
@@ -1308,27 +1316,21 @@ namespace emulator
             return () =>
             {
                 var addr = Registers.Get(p0.Item1);
-                var reg = Memory.Read(addr);
+                var lhs = Memory.Read(addr);
 
-                var res = SR(reg);
+                byte bit7 = (byte)(lhs & 0x80);
 
-                Memory.Write(addr, res);
+                Registers.Mark(Flag.NN);
+                Registers.Mark(Flag.NH);
+                Registers.Set(Flag.C, lhs.GetBit(0));
+
+                lhs = (byte)((lhs >> 1) | bit7);
+                Memory.Write(addr, lhs);
+
+                Registers.Set(Flag.Z, lhs == 0);
+
                 AddTicks(duration);
             };
-        }
-
-        private byte SR(byte reg)
-        {
-            var BottomBit = reg.GetBit(0);
-
-            Registers.Mark(Flag.NN);
-            Registers.Mark(Flag.NH);
-
-            Registers.Set(Flag.C, BottomBit);
-
-            reg = (byte)(reg >> 1 | reg & 0x80);
-            Registers.Set(Flag.Z, reg == 0);
-            return reg;
         }
 
         public Action SWAP((Register, Traits) p0, int duration)
@@ -1372,9 +1374,14 @@ namespace emulator
         {
             return () =>
             {
-                var reg = Registers.Get(p0.Item1);
-                var res = SR(reg);
-                Registers.Set(p0.Item1, res);
+                var lhs = Registers.Get(p0.Item1);
+
+                Registers.Mark(Flag.NN);
+                Registers.Mark(Flag.NH);
+                Registers.Set(Flag.C, lhs.GetBit(0));
+                Registers.Set(Flag.Z, lhs >> 1 == 0);
+
+                Registers.Set(p0.Item1, (byte)(lhs >> 1));
                 AddTicks(duration);
             };
         }
@@ -1383,11 +1390,14 @@ namespace emulator
             return () =>
             {
                 var addr = Registers.Get(p0.Item1);
-                var reg = Memory.Read(addr);
+                var lhs = Memory.Read(addr);
 
-                var res = SR(reg);
+                Registers.Mark(Flag.NN);
+                Registers.Mark(Flag.NH);
+                Registers.Set(Flag.C, lhs.GetBit(0));
+                Registers.Set(Flag.Z, lhs >> 1 == 0);
 
-                Memory.Write(addr, res);
+                Memory.Write(addr, (byte)(lhs >> 1));
                 AddTicks(duration);
             };
         }
