@@ -515,10 +515,9 @@ namespace emulator
         {
             return () =>
             {
-                var lhs = Registers.Get(p0.Item1);
                 var rhs = Registers.Get(p1.Item1);
 
-                Registers.Set(p0.Item1, ADC(lhs, rhs));
+                ADC(rhs);
                 AddTicks(duration);
             };
         }
@@ -526,25 +525,12 @@ namespace emulator
         {
             return () =>
             {
-                var lhs = Registers.Get(p0.Item1);
                 var rhs = Memory.Read(Registers.Get(p1.Item1));
 
-                Registers.Set(p0.Item1, ADC(lhs, rhs));
+                ADC(rhs);
                 AddTicks(duration);
             };
         }
-
-        private byte ADC(byte lhs, byte rhs)
-        {
-            Registers.Mark(Flag.NN);
-            var sum = lhs + rhs + (Registers.Get(Flag.C) ? 1 : 0);
-
-            Registers.Set(Flag.Z, ((byte)sum) == 0);
-            Registers.Set(Flag.H, lhs.IsHalfCarryAdd((byte)(rhs + (Registers.Get(Flag.C) ? 1 : 0))));
-            Registers.Set(Flag.C, sum > 0xff);
-            return (byte)sum;
-        }
-
         public Action SUB((Register, Traits) p0, int duration)
         {
             return () =>
@@ -583,10 +569,9 @@ namespace emulator
         {
             return () =>
             {
-                var lhs = Registers.Get(p0.Item1);
                 var rhs = Registers.Get(p1.Item1);
 
-                Registers.Set(p0.Item1, SBC(lhs, rhs));
+                SBC(rhs);
                 AddTicks(duration);
             };
         }
@@ -594,26 +579,37 @@ namespace emulator
         {
             return () =>
             {
-                var lhs = Registers.Get(p0.Item1);
                 var rhs = Memory.Read(Registers.Get(p1.Item1));
 
-                Registers.Set(p0.Item1, SBC(lhs, rhs));
+                SBC(rhs);
                 AddTicks(duration);
             };
         }
 
-        private byte SBC(byte lhs, byte rhs)
+        private void ADC(byte rhs)
         {
-            Registers.Mark(Flag.N);
-            byte sum = (byte)(lhs - rhs);
+            var lhs = Registers.A;
+            var carry = Registers.Get(Flag.C) ? 1 : 0;
+            Registers.A = (byte)(lhs + rhs + carry);
 
-            sum -= (Registers.Get(Flag.C) ? 1 : 0);
-
-            Registers.Set(Flag.Z, ((byte)sum) == 0);
-            Registers.Set(Flag.H, lhs.IsHalfCarrySub((byte)(rhs - (Registers.Get(Flag.C) ? 1 : 0))));
-            Registers.Set(Flag.C, rhs > lhs);
-            return sum;
+            Registers.Mark(Flag.NN);
+            Registers.Set(Flag.Z, ((byte)(lhs + rhs + carry)) == 0);
+            Registers.Set(Flag.H, ((lhs & 0xf) + (rhs & 0xf) + carry) > 0x0F);
+            Registers.Set(Flag.C, (lhs + rhs + carry) > 0xff);
         }
+
+        private void SBC(byte rhs)
+        {
+            var lhs = Registers.A;
+            var carry = Registers.Get(Flag.C) ? 1 : 0;
+            Registers.A = (byte)(lhs - rhs - carry);
+
+            Registers.Mark(Flag.N);
+            Registers.Set(Flag.Z, ((byte)(lhs - rhs - carry)) == 0);
+            Registers.Set(Flag.H, (lhs & 0xf) < ((rhs & 0xf) + carry));
+            Registers.Set(Flag.C, (lhs - rhs - carry) > 0xff || (lhs - rhs - carry) < 0);
+        }
+
         public Action AND((Register, Traits) p0, int duration)
         {
             return () =>
@@ -856,12 +852,9 @@ namespace emulator
         {
             return () =>
             {
-                Registers.Mark(Flag.NN);
-
-                var lhs = Registers.A;
                 var rhs = (byte)Memory.Fetch(DMGInteger.d8);
 
-                Registers.A = ADC(lhs, rhs);
+                ADC(rhs);
                 AddTicks(duration);
             };
         }
@@ -917,12 +910,9 @@ namespace emulator
         {
             return () =>
             {
-                Registers.Mark(Flag.N);
-
-                var lhs = Registers.A;
                 var rhs = (byte)Memory.Fetch(DMGInteger.d8);
 
-                Registers.A = SBC(lhs, rhs);
+                SBC(rhs);
                 AddTicks(duration);
             };
         }
