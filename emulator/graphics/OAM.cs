@@ -39,6 +39,6 @@ namespace emulator
             s.X < 168 &&
             line >= s.Y - 16 &&
             line < s.Y - 16 + spriteHeight).
-            Take(maxSpritesOnLine).ToList();
+            Take(maxSpritesOnLine).OrderBy(x=> x.X).ToList();
     }
 }
