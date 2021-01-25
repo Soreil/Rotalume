@@ -70,38 +70,33 @@ namespace emulator
         {
             List<Shade> background = null;
             List<Shade> sprites = null;
+            List<Shade> window = null;
             if (PPU.BGDisplayEnable)
             {
                 var palette = GetBackgroundPalette();
                 background = GetBackgroundLineShades(palette, YScrolled(PPU.LY, PPU.SCY), PPU.BGTileMapDisplaySelect);
 
-                List<Shade> window = null;
                 if (PPU.WindowDisplayEnable)
+                {
                     window = GetWindowLineShades();
-                if (window is not null)
-                    background = Merge(background, window);
+                    if (window != null)
+                        background = Merge(background, window);
+                }
+            }
+            else
+            {
+                background = new List<Shade>(DisplayWidth);
+                var bgp = GetBackgroundPalette();
+                for (int i = 0; i < DisplayWidth; i++)
+                    background.Add(bgp[0]);
             }
             if (PPU.OBJDisplayEnable && SpriteAttributes.Any())
             {
                 sprites = GetSpriteLineShades();
+                background = Merge(background, sprites);
             }
 
-            List<Shade> line;
-            if (background is not null && sprites is not null)
-                line = Merge(background, sprites);
-            else
-            {
-                if (background is not null)
-                    line = background;
-                else if (sprites is not null)
-                    line = sprites;
-                else
-                {
-                    line = new List<Shade>(DisplayWidth);
-                    for (int i = 0; i < DisplayWidth; i++) line.Add(Shade.White);
-                }
-            }
-            fs.Write(line.ConvertAll(ShadeToGray).ToArray());
+            fs.Write(background.ConvertAll(ShadeToGray).ToArray());
         }
 
         private List<Shade> GetWindowLineShades()
