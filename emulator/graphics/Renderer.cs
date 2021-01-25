@@ -26,12 +26,6 @@ namespace emulator
         {
             return (int)(ClocksInFrame / TicksPerScanline);
         }
-        int ClockInScanline => (int)(ClocksInFrame % TicksPerScanline);
-        private void UpdateLineRegister()
-        {
-            PPU.LY = (byte)(Line() % ScanlinesPerFrame);
-            PPU.LYCInterrupt = PPU.LY == PPU.LYC;
-        }
         public Renderer(PPU ppu, Stream destination = null)
         {
             fs = destination == null ? Stream.Null : destination;
@@ -47,12 +41,18 @@ namespace emulator
 
             if (Clock() > TimeUntilWhichToPause)
             {
+                if (PPU.Mode == Mode.OAMSearch || PPU.Mode == Mode.VBlank)
+                {
+                    PPU.LY = PPU.LY == 153 ? 0 : (byte)(PPU.LY + 1);
+                    PPU.LYCInterrupt = PPU.LY == PPU.LYC;
+                }
                 if (PPU.Mode == Mode.OAMSearch)
+                {
                     SpriteAttributes = PPU.OAM.SpritesOnLine(PPU.LY, PPU.SpriteHeight);
+                }
                 if (PPU.Mode == Mode.Transfer)
                     Draw();
 
-                UpdateLineRegister();
                 IncrementMode();
                 SetStatInterruptForMode();
                 SetNewClockTarget();
@@ -62,74 +62,81 @@ namespace emulator
         private void SetStatInterruptForMode()
         {
             if (PPU.Mode == Mode.OAMSearch && PPU.STAT.GetBit(5)) PPU.EnableLCDCStatusInterrupt();
-            else if (PPU.Mode == Mode.VBlank && PPU.STAT.GetBit(4)) PPU.EnableLCDCStatusInterrupt();
+            else if (PPU.Mode == Mode.VBlank && PPU.STAT.GetBit(4) || PPU.STAT.GetBit(5)) PPU.EnableLCDCStatusInterrupt();
             else if (PPU.Mode == Mode.HBlank && PPU.STAT.GetBit(3)) PPU.EnableLCDCStatusInterrupt();
         }
 
+        private readonly Shade[] background = new Shade[DisplayWidth];
+        private readonly Shade[] sprites = new Shade[DisplayWidth];
+        private readonly Shade[] window = new Shade[DisplayWidth];
+        private readonly byte[] output = new byte[DisplayWidth];
         private void Draw()
         {
-            List<Shade> background = null;
-            List<Shade> sprites = null;
-            List<Shade> window = null;
+
             if (PPU.BGDisplayEnable)
             {
                 var palette = GetBackgroundPalette();
-                background = GetBackgroundLineShades(palette, YScrolled(PPU.LY, PPU.SCY), PPU.BGTileMapDisplaySelect);
+                GetBackgroundLineShades(palette, YScrolled(PPU.LY, PPU.SCY), PPU.BGTileMapDisplaySelect, background);
 
                 if (PPU.WindowDisplayEnable)
                 {
-                    window = GetWindowLineShades();
-                    if (window != null)
-                        background = Merge(background, window);
+                    if (PPU.WY <= PPU.LY)
+                    {
+                        GetWindowLineShades(window);
+                        MergeWindow(background, window);
+                    }
                 }
             }
             else
             {
-                background = new List<Shade>(DisplayWidth);
                 var bgp = GetBackgroundPalette();
                 for (int i = 0; i < DisplayWidth; i++)
-                    background.Add(bgp[0]);
+                    background[i] = bgp[0];
             }
             if (PPU.OBJDisplayEnable && SpriteAttributes.Any())
             {
-                sprites = GetSpriteLineShades();
-                background = Merge(background, sprites);
+                GetSpriteLineShades(sprites);
+                MergeSprites(background, sprites);
             }
 
-            fs.Write(background.ConvertAll(ShadeToGray).ToArray());
+            for (int i = 0; i < DisplayWidth; i++)
+                output[i] = ShadeToGray(background[i]);
+
+            fs.Write(output);
         }
 
-        private List<Shade> GetWindowLineShades()
+        private void GetWindowLineShades(Shade[] line)
         {
-            if (PPU.WY > PPU.LY) return null;
-
-            List<Shade> line = new(DisplayWidth);
 
             //if (PPU.WX < 7) throw new Exception("Not handled");
             var windowStartX = PPU.WX - 7;
             if (windowStartX < 0) windowStartX = 0;
             for (int tile = 0; tile < TilesPerLine; tile++)
             {
-                var curPix = TilePixelLine(GetBackgroundPalette(), PPU.LY - PPU.WY, PPU.TileMapDisplaySelect, tile);
+                var curPix = TilePixelLineWindow(GetBackgroundPalette(), PPU.LY - PPU.WY, PPU.TileMapDisplaySelect, tile);
                 for (int cur = 0; cur < curPix.Length; cur++)
                 {
                     if (tile * TileWidth + cur >= windowStartX)
-                        line.Add(curPix[cur]);
-                    else line.Add(Shade.Transparant);
+                        line[(tile * 8) + cur] = curPix[cur];
+                    else line[(tile * 8) + cur] = Shade.Empty;
                 }
             }
-            return line;
         }
 
-        private static List<Shade> Merge(List<Shade> background, List<Shade> sprites)
+        private static void MergeSprites(Shade[] background, Shade[] sprites)
         {
-            var pixels = new List<Shade>(DisplayWidth);
             for (int i = 0; i < DisplayWidth; i++)
             {
-                if (sprites[i] == Shade.Transparant) pixels.Add(background[i]);
-                else pixels.Add(sprites[i]);
+                if (sprites[i] != Shade.Transparant) background[i] = sprites[i];
             }
-            return pixels;
+        }
+
+        private static void MergeWindow(Shade[] background, Shade[] window)
+        {
+            for (int i = 0; i < DisplayWidth; i++)
+            {
+                if (window[i] != Shade.Empty) background[i] = window[i];
+            }
         }
 
         public static byte ShadeToGray(Shade s) => s switch
@@ -142,29 +149,23 @@ namespace emulator
             _ => throw new Exception(),
         };
 
-        public List<Shade> GetBackgroundLineShades(Shade[] palette, byte yScrolled, ushort tilemap)
+        public void GetBackgroundLineShades(Shade[] palette, byte yScrolled, ushort tilemap, Shade[] background)
         {
-            var pixelsBG = new List<Shade>(DisplayWidth);
-
             for (int tileNumber = 0; tileNumber < TilesPerLine; tileNumber++)
             {
                 var curPix = TilePixelLine(palette, yScrolled, tilemap, tileNumber);
                 for (int cur = 0; cur < curPix.Length; cur++)
-                    pixelsBG.Add(curPix[cur]);
+                    background[(tileNumber * 8) + cur] = curPix[cur];
             }
-
-            return pixelsBG;
         }
-        private List<Shade> GetSpriteLineShades()
+
+        private void GetSpriteLineShades(Shade[] sprites)
         {
-            var pixelsSprite = new List<Shade>(DisplayWidth);
 
             for (int x = 1; x <= DisplayWidth; x++)
             {
-                pixelsSprite.Add(GetSpritePixel(x));
+                sprites[x - 1] = GetSpritePixel(x);
             }
-
-            return pixelsSprite;
         }
 
         private static byte YScrolled(byte LY, byte SCY) => (byte)((LY + SCY) & 0xff);
@@ -172,6 +173,17 @@ namespace emulator
         private Shade[] TilePixelLine(Shade[] palette, int yOffset, ushort tilemap, int tileNumber)
         {
             var xOffset = ((PPU.SCX / TileWidth) + tileNumber) & 0x1f;
+
+            var TileID = PPU.VRAM[tilemap + xOffset + ((yOffset / TileWidth) * 32)]; //Background ID map is laid out as 32x32 tiles of size TileWidthxTileWidth
+
+            var pixels = GetTileLine(palette, yOffset % TileWidth, TileID);
+
+            return pixels;
+        }
+
+        private Shade[] TilePixelLineWindow(Shade[] palette, int yOffset, ushort tilemap, int tileNumber)
+        {
+            var xOffset = (tileNumber) & 0x1f;
 
             var TileID = PPU.VRAM[tilemap + xOffset + ((yOffset / TileWidth) * 32)]; //Background ID map is laid out as 32x32 tiles of size TileWidthxTileWidth
 
