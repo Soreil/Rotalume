@@ -72,7 +72,6 @@ namespace emulator
         private readonly byte[] output = new byte[DisplayWidth];
         private void Draw()
         {
-
             if (PPU.BGDisplayEnable)
             {
                 var palette = GetBackgroundPalette();
@@ -117,8 +116,8 @@ namespace emulator
                 for (int cur = 0; cur < curPix.Length; cur++)
                 {
                     if (tile * TileWidth + cur >= windowStartX)
-                        line[(tile * 8) + cur] = curPix[cur];
-                    else line[(tile * 8) + cur] = Shade.Empty;
+                        line[(tile * TileWidth) + cur] = curPix[cur];
+                    else line[(tile * TileWidth) + cur] = Shade.Empty;
                 }
             }
         }
@@ -145,7 +144,6 @@ namespace emulator
             Shade.LightGray => 0xc0,
             Shade.DarkGray => 0x40,
             Shade.Black => 0,
-            Shade.Transparant => 0xff, //We shouldn't hit this one but white is the default
             _ => throw new Exception(),
         };
 
@@ -155,7 +153,7 @@ namespace emulator
             {
                 var curPix = TilePixelLine(palette, yScrolled, tilemap, tileNumber);
                 for (int cur = 0; cur < curPix.Length; cur++)
-                    background[(tileNumber * 8) + cur] = curPix[cur];
+                    background[(tileNumber * TileWidth) + cur] = curPix[cur];
             }
         }
 
