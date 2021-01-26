@@ -36,7 +36,7 @@ namespace emulator
         {
 
             if (Clock() < TimeUntilWhichToPause) return;
-            
+
 
             if (PPU.Mode == Mode.OAMSearch || PPU.Mode == Mode.VBlank)
             {
@@ -84,7 +84,7 @@ namespace emulator
         }
 
         private readonly Shade[] background = new Shade[DisplayWidth];
-        private readonly (Shade, int, bool)[] sprites = new (Shade, int, bool)[DisplayWidth];
+        private readonly (int, int, bool)[] sprites = new (int, int, bool)[DisplayWidth];
         private readonly Shade[] window = new Shade[DisplayWidth];
         private readonly byte[] output = new byte[DisplayWidth];
         private void Draw()
@@ -139,12 +139,12 @@ namespace emulator
             }
         }
 
-        private void MergeSprites(Shade[] background, (Shade, int, bool)[] sprites)
+        private void MergeSprites(Shade[] background, (int, int, bool)[] sprites)
         {
 
             for (int i = 0; i < DisplayWidth; i++)
             {
-                if (sprites[i].Item1 != Shade.Empty)
+                if (sprites[i].Item1 != 0)
                 {
                     var palettes = new Shade[2][] { GetSpritePalette0(), GetSpritePalette1() };
 
@@ -187,7 +187,7 @@ namespace emulator
             }
         }
 
-        private void GetSpriteLineShades((Shade, int, bool)[] sprites)
+        private void GetSpriteLineShades((int, int, bool)[] sprites)
         {
             for (int x = 1; x <= DisplayWidth; x++)
             {
@@ -219,31 +219,41 @@ namespace emulator
             return pixels;
         }
 
-        private (Shade, int, bool) GetSpritePixel(int xPos)
+        private (int, int, bool) GetSpritePixel(int xPos)
         {
             if (!PPU.OBJDisplayEnable) throw new Exception("Sprites disabled");
-            if (!SpriteAttributes.Any(s => s.X >= xPos && (s.X <= xPos + 7))) return (Shade.Empty, 0, false);
+            if (!SpriteAttributes.Any(s => s.X >= xPos && (s.X <= xPos + 7))) return (0, 0, false);
 
-            var sprite = SpriteAttributes.First(s => s.X >= xPos && (s.X <= xPos + 7));
+            var sprites = SpriteAttributes.Where(s => s.X >= xPos && (s.X <= xPos + 7));
 
-            //if (PPU.SpriteHeight == 16) System.Diagnostics.Debugger.Break();
+            List<(int, SpriteAttributes)> pairs = new();
 
-            var line = PPU.LY - sprite.Y + 16;
-            if (sprite.YFlipped) line = PPU.SpriteHeight - 1 - line;
+            foreach (var sprite in sprites)
+            {
+                //if (PPU.SpriteHeight == 16) System.Diagnostics.Debugger.Break();
 
-            var at = 0x8000 + (sprite.ID * 16) + (line * 2);
-            var tileDataLow = PPU.VRAM[at]; //low byte of line
-            var tileDataHigh = PPU.VRAM[at + 1]; //high byte of line
+                var line = PPU.LY - sprite.Y + 16;
+                if (sprite.YFlipped) line = PPU.SpriteHeight - 1 - line;
 
-            var index = sprite.X - xPos;
-            if (sprite.XFlipped)
-                index = 7 - index;
+                var at = 0x8000 + (sprite.ID * 16) + (line * 2);
+                var tileDataLow = PPU.VRAM[at]; //low byte of line
+                var tileDataHigh = PPU.VRAM[at + 1]; //high byte of line
 
-            var paletteIndex = tileDataLow.GetBit(index) ? 1 : 0;
-            paletteIndex += tileDataHigh.GetBit(index) ? 2 : 0;
+                var index = sprite.X - xPos;
+                if (sprite.XFlipped)
+                    index = 7 - index;
 
+                var paletteIndex = tileDataLow.GetBit(index) ? 1 : 0;
+                paletteIndex += tileDataHigh.GetBit(index) ? 2 : 0;
 
-            return ((Shade)paletteIndex, sprite.Palette, sprite.SpriteToBackgroundPriority);
+                pairs.Add((paletteIndex, sprite));
+            }
+
+            if (!pairs.Any(x => x.Item1 != 0)) return (0, 0, false);
+
+            var chosen = pairs.Where(x => x.Item1 != 0).First();
+
+            return (chosen.Item1, chosen.Item2.Palette, chosen.Item2.SpriteToBackgroundPriority);
         }
 
         public Shade[] GetTileLine(Shade[] palette, int line, byte currentTileIndex)
