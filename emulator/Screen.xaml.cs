@@ -43,7 +43,7 @@ namespace GUI
                 var inv = Dispatcher.BeginInvoke(new UpdateJoypadCb(UpdateJoypadPresses),
                     System.Windows.Threading.DispatcherPriority.Render,
                     x);
-                inv.Wait(new TimeSpan(10000));
+                inv.Wait(new TimeSpan(100000));
                 //TODO: Find a more clean way to handle program exit mid Invoke
                 if (inv.Status != System.Windows.Threading.DispatcherOperationStatus.Completed) return 0x0f;
                 return (byte)inv.Result;
@@ -158,6 +158,7 @@ namespace GUI
         }
 
         volatile bool keyboardInterruptReady = false;
+
         readonly Dictionary<Key, bool> Pressed = new Dictionary<Key, bool> {
             {Key.A,    false},
             {Key.S,    false},
@@ -169,6 +170,22 @@ namespace GUI
             {Key.Down, false},
         };
 
+        readonly Dictionary<Key, DateTime> ReleasedWhen = new Dictionary<Key, DateTime> {
+            {Key.A,    DateTime.Now},
+            {Key.S,    DateTime.Now},
+            {Key.D,    DateTime.Now},
+            {Key.F,    DateTime.Now},
+            {Key.Right,DateTime.Now},
+            {Key.Left, DateTime.Now},
+            {Key.Up,   DateTime.Now},
+            {Key.Down, DateTime.Now},
+        };
+
+        private static bool RecentEnough(DateTime now, DateTime then)
+        {
+            var span = now - then;
+            return span.TotalMilliseconds < 5;
+        }
         private byte UpdateJoypadPresses(byte Flags)
         {
             var selectButtons = !Flags.GetBit(5);
@@ -177,19 +194,20 @@ namespace GUI
             byte joypad = 0xf;
             if (!selectButtons && !selectArrows) return (byte)((joypad & 0xf) | 0xc0);
 
+            var now = DateTime.Now;
             if (selectArrows)
             {
-                if (Pressed[Key.Right]) joypad = joypad.SetBit(0, false);
-                if (Pressed[Key.Left]) joypad = joypad.SetBit(1, false);
-                if (Pressed[Key.Up]) joypad = joypad.SetBit(2, false);
-                if (Pressed[Key.Down]) joypad = joypad.SetBit(3, false);
+                if (Pressed[Key.Right] || RecentEnough(now, ReleasedWhen[Key.Right])) joypad = joypad.SetBit(0, false);
+                if (Pressed[Key.Left] || RecentEnough(now, ReleasedWhen[Key.Left])) joypad = joypad.SetBit(1, false);
+                if (Pressed[Key.Up] || RecentEnough(now, ReleasedWhen[Key.Up])) joypad = joypad.SetBit(2, false);
+                if (Pressed[Key.Down] || RecentEnough(now, ReleasedWhen[Key.Down])) joypad = joypad.SetBit(3, false);
             }
             if (selectButtons)
             {
-                if (Pressed[Key.A]) joypad = joypad.SetBit(0, false);
-                if (Pressed[Key.S]) joypad = joypad.SetBit(1, false);
-                if (Pressed[Key.D]) joypad = joypad.SetBit(2, false);
-                if (Pressed[Key.F]) joypad = joypad.SetBit(3, false);
+                if (Pressed[Key.A] || RecentEnough(now, ReleasedWhen[Key.A])) joypad = joypad.SetBit(0, false);
+                if (Pressed[Key.S] || RecentEnough(now, ReleasedWhen[Key.S])) joypad = joypad.SetBit(1, false);
+                if (Pressed[Key.D] || RecentEnough(now, ReleasedWhen[Key.D])) joypad = joypad.SetBit(2, false);
+                if (Pressed[Key.F] || RecentEnough(now, ReleasedWhen[Key.F])) joypad = joypad.SetBit(3, false);
             }
 
             return (byte)((joypad & 0xf) | 0xc0);
@@ -197,7 +215,7 @@ namespace GUI
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
-            if (Pressed.ContainsKey(e.Key) && Pressed[e.Key] == false)
+            if (Pressed.ContainsKey(e.Key))
             {
                 Pressed[e.Key] = true;
                 if (GameThread is not null)
@@ -206,10 +224,14 @@ namespace GUI
             if (e.Key == Key.P) paused = !paused;
         }
 
+        //There is a bouncing issue here which might be fixed by a delay
         private void Window_KeyUp(object sender, KeyEventArgs e)
         {
             if (Pressed.ContainsKey(e.Key))
+            {
                 Pressed[e.Key] = false;
+                ReleasedWhen[e.Key] = DateTime.Now;
+            }
         }
     }
 }
