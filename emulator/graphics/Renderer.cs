@@ -63,7 +63,7 @@ namespace emulator
         }
 
         private readonly Shade[] background = new Shade[DisplayWidth];
-        private readonly (Shade, int)[] sprites = new (Shade, int)[DisplayWidth];
+        private readonly (Shade, int, bool)[] sprites = new (Shade, int, bool)[DisplayWidth];
         private readonly Shade[] window = new Shade[DisplayWidth];
         private readonly byte[] output = new byte[DisplayWidth];
         private void Draw()
@@ -118,7 +118,7 @@ namespace emulator
             }
         }
 
-        private void MergeSprites(Shade[] background, (Shade, int)[] sprites)
+        private void MergeSprites(Shade[] background, (Shade, int, bool)[] sprites)
         {
 
             for (int i = 0; i < DisplayWidth; i++)
@@ -126,9 +126,14 @@ namespace emulator
                 if (sprites[i].Item1 != Shade.Empty)
                 {
                     var palettes = new Shade[2][] { GetSpritePalette0(), GetSpritePalette1() };
-                    var colour = palettes[sprites[i].Item2][(int)sprites[i].Item1];
-                    if (colour != Shade.Transparant)
-                        background[i] = colour;
+
+                    //Handle background priority
+                    if (!sprites[i].Item3 || background[i] == Shade.White)
+                    {
+                        var colour = palettes[sprites[i].Item2][(int)sprites[i].Item1];
+                        if (colour != Shade.Transparant)
+                            background[i] = colour;
+                    }
                 }
             }
         }
@@ -160,7 +165,7 @@ namespace emulator
             }
         }
 
-        private void GetSpriteLineShades((Shade, int)[] sprites)
+        private void GetSpriteLineShades((Shade, int, bool)[] sprites)
         {
             for (int x = 1; x <= DisplayWidth; x++)
             {
@@ -192,16 +197,17 @@ namespace emulator
             return pixels;
         }
 
-        private (Shade, int) GetSpritePixel(int xPos)
+        private (Shade, int, bool) GetSpritePixel(int xPos)
         {
             if (!PPU.OBJDisplayEnable) throw new Exception("Sprites disabled");
-            if (!SpriteAttributes.Any(s => s.X >= xPos && (s.X <= xPos + 7))) return (Shade.Empty, 0);
+            if (!SpriteAttributes.Any(s => s.X >= xPos && (s.X <= xPos + 7))) return (Shade.Empty, 0, false);
 
             var sprite = SpriteAttributes.First(s => s.X >= xPos && (s.X <= xPos + 7));
 
+            //if (PPU.SpriteHeight == 16) System.Diagnostics.Debugger.Break();
 
             var line = PPU.LY - sprite.Y + 16;
-            if (sprite.YFlipped) line = 7 - line;
+            if (sprite.YFlipped) line = PPU.SpriteHeight - 1 - line;
 
             var at = 0x8000 + (sprite.ID * 16) + (line * 2);
             var tileDataLow = PPU.VRAM[at]; //low byte of line
@@ -215,7 +221,7 @@ namespace emulator
             paletteIndex += tileDataHigh.GetBit(index) ? 2 : 0;
 
 
-            return ((Shade)paletteIndex, sprite.Palette);
+            return ((Shade)paletteIndex, sprite.Palette, sprite.SpriteToBackgroundPriority);
         }
 
         public Shade[] GetTileLine(Shade[] palette, int line, byte currentTileIndex)
