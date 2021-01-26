@@ -41,28 +41,19 @@ namespace emulator
 
             if (Clock() < TimeUntilWhichToPause) return;
 
-            if (PPU.LY < DisplayHeight)
-            {
-                if (PPU.Mode == Mode.OAMSearch)
-                {
-                    PPU.LY++;
-                    PPU.LYCInterrupt = PPU.LY == PPU.LYC;
-                }
-                if (PPU.Mode == Mode.OAMSearch)
-                {
-                    SpriteAttributes = PPU.OAM.SpritesOnLine(PPU.LY, PPU.SpriteHeight);
-                }
-                if (PPU.Mode == Mode.Transfer)
-                    Draw();
-
-                IncrementMode();
-            }
-            else
+            if (PPU.Mode == Mode.OAMSearch || PPU.Mode == Mode.VBlank)
             {
                 PPU.LY = PPU.LY == 153 ? 0 : (byte)(PPU.LY + 1);
                 PPU.LYCInterrupt = PPU.LY == PPU.LYC;
             }
+            if (PPU.Mode == Mode.OAMSearch)
+            {
+                SpriteAttributes = PPU.OAM.SpritesOnLine(PPU.LY, PPU.SpriteHeight);
+            }
+            if (PPU.Mode == Mode.Transfer)
+                Draw();
 
+            IncrementMode();
             SetStatInterruptForMode();
             SetNewClockTarget();
         }
