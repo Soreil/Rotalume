@@ -110,14 +110,32 @@ namespace GUI
         }
 
         Task GameThread;
-        private void LoadROM(object sender, RoutedEventArgs e)
+        private void LoadROM(object sender, DragEventArgs e)
         {
-            bool br = (bool)bootromCheckbox.IsChecked;
+            // If the DataObject contains string data, extract it.
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] filenames = e.Data.GetData(DataFormats.FileDrop, true) as string[];
+
+                if (filenames.Count() != 1) return;
+
+                SpinUpNewGameboy(filenames[0]);
+            }
+
+        }
+        private void LoadROMPopUp(object sender, RoutedEventArgs e)
+        {
 
             var ofd = new Microsoft.Win32.OpenFileDialog() { DefaultExt = ".gb", Filter = "ROM Files (.gb)|*.gb" };
             var result = ofd.ShowDialog();
             if (result == false) return;
 
+            SpinUpNewGameboy(ofd.FileName);
+        }
+
+        private void SpinUpNewGameboy(string fn)
+        {
+            bool br = (bool)bootromCheckbox.IsChecked;
             if (GameThread is not null)
             {
                 CancelRequested = true;
@@ -131,7 +149,7 @@ namespace GUI
             {
                 Thread.CurrentThread.IsBackground = true;
                 Thread.CurrentThread.Name = "Gaming";
-                Gameboy(ofd.FileName, br);
+                Gameboy(fn, br);
             });
 
             GameThread.Start();
