@@ -119,7 +119,7 @@ namespace GUI
                 string[] fileNames = e.Data.GetData(DataFormats.FileDrop, true) as string[];
 
                 //Check that the file isn't a folder
-                if (fileNames.Length != 1 && File.Exists(fileNames[0]))
+                if (fileNames.Length == 1 && File.Exists(fileNames[0]))
                     SpinUpNewGameboy(fileNames[0]);
 
             }

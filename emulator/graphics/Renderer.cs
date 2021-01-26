@@ -21,11 +21,7 @@ namespace emulator
 
         public const int TicksPerScanline = 456;
         public const int TicksPerFrame = ScanlinesPerFrame * TicksPerScanline;
-        long ClocksInFrame => Clock() % TicksPerFrame;
-        int Line()
-        {
-            return (int)(ClocksInFrame / TicksPerScanline);
-        }
+
         public Renderer(PPU ppu, Stream destination = null)
         {
             fs = destination == null ? Stream.Null : destination;
@@ -67,7 +63,7 @@ namespace emulator
         }
 
         private readonly Shade[] background = new Shade[DisplayWidth];
-        private readonly Shade[] sprites = new Shade[DisplayWidth];
+        private readonly (Shade, int)[] sprites = new (Shade, int)[DisplayWidth];
         private readonly Shade[] window = new Shade[DisplayWidth];
         private readonly byte[] output = new byte[DisplayWidth];
         private void Draw()
@@ -122,11 +118,18 @@ namespace emulator
             }
         }
 
-        private static void MergeSprites(Shade[] background, Shade[] sprites)
+        private void MergeSprites(Shade[] background, (Shade, int)[] sprites)
         {
+
             for (int i = 0; i < DisplayWidth; i++)
             {
-                if (sprites[i] != Shade.Transparant) background[i] = sprites[i];
+                if (sprites[i].Item1 != Shade.Empty)
+                {
+                    var palettes = new Shade[2][] { GetSpritePalette0(), GetSpritePalette1() };
+                    var colour = palettes[sprites[i].Item2][(int)sprites[i].Item1];
+                    if (colour != Shade.Transparant)
+                        background[i] = colour;
+                }
             }
         }
 
@@ -157,9 +160,8 @@ namespace emulator
             }
         }
 
-        private void GetSpriteLineShades(Shade[] sprites)
+        private void GetSpriteLineShades((Shade, int)[] sprites)
         {
-
             for (int x = 1; x <= DisplayWidth; x++)
             {
                 sprites[x - 1] = GetSpritePixel(x);
@@ -190,10 +192,10 @@ namespace emulator
             return pixels;
         }
 
-        private Shade GetSpritePixel(int xPos)
+        private (Shade, int) GetSpritePixel(int xPos)
         {
             if (!PPU.OBJDisplayEnable) throw new Exception("Sprites disabled");
-            if (!SpriteAttributes.Any(s => s.X >= xPos && (s.X <= xPos + 7))) return Shade.Transparant;
+            if (!SpriteAttributes.Any(s => s.X >= xPos && (s.X <= xPos + 7))) return (Shade.Empty, 0);
 
             var sprite = SpriteAttributes.First(s => s.X >= xPos && (s.X <= xPos + 7));
 
@@ -212,8 +214,8 @@ namespace emulator
             var paletteIndex = tileDataLow.GetBit(index) ? 1 : 0;
             paletteIndex += tileDataHigh.GetBit(index) ? 2 : 0;
 
-            var palette = sprite.Palette == 1 ? GetSpritePalette1() : GetSpritePalette0();
-            return palette[paletteIndex];
+
+            return ((Shade)paletteIndex, sprite.Palette);
         }
 
         public Shade[] GetTileLine(Shade[] palette, int line, byte currentTileIndex)
@@ -285,8 +287,8 @@ namespace emulator
 
         //This currently doesn't work since the transition to the final draw line is when increment mode sees 143 for line count and HBlank for mode
         //We are effectively updating a register for something which has already happened?
-        private bool FinalStageOfFinalPrintedLine() => (Line() == DisplayHeight && PPU.Mode == Mode.HBlank);
-        private bool FinalStageOrVBlanking() => FinalStageOfFinalPrintedLine() || Line() > DisplayHeight;
+        private bool FinalStageOfFinalPrintedLine() => (PPU.LY == DisplayHeight && PPU.Mode == Mode.HBlank);
+        private bool FinalStageOrVBlanking() => FinalStageOfFinalPrintedLine() || PPU.LY > DisplayHeight;
 
         private void SetNewClockTarget() => TimeUntilWhichToPause += PPU.Mode switch
         {
