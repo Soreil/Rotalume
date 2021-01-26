@@ -141,7 +141,7 @@ namespace emulator
 
         private void MergeSprites(Shade[] background, (int, int, bool)[] sprites)
         {
-
+            var bgp0 = GetBackgroundPalette()[0];
             for (int i = 0; i < DisplayWidth; i++)
             {
                 if (sprites[i].Item1 != 0)
@@ -150,7 +150,7 @@ namespace emulator
 
                     //Handle background priority we got this wrong, we should be looking for an index of the background pixel not the actual colour after lookup most likely?
                     //BGBTEST only works right if I choose shade.black because that is index 0 for it
-                    if (!sprites[i].Item3 || background[i] == Shade.Black)
+                    if (!sprites[i].Item3 || background[i] == bgp0)
                     {
                         var colour = palettes[sprites[i].Item2][(int)sprites[i].Item1];
                         if (colour != Shade.Transparant)
