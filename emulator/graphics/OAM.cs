@@ -9,6 +9,7 @@ namespace emulator
 
         public const int Start = 0xFE00;
         public const int Size = 0xa0;
+        public bool Locked = false;
 
         public OAM() { mem = new byte[Size]; for (int i = 0; i < Size; i++) mem[i] = 0xff; }
 
@@ -39,6 +40,6 @@ namespace emulator
             s.X < 168 &&
             line >= s.Y - 16 &&
             line < s.Y - 16 + spriteHeight).
-            Take(maxSpritesOnLine).OrderBy(x=> x.X).ToList();
+            Take(maxSpritesOnLine).OrderBy(x => x.X).ToList();
     }
 }

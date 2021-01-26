@@ -36,6 +36,7 @@ namespace emulator
         {
 
             if (Clock() < TimeUntilWhichToPause) return;
+            
 
             if (PPU.Mode == Mode.OAMSearch || PPU.Mode == Mode.VBlank)
             {
@@ -50,10 +51,30 @@ namespace emulator
                 Draw();
 
             IncrementMode();
+            SetLockStates(); //Doesn't work currently
             SetStatInterruptForMode();
             SetNewClockTarget();
         }
 
+        private void SetLockStates()
+        {
+            switch (PPU.Mode)
+            {
+                case Mode.HBlank:
+                case Mode.VBlank:
+                    PPU.VRAM.Locked = false;
+                    PPU.OAM.Locked = false;
+                    break;
+                case Mode.OAMSearch:
+                    PPU.OAM.Locked = true;
+                    PPU.VRAM.Locked = false;
+                    break;
+                case Mode.Transfer:
+                    PPU.OAM.Locked = true;
+                    PPU.VRAM.Locked = true;
+                    break;
+            }
+        }
 
         private void SetStatInterruptForMode()
         {
@@ -128,7 +149,7 @@ namespace emulator
                     var palettes = new Shade[2][] { GetSpritePalette0(), GetSpritePalette1() };
 
                     //Handle background priority we got this wrong, we should be looking for an index of the background pixel not the actual colour after lookup most likely?
-                    //BGBTEST only works right if I choose shade.black because that is index 0 for it.
+                    //BGBTEST only works right if I choose shade.black because that is index 0 for it
                     if (!sprites[i].Item3 || background[i] == Shade.Black)
                     {
                         var colour = palettes[sprites[i].Item2][(int)sprites[i].Item1];

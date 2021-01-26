@@ -40,6 +40,8 @@ namespace emulator
                     Renderer = null; //We want to destroy the old renderer so it can't keep running after requested to turn off
                     LY = 0;
                     Mode = Mode.HBlank;
+                    VRAM.Locked = false;
+                    OAM.Locked = false;
                 }
             }
         }
@@ -50,7 +52,7 @@ namespace emulator
         {
             get => _stat;
             set => _stat = (byte)((value & 0x7f) | 0x80);
-        } 
+        }
 
         public byte SCY; //FF42
         public byte SCX; //FF43
