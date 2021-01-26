@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -115,11 +116,12 @@ namespace GUI
             // If the DataObject contains string data, extract it.
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
-                string[] filenames = e.Data.GetData(DataFormats.FileDrop, true) as string[];
+                string[] fileNames = e.Data.GetData(DataFormats.FileDrop, true) as string[];
 
-                if (filenames.Count() != 1) return;
+                //Check that the file isn't a folder
+                if (fileNames.Length != 1 && File.Exists(fileNames[0]))
+                    SpinUpNewGameboy(fileNames[0]);
 
-                SpinUpNewGameboy(filenames[0]);
             }
 
         }
