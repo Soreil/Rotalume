@@ -36,7 +36,7 @@ namespace GUI
 
         volatile bool paused = false;
         volatile bool CancelRequested = false;
-        private void Gameboy(string path, bool bootromEnabled)
+        private void Gameboy(string path, bool bootromEnabled, bool fpsLimit)
         {
             byte updateJoyPad(byte x)
             {
@@ -64,18 +64,31 @@ namespace GUI
             Dispatcher.BeginInvoke(new UpdateImageCb(RunGameboy),
                 System.Windows.Threading.DispatcherPriority.Render);
 
+            DateTime lastFrame = DateTime.MinValue;
+            void updateWithLimiting(byte[] x)
+            {
+                const double TargetFPS = 4194304.0 / 70224.0;
+                const long TargetFrameTime = (long)((1.0 / TargetFPS) * 1000.0 * 10000.0);
+                var elapsed = DateTime.Now - lastFrame;
+                if (elapsed.Ticks < TargetFrameTime)
+                    Thread.Sleep((int)((TargetFrameTime - elapsed.Ticks) / 10000L));
+                lastFrame = DateTime.Now;
+
+                update(x);
+            }
             void update(byte[] x)
             {
                 Dispatcher.BeginInvoke(new UpdateImagePixelsCb(UpdatePixels),
-    System.Windows.Threading.DispatcherPriority.Render,
-     x);
+            System.Windows.Threading.DispatcherPriority.Render,
+             x);
                 Dispatcher.BeginInvoke(new UpdateLabelCb(UpdateLabel),
                     System.Windows.Threading.DispatcherPriority.Render);
             }
 
-            gameboy.PPU.Writer = new emulator.FrameSink(update);
+            gameboy.PPU.Writer = new emulator.FrameSink(fpsLimit ? updateWithLimiting : update);
 
             StartTime = DateTime.Now;
+            frameNumber = 0;
 
             while (!CancelRequested)
             {
@@ -138,6 +151,7 @@ namespace GUI
         private void SpinUpNewGameboy(string fn)
         {
             bool br = (bool)bootromCheckbox.IsChecked;
+            bool fps = (bool)fpsLimit.IsChecked;
             if (GameThread is not null)
             {
                 CancelRequested = true;
@@ -151,7 +165,7 @@ namespace GUI
             {
                 Thread.CurrentThread.IsBackground = true;
                 Thread.CurrentThread.Name = "Gaming";
-                Gameboy(fn, br);
+                Gameboy(fn, br, fps);
             });
 
             GameThread.Start();

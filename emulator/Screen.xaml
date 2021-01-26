@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="MainWindow" ResizeMode="NoResize" Height="720" Width="680" KeyDown="Window_KeyDown" KeyUp="Window_KeyUp">
+        Title="MainWindow" ResizeMode="NoResize" Height="740" Width="680" KeyDown="Window_KeyDown" KeyUp="Window_KeyUp">
     <StackPanel AllowDrop="True" Drop="LoadROM">
         <Label Name="FPS" Content=""/>
         <Border BorderBrush="Orange"  BorderThickness="4" HorizontalAlignment="Center">
@@ -18,10 +18,13 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <Button    Grid.Row="0" Grid.Column="0"  Click="LoadROMPopUp"  Content="Open ROM"/>
             <TextBlock Grid.Row="1" Grid.Column="0"  Text="Bootrom enabled:"/>
             <CheckBox  Grid.Row="1" Grid.Column="1" Name="bootromCheckbox"  IsChecked="False"/>
+            <TextBlock Grid.Row="2" Grid.Column="0"  Text="Limit FPS enabled:"/>
+            <CheckBox  Grid.Row="2" Grid.Column="1" Name="fpsLimit"  IsChecked="False"/>
         </Grid>
     </StackPanel>
 </Window>
