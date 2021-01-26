@@ -127,8 +127,9 @@ namespace emulator
                 {
                     var palettes = new Shade[2][] { GetSpritePalette0(), GetSpritePalette1() };
 
-                    //Handle background priority
-                    if (!sprites[i].Item3 || background[i] == Shade.White)
+                    //Handle background priority we got this wrong, we should be looking for an index of the background pixel not the actual colour after lookup most likely?
+                    //BGBTEST only works right if I choose shade.black because that is index 0 for it.
+                    if (!sprites[i].Item3 || background[i] == Shade.Black)
                     {
                         var colour = palettes[sprites[i].Item2][(int)sprites[i].Item1];
                         if (colour != Shade.Transparant)
