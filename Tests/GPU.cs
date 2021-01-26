@@ -88,10 +88,10 @@ namespace Tests
             Assert.AreEqual(expected, screen);
         }
 
-        private static string MakePrintableLine(List<Shade> pixels)
+        private static string MakePrintableLine(Shade[] pixels)
         {
-            char[] ScreenLine = new char[pixels.Count];
-            for (var p = 0; p < pixels.Count; p++)
+            char[] ScreenLine = new char[pixels.Length];
+            for (var p = 0; p < pixels.Length; p++)
             {
                 if (pixels[p] == Shade.White) ScreenLine[p] = '.';
                 else if (pixels[p] == Shade.Black) ScreenLine[p] = '#';
@@ -106,11 +106,11 @@ namespace Tests
         {
             var palette = r.GetBackgroundPalette();
 
-            var lines = new List<List<Shade>>(Renderer.TileWidth);
+            var lines = new List<Shade[]>(Renderer.TileWidth);
             for (int y = 0; y < Renderer.TileWidth; y++)
             {
                 var line = r.GetTileLine(palette, y % Renderer.TileWidth, tileNumber);
-                lines.Add(new(line));
+                lines.Add(line);
             }
 
             List<string> output = new();
@@ -123,7 +123,8 @@ namespace Tests
 
         public string GetLine(Shade[] palette, byte yScrolled, ushort tilemap, Renderer r)
         {
-            var pixels = r.GetBackgroundLineShades(palette, yScrolled, tilemap);
+            var pixels = new Shade[Renderer.DisplayWidth];
+            r.GetBackgroundLineShades(palette, yScrolled, tilemap,pixels);
 
             var s = MakePrintableLine(pixels);
             return s;

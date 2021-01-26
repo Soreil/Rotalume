@@ -39,11 +39,13 @@ namespace emulator
         public void Render()
         {
 
-            if (Clock() > TimeUntilWhichToPause)
+            if (Clock() < TimeUntilWhichToPause) return;
+
+            if (PPU.LY < DisplayHeight)
             {
-                if (PPU.Mode == Mode.OAMSearch || PPU.Mode == Mode.VBlank)
+                if (PPU.Mode == Mode.OAMSearch)
                 {
-                    PPU.LY = PPU.LY == 153 ? 0 : (byte)(PPU.LY + 1);
+                    PPU.LY++;
                     PPU.LYCInterrupt = PPU.LY == PPU.LYC;
                 }
                 if (PPU.Mode == Mode.OAMSearch)
@@ -54,10 +56,17 @@ namespace emulator
                     Draw();
 
                 IncrementMode();
-                SetStatInterruptForMode();
-                SetNewClockTarget();
             }
+            else
+            {
+                PPU.LY = PPU.LY == 153 ? 0 : (byte)(PPU.LY + 1);
+                PPU.LYCInterrupt = PPU.LY == PPU.LYC;
+            }
+
+            SetStatInterruptForMode();
+            SetNewClockTarget();
         }
+
 
         private void SetStatInterruptForMode()
         {
