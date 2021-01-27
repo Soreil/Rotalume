@@ -87,7 +87,6 @@ namespace GUI
 
             gameboy.PPU.Writer = new emulator.FrameSink(fpsLimit ? updateWithLimiting : update);
 
-            StartTime = DateTime.Now;
             frameNumber = 0;
 
             while (!CancelRequested)
@@ -109,12 +108,31 @@ namespace GUI
         int frameNumber = 0;
 
         DateTime StartTime = new();
+        DateTime[] FrameTimes = new DateTime[16];
+
+        private double AverageFPS()
+        {
+            TimeSpan deltas = TimeSpan.Zero;
+            for (int i = 1; i < FrameTimes.Length; i++)
+            {
+                deltas += Delta(i, i - 1);
+            }
+
+            return TimeSpan.FromSeconds(1) / (deltas / (FrameTimes.Length-1));
+        }
+        private TimeSpan Delta(int i, int j) => (FrameTimes[i] - FrameTimes[j]);
         private void UpdateLabel()
         {
             frameNumber++;
-            var frameTime = (DateTime.Now - StartTime) / frameNumber;
-            var fps = 1000 / frameTime.TotalMilliseconds;
-            FPS.Content = string.Format("Frame:{0} FrameTime:{1} FPS:{2}", frameNumber, frameTime.TotalMilliseconds, fps);
+            var time = DateTime.Now;
+            for (int i = 1; i < FrameTimes.Length; i++)
+                FrameTimes[i - 1] = FrameTimes[i];
+            FrameTimes[FrameTimes.Length - 1] = time;
+
+            FPS.Content = string.Format("Frame:{0} FrameTime:{1} FPS:{2}",
+                frameNumber,
+                Delta(15, 14).TotalMilliseconds,
+                AverageFPS());
         }
 
         private void UpdatePixels(byte[] data)

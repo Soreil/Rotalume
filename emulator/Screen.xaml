@@ -21,9 +21,9 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <Button    Grid.Row="0" Grid.Column="0"  Click="LoadROMPopUp"  Content="Open ROM"/>
-            <TextBlock Grid.Row="1" Grid.Column="0"  Text="Bootrom enabled:"/>
+            <TextBlock Grid.Row="1" Grid.Column="0"  Text="Use bootrom"/>
             <CheckBox  Grid.Row="1" Grid.Column="1" Name="bootromCheckbox"  IsChecked="False"/>
-            <TextBlock Grid.Row="2" Grid.Column="0"  Text="Limit FPS enabled:"/>
+            <TextBlock Grid.Row="2" Grid.Column="0"  Text="Limit FPS"/>
             <CheckBox  Grid.Row="2" Grid.Column="1" Name="fpsLimit"  IsChecked="False"/>
         </Grid>
     </StackPanel>
