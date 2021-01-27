@@ -4,9 +4,9 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="MainWindow" ResizeMode="NoResize" Height="740" Width="680" KeyDown="Window_KeyDown" KeyUp="Window_KeyUp">
+        Title="MainWindow" ResizeMode="NoResize" Height="720" Width="680" KeyDown="Window_KeyDown" KeyUp="Window_KeyUp">
     <StackPanel AllowDrop="True" Drop="LoadROM">
-        <Label Name="FPS" Content=""/>
+        <Label Name="FPS" Content="" Padding="0,0,0,4"/>
         <Border BorderBrush="Orange"  BorderThickness="4" HorizontalAlignment="Center">
             <Image Name="Display" Height="576" Width="640"/>
         </Border>

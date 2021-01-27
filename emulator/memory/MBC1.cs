@@ -23,7 +23,6 @@ namespace emulator
     internal class MBC1 : MBC
     {
         private readonly byte[] gameROM;
-        private readonly List<byte[]> RAMBanks;
 
         private bool RAMEnabled = false;
         const int ROMBankSize = 0x4000;
@@ -50,7 +49,7 @@ namespace emulator
             ROMBankCount = this.gameROM.Length / 0x4000;
             if (header.Type == CartType.MBC1_RAM && header.RAM_Size == 0) header = header with { RAM_Size = 0x2000 };
             RAMBankCount = Math.Max(1, header.RAM_Size / RAMBankSize);
-            RAMBanks = new List<byte[]>(RAMBankCount);
+            RAMBanks = new byte[header.RAM_Size];
 
             //0x800 is the only alternative bank size
             if (header.RAM_Size == 0)
@@ -59,9 +58,6 @@ namespace emulator
             //0x800 is the only alternative bank size
             if (header.RAM_Size == 0x800)
                 RAMBankSize = 0x800;
-
-            for (int i = 0; i < RAMBankCount; i++)
-                RAMBanks.Add(new byte[RAMBankSize]);
         }
 
         public override byte this[int n]
@@ -96,7 +92,7 @@ namespace emulator
 
         private bool IsUpperBank(int n) => n >= ROMBankSize;
 
-        public byte GetRAM(int n) => RAMEnabled ? RAMBanks[ramBank][n - RAMStart] : 0xff;
-        public byte SetRAM(int n, byte v) => RAMEnabled ? RAMBanks[ramBank][n - RAMStart] = v : _ = v;
+        public byte GetRAM(int n) => RAMEnabled ? RAMBanks[(ramBank * RAMBankSize) + n - RAMStart] : 0xff;
+        public byte SetRAM(int n, byte v) => RAMEnabled ? RAMBanks[(ramBank * RAMBankSize) + n - RAMStart] = v : _ = v;
     }
 }
