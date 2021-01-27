@@ -16,6 +16,7 @@ Test coverage:
 - bgbtest: Fully working
 - Blargg CPU instruction tests: Fully working
 - Mooneye GB MBC1 tests: Fully working except for multiROM support
+- Mooneye GB MBC2 tests: Fully working
 - Mooneye GB Timer tests: Fully working except for TMA_write
 
 Working games:
