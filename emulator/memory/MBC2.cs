@@ -8,16 +8,14 @@ namespace emulator
         byte[] _ram = new byte[0x200];
         public byte this[int at]
         {
-            get => _ram[(at & 0x1FF)];
-            set => _ram[(at & 0x1FF)] = (byte)(value & 0xf);
+            get => _ram[at & 0x1FF];
+            set => _ram[at & 0x1FF] = (byte)(value & 0xf);
         }
 
         public HalfRAM()
         {
             for (int i = 0; i < _ram.Length; i++)
-            {
                 _ram[i] = 0xf;
-            }
         }
     }
     internal class MBC2 : MBC
@@ -48,13 +46,9 @@ namespace emulator
                 {
                     case var v when v < 0x4000:
                         if ((v & 0x100) == 0)
-                        {
                             RAMEnabled = (value & 0xf) == 0x0a;
-                        }
                         else
-                        {
                             ROMBank = value & 0x0f;
-                        }
                         break;
                     case var v when v >= RAMStart:
                         SetRAM(n, value);
@@ -69,7 +63,7 @@ namespace emulator
 
         private bool IsUpperBank(int n) => n >= ROMBankSize;
 
-        public byte GetRAM(int n) => RAMEnabled ? RAM[n - RAMStart] : 0xff;
+        public byte GetRAM(int n) => RAMEnabled ? (byte)(RAM[n - RAMStart] | 0xf0) : 0xff;
         public byte SetRAM(int n, byte v) => RAMEnabled ? RAM[n - RAMStart] = v : _ = v;
     }
 }
