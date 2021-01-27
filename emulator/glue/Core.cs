@@ -347,6 +347,8 @@ namespace emulator
             CartType.MBC1 => new MBC1(header, gameROM),
             CartType.MBC1_RAM_BATTERY => new MBC1(header, gameROM),
             CartType.MBC1_RAM => new MBC1(header, gameROM),
+            CartType.MBC2_BATTERY => new MBC2(header, gameROM),
+            CartType.MBC2 => new MBC2(header, gameROM),
             _ => throw new NotImplementedException(),
         };
 
