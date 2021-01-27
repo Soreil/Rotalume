@@ -179,12 +179,35 @@ namespace emulator
 
         public void GetBackgroundLineShades(Shade[] palette, byte yScrolled, ushort tilemap, Shade[] background)
         {
-            for (int tileNumber = 0; tileNumber < TilesPerLine; tileNumber++)
+
+            //Offset is the amount of pixels we have to draw for the first tile if the first tile is going to be scrolled
+            var offset = PPU.SCX & 0x7;
+
+            var firstTilePixels = TilePixelLineNoScroll(palette, yScrolled, tilemap, offset);
+            for (int cur = 0; cur < firstTilePixels.Length; cur++)
+                background[cur] = firstTilePixels[cur];
+
+            for (int tileNumber = 1; tileNumber <= TilesPerLine; tileNumber++)
             {
                 var curPix = TilePixelLine(palette, yScrolled, tilemap, tileNumber);
                 for (int cur = 0; cur < curPix.Length; cur++)
-                    background[(tileNumber * TileWidth) + cur] = curPix[cur];
+                {
+                    var pos = (8 - offset) + ((tileNumber - 1) * TileWidth) + cur;
+                    if (pos >= DisplayWidth) break;
+                    background[pos] = curPix[cur];
+                }
             }
+        }
+
+        private Shade[] TilePixelLineNoScroll(Shade[] palette, byte yOffset, ushort tilemap, int offset)
+        {
+            var xOffset = (PPU.SCX / TileWidth) & 0x1f;
+
+            var TileID = PPU.VRAM[tilemap + xOffset + ((yOffset / TileWidth) * 32)]; //Background ID map is laid out as 32x32 tiles of size TileWidthxTileWidth
+
+            var pixels = GetTileLine(palette, yOffset % TileWidth, TileID);
+
+            return pixels.Skip(offset).ToArray();
         }
 
         private void GetSpriteLineShades((int, int, bool)[] sprites)
