@@ -343,3 +343,4 @@ healthchecksdb
 /emulator/bootrom/DMG_ROM_BOOT.bin
 *.sav
 /rgbds
+*.gbc

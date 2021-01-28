@@ -351,6 +351,8 @@ namespace emulator
             CartType.MBC2 => new MBC2(header, gameROM),
             CartType.MBC3_TIMER_BATTERY => new MBC3(header, gameROM, () => Clock),
             CartType.MBC3_RAM_BATTERY => new MBC3(header, gameROM, () => Clock),
+            CartType.MBC3_TIMER_RAM_BATTERY => new MBC3(header, gameROM, () => Clock),
+            CartType.MBC3_RAM => new MBC3(header, gameROM, () => Clock),
             _ => throw new NotImplementedException(),
         };
 
