@@ -341,7 +341,7 @@ namespace emulator
 
         private static MBC MakeFakeMBC(byte[] gameROM) => new ROMONLY(gameROM);
 
-        private static MBC MakeMBC(CartHeader header, byte[] gameROM) => header.Type switch
+        private MBC MakeMBC(CartHeader header, byte[] gameROM) => header.Type switch
         {
             CartType.ROM_ONLY => new ROMONLY(gameROM),
             CartType.MBC1 => new MBC1(header, gameROM),
@@ -349,6 +349,7 @@ namespace emulator
             CartType.MBC1_RAM => new MBC1(header, gameROM),
             CartType.MBC2_BATTERY => new MBC2(header, gameROM),
             CartType.MBC2 => new MBC2(header, gameROM),
+            CartType.MBC3_TIMER_BATTERY => new MBC3(header, gameROM, () => Clock),
             _ => throw new NotImplementedException(),
         };
 
