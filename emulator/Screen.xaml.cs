@@ -107,7 +107,6 @@ namespace GUI
 
         int frameNumber = 0;
 
-        DateTime StartTime = new();
         DateTime[] FrameTimes = new DateTime[16];
 
         private double AverageFPS()
