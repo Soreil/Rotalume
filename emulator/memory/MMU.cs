@@ -24,7 +24,9 @@ namespace emulator
                 if (_bootROMActive() && at < 0x100) //Bootrom is read only so we don't need a corresponding function in set
                     return bootROM[at];
 
+#pragma warning disable CS8509 // Exhaustive
                 return at switch
+#pragma warning restore CS8509
                 {
                     >= 0 and < 0x4000 => Card[at],//bank0
                     >= 0x4000 and < 0x8000 => Card[at],//bank1
@@ -37,7 +39,6 @@ namespace emulator
                     >= 0xff00 and < 0xff80 => IORegisters[at],
                     >= 0xff80 and < 0xffff => HRAM[at],
                     0xffff => InterruptEnable[at],
-                    _ => throw new Exception("Unhandled address read"),
                 };
             }
 
@@ -80,8 +81,6 @@ namespace emulator
                     case 0xffff:
                         InterruptEnable[at] = value;
                         break;
-                    default:
-                        throw new Exception("Unhandled address write");
                 }
             }
         }
