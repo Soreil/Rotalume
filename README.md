@@ -17,6 +17,7 @@ Test coverage:
 - Blargg CPU instruction tests: Fully working
 - Mooneye GB MBC1 tests: Fully working except for multiROM support
 - Mooneye GB MBC2 tests: Fully working
+- Mooneye GB MBC5 tests: Fully working (doesn't test rumble)
 - Mooneye GB Timer tests: Fully working except for TMA_write
 - ax6 rtc3test: Basic tests and accuracy tests working. No support yet for reading back minutes and seconds above 60 and hours above 24
 
