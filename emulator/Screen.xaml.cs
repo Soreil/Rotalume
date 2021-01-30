@@ -117,7 +117,7 @@ namespace GUI
                 deltas += Delta(i, i - 1);
             }
 
-            return TimeSpan.FromSeconds(1) / (deltas / (FrameTimes.Length-1));
+            return TimeSpan.FromSeconds(1) / (deltas / (FrameTimes.Length - 1));
         }
         private TimeSpan Delta(int i, int j) => (FrameTimes[i] - FrameTimes[j]);
         private void UpdateLabel()
@@ -158,7 +158,7 @@ namespace GUI
         private void LoadROMPopUp(object sender, RoutedEventArgs e)
         {
 
-            var ofd = new Microsoft.Win32.OpenFileDialog() { DefaultExt = ".gb", Filter = "ROM Files (.gb)|*.gb" };
+            var ofd = new Microsoft.Win32.OpenFileDialog() { DefaultExt = ".gb", Filter = "ROM Files (*.gb;*.gbc)|*.gb;*.gbc" };
             var result = ofd.ShowDialog();
             if (result == false) return;
 
