@@ -187,14 +187,14 @@ namespace emulator
             switch (RTCRegisterNumber)
             {
                 case 0x08:
-                    seconds = Math.Min((byte)59, v);
+                    seconds = (byte)(v & 0x3f);
                     remainder = 0; //We have to reset the subseconds in case we want to set the second component of the RTC
                     break;
                 case 0x09:
-                    minutes = Math.Min((byte)59, v);
+                    minutes = (byte)(v & 0x3f);
                     break;
                 case 0x0a:
-                    hours = Math.Min((byte)23, v);
+                    hours = (byte)(v & 0x1f);
                     break;
                 case 0x0b:
                     days = v + daysTopBit;
