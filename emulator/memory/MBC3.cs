@@ -28,11 +28,11 @@ namespace emulator
         bool RTCSelected = false;
 
         private byte PreviousLatchControlWriteValue = 0;
-        private long SetTime = 0; //We need to load this as well as the RAM in on load of the cartridge
+        private long BaseToSubtractFromClock = 0; //We need to load this as well as the RAM in on load of the cartridge
         private long LatchedTime = 0;
-        private bool halted = false;
+        private bool ClockIsPaused = false;
         private bool DateOverflow = false;
-        private long DateHaltedAgo = 0;
+        private long PausedClock = 0;
         public MBC3(CartHeader header, byte[] gameROM, Func<long> getClock)
         {
             this.gameROM = gameROM;
@@ -66,12 +66,12 @@ namespace emulator
                         ROMBankNumber = value == 0 ? 1 : value & 0x7f;
                         break;
                     case var v when v < 0x6000:
-                        if (value > 3 && value < 0x0d)
+                        if (value >= 8 && value < 0x0d)
                         {
                             RTCRegisterNumber = value;
                             RTCSelected = true;
                         }
-                        if (value < 3)
+                        if (value <= 3)
                         {
                             RAMBankNumber = value & 0x03;
                             RTCSelected = false;
@@ -80,11 +80,14 @@ namespace emulator
                     case var v when v < 0x8000:
                         if (PreviousLatchControlWriteValue == 0 && value == 1)
                         {
-                            if (halted)
-                                LatchedTime = DateHaltedAgo;
-                            else
-                                LatchedTime = GetRTC() - SetTime;
+                            if (CurrentClock >= TicksPerDay * 0x200)
+                            {
+                                DateOverflow = true;
+                                CurrentClock %= (TicksPerDay * 0x200);
+                            }
+                            LatchedTime = CurrentClock;
                         }
+
                         PreviousLatchControlWriteValue = value;
                         break;
                     default:
@@ -110,7 +113,7 @@ namespace emulator
                 0x08 => (byte)((LatchedTime % TicksPerMinute) / TicksPerSecond),
                 0x09 => (byte)((LatchedTime % TicksPerHour) / TicksPerMinute),
                 0x0a => (byte)((LatchedTime % TicksPerDay) / TicksPerHour),
-                0x0b => (byte)((LatchedTime / TicksPerDay) & 0xff),
+                0x0b => (byte)(LatchedTime / TicksPerDay),
                 0x0c => MakeFlags(LatchedTime / TicksPerDay),
             };
         }
@@ -118,9 +121,9 @@ namespace emulator
         private byte MakeFlags(long days)
         {
             bool MSB = (days & 0x100) == 0x100;
-            byte flags = 0xff;
+            byte flags = 0;
             flags = flags.SetBit(0, MSB);
-            flags = flags.SetBit(6, halted);
+            flags = flags.SetBit(6, ClockIsPaused);
             flags = flags.SetBit(7, DateOverflow);
             return flags;
         }
@@ -128,9 +131,20 @@ namespace emulator
         private void SetRAM(int n, byte v)
         {
             if (RAMEnabled && !RTCSelected) RAMBanks[(RAMBankNumber * RAMBankSize) + n - RAMStart] = v;
-            if (RTCSelected)
+            if (RTCSelected) SetRTCRegister(v);
+        }
+
+        private long CurrentClock
+        {
+            get
             {
-                SetRTCRegister(v);
+                if (ClockIsPaused) return PausedClock;
+                else return GetRTC() - BaseToSubtractFromClock;
+            }
+            set
+            {
+                if (ClockIsPaused) PausedClock = value;
+                else BaseToSubtractFromClock = GetRTC() - value;
             }
         }
 
@@ -138,13 +152,36 @@ namespace emulator
         {
             if (RTCRegisterNumber == 0x0c)
             {
-                HandleRTCStop(v);
+                if (!ClockIsPaused && v.GetBit(6))
+                {
+                    StopClock();
+                }
+                else if (ClockIsPaused)
+                {
+                    ReactivateClock();
+                }
+                if (v.GetBit(7))
+                {
+                    SetCarry();
+                }
+                else
+                {
+                    UnSetCarry();
+                }
+                if (v.GetBit(0))
+                {
+                    SetDayCounterMSB();
+                }
+                else
+                {
+                    UnSetDayCounterMSB();
+                }
+
+
                 return;
             }
-            if (!halted) return;
 
-            (long days, byte hours, byte minutes, byte seconds) = getDateComponents(DateHaltedAgo);
-            long remainder = DateHaltedAgo % TicksPerSecond;
+            (long days, byte hours, byte minutes, byte seconds, long remainder) = getDateComponents(CurrentClock);
             var daysTopBit = days & 0x100;
 
             switch (RTCRegisterNumber)
@@ -163,62 +200,57 @@ namespace emulator
                     days = v + daysTopBit;
                     break;
             };
-            DateHaltedAgo = makeDate(days, hours, minutes, seconds, remainder);
+            CurrentClock = makeDate(days, hours, minutes, seconds, remainder);
+        }
+
+        private void ReactivateClock()
+        {
+            if (ClockIsPaused)
+            {
+                ClockIsPaused = false;
+                BaseToSubtractFromClock = GetRTC() - PausedClock;
+                PausedClock = long.MinValue; //Sanity check
+            }
+        }
+
+        private void UnSetCarry()
+        {
+            DateOverflow = false;
+        }
+
+        private void UnSetDayCounterMSB()
+        {
+            if (CurrentClock / TicksPerDay >= 0x100) CurrentClock -= (TicksPerDay * 0x100);
+        }
+
+        private void SetDayCounterMSB()
+        {
+            if (CurrentClock / TicksPerDay < 0x100) CurrentClock += (TicksPerDay * 0x100);
+        }
+
+        private void SetCarry()
+        {
+            DateOverflow = true;
+        }
+
+        private void StopClock()
+        {
+            ClockIsPaused = true;
+            PausedClock = GetRTC() - BaseToSubtractFromClock;
         }
 
         private static long makeDate(long days, byte hours, byte minutes, byte seconds, long remainder)
         {
             return (days * TicksPerDay) + (hours * TicksPerHour) + (minutes * TicksPerMinute) + (seconds * TicksPerSecond) + remainder;
         }
-        private static (long days, byte hours, byte minutes, byte seconds) getDateComponents(long timeSpan)
+        private static (long days, byte hours, byte minutes, byte seconds, long remainder) getDateComponents(long timeSpan)
         {
             var days = (timeSpan / TicksPerDay);
             var hours = (byte)(timeSpan % TicksPerDay / TicksPerHour);
             var minutes = (byte)(timeSpan % TicksPerHour / TicksPerMinute);
             var seconds = (byte)(timeSpan % TicksPerMinute / TicksPerSecond);
-            if (hours >= 24) throw new Exception("Hour overflow");
-            if (minutes >= 60) throw new Exception("Minute overflow");
-            if (seconds >= 60) throw new Exception("Second overflow");
-            return (days, hours, minutes, seconds);
-        }
-
-        private void HandleRTCStop(byte v)
-        {
-            if (!halted && v.GetBit(6)) //Switch to timer stop mode
-            {
-                halted = true;
-                //This delta is how many ticks before the current clock the halt is
-                //Because this number is relative to the current clock our time isn't increasing
-                DateHaltedAgo = GetRTC() - SetTime;
-                if (DateHaltedAgo < 0) throw new Exception("Didn't expect that!");
-                else
-                {
-                    if (DateHaltedAgo > TicksPerDay * 0x1ff)
-                    {
-                        DateOverflow = true;
-                        DateHaltedAgo %= (TicksPerDay * 0x1ff);
-                    }
-                }
-            }
-            else if (halted && !v.GetBit(6)) //Reactivate the timer
-            {
-                halted = false;
-                SetTime = GetRTC() - DateHaltedAgo;
-            }
-            if (!halted) return;
-
-            DateOverflow = v.GetBit(7);
-
-            //Set MSB to 0 therefore discard the days over 0xff;
-            if (!v.GetBit(0))
-            {
-                DateHaltedAgo %= (TicksPerDay * 0xff);
-            }
-            //Set MSB to 1 by adding 0x100 if the bit is not already set
-            else
-            {
-                DateHaltedAgo |= (TicksPerDay * 0x100);
-            }
+            var remainder = timeSpan % TicksPerSecond;
+            return (days, hours, minutes, seconds, remainder);
         }
     }
 }
