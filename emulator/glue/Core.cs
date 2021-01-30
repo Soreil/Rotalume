@@ -354,6 +354,8 @@ namespace emulator
             CartType.MBC3_RAM_BATTERY => new MBC3(header, gameROM, () => Clock),
             CartType.MBC3_TIMER_RAM_BATTERY => new MBC3(header, gameROM, () => Clock),
             CartType.MBC3_RAM => new MBC3(header, gameROM, () => Clock),
+            CartType.MBC5 => new MBC5(header, gameROM),
+            CartType.MBC5_RAM_BATTERY => new MBC5(header, gameROM),
             _ => throw new NotImplementedException(),
         };
 
@@ -371,10 +373,7 @@ namespace emulator
 
             var op = CPU.Halted == HaltState.haltbug ? ReadHaltBug() : Read();
             if (op != 0xcb)
-            {
-                //Unprefixeds.Push((PC - 1, (Unprefixed)op));
                 CPU.Op((Unprefixed)op)();
-            }
             else
             {
                 var CBop = Read(); //Because of the CB prefix we encountered in the previous case we already skipped the extra byte of a cb instruction here
