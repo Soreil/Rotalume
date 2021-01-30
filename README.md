@@ -8,7 +8,7 @@ Missing major features:
 - Sound
 - RAM battery emulation (no saving!)
 - Serial (no multiplayer)
-- Memory Bank Controllers other than MBC1 (many game cartridges won't work at all)
+- Memory Bank Controllers newer than MBC3
 - Sub scanline PPU controls (not possible to do many more advanced graphical effects some games use)
 - Accurate timing of internal steps of CPU instructions (For instance, for a 16 bit load load high and load low should happen on their own clock cycles but we just do all at once)
 
@@ -18,6 +18,7 @@ Test coverage:
 - Mooneye GB MBC1 tests: Fully working except for multiROM support
 - Mooneye GB MBC2 tests: Fully working
 - Mooneye GB Timer tests: Fully working except for TMA_write
+- ax6 rtc3test: Basic tests and accuracy tests working. No support yet for reading back minutes and seconds above 60 and hours above 24
 
 Working games:
 - Dr Mario
