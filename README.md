@@ -1,4 +1,4 @@
-# $Funny title
+# Rotalume
 
 This is supposed to become a somewhat accurate gameboy emulator targeting the original hardware. The emulator can currently play a bunch of games.
 To run the emulator one can simply run ```dotnet run -p .\emulator.csproj``` in the emulator subfolder.
