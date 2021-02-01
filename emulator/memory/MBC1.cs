@@ -26,19 +26,19 @@ namespace emulator
 
         private bool RAMEnabled = false;
         const int ROMBankSize = 0x4000;
-        int RAMBankSize = RAMSize;
+        readonly int RAMBankSize = RAMSize;
 
-        int lowBank => GetLowBankNumber();
+        int LowBank => GetLowBankNumber();
 
         //This can return 0/20/40/60h
         private int GetLowBankNumber() => BankingMode == 1 ? (UpperBitsOfROMBank << 5) & (ROMBankCount - 1) : 0;
 
-        private int HighBank() => (LowerBitsOfROMBank | (UpperBitsOfROMBank << 5)) & (ROMBankCount - 1);
-        int highBank => HighBank();
+        private int HighBank => (LowerBitsOfROMBank | (UpperBitsOfROMBank << 5)) & (ROMBankCount - 1);
 
-        int ramBank => RAMBankCount == 1 ? 0 : (BankingMode == 1 ? UpperBitsOfROMBank : 0);
-        int RAMBankCount;
-        int ROMBankCount;
+        int RamBank => RAMBankCount == 1 ? 0 : (BankingMode == 1 ? UpperBitsOfROMBank : 0);
+
+        readonly int RAMBankCount;
+        readonly int ROMBankCount;
 
         int LowerBitsOfROMBank = 1;
         int UpperBitsOfROMBank = 0;
@@ -87,12 +87,12 @@ namespace emulator
         }
 
         public byte GetROM(int n) => IsUpperBank(n) ? ReadHighBank(n) : ReadLowBank(n);
-        private byte ReadLowBank(int n) => gameROM[lowBank * ROMBankSize + n];
-        private byte ReadHighBank(int n) => gameROM[highBank * ROMBankSize + (n - ROMBankSize)];
+        private byte ReadLowBank(int n) => gameROM[LowBank * ROMBankSize + n];
+        private byte ReadHighBank(int n) => gameROM[HighBank * ROMBankSize + (n - ROMBankSize)];
 
-        private bool IsUpperBank(int n) => n >= ROMBankSize;
+        private static bool IsUpperBank(int n) => n >= ROMBankSize;
 
-        public byte GetRAM(int n) => RAMEnabled ? RAMBanks[(ramBank * RAMBankSize) + n - RAMStart] : 0xff;
-        public byte SetRAM(int n, byte v) => RAMEnabled ? RAMBanks[(ramBank * RAMBankSize) + n - RAMStart] = v : _ = v;
+        public byte GetRAM(int n) => RAMEnabled ? RAMBanks[(RamBank * RAMBankSize) + n - RAMStart] : 0xff;
+        public byte SetRAM(int n, byte v) => RAMEnabled ? RAMBanks[(RamBank * RAMBankSize) + n - RAMStart] = v : _ = v;
     }
 }

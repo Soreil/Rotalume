@@ -9,10 +9,9 @@ namespace emulator
 
         private bool RAMEnabled = false;
         const int ROMBankSize = 0x4000;
-        int RAMBankSize = RAMSize;
-
-        int RAMBankCount;
-        int ROMBankCount;
+        readonly int RAMBankSize = RAMSize;
+        readonly int RAMBankCount;
+        readonly int ROMBankCount;
 
         int ROMBankNumber = 1;
         int RAMBankNumber = 0;
@@ -63,13 +62,12 @@ namespace emulator
         private byte ReadLowBank(int n) => gameROM[n];
         private byte ReadHighBank(int n) => gameROM[ROMBankNumber * ROMBankSize + (n - ROMBankSize)];
 
-        private bool IsUpperBank(int n) => n >= ROMBankSize;
+        private static bool IsUpperBank(int n) => n >= ROMBankSize;
 
         public byte GetRAM(int n)
         {
             return RAMEnabled ? RAMBanks[(RAMBankNumber * RAMBankSize) + n - RAMStart] : 0xff;
         }
-
 
         private void SetRAM(int n, byte v)
         {

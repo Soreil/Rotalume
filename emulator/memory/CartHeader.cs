@@ -81,5 +81,21 @@ namespace emulator
             ROM_Size = ROM_Size_Mapping(gameROM[0x148]);
             RAM_Size = RAM_Size_Mapping(gameROM[0x149]);
         }
+
+        internal bool HasBattery() => Type switch
+        {
+            CartType.MBC1_RAM_BATTERY => true,
+            CartType.MBC2_BATTERY => true,
+            CartType.ROM_RAM_BATTERY => true,
+            CartType.MMM01_RAM_BATTERY => true,
+            CartType.MBC3_TIMER_BATTERY => true,
+            CartType.MBC3_TIMER_RAM_BATTERY => true,
+            CartType.MBC3_RAM_BATTERY => true,
+            CartType.MBC5_RAM_BATTERY => true,
+            CartType.MBC5_RUMBLE_RAM_BATTERY => true,
+            CartType.MBC7_SENSOR_RUMBLE_RAM_BATTERY => true,
+            CartType.HuC1_RAM_BATTERY => true,
+            _ => false,
+        };
     }
 }

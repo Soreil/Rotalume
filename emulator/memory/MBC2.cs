@@ -5,7 +5,7 @@ namespace emulator
 {
     internal class HalfRAM
     {
-        byte[] _ram = new byte[0x200];
+        public byte[] _ram = new byte[0x200];
         public byte this[int at]
         {
             get => _ram[at & 0x1FF];
@@ -27,14 +27,16 @@ namespace emulator
 
         int _rombank = 1;
         int ROMBank { get => _rombank; set => _rombank = value == 0 ? 1 : value & (ROMBankCount - 1); }
-        int ROMBankCount;
 
-        HalfRAM RAM = new HalfRAM();
+        readonly int ROMBankCount;
+        readonly HalfRAM RAM = new HalfRAM();
 
-        public MBC2(CartHeader header, byte[] gameROM)
+
+        public MBC2(byte[] gameROM)
         {
             this.gameROM = gameROM;
             ROMBankCount = (this.gameROM.Length) / 0x4000;
+            RAMBanks = RAM._ram;
         }
 
         public override byte this[int n]
@@ -61,7 +63,7 @@ namespace emulator
         private byte ReadLowBank(int n) => gameROM[n];
         private byte ReadHighBank(int n) => gameROM[(ROMBank * ROMBankSize) + (n - ROMBankSize)];
 
-        private bool IsUpperBank(int n) => n >= ROMBankSize;
+        private static bool IsUpperBank(int n) => n >= ROMBankSize;
 
         public byte GetRAM(int n) => RAMEnabled ? (byte)(RAM[n - RAMStart] | 0xf0) : 0xff;
         public byte SetRAM(int n, byte v) => RAMEnabled ? RAM[n - RAMStart] = v : _ = v;

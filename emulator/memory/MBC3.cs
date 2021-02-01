@@ -9,18 +9,14 @@ namespace emulator
 
         private bool RAMEnabled = false;
         const int ROMBankSize = 0x4000;
-        int RAMBankSize = RAMSize;
+        readonly int RAMBankSize = RAMSize;
 
         const int lowBank = 0;
-
-        int RAMBankCount;
-        int ROMBankCount;
 
         int ROMBankNumber = 1;
         int RAMBankNumber = 0;
         int RTCRegisterNumber = 0;
-
-        Func<long> GetRTC;
+        readonly Func<long> GetRTC;
         const long TicksPerSecond = 1 << 22;
         const long TicksPerMinute = TicksPerSecond * 60;
         const long TicksPerHour = TicksPerMinute * 60;
@@ -33,12 +29,9 @@ namespace emulator
         private bool ClockIsPaused = false;
         private bool DateOverflow = false;
         private long PausedClock = 0;
-        public MBC3(CartHeader header, byte[] gameROM, Func<long> getClock)
+        public MBC3(CartHeader header, byte[] gameROM, Func<long> getClock = null)
         {
             this.gameROM = gameROM;
-            ROMBankCount = this.gameROM.Length / 0x4000;
-            if (header.Type == CartType.MBC1_RAM && header.RAM_Size == 0) header = header with { RAM_Size = 0x2000 };
-            RAMBankCount = Math.Max(1, header.RAM_Size / RAMBankSize);
             RAMBanks = new byte[header.RAM_Size];
 
             //0x800 is the only alternative bank size
@@ -101,7 +94,7 @@ namespace emulator
         private byte ReadLowBank(int n) => gameROM[lowBank * ROMBankSize + n];
         private byte ReadHighBank(int n) => gameROM[ROMBankNumber * ROMBankSize + (n - ROMBankSize)];
 
-        private bool IsUpperBank(int n) => n >= ROMBankSize;
+        private static bool IsUpperBank(int n) => n >= ROMBankSize;
 
         public byte GetRAM(int n)
         {
@@ -181,7 +174,7 @@ namespace emulator
                 return;
             }
 
-            (long days, byte hours, byte minutes, byte seconds, long remainder) = getDateComponents(CurrentClock);
+            (long days, byte hours, byte minutes, byte seconds, long remainder) = GetDateComponents(CurrentClock);
             var daysTopBit = days & 0x100;
 
             switch (RTCRegisterNumber)
@@ -200,7 +193,7 @@ namespace emulator
                     days = v + daysTopBit;
                     break;
             };
-            CurrentClock = makeDate(days, hours, minutes, seconds, remainder);
+            CurrentClock = MakeDate(days, hours, minutes, seconds, remainder);
         }
 
         private void ReactivateClock()
@@ -239,11 +232,11 @@ namespace emulator
             PausedClock = GetRTC() - BaseToSubtractFromClock;
         }
 
-        private static long makeDate(long days, byte hours, byte minutes, byte seconds, long remainder)
+        private static long MakeDate(long days, byte hours, byte minutes, byte seconds, long remainder)
         {
             return (days * TicksPerDay) + (hours * TicksPerHour) + (minutes * TicksPerMinute) + (seconds * TicksPerSecond) + remainder;
         }
-        private static (long days, byte hours, byte minutes, byte seconds, long remainder) getDateComponents(long timeSpan)
+        private static (long days, byte hours, byte minutes, byte seconds, long remainder) GetDateComponents(long timeSpan)
         {
             var days = (timeSpan / TicksPerDay);
             var hours = (byte)(timeSpan % TicksPerDay / TicksPerHour);

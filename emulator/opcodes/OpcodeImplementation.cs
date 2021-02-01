@@ -511,7 +511,7 @@ namespace emulator
             return (byte)sum;
         }
 
-        public Action ADC((Register, Traits) p0, (Register, Traits) p1, int duration)
+        public Action ADC((Register, Traits) p1, int duration)
         {
             return () =>
             {
@@ -1427,8 +1427,8 @@ namespace emulator
             Registers.Mark(Flag.NN);
             Registers.Mark(Flag.H);
         }
-        private byte RES(int at, byte b) => b.ClearBit(at);
-        private byte SET(int at, byte b) => b.SetBit(at);
+        private static byte RES(int at, byte b) => b.ClearBit(at);
+        private static byte SET(int at, byte b) => b.SetBit(at);
 
         public Action RES((byte, Traits) p0, (Register, Traits) p1, int duration)
         {

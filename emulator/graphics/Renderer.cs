@@ -24,7 +24,7 @@ namespace emulator
 
         public Renderer(PPU ppu, Stream destination = null)
         {
-            fs = destination == null ? Stream.Null : destination;
+            fs = destination ?? Stream.Null;
             PPU = ppu;
             var startTime = PPU.Clock();
             Clock = () => ppu.Clock() - startTime;

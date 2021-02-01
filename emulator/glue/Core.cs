@@ -78,9 +78,23 @@ namespace emulator
             var ioRegisters = SetupControlRegisters(GetJoyPad, ReadBootROMFlag);
 
             CartHeader Header = gameROM.Length < 0x8000 ? null : new CartHeader(gameROM);
+
+            System.IO.MemoryMappedFiles.MemoryMappedFile m = null;
+            if (Header.HasBattery())
+            {
+                var path = Environment.GetEnvironmentVariable("LocalAppData") + string.Format(@"\{0}.sav", Header.Title);
+                if (!System.IO.File.Exists(path))
+                {
+                    int size = 0;
+                    if (Header.RAM_Size != 0) size += Header.RAM_Size;
+
+                    System.IO.File.WriteAllBytes(path, new byte[Header.RAM_Size]);
+                }
+                m = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateFromFile(path);
+            }
             MBC Card;
-            if (Header is not null) Card = MakeMBC(Header, gameROM);
-            else Card = MakeFakeMBC(gameROM);
+            if (Header is null) Card = MakeFakeMBC(gameROM);
+            else Card = MakeMBC(Header, gameROM, m);
 
             var memory = new MMU(Read,
     bootROM,
@@ -341,22 +355,22 @@ namespace emulator
 
         private static MBC MakeFakeMBC(byte[] gameROM) => new ROMONLY(gameROM);
 
-        private MBC MakeMBC(CartHeader header, byte[] gameROM) => header.Type switch
+        private MBC MakeMBC(CartHeader header, byte[] gameROM, System.IO.MemoryMappedFiles.MemoryMappedFile file) => header.Type switch
         {
             CartType.ROM_ONLY => new ROMONLY(gameROM),
             CartType.MBC1 => new MBC1(header, gameROM),
-            CartType.MBC1_RAM_BATTERY => new MBC1(header, gameROM),
             CartType.MBC1_RAM => new MBC1(header, gameROM),
-            CartType.MBC2_BATTERY => new MBC2(header, gameROM),
-            CartType.MBC2 => new MBC2(header, gameROM),
-            CartType.MBC3 => new MBC3(header, gameROM, () => Clock),
-            CartType.MBC3_TIMER_BATTERY => new MBC3(header, gameROM, () => Clock),
-            CartType.MBC3_RAM_BATTERY => new MBC3(header, gameROM, () => Clock),
-            CartType.MBC3_TIMER_RAM_BATTERY => new MBC3(header, gameROM, () => Clock),
-            CartType.MBC3_RAM => new MBC3(header, gameROM, () => Clock),
+            CartType.MBC1_RAM_BATTERY => new MBC1(header, gameROM, file),
+            CartType.MBC2 => new MBC2(gameROM),
+            CartType.MBC2_BATTERY => new MBC2(gameROM, file),
+            CartType.MBC3 => new MBC3(header, gameROM),
+            CartType.MBC3_RAM => new MBC3(header, gameROM),
+            CartType.MBC3_RAM_BATTERY => new MBC3(header, gameROM, file),
+            CartType.MBC3_TIMER_BATTERY => new MBC3(header, gameROM, () => Clock, file),
+            CartType.MBC3_TIMER_RAM_BATTERY => new MBC3(header, gameROM, () => Clock, file),
             CartType.MBC5 => new MBC5(header, gameROM),
             CartType.MBC5_RAM => new MBC5(header, gameROM),
-            CartType.MBC5_RAM_BATTERY => new MBC5(header, gameROM),
+            CartType.MBC5_RAM_BATTERY => new MBC5(header, gameROM, file),
             _ => throw new NotImplementedException(),
         };
 
