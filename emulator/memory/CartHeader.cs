@@ -97,5 +97,12 @@ namespace emulator
             CartType.HuC1_RAM_BATTERY => true,
             _ => false,
         };
+
+        internal bool HasClock() => Type switch
+        {
+            CartType.MBC3_TIMER_BATTERY => true,
+            CartType.MBC3_TIMER_RAM_BATTERY => true,
+            _ => false,
+        };
     }
 }

@@ -8,7 +8,7 @@ namespace emulator
         public const int ROMSize = 0x8000;
         public const int RAMStart = 0xa000;
         public const int RAMSize = 0x2000;
-        public byte[] RAMBanks { get; init; }
+        public System.IO.MemoryMappedFiles.MemoryMappedViewAccessor RAMBanks { get; init; }
         public abstract byte this[int n]
         {
             get;

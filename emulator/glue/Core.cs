@@ -82,13 +82,18 @@ namespace emulator
             System.IO.MemoryMappedFiles.MemoryMappedFile m = null;
             if (Header.HasBattery())
             {
-                var path = Environment.GetEnvironmentVariable("LocalAppData") + string.Format(@"\{0}.sav", Header.Title);
+                var root = Environment.GetEnvironmentVariable("LocalAppData") + "\\rotalume";
+                if (!System.IO.Directory.Exists(root))
+                    System.IO.Directory.CreateDirectory(root);
+
+                var path = string.Format(@"{0}\{1}.sav", root, Header.Title);
                 if (!System.IO.File.Exists(path))
                 {
                     int size = 0;
                     if (Header.RAM_Size != 0) size += Header.RAM_Size;
+                    if (Header.HasClock()) size += 16; //16 bytes to store clock should be plenty
 
-                    System.IO.File.WriteAllBytes(path, new byte[Header.RAM_Size]);
+                    System.IO.File.WriteAllBytes(path, new byte[size]);
                 }
                 m = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateFromFile(path);
             }
@@ -366,8 +371,8 @@ namespace emulator
             CartType.MBC3 => new MBC3(header, gameROM),
             CartType.MBC3_RAM => new MBC3(header, gameROM),
             CartType.MBC3_RAM_BATTERY => new MBC3(header, gameROM, file),
-            CartType.MBC3_TIMER_BATTERY => new MBC3(header, gameROM, () => Clock, file),
-            CartType.MBC3_TIMER_RAM_BATTERY => new MBC3(header, gameROM, () => Clock, file),
+            CartType.MBC3_TIMER_BATTERY => new MBC3(header, gameROM, file, () => Clock),
+            CartType.MBC3_TIMER_RAM_BATTERY => new MBC3(header, gameROM, file, () => Clock),
             CartType.MBC5 => new MBC5(header, gameROM),
             CartType.MBC5_RAM => new MBC5(header, gameROM),
             CartType.MBC5_RAM_BATTERY => new MBC5(header, gameROM, file),

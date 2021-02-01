@@ -5,18 +5,14 @@ namespace emulator
 {
     internal class HalfRAM
     {
-        public byte[] _ram = new byte[0x200];
+        System.IO.MemoryMappedFiles.MemoryMappedViewAccessor _ram;
         public byte this[int at]
         {
-            get => _ram[at & 0x1FF];
-            set => _ram[at & 0x1FF] = (byte)(value & 0xf);
+            get => _ram.ReadByte(at & 0x1FF);
+            set => _ram.Write(at & 0x1FF, (byte)(value & 0xf));
         }
 
-        public HalfRAM()
-        {
-            for (int i = 0; i < _ram.Length; i++)
-                _ram[i] = 0xf;
-        }
+        public HalfRAM(System.IO.MemoryMappedFiles.MemoryMappedViewAccessor v) => _ram = v;
     }
     internal class MBC2 : MBC
     {
@@ -29,14 +25,15 @@ namespace emulator
         int ROMBank { get => _rombank; set => _rombank = value == 0 ? 1 : value & (ROMBankCount - 1); }
 
         readonly int ROMBankCount;
-        readonly HalfRAM RAM = new HalfRAM();
+        readonly HalfRAM RAM;
 
 
-        public MBC2(byte[] gameROM)
+        public MBC2(byte[] gameROM, System.IO.MemoryMappedFiles.MemoryMappedFile file = null)
         {
             this.gameROM = gameROM;
             ROMBankCount = (this.gameROM.Length) / 0x4000;
-            RAMBanks = RAM._ram;
+            RAMBanks = file.CreateViewAccessor(0, 0x2000);
+            RAM = new(RAMBanks);
         }
 
         public override byte this[int n]

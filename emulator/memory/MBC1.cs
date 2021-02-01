@@ -43,21 +43,14 @@ namespace emulator
         int LowerBitsOfROMBank = 1;
         int UpperBitsOfROMBank = 0;
         int BankingMode = 0;
-        public MBC1(CartHeader header, byte[] gameROM)
+        public MBC1(CartHeader header, byte[] gameROM, System.IO.MemoryMappedFiles.MemoryMappedFile file = null)
         {
             this.gameROM = gameROM;
             ROMBankCount = this.gameROM.Length / 0x4000;
-            if (header.Type == CartType.MBC1_RAM && header.RAM_Size == 0) header = header with { RAM_Size = 0x2000 };
+
             RAMBankCount = Math.Max(1, header.RAM_Size / RAMBankSize);
-            RAMBanks = new byte[header.RAM_Size];
-
-            //0x800 is the only alternative bank size
-            if (header.RAM_Size == 0)
-                RAMBankSize = 0;
-
-            //0x800 is the only alternative bank size
-            if (header.RAM_Size == 0x800)
-                RAMBankSize = 0x800;
+            RAMBanks = file.CreateViewAccessor(0, header.RAM_Size);
+            RAMBankSize = Math.Min(header.RAM_Size, 0x2000);
         }
 
         public override byte this[int n]
@@ -92,7 +85,11 @@ namespace emulator
 
         private static bool IsUpperBank(int n) => n >= ROMBankSize;
 
-        public byte GetRAM(int n) => RAMEnabled ? RAMBanks[(RamBank * RAMBankSize) + n - RAMStart] : 0xff;
-        public byte SetRAM(int n, byte v) => RAMEnabled ? RAMBanks[(RamBank * RAMBankSize) + n - RAMStart] = v : _ = v;
+        public byte GetRAM(int n) => RAMEnabled ? RAMBanks.ReadByte((RamBank * RAMBankSize) + n - RAMStart) : 0xff;
+        public void SetRAM(int n, byte v)
+        {
+            if (RAMEnabled)
+                RAMBanks.Write((RamBank * RAMBankSize) + n - RAMStart, v);
+        }
     }
 }

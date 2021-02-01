@@ -15,12 +15,12 @@ namespace emulator
 
         int ROMBankNumber = 1;
         int RAMBankNumber = 0;
-        public MBC5(CartHeader header, byte[] gameROM)
+        public MBC5(CartHeader header, byte[] gameROM, System.IO.MemoryMappedFiles.MemoryMappedFile file = null)
         {
             this.gameROM = gameROM;
             ROMBankCount = this.gameROM.Length / 0x4000;
             RAMBankCount = Math.Max(1, header.RAM_Size / RAMBankSize);
-            RAMBanks = new byte[header.RAM_Size];
+            RAMBanks = file.CreateViewAccessor(0, header.RAM_Size);
 
             //0x800 is the only alternative bank size
             if (header.RAM_Size == 0)
@@ -64,15 +64,11 @@ namespace emulator
 
         private static bool IsUpperBank(int n) => n >= ROMBankSize;
 
-        public byte GetRAM(int n)
-        {
-            return RAMEnabled ? RAMBanks[(RAMBankNumber * RAMBankSize) + n - RAMStart] : 0xff;
-        }
-
-        private void SetRAM(int n, byte v)
+        public byte GetRAM(int n) => RAMEnabled ? RAMBanks.ReadByte((RAMBankNumber * RAMBankSize) + n - RAMStart) : 0xff;
+        public void SetRAM(int n, byte v)
         {
             if (RAMEnabled)
-                RAMBanks[(RAMBankNumber * RAMBankSize) + n - RAMStart] = v;
+                RAMBanks.Write((RAMBankNumber * RAMBankSize) + n - RAMStart, v);
         }
 
     }

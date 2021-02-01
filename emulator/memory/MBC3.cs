@@ -29,10 +29,10 @@ namespace emulator
         private bool ClockIsPaused = false;
         private bool DateOverflow = false;
         private long PausedClock = 0;
-        public MBC3(CartHeader header, byte[] gameROM, Func<long> getClock = null)
+        public MBC3(CartHeader header, byte[] gameROM, System.IO.MemoryMappedFiles.MemoryMappedFile file = null, Func<long> getClock = null)
         {
             this.gameROM = gameROM;
-            RAMBanks = new byte[header.RAM_Size];
+            RAMBanks = file.CreateViewAccessor(0, header.RAM_Size);
 
             //0x800 is the only alternative bank size
             if (header.RAM_Size == 0)
@@ -98,7 +98,7 @@ namespace emulator
 
         public byte GetRAM(int n)
         {
-            if (!RTCSelected) return RAMEnabled ? RAMBanks[(RAMBankNumber * RAMBankSize) + n - RAMStart] : 0xff;
+            if (!RTCSelected) return RAMEnabled ? RAMBanks.ReadByte((RAMBankNumber * RAMBankSize) + n - RAMStart) : 0xff;
 #pragma warning disable CS8509 // Exhaustive
             return RTCRegisterNumber switch
 #pragma warning restore CS8509 // Exhaustive
@@ -123,7 +123,7 @@ namespace emulator
 
         private void SetRAM(int n, byte v)
         {
-            if (RAMEnabled && !RTCSelected) RAMBanks[(RAMBankNumber * RAMBankSize) + n - RAMStart] = v;
+            if (RAMEnabled && !RTCSelected) RAMBanks.Write((RAMBankNumber * RAMBankSize) + n - RAMStart, v);
             if (RTCSelected) SetRTCRegister(v);
         }
 
