@@ -174,7 +174,9 @@ namespace emulator
                 //16 bytes to store clock should be plenty
                 if (Header.HasClock()) size += 16;
 
-                System.IO.File.WriteAllBytes(path, new byte[size]);
+                var buffer = new byte[size];
+                for (int i = 0; i < size; i++) buffer[i] = 0xff;
+                System.IO.File.WriteAllBytes(path, buffer);
             }
             return System.IO.MemoryMappedFiles.MemoryMappedFile.CreateFromFile(path);
         }
