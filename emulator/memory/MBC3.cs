@@ -23,7 +23,7 @@ namespace emulator
         const long TicksPerDay = TicksPerHour * 24;
         bool RTCSelected = false;
 
-        private byte PreviousLatchControlWriteValue = 0;
+        private byte PreviousLatchControlWriteValue = 0xff; //Setting this to 0 would mean it triggers on the first 1 write with a 0
         private long BaseToSubtractFromClock = 0; //We need to load this as well as the RAM in on load of the cartridge
         private long LatchedTime = 0;
         private bool ClockIsPaused = false;
@@ -146,30 +146,17 @@ namespace emulator
             if (RTCRegisterNumber == 0x0c)
             {
                 if (!ClockIsPaused && v.GetBit(6))
-                {
                     StopClock();
-                }
                 else if (ClockIsPaused)
-                {
                     ReactivateClock();
-                }
                 if (v.GetBit(7))
-                {
                     SetCarry();
-                }
                 else
-                {
                     UnSetCarry();
-                }
                 if (v.GetBit(0))
-                {
                     SetDayCounterMSB();
-                }
                 else
-                {
                     UnSetDayCounterMSB();
-                }
-
 
                 return;
             }

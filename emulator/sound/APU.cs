@@ -2,11 +2,17 @@
 {
     public class APU
     {
-        public byte NR10 = 0xff;
+        private byte _nr10 = 0xff;
+        public byte NR10
+        {
+            get => (byte)(_nr10 & 0x7f | 0x80);
+            set => _nr10 = value;
+        }
+
         private byte _nr11 = 0xff;
         public byte NR11
         {
-            get => (byte)(_nr11 & 0xb0 | 0x3f);
+            get => (byte)(_nr11 & 0xc0 | 0x3f);
             set => _nr11 = value;
         }
         public byte NR12 = 0xff;
@@ -72,7 +78,7 @@
         public byte NR52
         {
             get => _nr52;
-            set => _nr52 = (byte)(value & 0x80 | (_nr52&0x7f));
+            set => _nr52 = (byte)(value & 0x80 | (_nr52 & 0x7f));
         }
 
         public APU()

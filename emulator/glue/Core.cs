@@ -263,7 +263,7 @@ namespace emulator
             //DMA
             controlRegisters.Writer[0x46] = (x) =>
             {
-                if (x > 0xf1) throw new Exception("Illegal DMA start adress");
+                if (x > 0xf1) throw new Exception("Illegal DMA start adress"); //TODO: investigate how to handle these
                 _dma = x;
 
                 ushort baseAddr = (ushort)(x << 8);
