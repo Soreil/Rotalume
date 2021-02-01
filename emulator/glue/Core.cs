@@ -79,24 +79,7 @@ namespace emulator
 
             CartHeader Header = gameROM.Length < 0x8000 ? null : new CartHeader(gameROM);
 
-            System.IO.MemoryMappedFiles.MemoryMappedFile m = null;
-            if (Header.HasBattery())
-            {
-                var root = Environment.GetEnvironmentVariable("LocalAppData") + "\\rotalume";
-                if (!System.IO.Directory.Exists(root))
-                    System.IO.Directory.CreateDirectory(root);
-
-                var path = string.Format(@"{0}\{1}.sav", root, Header.Title);
-                if (!System.IO.File.Exists(path))
-                {
-                    int size = 0;
-                    if (Header.RAM_Size != 0) size += Header.RAM_Size;
-                    if (Header.HasClock()) size += 16; //16 bytes to store clock should be plenty
-
-                    System.IO.File.WriteAllBytes(path, new byte[size]);
-                }
-                m = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateFromFile(path);
-            }
+            var m = MakeMemoryMappedFile(Header);
             MBC Card;
             if (Header is null) Card = MakeFakeMBC(gameROM);
             else Card = MakeMBC(Header, gameROM, m);
@@ -170,6 +153,30 @@ namespace emulator
 
                 CPU.IME = true;
             }
+        }
+
+        private static System.IO.MemoryMappedFiles.MemoryMappedFile MakeMemoryMappedFile(CartHeader Header)
+        {
+            if (!Header.HasBattery())
+                return null;
+
+            var root = Environment.GetEnvironmentVariable("LocalAppData") + "\\rotalume";
+            if (!System.IO.Directory.Exists(root))
+                System.IO.Directory.CreateDirectory(root);
+
+            var path = string.Format(@"{0}\{1}.sav", root, Header.Title);
+            if (!System.IO.File.Exists(path))
+            {
+                int size = 0;
+                if (Header.RAM_Size != 0) size += Header.RAM_Size;
+                //MBC2 does not report a size in the header but instead has a fixed 2k internal RAM
+                else if (Header.Type == CartType.MBC2_BATTERY) size += 0x2000;
+                //16 bytes to store clock should be plenty
+                if (Header.HasClock()) size += 16;
+
+                System.IO.File.WriteAllBytes(path, new byte[size]);
+            }
+            return System.IO.MemoryMappedFiles.MemoryMappedFile.CreateFromFile(path);
         }
 
         private ControlRegister SetupControlRegisters(Func<byte, byte> GetJoyPad, Func<byte> ReadBootROMFlag)

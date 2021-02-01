@@ -49,8 +49,10 @@ namespace emulator
             ROMBankCount = this.gameROM.Length / 0x4000;
 
             RAMBankCount = Math.Max(1, header.RAM_Size / RAMBankSize);
-            RAMBanks = file.CreateViewAccessor(0, header.RAM_Size);
             RAMBankSize = Math.Min(header.RAM_Size, 0x2000);
+
+            if (header.RAM_Size != 0)
+                RAMBanks = file.CreateViewAccessor(0, header.RAM_Size);
         }
 
         public override byte this[int n]
