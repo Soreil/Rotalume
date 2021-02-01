@@ -160,7 +160,7 @@ namespace emulator
             if (!Header.HasBattery())
                 return null;
 
-            var root = Environment.GetEnvironmentVariable("LocalAppData") + "\\rotalume";
+            var root = Environment.GetEnvironmentVariable("AppData") + "\\rotalume";
             if (!System.IO.Directory.Exists(root))
                 System.IO.Directory.CreateDirectory(root);
 
