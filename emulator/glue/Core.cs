@@ -183,14 +183,10 @@ namespace emulator
 
         private ControlRegister SetupControlRegisters(Func<byte, byte> GetJoyPad, Func<byte> ReadBootROMFlag)
         {
-            ControlRegister controlRegisters = new ControlRegister(0xff00, 0x80);
 
             Action<byte> BootROMFlagController = (byte b) =>
             {
-                if (b == 1)
-                {
-                    bootROMActive = false;
-                }
+                if (b == 1) bootROMActive = false;
             };
 
             Action<byte> LCDControlController = (byte b) => PPU.LCDC = b;
@@ -224,6 +220,7 @@ namespace emulator
             Action<byte> LYCController = (byte b) => PPU.LYC = b;
             Func<byte> ReadLYC = () => PPU.LYC;
 
+            ControlRegister controlRegisters = new ControlRegister(0xff00, 0x80);
 
             controlRegisters.Writer[0] = x => keypadFlags = (byte)(x & 0xf0);
             controlRegisters.Reader[0] = () => GetJoyPad(keypadFlags);
@@ -231,6 +228,34 @@ namespace emulator
             controlRegisters.Writer[0xF] = x => CPU.InterruptFireRegister = x;
             controlRegisters.Reader[0xF] = () => CPU.InterruptFireRegister;
 
+            HookUpTimers(controlRegisters);
+
+            controlRegisters.Writer[0x50] = BootROMFlagController;
+            controlRegisters.Reader[0x50] = ReadBootROMFlag;
+
+            HookUpGraphics(controlRegisters, LCDControlController, ReadLCDControl, LCDStatController, ReadLCDStat, ScrollYController, ReadScrollY, ScrollXController, ReadScrollX, LCDLineController, ReadLine, PaletteController, ReadPalette, OBP0Controller, ReadOBP0, OBP1Controller, ReadOBP1, WYController, ReadWY, WXController, ReadWX, LYCController, ReadLYC);
+
+            HookUpSound(controlRegisters);
+
+            //Serial
+            controlRegisters.Writer[1] = (x) => { };
+            controlRegisters.Reader[1] = () => 0;
+
+            controlRegisters.Writer[2] = (x) => serialControl = (byte)((x & 0x81) | 0x7e);
+            controlRegisters.Reader[2] = () => serialControl;
+
+            //Not used on the DMG
+            for (ushort Unused = 0xff4c; Unused < 0xff80; Unused++)
+            {
+                if (Unused == 0xff50) continue;
+                controlRegisters.Writer[Unused & 0xff] = (x) => { };
+                controlRegisters.Reader[Unused & 0xff] = () => 0xff;
+            }
+            return controlRegisters;
+        }
+
+        private void HookUpTimers(ControlRegister controlRegisters)
+        {
             controlRegisters.Writer[0x04] = x => Timers.DIV = x;
             controlRegisters.Reader[0x04] = () => Timers.DIV;
 
@@ -242,10 +267,10 @@ namespace emulator
 
             controlRegisters.Writer[0x07] = x => Timers.TAC = x;
             controlRegisters.Reader[0x07] = () => Timers.TAC;
+        }
 
-            controlRegisters.Writer[0x50] = BootROMFlagController;
-            controlRegisters.Reader[0x50] = ReadBootROMFlag;
-
+        private void HookUpGraphics(ControlRegister controlRegisters, Action<byte> LCDControlController, Func<byte> ReadLCDControl, Action<byte> LCDStatController, Func<byte> ReadLCDStat, Action<byte> ScrollYController, Func<byte> ReadScrollY, Action<byte> ScrollXController, Func<byte> ReadScrollX, Action<byte> LCDLineController, Func<byte> ReadLine, Action<byte> PaletteController, Func<byte> ReadPalette, Action<byte> OBP0Controller, Func<byte> ReadOBP0, Action<byte> OBP1Controller, Func<byte> ReadOBP1, Action<byte> WYController, Func<byte> ReadWY, Action<byte> WXController, Func<byte> ReadWX, Action<byte> LYCController, Func<byte> ReadLYC)
+        {
             //PPU registers
             controlRegisters.Writer[0x40] = LCDControlController;
             controlRegisters.Reader[0x40] = ReadLCDControl;
@@ -288,7 +313,10 @@ namespace emulator
             controlRegisters.Reader[0x4A] = ReadWY;
             controlRegisters.Writer[0x4B] = WXController;
             controlRegisters.Reader[0x4B] = ReadWX;
+        }
 
+        private void HookUpSound(ControlRegister controlRegisters)
+        {
             //Sound
             controlRegisters.Writer[0x10] = (x) => APU.NR10 = x;
             controlRegisters.Reader[0x10] = () => APU.NR10;
@@ -296,20 +324,30 @@ namespace emulator
             controlRegisters.Reader[0x11] = () => APU.NR11;
             controlRegisters.Writer[0x12] = (x) => APU.NR12 = x;
             controlRegisters.Reader[0x12] = () => APU.NR12;
+            controlRegisters.Writer[0x13] = (x) => APU.NR13 = x;
+            controlRegisters.Reader[0x13] = () => APU.NR13;
             controlRegisters.Writer[0x14] = (x) => APU.NR14 = x;
             controlRegisters.Reader[0x14] = () => APU.NR14;
             controlRegisters.Writer[0x16] = (x) => APU.NR21 = x;
             controlRegisters.Reader[0x16] = () => APU.NR21;
             controlRegisters.Writer[0x17] = (x) => APU.NR22 = x;
             controlRegisters.Reader[0x17] = () => APU.NR22;
+            controlRegisters.Writer[0x18] = (x) => APU.NR23 = x;
+            controlRegisters.Reader[0x18] = () => APU.NR23;
             controlRegisters.Writer[0x19] = (x) => APU.NR24 = x;
             controlRegisters.Reader[0x19] = () => APU.NR24;
             controlRegisters.Writer[0x1a] = (x) => APU.NR30 = x;
             controlRegisters.Reader[0x1a] = () => APU.NR30;
+            controlRegisters.Writer[0x1b] = (x) => APU.NR31 = x;
+            controlRegisters.Reader[0x1b] = () => APU.NR31;
             controlRegisters.Writer[0x1c] = (x) => APU.NR32 = x;
             controlRegisters.Reader[0x1c] = () => APU.NR32;
+            controlRegisters.Writer[0x1d] = (x) => APU.NR33 = x;
+            controlRegisters.Reader[0x1d] = () => APU.NR33;
             controlRegisters.Writer[0x1e] = (x) => APU.NR34 = x;
             controlRegisters.Reader[0x1e] = () => APU.NR34;
+            controlRegisters.Writer[0x20] = (x) => APU.NR41 = x;
+            controlRegisters.Reader[0x20] = () => APU.NR41;
             controlRegisters.Writer[0x21] = (x) => APU.NR42 = x;
             controlRegisters.Reader[0x21] = () => APU.NR42;
             controlRegisters.Writer[0x22] = (x) => APU.NR43 = x;
@@ -323,48 +361,38 @@ namespace emulator
             controlRegisters.Writer[0x26] = (x) => APU.NR52 = x;
             controlRegisters.Reader[0x26] = () => APU.NR52;
 
-            for (ushort SoundRegister = 0xff13; SoundRegister <= 0xff26; SoundRegister++)
-            {
-                if (SoundRegister == 0xff14 ||
-                    SoundRegister == 0xff16 ||
-                    SoundRegister == 0xff17 ||
-                    SoundRegister == 0xff19 ||
-                    SoundRegister == 0xff1a ||
-                    SoundRegister == 0xff1c ||
-                    SoundRegister == 0xff1e ||
-                    SoundRegister == 0xff21 ||
-                    SoundRegister == 0xff22 ||
-                    SoundRegister == 0xff23 ||
-                    SoundRegister == 0xff24 ||
-                    SoundRegister == 0xff25 ||
-                    SoundRegister == 0xff26
-                    ) continue;
-
-                controlRegisters.Writer[SoundRegister & 0xff] = (x) => { };
-                controlRegisters.Reader[SoundRegister & 0xff] = () => 0xff;
-            }
-
-            for (ushort SoundWave = 0xff30; SoundWave <= 0xff3f; SoundWave++)
-            {
-                controlRegisters.Writer[SoundWave & 0xff] = (x) => { };
-                controlRegisters.Reader[SoundWave & 0xff] = () => 0xff;
-            }
-
-            //Serial
-            controlRegisters.Writer[1] = (x) => { };
-            controlRegisters.Reader[1] = () => 0;
-
-            controlRegisters.Writer[2] = (x) => serialControl = (byte)((x & 0x81) | 0x7e);
-            controlRegisters.Reader[2] = () => serialControl;
-
-            //Not used on the DMG
-            for (ushort Unused = 0xff4c; Unused < 0xff80; Unused++)
-            {
-                if (Unused == 0xff50) continue;
-                controlRegisters.Writer[Unused & 0xff] = (x) => { };
-                controlRegisters.Reader[Unused & 0xff] = () => 0xff;
-            }
-            return controlRegisters;
+            controlRegisters.Writer[0xff30] = (x) => APU.Wave[0] = x;
+            controlRegisters.Reader[0xff30] = () => APU.Wave[0];
+            controlRegisters.Writer[0xff31] = (x) => APU.Wave[1] = x;
+            controlRegisters.Reader[0xff31] = () => APU.Wave[1];
+            controlRegisters.Writer[0xff32] = (x) => APU.Wave[2] = x;
+            controlRegisters.Reader[0xff32] = () => APU.Wave[2];
+            controlRegisters.Writer[0xff33] = (x) => APU.Wave[3] = x;
+            controlRegisters.Reader[0xff33] = () => APU.Wave[3];
+            controlRegisters.Writer[0xff34] = (x) => APU.Wave[4] = x;
+            controlRegisters.Reader[0xff34] = () => APU.Wave[4];
+            controlRegisters.Writer[0xff35] = (x) => APU.Wave[5] = x;
+            controlRegisters.Reader[0xff35] = () => APU.Wave[5];
+            controlRegisters.Writer[0xff36] = (x) => APU.Wave[6] = x;
+            controlRegisters.Reader[0xff36] = () => APU.Wave[6];
+            controlRegisters.Writer[0xff37] = (x) => APU.Wave[7] = x;
+            controlRegisters.Reader[0xff37] = () => APU.Wave[7];
+            controlRegisters.Writer[0xff38] = (x) => APU.Wave[8] = x;
+            controlRegisters.Reader[0xff38] = () => APU.Wave[8];
+            controlRegisters.Writer[0xff39] = (x) => APU.Wave[9] = x;
+            controlRegisters.Reader[0xff39] = () => APU.Wave[9];
+            controlRegisters.Writer[0xff3a] = (x) => APU.Wave[10] = x;
+            controlRegisters.Reader[0xff3a] = () => APU.Wave[10];
+            controlRegisters.Writer[0xff3b] = (x) => APU.Wave[11] = x;
+            controlRegisters.Reader[0xff3b] = () => APU.Wave[11];
+            controlRegisters.Writer[0xff3c] = (x) => APU.Wave[12] = x;
+            controlRegisters.Reader[0xff3c] = () => APU.Wave[12];
+            controlRegisters.Writer[0xff3d] = (x) => APU.Wave[13] = x;
+            controlRegisters.Reader[0xff3d] = () => APU.Wave[13];
+            controlRegisters.Writer[0xff3e] = (x) => APU.Wave[14] = x;
+            controlRegisters.Reader[0xff3e] = () => APU.Wave[14];
+            controlRegisters.Writer[0xff3f] = (x) => APU.Wave[15] = x;
+            controlRegisters.Reader[0xff3f] = () => APU.Wave[15];
         }
 
         private static MBC MakeFakeMBC(byte[] gameROM) => new ROMONLY(gameROM);
@@ -410,10 +438,7 @@ namespace emulator
             }
         }
 
-        public static byte[] LoadBootROM()
-        {
-            return System.IO.File.ReadAllBytes(@"..\..\..\..\emulator\bootrom\DMG_ROM_BOOT.bin");
-        }
+        public static byte[] LoadBootROM() => System.IO.File.ReadAllBytes(@"..\..\..\..\emulator\bootrom\DMG_ROM_BOOT.bin");
 
         public void Step()
         {

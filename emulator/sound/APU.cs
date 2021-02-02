@@ -129,6 +129,13 @@ namespace emulator
         private bool Sound2OnEnabled => NR52.GetBit(1);
         private bool Sound3OnEnabled => NR52.GetBit(2);
         private bool Sound4OnEnabled => NR52.GetBit(3);
+
+        public byte NR23 { get; internal set; }
+        public byte NR31 { get; internal set; }
+        public byte NR33 { get; internal set; }
+        public byte NR41 { get; internal set; }
+        public byte[] Wave { get; internal set; } = new byte[0x10];
+
         public APU()
         {
 
