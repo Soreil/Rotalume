@@ -18,7 +18,7 @@ namespace emulator
             if (DelayTicks > 0)
             {
                 DelayTicks--;
-                if (DelayTicks == 0) _tima = TMA;
+                if (DelayTicks == 0) Tima = TMA;
             }
 
             var before = (InternalCounter & (1 << TACBitSelected)) == 0;
@@ -44,8 +44,6 @@ namespace emulator
                 InternalCounter = 0;
             }
         }
-
-        static readonly int[] clocks = new int[4] { 1024, 16, 64, 256 };
 
         private byte _tac = 0xf8;
         public byte TAC
@@ -82,7 +80,6 @@ namespace emulator
             1 => 3,
             2 => 5,
             3 => 7,
-            _ => throw new NotImplementedException(),
         };
 
         private byte _tma;
@@ -95,17 +92,17 @@ namespace emulator
             }
         }
 
-        private byte _tima
+        private byte Tima
         {
             get;
             set;
         }
         public byte TIMA
         {
-            get => _tima;
+            get => Tima;
             set
             {
-                _tima = value;
+                Tima = value;
             }
         }
 
@@ -115,12 +112,12 @@ namespace emulator
         int DelayTicks = 0;
         private void IncrementTIMA()
         {
-            if (_tima == 0xff)
+            if (Tima == 0xff)
             {
                 DelayTicks = DelayDuration;
                 EnableTimerInterrupt();
             }
-            _tima++;
+            Tima++;
         }
     }
 }

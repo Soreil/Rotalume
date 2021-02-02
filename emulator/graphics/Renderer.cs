@@ -192,7 +192,7 @@ namespace emulator
                 var curPix = TilePixelLine(palette, yScrolled, tilemap, tileNumber);
                 for (int cur = 0; cur < curPix.Length; cur++)
                 {
-                    var pos = (8 - offset) + ((tileNumber - 1) * TileWidth) + cur;
+                    var pos = 8 - offset + ((tileNumber - 1) * TileWidth) + cur;
                     if (pos >= DisplayWidth) break;
                     background[pos] = curPix[cur];
                 }

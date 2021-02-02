@@ -102,7 +102,7 @@ namespace Tests
             return s;
         }
 
-        public string GetTile(byte tileNumber, Renderer r)
+        public static string GetTile(byte tileNumber, Renderer r)
         {
             var palette = r.GetBackgroundPalette();
 
@@ -121,7 +121,7 @@ namespace Tests
             return string.Join("\r\n", output);
         }
 
-        public string GetLine(Shade[] palette, byte yScrolled, ushort tilemap, Renderer r)
+        public static string GetLine(Shade[] palette, byte yScrolled, ushort tilemap, Renderer r)
         {
             var pixels = new Shade[Renderer.DisplayWidth];
             r.GetBackgroundLineShades(palette, yScrolled, tilemap,pixels);
@@ -140,8 +140,6 @@ namespace Tests
 
             while (!Proc.PPU.LCDEnable)
                 Proc.Step();
-
-            var render = new emulator.Renderer(Proc.PPU);
 
             var tilemap = Proc.PPU.BGTileMapDisplaySelect;
             for (var y = 0; y < 32; y++)

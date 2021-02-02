@@ -521,7 +521,7 @@ namespace emulator
                 AddTicks(duration);
             };
         }
-        public Action ADC((Register, Traits) p0, (WideRegister, Traits) p1, int duration)
+        public Action ADC((WideRegister, Traits) p1, int duration)
         {
             return () =>
             {
@@ -565,7 +565,7 @@ namespace emulator
             return sum;
         }
 
-        public Action SBC((Register, Traits) p0, (Register, Traits) p1, int duration)
+        public Action SBC((Register, Traits) p1, int duration)
         {
             return () =>
             {
