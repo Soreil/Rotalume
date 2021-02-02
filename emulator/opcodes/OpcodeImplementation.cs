@@ -575,7 +575,7 @@ namespace emulator
                 AddTicks(duration);
             };
         }
-        public Action SBC((Register, Traits) p0, (WideRegister, Traits) p1, int duration)
+        public Action SBC((WideRegister, Traits) p1, int duration)
         {
             return () =>
             {
