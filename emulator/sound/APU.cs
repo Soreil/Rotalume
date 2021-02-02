@@ -1,4 +1,6 @@
-﻿namespace emulator
+﻿using System;
+
+namespace emulator
 {
     public class APU
     {
@@ -16,6 +18,8 @@
             set => _nr11 = value;
         }
         public byte NR12 = 0xff;
+
+        public byte NR13 = 0xff;
 
         private byte _nr14 = 0xff;
         public byte NR14
@@ -81,6 +85,50 @@
             set => _nr52 = (byte)(value & 0x80 | (_nr52 & 0x7f));
         }
 
+        //We should have this available as a namespace wide thing somehow
+        const int baseClock = 1 << 22;
+
+        //All of the Channel 1 fields
+        private int Channel1SweepTime => ((NR10 & 0x70) >> 4) * baseClock / 128;
+        private bool Channel1SweepIncreasing => NR10.GetBit(3);
+        private int Channel1SweepShifts => NR10 & 0x07;
+
+        private double Channel1DutyCycle => ((NR11 & 0xc0) >> 6) switch
+        {
+            0 => 1 / 8d,
+            1 => 2 / 8d,
+            2 => 4 / 8d,
+            3 => 6 / 8d,
+        };
+        private TimeSpan Channel1SoundLength => TimeSpan.FromSeconds((64 - (NR11 & 0x3f)) * (1 / 256d));
+
+        private double Channel1InitialEnveloppeVolume => ((NR12 & 0xf0) >> 4) * (1 / 15d);
+        private bool Channel1EnveloppeIncreasing => NR12.GetBit(3);
+        private int Channel1EnveloppeSweepNumber => NR12 & 0x07;
+        private int Channel1Frequency => NR13 | ((NR14 & 0x3) << 8);
+        private bool Channel1Initial => NR14.GetBit(7);
+        private bool Channel1Counter => NR14.GetBit(6);
+
+        //Control register fields
+        private bool LeftChannelOn => NR50.GetBit(7);
+        private int LeftOutputVolume => (NR50 & 0x70) >> 4;
+        private bool RightChannelOn => NR50.GetBit(3);
+        private int RightOutputVolume => NR50 & 0x07;
+
+        private bool Sound1OnLeftChannel => NR51.GetBit(4);
+        private bool Sound2OnLeftChannel => NR51.GetBit(5);
+        private bool Sound3OnLeftChannel => NR51.GetBit(6);
+        private bool Sound4OnLeftChannel => NR51.GetBit(7);
+        private bool Sound1OnRightChannel => NR51.GetBit(0);
+        private bool Sound2OnRightChannel => NR51.GetBit(1);
+        private bool Sound3OnRightChannel => NR51.GetBit(2);
+        private bool Sound4OnRightChannel => NR51.GetBit(3);
+
+        private bool MasterSoundDisable => NR52.GetBit(7);
+        private bool Sound1OnEnabled => NR52.GetBit(0);
+        private bool Sound2OnEnabled => NR52.GetBit(1);
+        private bool Sound3OnEnabled => NR52.GetBit(2);
+        private bool Sound4OnEnabled => NR52.GetBit(3);
         public APU()
         {
 
