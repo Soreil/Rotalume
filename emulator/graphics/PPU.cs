@@ -105,12 +105,12 @@ namespace emulator
             _ => throw new IndexOutOfRangeException()
         };
 
+        public bool LCDEnable => LCDC.GetBit(7);
         public ushort TileMapDisplaySelect => LCDC.GetBit(6) ? 0x9C00 : 0x9800;
+        public bool WindowDisplayEnable => LCDC.GetBit(5);
         public ushort BGAndWindowTileDataSelect => LCDC.GetBit(4) ? 0x8000 : 0x8800;
         public ushort BGTileMapDisplaySelect => LCDC.GetBit(3) ? 0x9c00 : 0x9800;
         public int SpriteHeight => LCDC.GetBit(2) ? 16 : 8;
-        public bool LCDEnable => LCDC.GetBit(7);
-        public bool WindowDisplayEnable => LCDC.GetBit(5);
         public bool OBJDisplayEnable => LCDC.GetBit(1);
         public bool BGDisplayEnable => LCDC.GetBit(0);
 

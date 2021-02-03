@@ -92,7 +92,7 @@ namespace emulator
             if (PPU.BGDisplayEnable)
             {
                 var palette = GetBackgroundPalette();
-                GetBackgroundLineShades(palette, YScrolled(PPU.LY, PPU.SCY), PPU.BGTileMapDisplaySelect, background);
+                GetBackgroundLineShades(palette, PPU.BGTileMapDisplaySelect, background);
 
                 if (PPU.WindowDisplayEnable)
                 {
@@ -177,19 +177,19 @@ namespace emulator
             _ => throw new Exception(),
         };
 
-        public void GetBackgroundLineShades(Shade[] palette, byte yScrolled, ushort tilemap, Shade[] background)
+        public void GetBackgroundLineShades(Shade[] palette, ushort tilemap, Shade[] background)
         {
 
             //Offset is the amount of pixels we have to draw for the first tile if the first tile is going to be scrolled
             var offset = PPU.SCX & 0x7;
 
-            var firstTilePixels = TilePixelLineNoScroll(palette, yScrolled, tilemap, offset);
+            var firstTilePixels = TilePixelLineNoScroll(palette, YScrolled(PPU.LY, PPU.SCY), tilemap, offset);
             for (int cur = 0; cur < firstTilePixels.Length; cur++)
                 background[cur] = firstTilePixels[cur];
 
             for (int tileNumber = 1; tileNumber <= TilesPerLine; tileNumber++)
             {
-                var curPix = TilePixelLine(palette, yScrolled, tilemap, tileNumber);
+                var curPix = TilePixelLine(palette, YScrolled(PPU.LY, PPU.SCY), tilemap, tileNumber);
                 for (int cur = 0; cur < curPix.Length; cur++)
                 {
                     var pos = 8 - offset + ((tileNumber - 1) * TileWidth) + cur;
