@@ -40,6 +40,7 @@ namespace emulator
             if (PPU.Mode == Mode.OAMSearch || PPU.Mode == Mode.VBlank)
             {
                 PPU.LY = PPU.LY == 153 ? 0 : (byte)(PPU.LY + 1);
+                if (PPU.LY == 0) WindowLY = 0;
                 if (PPU.LY == PPU.LYC) PPU.LYCInterrupt = true;
             }
             if (PPU.Mode == Mode.OAMSearch)
@@ -95,7 +96,7 @@ namespace emulator
 
                 if (PPU.WindowDisplayEnable)
                 {
-                    if (PPU.WY <= PPU.LY)
+                    if (PPU.WY <= PPU.LY && PPU.WX < 167)
                     {
                         GetWindowLineShades(window);
                         MergeWindow(background, window);
@@ -120,22 +121,26 @@ namespace emulator
             fs.Write(output);
         }
 
+        int WindowLY = 0;
         private void GetWindowLineShades(Shade[] line)
         {
-
-            //if (PPU.WX < 7) throw new Exception("Not handled");
             var windowStartX = PPU.WX - 7;
+            var windowStartY = WindowLY++;
             if (windowStartX < 0) windowStartX = 0;
-            for (int tile = 0; tile < TilesPerLine; tile++)
+
+            for (int i = 0; i < line.Length; i++) line[i] = Shade.Empty;
+
+            var firstTile = windowStartX / 8;
+            for (int tileNumber = windowStartX / 8; tileNumber < TilesPerLine; tileNumber++)
             {
-                var curPix = TilePixelLineWindow(GetBackgroundPalette(), PPU.LY - PPU.WY, PPU.TileMapDisplaySelect, tile);
+                var curPix = TilePixelLineWindow(GetBackgroundPalette(), windowStartY, PPU.TileMapDisplaySelect, tileNumber - firstTile);
                 for (int cur = 0; cur < curPix.Length; cur++)
                 {
-                    if (tile * TileWidth + cur >= windowStartX)
-                        line[(tile * TileWidth) + cur] = curPix[cur];
-                    else line[(tile * TileWidth) + cur] = Shade.Empty;
+                    if ((tileNumber * TileWidth) + cur >= windowStartX)
+                        line[(tileNumber * TileWidth) + cur] = curPix[cur];
                 }
             }
+
         }
 
         private void MergeSprites(Shade[] background, (int, int, bool)[] sprites)
@@ -257,7 +262,8 @@ namespace emulator
                 var line = PPU.LY - sprite.Y + 16;
                 if (sprite.YFlipped) line = PPU.SpriteHeight - 1 - line;
 
-                var at = 0x8000 + (sprite.ID * 16) + (line * 2);
+                var ID = PPU.SpriteHeight == 16 ? (sprite.ID & 0xfe) : sprite.ID;
+                var at = 0x8000 + (ID * 16) + (line * 2);
                 var tileDataLow = PPU.VRAM[at]; //low byte of line
                 var tileDataHigh = PPU.VRAM[at + 1]; //high byte of line
 
