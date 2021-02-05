@@ -53,6 +53,16 @@ namespace emulator
             pushrow();
             //takes one cycle every time it is attempted, won't go back until succeeds
         }
+
+        private void sleep()
+        {
+            throw new NotImplementedException();
+        }
+
+        private void pushrow()
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class FIFO<T>

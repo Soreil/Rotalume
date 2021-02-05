@@ -131,7 +131,7 @@ namespace emulator
             }
         }
 
-        private Renderer Renderer;
+        public Renderer Renderer;
         public void Do()
         {
             if (Renderer is not null)

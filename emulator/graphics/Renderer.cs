@@ -37,11 +37,10 @@ namespace emulator
 
             if (Clock() < TimeUntilWhichToPause) return;
 
-
             if (PPU.Mode == Mode.OAMSearch || PPU.Mode == Mode.VBlank)
             {
                 PPU.LY = PPU.LY == 153 ? 0 : (byte)(PPU.LY + 1);
-                PPU.LYCInterrupt = PPU.LY == PPU.LYC;
+                if (PPU.LY == PPU.LYC) PPU.LYCInterrupt = true;
             }
             if (PPU.Mode == Mode.OAMSearch)
             {
@@ -289,7 +288,7 @@ namespace emulator
             //We need the line in the TileWidthxTileWidth tile so we take y mod TileWidth to get it
             //Times 2 is needed because a tile has two bytes per line.
             int at;
-            if (tileData != 0x8800) at = tileData + (currentTileIndex * 16) + (line * 2);
+            if (tileData == 0x8000) at = tileData + (currentTileIndex * 16) + (line * 2);
             else at = 0x9000 + (((sbyte)currentTileIndex) * 16) + (line * 2);
 
             var tileDataLow = PPU.VRAM[at]; //low byte of line

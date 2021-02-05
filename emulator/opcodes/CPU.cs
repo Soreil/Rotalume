@@ -11,7 +11,7 @@ namespace emulator
         public bool IME = false;
         public HaltState Halted = HaltState.off;
 
-        public bool InterruptEnableSceduled = false;
+        public bool InterruptEnableScheduled = false;
 
         public Action Op(Unprefixed op) => StdOps[(int)op];
         public Action Op(Cbprefixed op) => CbOps[(int)op];
@@ -25,7 +25,7 @@ namespace emulator
             SetPC = setPC;
             GetPC = getPC;
 
-            enableInterruptsDelayed = () => InterruptEnableSceduled = true;
+            enableInterruptsDelayed = () => InterruptEnableScheduled = true;
             enableInterrupts = () => IME = true;
             disableInterrupts = () => IME = false;
             halt = () =>

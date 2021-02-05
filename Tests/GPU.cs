@@ -73,18 +73,16 @@ namespace Tests
             while (!Proc.PPU.LCDEnable)
                 Proc.Step();
 
-            var render = new emulator.Renderer(Proc.PPU);
-
-            var pallette = render.GetBackgroundPalette();
+            var pallette = Proc.PPU.Renderer.GetBackgroundPalette();
 
             List<string> lines = new();
-            for (byte y = 64; y < 80; y++)
+            for (byte y = 0; y < 255; y++)
             {
-                var line = GetLine(pallette, y, Proc.PPU.BGTileMapDisplaySelect, render);
+                var line = GetLine(pallette, y, Proc.PPU.BGTileMapDisplaySelect, Proc.PPU.Renderer);
                 lines.Add(line);
             }
             var screen = string.Join("\r\n", lines);
-
+            Console.WriteLine(screen);
             Assert.AreEqual(expected, screen);
         }
 
@@ -124,7 +122,7 @@ namespace Tests
         public static string GetLine(Shade[] palette, byte yScrolled, ushort tilemap, Renderer r)
         {
             var pixels = new Shade[Renderer.DisplayWidth];
-            r.GetBackgroundLineShades(palette, yScrolled, tilemap,pixels);
+            r.GetBackgroundLineShades(palette, tilemap, pixels);
 
             var s = MakePrintableLine(pixels);
             return s;

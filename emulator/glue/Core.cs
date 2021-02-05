@@ -448,10 +448,10 @@ namespace emulator
                 CPU.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(4);
 
             CPU.DoInterrupt();
-            if (CPU.InterruptEnableSceduled)
+            if (CPU.InterruptEnableScheduled)
             {
                 CPU.IME = true;
-                CPU.InterruptEnableSceduled = false;
+                CPU.InterruptEnableScheduled = false;
             }
             PPU.Do();
         }
