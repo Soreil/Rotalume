@@ -156,7 +156,7 @@ namespace emulator
                     //BGBTEST only works right if I choose shade.black because that is index 0 for it
                     if (!sprites[i].Item3 || background[i] == bgp0)
                     {
-                        var colour = palettes[sprites[i].Item2][(int)sprites[i].Item1];
+                        var colour = palettes[sprites[i].Item2][sprites[i].Item1];
                         if (colour != Shade.Transparant)
                             background[i] = colour;
                     }
@@ -257,8 +257,6 @@ namespace emulator
 
             foreach (var sprite in sprites)
             {
-                //if (PPU.SpriteHeight == 16) System.Diagnostics.Debugger.Break();
-
                 var line = PPU.LY - sprite.Y + 16;
                 if (sprite.YFlipped) line = PPU.SpriteHeight - 1 - line;
 

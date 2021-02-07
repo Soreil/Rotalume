@@ -8,8 +8,6 @@ namespace emulator
     {
         public ushort PC;
 
-        public Stack<(int, Unprefixed)> Unprefixeds = new();
-
         //Not sure where this special bit should go but it's not in memory and suposed to be hard to access
         bool bootROMActive = true;
 
@@ -32,8 +30,6 @@ namespace emulator
         private byte _dma = 0xff;
         private byte serialControl = 0x7e;
 
-
-        readonly ControlRegister controlRegisters = new ControlRegister(0xff00, 0x80);
         readonly ControlRegister interruptRegisters = new ControlRegister(0xffff, 0x1); //This is only being used for two registers.
 
         public Core(List<byte> bwah) : this(bwah.ToArray())
@@ -69,13 +65,12 @@ namespace emulator
 
             Timers = new Timers(() => CPU.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(2));
 
-            Func<byte> ReadBootROMFlag = () => 0xff;
             GetKeyboardInterrupt = getKeyboardInterrupt;
 
             interruptRegisters.Writer[0x00] = x => CPU.InterruptControlRegister = x;
             interruptRegisters.Reader[0x00] = () => CPU.InterruptControlRegister;
 
-            var ioRegisters = SetupControlRegisters(GetJoyPad, ReadBootROMFlag);
+            var ioRegisters = SetupControlRegisters(GetJoyPad);
 
             CartHeader Header = gameROM.Length < 0x8000 ? null : new CartHeader(gameROM);
 
@@ -96,9 +91,9 @@ namespace emulator
 
             CPU = new CPU(GetProgramCounter, SetProgramCounter, IncrementClock, memory);
 
+            //We have to replicate the state of the system post boot without running the bootrom
             if (bootROM == null)
             {
-
                 bootROMActive = false;
 
                 //registers
@@ -113,7 +108,6 @@ namespace emulator
                 Timers.TIMA = 0;
                 Timers.TAC = 0;
                 Timers.TMA = 0;
-                //Timers.InternalCounter = 0xabcc;
                 Timers.InternalCounter = 0x1800;
 
                 CPU.InterruptFireRegister = 0xe1;
@@ -157,13 +151,16 @@ namespace emulator
 
         private static System.IO.MemoryMappedFiles.MemoryMappedFile MakeMemoryMappedFile(CartHeader Header)
         {
+            //A cartridge requires a battery in order to be able to keep state while the system is off
             if (!Header.HasBattery())
                 return null;
 
+            //This retrieves %appdata% path
             var root = Environment.GetEnvironmentVariable("AppData") + "\\rotalume";
             if (!System.IO.Directory.Exists(root))
                 System.IO.Directory.CreateDirectory(root);
 
+            //Filenames might be somewhat illegal depending on what characters are in the title?
             var path = string.Format(@"{0}\{1}.sav", root, Header.Title);
             if (!System.IO.File.Exists(path))
             {
@@ -181,7 +178,7 @@ namespace emulator
             return System.IO.MemoryMappedFiles.MemoryMappedFile.CreateFromFile(path);
         }
 
-        private ControlRegister SetupControlRegisters(Func<byte, byte> GetJoyPad, Func<byte> ReadBootROMFlag)
+        private ControlRegister SetupControlRegisters(Func<byte, byte> GetJoyPad)
         {
 
             Action<byte> BootROMFlagController = (byte b) =>
@@ -231,7 +228,7 @@ namespace emulator
             HookUpTimers(controlRegisters);
 
             controlRegisters.Writer[0x50] = BootROMFlagController;
-            controlRegisters.Reader[0x50] = ReadBootROMFlag;
+            controlRegisters.Reader[0x50] = () => 0xff;
 
             HookUpGraphics(controlRegisters, LCDControlController, ReadLCDControl, LCDStatController, ReadLCDStat, ScrollYController, ReadScrollY, ScrollXController, ReadScrollX, LCDLineController, ReadLine, PaletteController, ReadPalette, OBP0Controller, ReadOBP0, OBP1Controller, ReadOBP1, WYController, ReadWY, WXController, ReadWX, LYCController, ReadLYC);
 

@@ -44,14 +44,19 @@ namespace emulator
             //clock advances 2 cycles
 
             var tileDataHigh = p.VRAM[at + 1];
-            pushrow();
+            pushrow(tileDataLow, tileDataHigh);
             //clock advances 2 cycles
 
             sleep();
             //clock advances 2 cycles
 
-            pushrow();
+            pushrow(tileDataLow, tileDataHigh);
             //takes one cycle every time it is attempted, won't go back until succeeds
+        }
+
+        private void pushrow(byte tileDataLow, byte tileDataHigh)
+        {
+            throw new NotImplementedException();
         }
 
         private void sleep()
@@ -59,10 +64,6 @@ namespace emulator
             throw new NotImplementedException();
         }
 
-        private void pushrow()
-        {
-            throw new NotImplementedException();
-        }
     }
 
     public class FIFO<T>
@@ -80,9 +81,7 @@ namespace emulator
 
             count--;
             for (int i = 0; i < count; i++)
-            {
                 buffer[i] = buffer[i + 1];
-            }
 
             return res;
         }
