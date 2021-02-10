@@ -24,8 +24,8 @@ namespace emulator
         byte tileDataLow;
         byte tileDataHigh;
 
-        private int FetcherStep = 0;
-        private bool PushedEarly = false;
+        public int FetcherStep = 0;
+        public bool PushedEarly = false;
 
         //Fetch runs one of the steps of the background fetcher and returns the amount of cycles used
         public int Fetch()
