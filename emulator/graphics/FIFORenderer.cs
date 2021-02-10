@@ -91,7 +91,7 @@ namespace emulator
         {
             ushort tilemap = ((p.BGTileMapDisplaySelect == 0x9c00 && scanlineX <= ((p.WX + 7) / 8) && p.LY >= p.WY) ||
             p.TileMapDisplaySelect == 0x9c00 && scanlineX >= ((p.WX + 7) / 8) && p.LY >= p.WY) ? 0x9c00 : 0x9800;
-            bool inWindow = scanlineX >= (p.WX + 7) / 8 && p.LY >= p.WY;
+            bool inWindow = scanlineX >= (p.WX + 7) / 8 && p.LY >= p.WY && p.WindowDisplayEnable;
 
             var windowStartX = p.WX - 7;
             var windowStartY = WindowLY++;
