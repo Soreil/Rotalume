@@ -17,7 +17,7 @@ namespace emulator
             p = P;
         }
 
-        int scanlineX = 0;
+        public int scanlineX = 0;
 
         byte tileIndex;
         int at;
@@ -97,7 +97,7 @@ namespace emulator
             var windowStartY = WindowLY++;
             if (windowStartX < 0) windowStartX = 0;
 
-            var fetcherX = inWindow ? (scanlineX / 8) - (windowStartX / 8) : ((p.SCX / 8) + scanlineX) & 0x1f;
+            var fetcherX = inWindow ? (scanlineX / 8) - (windowStartX / 8) : ((p.SCX / 8) + (scanlineX / 8)) & 0x1f;
             var fetcherY = inWindow ? windowStartY : (p.LY + p.SCY) & 0xff;
 
             var tileIndex = p.VRAM[tilemap + fetcherX + (fetcherY / 8 * 32)];
