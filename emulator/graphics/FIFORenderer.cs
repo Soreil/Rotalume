@@ -7,11 +7,13 @@ namespace emulator
 
     }
 
-    public record FIFOPixel(byte color, bool priority);
-    public record FIFOSpritePixel(byte color, bool priority, byte[] Palette) : FIFOPixel(color, priority);
+    public record FIFOPixel(byte color);
+    public record FIFOSpritePixel(byte color, bool priority, int Palette) : FIFOPixel(color);
 
     public class PixelFetcher
     {
+        const int tileWidth = 8;
+
         PPU p;
         private readonly FIFO<FIFOPixel> BGFIFO = new();
         private readonly FIFO<FIFOSpritePixel> SpriteFIFO = new();
@@ -22,46 +24,80 @@ namespace emulator
 
         int scanlineX = 0;
 
+        byte tileIndex;
+        int at;
+        byte tileDataLow;
+        byte tileDataHigh;
         public void Fetch()
         {
-            ushort tilemap = ((p.BGTileMapDisplaySelect == 0x9c00 && (scanlineX <= ((p.WX + 7) / 8) && p.LY >= p.WY)) ||
-            (p.TileMapDisplaySelect == 0x9c00 && scanlineX >= ((p.WX + 7) / 8)) && p.LY >= p.WY) ? 0x9c00 : 0x9800;
-            bool inWindow = scanlineX >= (p.WX + 7) / 8 && p.LY >= p.WY;
-
-            var fetcherX = inWindow ? scanlineX : ((p.SCX / 8) + scanlineX) & 0x1f;
-            var fetcherY = inWindow ? p.LY : (p.LY + p.SCY) & 0xff;
-
-            var tileIndex = p.VRAM[tilemap + fetcherX + ((fetcherY / 8) * 32)];
+            tileIndex = FetchTileID();
             //clock advances 2 cycles
 
-            var tiledatamap = p.BGAndWindowTileDataSelect;
-
-            int at = 0;
-            if (tiledatamap != 0x8800) at = tiledatamap + (tileIndex * 16) + (p.LY * 2);
-            else at = 0x9000 + (((sbyte)tileIndex) * 16) + (p.LY * 2);
-
-            var tileDataLow = p.VRAM[at];
+            at = GetAdress();
+            tileDataLow = FetchLow();
             //clock advances 2 cycles
 
-            var tileDataHigh = p.VRAM[at + 1];
-            pushrow(tileDataLow, tileDataHigh);
+            tileDataHigh = FetchHigh();
+            Pushrow();
             //clock advances 2 cycles
 
-            sleep();
+            Sleep();
             //clock advances 2 cycles
 
-            pushrow(tileDataLow, tileDataHigh);
+            Pushrow();
             //takes one cycle every time it is attempted, won't go back until succeeds
         }
 
-        private void pushrow(byte tileDataLow, byte tileDataHigh)
+        private byte FetchHigh() => p.VRAM[at + 1];
+        private byte FetchLow() => p.VRAM[at];
+
+        private int GetAdress()
         {
-            throw new NotImplementedException();
+            var tiledatamap = p.BGAndWindowTileDataSelect;
+
+            int at;
+            if (tiledatamap != 0x8800) at = tiledatamap + (tileIndex * 16) + (p.LY * 2);
+            else at = 0x9000 + (((sbyte)tileIndex) * 16) + (p.LY * 2);
+            return at;
         }
 
-        private void sleep()
+        int WindowLY = 0;
+        private byte FetchTileID()
         {
-            throw new NotImplementedException();
+            ushort tilemap = ((p.BGTileMapDisplaySelect == 0x9c00 && scanlineX <= ((p.WX + 7) / 8) && p.LY >= p.WY) ||
+            p.TileMapDisplaySelect == 0x9c00 && scanlineX >= ((p.WX + 7) / 8) && p.LY >= p.WY) ? 0x9c00 : 0x9800;
+            bool inWindow = scanlineX >= (p.WX + 7) / 8 && p.LY >= p.WY;
+
+            var windowStartX = p.WX - 7;
+            var windowStartY = WindowLY++;
+            if (windowStartX < 0) windowStartX = 0;
+
+            var fetcherX = inWindow ? (scanlineX/8) - (windowStartX / 8) : ((p.SCX / 8) + scanlineX) & 0x1f;
+            var fetcherY = inWindow ? windowStartY : (p.LY + p.SCY) & 0xff;
+
+            var tileIndex = p.VRAM[tilemap + fetcherX + (fetcherY / 8 * 32)];
+            return tileIndex;
+        }
+
+        private bool Pushrow()
+        {
+            if (BGFIFO.count == 8 || BGFIFO.count == 0)
+            {
+                for (var i = tileWidth; i > 0; i--)
+                {
+                    var paletteIndex = tileDataLow.GetBit(i - 1) ? 1 : 0;
+                    paletteIndex += tileDataHigh.GetBit(i - 1) ? 2 : 0;
+
+                    BGFIFO.Push(new((byte)paletteIndex));
+                }
+                return true;
+            }
+            else return false;
+        }
+
+        private void Sleep()
+        {
+            return;
         }
 
     }
