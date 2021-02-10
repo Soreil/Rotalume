@@ -2,11 +2,6 @@
 
 namespace emulator
 {
-    public class FIFORenderer
-    {
-
-    }
-
     public record FIFOPixel(byte color);
     public record FIFOSpritePixel(byte color, bool priority, int Palette) : FIFOPixel(color);
 
@@ -28,24 +23,54 @@ namespace emulator
         int at;
         byte tileDataLow;
         byte tileDataHigh;
-        public void Fetch()
+
+        private int FetcherStep = 0;
+        private bool PushedEarly = false;
+
+        //Fetch runs one of the steps of the background fetcher and returns the amount of cycles used
+        public int Fetch()
         {
-            tileIndex = FetchTileID();
-            //clock advances 2 cycles
+            switch (FetcherStep)
+            {
+                case 0:
+                    tileIndex = FetchTileID();
+                    FetcherStep = 1;
+                    return 2;
+                case 1:
+                    at = GetAdress();
+                    tileDataLow = FetchLow();
+                    FetcherStep = 2;
+                    return 2;
+                case 2:
+                    tileDataHigh = FetchHigh();
+                    PushedEarly = Pushrow();
+                    FetcherStep = 3;
+                    return 2;
+                case 3:
+                    Sleep();
+                    FetcherStep = PushedEarly ? 0 : 4;
+                    return 2;
+                case 4:
+                    FetcherStep = Pushrow() ? 0 : 4;
+                    return 1;
+                default:
+                    throw new Exception("Illegal fetcher state");
+            }
+        }
 
-            at = GetAdress();
-            tileDataLow = FetchLow();
-            //clock advances 2 cycles
+        //Only uses the BG FIFO for now
+        public Shade? RenderPixel()
+        {
+            if (scanlineX >= 160) return null;
 
-            tileDataHigh = FetchHigh();
-            Pushrow();
-            //clock advances 2 cycles
-
-            Sleep();
-            //clock advances 2 cycles
-
-            Pushrow();
-            //takes one cycle every time it is attempted, won't go back until succeeds
+            if (BGFIFO.count != 0)
+            {
+                var pix = BGFIFO.Pop();
+                //Do we need to pop in order to do this?
+                //Do we need pixels in the fifo to do this?
+                return p.BackgroundColor(p.BGDisplayEnable ? pix.color : 0);
+            }
+            return null;
         }
 
         private byte FetchHigh() => p.VRAM[at + 1];
@@ -72,7 +97,7 @@ namespace emulator
             var windowStartY = WindowLY++;
             if (windowStartX < 0) windowStartX = 0;
 
-            var fetcherX = inWindow ? (scanlineX/8) - (windowStartX / 8) : ((p.SCX / 8) + scanlineX) & 0x1f;
+            var fetcherX = inWindow ? (scanlineX / 8) - (windowStartX / 8) : ((p.SCX / 8) + scanlineX) & 0x1f;
             var fetcherY = inWindow ? windowStartY : (p.LY + p.SCY) & 0xff;
 
             var tileIndex = p.VRAM[tilemap + fetcherX + (fetcherY / 8 * 32)];
@@ -81,7 +106,7 @@ namespace emulator
 
         private bool Pushrow()
         {
-            if (BGFIFO.count == 8 || BGFIFO.count == 0)
+            if (BGFIFO.count == 0)
             {
                 for (var i = tileWidth; i > 0; i--)
                 {
