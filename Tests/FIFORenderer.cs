@@ -60,6 +60,61 @@ namespace Tests
             Assert.AreEqual(expected, got);
         }
         [Test]
+        public void RenderBackGroundTileWithYScrollNotDivisibleByTileSize()
+        {
+            //gradient from white to black and back
+            byte[] expected = new byte[8] { 0, 1, 2, 3, 3, 2, 1, 0 };
+            byte[] got = new byte[8];
+
+            int clock = 0;
+            var ppu = new emulator.PPU(() => clock, () => { }, () => { });
+            var fetcher = new emulator.PixelFetcher(ppu);
+
+            //black dark light white
+            ppu.BGP = 0b11100100;
+            //Screen and background on
+            ppu.LCDC = 0b10010011;
+
+            //gradient from white to black and back
+            ppu.VRAM[emulator.VRAM.Start + 2] = 0b01011010;
+            ppu.VRAM[emulator.VRAM.Start + 3] = 0b00111100;
+            ppu.SCY = 1;
+
+            var totalElapsed = 0;
+
+            var elapsed = fetcher.Fetch();
+            totalElapsed += elapsed;
+
+            Assert.AreEqual(2, elapsed);
+            Assert.AreEqual(1, fetcher.FetcherStep);
+            elapsed = fetcher.Fetch();
+            totalElapsed += elapsed;
+
+            Assert.AreEqual(2, elapsed);
+            Assert.AreEqual(2, fetcher.FetcherStep);
+            elapsed = fetcher.Fetch();
+            totalElapsed += elapsed;
+
+            Assert.AreEqual(2, elapsed);
+            Assert.AreEqual(3, fetcher.FetcherStep);
+            elapsed = fetcher.Fetch();
+            totalElapsed += elapsed;
+
+            Assert.AreEqual(2, elapsed);
+            Assert.AreEqual(0, fetcher.FetcherStep);
+
+            Assert.AreEqual(8, totalElapsed);
+
+            for (int i = 0; i < 8; i++)
+            {
+                var s = fetcher.RenderPixel();
+                Assert.NotNull(s);
+                got[i] = (byte)s;
+            }
+
+            Assert.AreEqual(expected, got);
+        }
+        [Test]
         public void RenderBackGroundLine()
         {
             byte[] expected = new byte[160] {
@@ -232,5 +287,67 @@ namespace Tests
             System.Console.WriteLine(line);
             Assert.AreEqual(expectedLY1, got);
         }
+        [Test]
+        public void RenderBackGroundTileOnSecondRow()
+        {
+            //gradient from white to black and back
+            byte[] expected = new byte[8] { 0, 1, 2, 3, 3, 2, 1, 0 };
+            byte[] got = new byte[8];
+
+            int clock = 0;
+            var ppu = new emulator.PPU(() => clock, () => { }, () => { });
+            var fetcher = new emulator.PixelFetcher(ppu);
+
+            //black dark light white
+            ppu.BGP = 0b11100100;
+            //Screen and background on
+            ppu.LCDC = 0b10010011;
+
+            //gradient from white to black and back
+            ppu.VRAM[emulator.VRAM.Start + 0x10] = 0b01011010;
+            ppu.VRAM[emulator.VRAM.Start + 0x11] = 0b00111100;
+
+            //Make the second row's first map entry point to the second tile (gradient)
+            ppu.VRAM[ppu.TileMapDisplaySelect + 0x20 + 0] = 0x01;
+
+            //Top line of second tile row
+            ppu.LY = 8;
+
+            var totalElapsed = 0;
+
+            var elapsed = fetcher.Fetch();
+            totalElapsed += elapsed;
+
+            Assert.AreEqual(2, elapsed);
+            Assert.AreEqual(1, fetcher.FetcherStep);
+            elapsed = fetcher.Fetch();
+            totalElapsed += elapsed;
+
+            Assert.AreEqual(2, elapsed);
+            Assert.AreEqual(2, fetcher.FetcherStep);
+            elapsed = fetcher.Fetch();
+            totalElapsed += elapsed;
+
+            Assert.AreEqual(2, elapsed);
+            Assert.AreEqual(3, fetcher.FetcherStep);
+            elapsed = fetcher.Fetch();
+            totalElapsed += elapsed;
+
+            Assert.AreEqual(2, elapsed);
+            Assert.AreEqual(0, fetcher.FetcherStep);
+
+            Assert.AreEqual(8, totalElapsed);
+
+            for (int i = 0; i < 8; i++)
+            {
+                var s = fetcher.RenderPixel();
+                Assert.NotNull(s);
+                got[i] = (byte)s;
+            }
+
+            Assert.AreEqual(expected, got);
+        }
+
     }
+
 }

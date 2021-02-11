@@ -81,8 +81,8 @@ namespace emulator
             var tiledatamap = p.BGAndWindowTileDataSelect;
 
             int at;
-            if (tiledatamap != 0x8800) at = tiledatamap + (tileIndex * 16) + (p.LY * 2);
-            else at = 0x9000 + (((sbyte)tileIndex) * 16) + (p.LY * 2);
+            if (tiledatamap != 0x8800) at = tiledatamap + (tileIndex * 16) + ((((p.LY + p.SCY) & 0xff) % 8) * 2);
+            else at = 0x9000 + (((sbyte)tileIndex) * 16) + ((((p.LY + p.SCY) & 0xff) % 8) * 2);
             return at;
         }
 
@@ -105,10 +105,10 @@ namespace emulator
             var windowStartY = WindowLY;
             if (windowStartX < 0) windowStartX = 0;
 
-            var fetcherX = inWindow ? (scanlineX / 8) - (windowStartX / 8) : ((p.SCX / 8) + (scanlineX / 8)) & 0x1f;
-            var fetcherY = inWindow ? windowStartY : (p.LY + p.SCY) & 0xff;
+            var tileX = inWindow ? (scanlineX / 8) - (windowStartX / 8) : ((p.SCX / 8) + (scanlineX / 8)) & 0x1f;
+            var tileY = inWindow ? windowStartY : (p.LY + p.SCY) & 0xff;
 
-            var tileIndex = p.VRAM[tilemap + fetcherX + (fetcherY / 8 * 32)];
+            var tileIndex = p.VRAM[tilemap + tileX + ((tileY / 8) * 32)];
             return tileIndex;
         }
 
