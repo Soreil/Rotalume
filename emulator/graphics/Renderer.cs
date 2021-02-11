@@ -26,55 +26,117 @@ namespace emulator
         {
             fs = destination ?? Stream.Null;
             PPU = ppu;
+            ppu.Mode = Mode.OAMSearch;
             var startTime = PPU.Clock();
             Clock = () => ppu.Clock() - startTime;
         }
 
         public List<SpriteAttributes> SpriteAttributes = new();
+        public PixelFetcher fetcher;
+        public int Stage3TickCount = 0;
 
-        public void Render()
+        public bool Render()
         {
+            if (Clock() < TimeUntilWhichToPause) return false;
 
-            if (Clock() < TimeUntilWhichToPause) return;
-
-            if (PPU.Mode == Mode.OAMSearch || PPU.Mode == Mode.VBlank)
+            if (PPU.Mode == Mode.HBlank)
             {
-                PPU.LY = PPU.LY == 153 ? 0 : (byte)(PPU.LY + 1);
+                SetStatInterruptForMode();
+                SetNewClockTarget();
+                PPU.Mode = PPU.LY == 143 ? Mode.VBlank : PPU.Mode = Mode.OAMSearch;
+                return true;
+            }
+            //We only want to increment the line register if we aren't on the very first line
+            //We should be handling this during the transition from HBlank to OAMSearch
+            if ((PPU.Mode == Mode.OAMSearch && fs.Position != 0) || PPU.Mode == Mode.VBlank)
+            {
+                PPU.LY++;
                 if (PPU.LY == 0) WindowLY = 0;
                 if (PPU.LY == PPU.LYC) PPU.LYCInterrupt = true;
+                if (PPU.LY == 144)
+                {
+                    PPU.EnableVBlankInterrupt();
+                    fs.Flush();
+                }
+                if (PPU.LY == 154)
+                {
+                    PPU.Mode = Mode.OAMSearch;
+                    PPU.LY = 0;
+                }
             }
             if (PPU.Mode == Mode.OAMSearch)
             {
                 SpriteAttributes = PPU.OAM.SpritesOnLine(PPU.LY, PPU.SpriteHeight);
+                TimeUntilWhichToPause += 80;
+                PPU.Mode = Mode.Transfer;
+                return true;
+            }
+            if (PPU.Mode == Mode.VBlank)
+            {
+                SetNewClockTarget();
+                return true;
+            }
+
+            if (PPU.Mode == Mode.Transfer && fetcher == null)
+            {
+                PPU.OAM.Locked = true;
+                PPU.VRAM.Locked = true;
+                fetcher = new PixelFetcher(PPU);
+                Stage3TickCount = 0;
+                //fallthrough
             }
             if (PPU.Mode == Mode.Transfer)
-                Draw();
-
-            IncrementMode();
-            SetLockStates(); //Doesn't work currently
-            SetStatInterruptForMode();
-            SetNewClockTarget();
-        }
-
-        private void SetLockStates()
-        {
-            switch (PPU.Mode)
             {
-                case Mode.HBlank:
-                case Mode.VBlank:
-                    PPU.VRAM.Locked = false;
-                    PPU.OAM.Locked = false;
-                    break;
-                case Mode.OAMSearch:
-                    PPU.OAM.Locked = true;
-                    PPU.VRAM.Locked = false;
-                    break;
-                case Mode.Transfer:
-                    PPU.OAM.Locked = true;
-                    PPU.VRAM.Locked = true;
-                    break;
+                var count = fetcher.Fetch();
+                for (int i = 0; i < count && fetcher.scanlineX < 160; i++)
+                {
+                    var pix = fetcher.RenderPixel();
+                    if (pix != null) background[fetcher.scanlineX++] = (Shade)pix;
+                }
+
+                Stage3TickCount += count;
+                TimeUntilWhichToPause += count;
+                //We have to execute this until the full line is drawn by renderpixel calls
             }
+            if (PPU.Mode == Mode.Transfer && fetcher.scanlineX == 160)
+            {
+                PPU.OAM.Locked = false;
+                PPU.VRAM.Locked = false;
+                var output = new byte[background.Length];
+                for (int i = 0; i < output.Length; i++)
+                    output[i] = ShadeToGray(background[i]);
+                fs.Write(output);
+                PPU.Mode = Mode.HBlank;
+                fetcher = null;
+                return true;
+            }
+            else if (PPU.Mode == Mode.Transfer)
+            {
+                return true; //This is to let it keep drawing the line
+            }
+
+            throw new Exception("");
         }
+
+        //private void SetLockStates()
+        //{
+        //    switch (PPU.Mode)
+        //    {
+        //        case Mode.HBlank:
+        //        case Mode.VBlank:
+        //            PPU.VRAM.Locked = false;
+        //            PPU.OAM.Locked = false;
+        //            break;
+        //        case Mode.OAMSearch:
+        //            PPU.OAM.Locked = true;
+        //            PPU.VRAM.Locked = false;
+        //            break;
+        //        case Mode.Transfer:
+        //            PPU.OAM.Locked = true;
+        //            PPU.VRAM.Locked = true;
+        //            break;
+        //    }
+        //}
 
         private void SetStatInterruptForMode()
         {
@@ -87,39 +149,6 @@ namespace emulator
         private readonly (int, int, bool)[] sprites = new (int, int, bool)[DisplayWidth];
         private readonly Shade[] window = new Shade[DisplayWidth];
         private readonly byte[] output = new byte[DisplayWidth];
-        private void Draw()
-        {
-            if (PPU.BGDisplayEnable)
-            {
-                var palette = GetBackgroundPalette();
-                GetBackgroundLineShades(palette, PPU.BGTileMapDisplaySelect, background);
-
-                if (PPU.WindowDisplayEnable)
-                {
-                    if (PPU.WY <= PPU.LY && PPU.WX < 167)
-                    {
-                        GetWindowLineShades(window);
-                        MergeWindow(background, window);
-                    }
-                }
-            }
-            else
-            {
-                var bgp = GetBackgroundPalette();
-                for (int i = 0; i < DisplayWidth; i++)
-                    background[i] = bgp[0];
-            }
-            if (PPU.OBJDisplayEnable && SpriteAttributes.Any())
-            {
-                GetSpriteLineShades(sprites);
-                MergeSprites(background, sprites);
-            }
-
-            for (int i = 0; i < DisplayWidth; i++)
-                output[i] = ShadeToGray(background[i]);
-
-            fs.Write(output);
-        }
 
         int WindowLY = 0;
         private void GetWindowLineShades(Shade[] line)
@@ -327,38 +356,9 @@ namespace emulator
                 PPU.SpritePalette1(2),
                 PPU.SpritePalette1(3)
             };
-
-        private void IncrementMode()
-        {
-            if (!FinalStageOrVBlanking())
-            {
-                PPU.Mode = PPU.Mode switch
-                {
-                    Mode.OAMSearch => Mode.Transfer,
-                    Mode.Transfer => Mode.HBlank,
-                    Mode.HBlank => Mode.OAMSearch,
-                    Mode.VBlank => Mode.OAMSearch, //This should only ever be hit at the moment we wrap back to line zero.
-                    _ => throw new InvalidOperationException(),
-                };
-            }
-            else if (PPU.LY == DisplayHeight)
-            {
-                PPU.Mode = Mode.VBlank;
-                PPU.EnableVBlankInterrupt();
-                fs.Flush();
-            }
-        }
-
-        //This currently doesn't work since the transition to the final draw line is when increment mode sees 143 for line count and HBlank for mode
-        //We are effectively updating a register for something which has already happened?
-        private bool FinalStageOfFinalPrintedLine() => (PPU.LY == DisplayHeight && PPU.Mode == Mode.HBlank);
-        private bool FinalStageOrVBlanking() => FinalStageOfFinalPrintedLine() || PPU.LY > DisplayHeight;
-
         private void SetNewClockTarget() => TimeUntilWhichToPause += PPU.Mode switch
         {
-            Mode.OAMSearch => 80,
-            Mode.Transfer => 172, //Transfer can take longer than this, what matters is that  transfer and hblank add up to be 376
-            Mode.HBlank => 204, //HBlank can take shorter than this
+            Mode.HBlank => 376 - Stage3TickCount,
             Mode.VBlank => TicksPerScanline, //We are going to blank every line since otherwise it would not increment the LY register in the current design
             _ => throw new NotImplementedException(),
         };

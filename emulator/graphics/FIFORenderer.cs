@@ -86,15 +86,23 @@ namespace emulator
             return at;
         }
 
+        bool AlreadyInWindow = false;
+        public bool JustEnteredWindow = false;
         int WindowLY = 0;
         private byte FetchTileID()
         {
             ushort tilemap = ((p.BGTileMapDisplaySelect == 0x9c00 && scanlineX <= ((p.WX + 7) / 8) && p.LY >= p.WY) ||
             p.TileMapDisplaySelect == 0x9c00 && scanlineX >= ((p.WX + 7) / 8) && p.LY >= p.WY) ? 0x9c00 : 0x9800;
             bool inWindow = scanlineX >= (p.WX + 7) / 8 && p.LY >= p.WY && p.WindowDisplayEnable;
+            if (inWindow && !AlreadyInWindow)
+            {
+                JustEnteredWindow = true;
+                AlreadyInWindow = true;
+            }
+            if (!!inWindow && AlreadyInWindow) AlreadyInWindow = false;
 
             var windowStartX = p.WX - 7;
-            var windowStartY = WindowLY++;
+            var windowStartY = WindowLY;
             if (windowStartX < 0) windowStartX = 0;
 
             var fetcherX = inWindow ? (scanlineX / 8) - (windowStartX / 8) : ((p.SCX / 8) + (scanlineX / 8)) & 0x1f;

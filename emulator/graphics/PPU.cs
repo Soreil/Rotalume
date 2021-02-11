@@ -135,7 +135,10 @@ namespace emulator
         public void Do()
         {
             if (Renderer is not null)
-                Renderer.Render();
+            {
+                while (true)
+                    if (!Renderer.Render()) return;
+            }
         }
 
         //We could have more calls to SetLCDC for other bits in the LCDC register.
