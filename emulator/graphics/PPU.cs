@@ -136,8 +136,7 @@ namespace emulator
         {
             if (Renderer is not null)
             {
-                while (true)
-                    if (!Renderer.Render()) return;
+                while (Clock() >= Renderer.TimeUntilWhichToPause) Renderer.Render();
             }
         }
 

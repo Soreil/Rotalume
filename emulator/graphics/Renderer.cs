@@ -35,16 +35,15 @@ namespace emulator
         public PixelFetcher fetcher;
         public int Stage3TickCount = 0;
 
-        public bool Render()
+        public int PixelsPopped = 0;
+        public void Render()
         {
-            if (Clock() < TimeUntilWhichToPause) return false;
-
             if (PPU.Mode == Mode.HBlank)
             {
                 SetStatInterruptForMode();
                 TimeUntilWhichToPause += 376 - Stage3TickCount;
                 PPU.Mode = PPU.LY == 143 ? Mode.VBlank : PPU.Mode = Mode.OAMSearch;
-                return true;
+                return;
             }
             //We only want to increment the line register if we aren't on the very first line
             //We should be handling this during the transition from HBlank to OAMSearch
@@ -69,13 +68,13 @@ namespace emulator
                 SpriteAttributes = PPU.OAM.SpritesOnLine(PPU.LY, PPU.SpriteHeight);
                 TimeUntilWhichToPause += 80;
                 PPU.Mode = Mode.Transfer;
-                return true;
+                return;
             }
             if (PPU.Mode == Mode.VBlank)
             {
                 SetStatInterruptForMode();
                 TimeUntilWhichToPause += TicksPerScanline;
-                return true;
+                return;
             }
 
             if (PPU.Mode == Mode.Transfer && fetcher == null)
@@ -84,6 +83,7 @@ namespace emulator
                 PPU.VRAM.Locked = true;
                 fetcher = new PixelFetcher(PPU);
                 Stage3TickCount = 0;
+                PixelsPopped = 0;
                 //fallthrough
             }
             if (PPU.Mode == Mode.Transfer)
@@ -92,7 +92,12 @@ namespace emulator
                 for (int i = 0; i < count && fetcher.scanlineX < 160; i++)
                 {
                     var pix = fetcher.RenderPixel();
-                    if (pix != null) background[fetcher.scanlineX++] = (Shade)pix;
+                    if (pix != null)
+                    {
+                        if (PixelsPopped >= (PPU.SCX & 7))
+                            background[fetcher.scanlineX++] = (Shade)pix;
+                        PixelsPopped++;
+                    }
                 }
 
                 Stage3TickCount += count;
@@ -109,11 +114,11 @@ namespace emulator
                 fs.Write(output);
                 PPU.Mode = Mode.HBlank;
                 fetcher = null;
-                return true;
+                return;
             }
             else if (PPU.Mode == Mode.Transfer)
             {
-                return true; //This is to let it keep drawing the line
+                return; //This is to let it keep drawing the line
             }
 
             throw new Exception("");

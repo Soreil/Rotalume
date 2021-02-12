@@ -61,8 +61,6 @@ namespace emulator
         //Only uses the BG FIFO for now
         public Shade? RenderPixel()
         {
-            if (scanlineX >= 160) return null;
-
             if (BGFIFO.count != 0)
             {
                 var pix = BGFIFO.Pop();
