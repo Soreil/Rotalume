@@ -42,7 +42,7 @@ namespace emulator
             if (PPU.Mode == Mode.HBlank)
             {
                 SetStatInterruptForMode();
-                SetNewClockTarget();
+                TimeUntilWhichToPause += 376 - Stage3TickCount;
                 PPU.Mode = PPU.LY == 143 ? Mode.VBlank : PPU.Mode = Mode.OAMSearch;
                 return true;
             }
@@ -74,7 +74,7 @@ namespace emulator
             if (PPU.Mode == Mode.VBlank)
             {
                 SetStatInterruptForMode();
-                SetNewClockTarget();
+                TimeUntilWhichToPause += TicksPerScanline;
                 return true;
             }
 
@@ -134,13 +134,6 @@ namespace emulator
             Shade.DarkGray => 0x40,
             Shade.Black => 0,
             _ => throw new Exception(),
-        };
-
-        private void SetNewClockTarget() => TimeUntilWhichToPause += PPU.Mode switch
-        {
-            Mode.HBlank => 376 - Stage3TickCount,
-            Mode.VBlank => TicksPerScanline, //We are going to blank every line since otherwise it would not increment the LY register in the current design
-            _ => throw new NotImplementedException(),
         };
     }
 }

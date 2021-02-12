@@ -115,6 +115,44 @@ namespace Tests
             Assert.AreEqual(expected, got);
         }
         [Test]
+        public void RenderBackgroundLineWithXScroll()
+        {
+            //gradient from white to black and back
+            byte[] expected = new byte[8] { 1, 2, 3, 3, 2, 1, 0, 0 };
+            byte[] got = new byte[160];
+
+            int clock = 0;
+            var ppu = new emulator.PPU(() => clock, () => { }, () => { });
+            var fetcher = new emulator.PixelFetcher(ppu);
+
+            //black dark light white
+            ppu.BGP = 0b11100100;
+            //Screen and background on
+            ppu.LCDC = 0b10010011;
+
+            //gradient from white to black and back
+            ppu.VRAM[emulator.VRAM.Start + 0] = 0b01011010;
+            ppu.VRAM[emulator.VRAM.Start + 1] = 0b00111100;
+            ppu.SCX = 1;
+
+            var totalElapsed = 0;
+            int read = 0;
+
+            for (int tick = 0; tick < 289; tick++)
+            {
+                var s = fetcher.RenderPixel();
+                if (read >= (ppu.SCX & 7) && s is not null)
+                    got[read - (ppu.SCX & 7)] = (byte)s;
+                if (s is not null)
+                    read++;
+                if (read == 160) break; //We have to add some more time here or keep the system running
+                if (tick == totalElapsed)
+                    totalElapsed += fetcher.Fetch();
+            }
+
+            Assert.AreEqual(expected, got[..8]);
+        }
+        [Test]
         public void RenderBackGroundLine()
         {
             byte[] expected = new byte[160] {
