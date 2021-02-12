@@ -36,6 +36,7 @@ namespace emulator
         public int Stage3TickCount = 0;
 
         public int PixelsPopped = 0;
+        public int PixelsSentToLCD = 0;
         public void Render()
         {
             if (PPU.Mode == Mode.HBlank)
@@ -89,14 +90,13 @@ namespace emulator
             if (PPU.Mode == Mode.Transfer)
             {
                 var count = fetcher.Fetch();
-                for (int i = 0; i < count && fetcher.scanlineX < 160; i++)
+                for (int i = 0; i < count && PixelsSentToLCD < 160; i++)
                 {
                     var pix = fetcher.RenderPixel();
                     if (pix != null)
                     {
                         if (PixelsPopped >= (PPU.SCX & 7))
-                            background[fetcher.scanlineX++] = (Shade)pix;
-                        PixelsPopped++;
+                            background[PixelsSentToLCD++] = (Shade)pix;
                     }
                 }
 
@@ -104,7 +104,7 @@ namespace emulator
                 TimeUntilWhichToPause += count;
                 //We have to execute this until the full line is drawn by renderpixel calls
             }
-            if (PPU.Mode == Mode.Transfer && fetcher.scanlineX == 160)
+            if (PPU.Mode == Mode.Transfer && PixelsSentToLCD == 160)
             {
                 PPU.OAM.Locked = false;
                 PPU.VRAM.Locked = false;

@@ -121,6 +121,7 @@ namespace emulator
 
                     BGFIFO.Push(new((byte)paletteIndex));
                 }
+                scanlineX += 8;
                 return true;
             }
             else return false;
