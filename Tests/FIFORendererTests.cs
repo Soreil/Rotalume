@@ -425,7 +425,7 @@ namespace Tests
 
                 //Assert.AreEqual(8, totalElapsed);
 
-                for (int i = 0; i < 8 && fetcher.scanlineX < 160; i++)
+                for (int i = 0; i < 8; i++)
                 {
                     var s = fetcher.RenderPixel();
                     Assert.NotNull(s);
