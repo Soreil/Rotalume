@@ -95,7 +95,8 @@ namespace emulator
                     var pix = fetcher.RenderPixel();
                     if (pix != null)
                     {
-                        if (PixelsPopped >= (PPU.SCX & 7))
+                        PixelsPopped++;
+                        if (PixelsPopped > (PPU.SCX & 7))
                             background[PixelsSentToLCD++] = (Shade)pix;
                     }
                 }
