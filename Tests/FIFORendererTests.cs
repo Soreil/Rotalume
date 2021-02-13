@@ -115,6 +115,124 @@ namespace Tests
             Assert.AreEqual(expected, got);
         }
         [Test]
+        public void RenderBackGroundTileWithYScrollOfMultipleTiles()
+        {
+            //gradient from white to black and back
+            byte[] expected = new byte[8] { 0, 1, 2, 3, 3, 2, 1, 0 };
+            byte[] got = new byte[8];
+
+            int clock = 0;
+            var ppu = new emulator.PPU(() => clock, () => { }, () => { });
+            var fetcher = new emulator.PixelFetcher(ppu);
+
+            //black dark light white
+            ppu.BGP = 0b11100100;
+            //Screen and background on
+            ppu.LCDC = 0b10010011;
+
+            //gradient from white to black and back
+            ppu.VRAM[emulator.VRAM.Start + 0x10] = 0b01011010;
+            ppu.VRAM[emulator.VRAM.Start + 0x11] = 0b00111100;
+            ppu.VRAM[emulator.VRAM.Start + 0x14] = 0b01011010;
+            ppu.VRAM[emulator.VRAM.Start + 0x15] = 0b00111100;
+            ppu.VRAM[ppu.TileMapDisplaySelect + 0x20] = 1;
+            ppu.SCY = 8;
+
+            var totalElapsed = 0;
+
+            var elapsed = fetcher.Fetch();
+            totalElapsed += elapsed;
+
+            Assert.AreEqual(2, elapsed);
+            Assert.AreEqual(1, fetcher.FetcherStep);
+            elapsed = fetcher.Fetch();
+            totalElapsed += elapsed;
+
+            Assert.AreEqual(2, elapsed);
+            Assert.AreEqual(2, fetcher.FetcherStep);
+            elapsed = fetcher.Fetch();
+            totalElapsed += elapsed;
+
+            Assert.AreEqual(2, elapsed);
+            Assert.AreEqual(3, fetcher.FetcherStep);
+            elapsed = fetcher.Fetch();
+            totalElapsed += elapsed;
+
+            Assert.AreEqual(2, elapsed);
+            Assert.AreEqual(0, fetcher.FetcherStep);
+
+            Assert.AreEqual(8, totalElapsed);
+
+            for (int i = 0; i < 8; i++)
+            {
+                var s = fetcher.RenderPixel();
+                Assert.NotNull(s);
+                got[i] = (byte)s;
+            }
+
+            Assert.AreEqual(expected, got);
+        }
+
+        [Test]
+        public void RenderBackGroundTileWithYScrollOfMultipleTilesNotOnTileBoundary()
+        {
+            //gradient from white to black and back
+            byte[] expected = new byte[8] { 0, 1, 2, 3, 3, 2, 1, 0 };
+            byte[] got = new byte[8];
+
+            int clock = 0;
+            var ppu = new emulator.PPU(() => clock, () => { }, () => { });
+            var fetcher = new emulator.PixelFetcher(ppu);
+
+            //black dark light white
+            ppu.BGP = 0b11100100;
+            //Screen and background on
+            ppu.LCDC = 0b10010011;
+
+            //gradient from white to black and back
+            ppu.VRAM[emulator.VRAM.Start + 0x10] = 0b01011010;
+            ppu.VRAM[emulator.VRAM.Start + 0x11] = 0b00111100;
+            ppu.VRAM[emulator.VRAM.Start + 0x14] = 0b01011010;
+            ppu.VRAM[emulator.VRAM.Start + 0x15] = 0b00111100;
+            ppu.VRAM[ppu.TileMapDisplaySelect + 0x20] = 1;
+            ppu.SCY = 10;
+
+            var totalElapsed = 0;
+
+            var elapsed = fetcher.Fetch();
+            totalElapsed += elapsed;
+
+            Assert.AreEqual(2, elapsed);
+            Assert.AreEqual(1, fetcher.FetcherStep);
+            elapsed = fetcher.Fetch();
+            totalElapsed += elapsed;
+
+            Assert.AreEqual(2, elapsed);
+            Assert.AreEqual(2, fetcher.FetcherStep);
+            elapsed = fetcher.Fetch();
+            totalElapsed += elapsed;
+
+            Assert.AreEqual(2, elapsed);
+            Assert.AreEqual(3, fetcher.FetcherStep);
+            elapsed = fetcher.Fetch();
+            totalElapsed += elapsed;
+
+            Assert.AreEqual(2, elapsed);
+            Assert.AreEqual(0, fetcher.FetcherStep);
+
+            Assert.AreEqual(8, totalElapsed);
+
+            for (int i = 0; i < 8; i++)
+            {
+                var s = fetcher.RenderPixel();
+                Assert.NotNull(s);
+                got[i] = (byte)s;
+            }
+
+            Assert.AreEqual(expected, got);
+        }
+
+        [Test]
         public void RenderBackgroundLineWithXScroll()
         {
             //gradient from white to black and back

@@ -17,7 +17,7 @@ namespace emulator
             p = P;
         }
 
-        public int scanlineX = 0;
+        private int scanlineX = 0;
 
         byte tileIndex;
         int at;
@@ -79,8 +79,8 @@ namespace emulator
             var tiledatamap = p.BGAndWindowTileDataSelect;
 
             int at;
-            if (tiledatamap != 0x8800) at = tiledatamap + (tileIndex * 16) + ((((p.LY + p.SCY) & 0xff) % 8) * 2);
-            else at = 0x9000 + (((sbyte)tileIndex) * 16) + ((((p.LY + p.SCY) & 0xff) % 8) * 2);
+            if (tiledatamap != 0x8800) at = tiledatamap + (tileIndex * 16) + ((((p.LY + p.SCY) & 0xff) & 7) * 2);
+            else at = 0x9000 + (((sbyte)tileIndex) * 16) + ((((p.LY + p.SCY) & 0xff) & 7) * 2);
             return at;
         }
 
