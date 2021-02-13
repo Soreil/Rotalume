@@ -85,6 +85,7 @@ namespace emulator
                 fetcher = new PixelFetcher(PPU);
                 Stage3TickCount = 0;
                 PixelsPopped = 0;
+                PixelsSentToLCD = 0;
                 //fallthrough
             }
             if (PPU.Mode == Mode.Transfer)
