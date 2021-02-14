@@ -135,24 +135,24 @@ namespace emulator
 
                 Stage3TickCount += count;
                 TimeUntilWhichToPause += count;
-                //We have to execute this until the full line is drawn by renderpixel calls
-            }
 
-            if (PPU.Mode == Mode.Transfer && PixelsSentToLCD == 160)
-            {
-                ScheduledModeChange = Mode.HBlank;
+                if (PixelsSentToLCD == 160)
+                {
+                    ScheduledModeChange = Mode.HBlank;
 
-                var output = new byte[background.Length];
-                for (int i = 0; i < output.Length; i++)
-                    output[i] = ShadeToGray(background[i]);
-                fs.Write(output);
-                fetcher.LineFinished();
-                PixelsPopped = 0;
-                PixelsSentToLCD = 0;
-                TotalTimeSpentInStage3 = Stage3TickCount;
-                Stage3TickCount = 0;
+                    var output = new byte[background.Length];
+                    for (int i = 0; i < output.Length; i++)
+                        output[i] = ShadeToGray(background[i]);
+                    fs.Write(output);
+                    fetcher.LineFinished();
+                    PixelsPopped = 0;
+                    PixelsSentToLCD = 0;
+                    TotalTimeSpentInStage3 = Stage3TickCount;
+                    Stage3TickCount = 0;
+                }
                 return;
             }
+
         }
 
         private readonly Shade[] background = new Shade[DisplayWidth];
