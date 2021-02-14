@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace emulator
 {
@@ -8,8 +9,7 @@ namespace emulator
     public class PixelFetcher
     {
         const int tileWidth = 8;
-
-        PPU p;
+        readonly PPU p;
         private readonly FIFO<FIFOPixel> BGFIFO = new();
         private readonly FIFO<FIFOSpritePixel> SpriteFIFO = new();
         public PixelFetcher(PPU P)
@@ -26,6 +26,26 @@ namespace emulator
 
         public int FetcherStep = 0;
         public bool PushedEarly = false;
+
+        HashSet<int> WindowLY = new();
+
+        //Line finished resets all state which is only relevant for a single line
+        internal void LineFinished()
+        {
+            FetcherStep = 0;
+            PushedEarly = false;
+            scanlineX = 0;
+            BGFIFO.Clear();
+            SpriteFIFO.Clear();
+        }
+
+        //Frame finished resets all state relevant for an entire frame
+        internal void FrameFinished()
+        {
+            LineFinished();
+            WindowLY.Clear();
+        }
+
 
         //Fetch runs one of the steps of the background fetcher and returns the amount of cycles used
         public int Fetch()
@@ -83,28 +103,29 @@ namespace emulator
             else at = 0x9000 + (((sbyte)tileIndex) * 16) + ((((p.LY + p.SCY) & 0xff) & 7) * 2);
             return at;
         }
-
-        bool AlreadyInWindow = false;
-        public bool JustEnteredWindow = false;
-        int WindowLY = 0;
         private byte FetchTileID()
         {
-            ushort tilemap = ((p.BGTileMapDisplaySelect == 0x9c00 && scanlineX <= ((p.WX + 7) / 8) && p.LY >= p.WY) ||
-            p.TileMapDisplaySelect == 0x9c00 && scanlineX >= ((p.WX + 7) / 8) && p.LY >= p.WY) ? 0x9c00 : 0x9800;
-            bool inWindow = scanlineX >= (p.WX + 7) / 8 && p.LY >= p.WY && p.WindowDisplayEnable;
-            if (inWindow && !AlreadyInWindow)
-            {
-                JustEnteredWindow = true;
-                AlreadyInWindow = true;
-            }
-            if (!!inWindow && AlreadyInWindow) AlreadyInWindow = false;
+            ushort tilemap =
+                ((p.BGTileMapDisplaySelect == 0x9c00 &&
+                scanlineX <= ((p.WX + 7) / 8) &&
+                p.LY >= p.WY) ||
+                p.TileMapDisplaySelect == 0x9c00 &&
+                scanlineX >= ((p.WX + 7) / 8) &&
+                p.LY >= p.WY) ?
+            0x9c00 : 0x9800;
+
+            bool inWindow = scanlineX >= (p.WX + 7) && p.LY >= p.WY && p.WindowDisplayEnable;
+            if (inWindow)
+                WindowLY.Add(p.LY);
 
             var windowStartX = p.WX - 7;
-            var windowStartY = WindowLY;
+            var windowStartY = WindowLY.Count - 1;
             if (windowStartX < 0) windowStartX = 0;
 
-            var tileX = inWindow ? (scanlineX / 8) - (windowStartX / 8) : ((p.SCX / 8) + (scanlineX / 8)) & 0x1f;
-            var tileY = inWindow ? windowStartY : (p.LY + p.SCY) & 0xff;
+            var tileX = inWindow ? (scanlineX / 8) - (windowStartX / 8) :
+                                   ((p.SCX / 8) + (scanlineX / 8)) & 0x1f;
+            var tileY = inWindow ? windowStartY :
+                                   (p.LY + p.SCY) & 0xff;
 
             var tileIndex = p.VRAM[tilemap + tileX + ((tileY / 8) * 32)];
             return tileIndex;

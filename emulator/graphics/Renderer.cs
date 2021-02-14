@@ -26,6 +26,7 @@ namespace emulator
             fs = destination ?? Stream.Null;
             PPU = ppu;
             ppu.Mode = Mode.OAMSearch;
+            fetcher = new PixelFetcher(PPU);
         }
 
         public List<SpriteAttributes> SpriteAttributes = new();
@@ -42,6 +43,15 @@ namespace emulator
             {
                 PPU.Mode = (Mode)ScheduledModeChange;
                 ScheduledModeChange = null;
+
+                if (PPU.Mode == Mode.Transfer)
+                {
+                    PPU.OAM.Locked = true;
+                    PPU.VRAM.Locked = true;
+                    Stage3TickCount = 0;
+                    PixelsPopped = 0;
+                    PixelsSentToLCD = 0;
+                }
             }
 
             //We only want to increment the line register if we aren't on the very first line
@@ -60,6 +70,7 @@ namespace emulator
                 {
                     PPU.Mode = Mode.OAMSearch;
                     PPU.LY = 0;
+                    fetcher.FrameFinished();
                 }
             }
             if (PPU.Mode == Mode.HBlank)
@@ -67,7 +78,7 @@ namespace emulator
                 SetStatInterruptForMode();
                 TimeUntilWhichToPause += 376 - Stage3TickCount;
 
-                ScheduledModeChange = PPU.LY == 143 ? Mode.VBlank : PPU.Mode = Mode.OAMSearch;
+                ScheduledModeChange = PPU.LY == 143 ? Mode.VBlank : Mode.OAMSearch;
                 return;
             }
             if (PPU.Mode == Mode.OAMSearch)
@@ -84,16 +95,6 @@ namespace emulator
                 return;
             }
 
-            if (PPU.Mode == Mode.Transfer && fetcher == null)
-            {
-                PPU.OAM.Locked = true;
-                PPU.VRAM.Locked = true;
-                fetcher = new PixelFetcher(PPU);
-                Stage3TickCount = 0;
-                PixelsPopped = 0;
-                PixelsSentToLCD = 0;
-                //fallthrough
-            }
             if (PPU.Mode == Mode.Transfer)
             {
                 var count = fetcher.Fetch();
@@ -121,7 +122,7 @@ namespace emulator
                     output[i] = ShadeToGray(background[i]);
                 fs.Write(output);
                 ScheduledModeChange = Mode.HBlank;
-                fetcher = null;
+                fetcher.LineFinished();
                 return;
             }
         }
