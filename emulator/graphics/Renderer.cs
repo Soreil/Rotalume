@@ -65,7 +65,11 @@ namespace emulator
                 {
                     PPU.OAM.Locked = false;
                     PPU.VRAM.Locked = false;
-                    SetStatInterruptForMode();
+
+                    //According to TCAGBD the OAM flag is also triggering on this
+                    if (PPU.Enable_VBlankInterrupt || PPU.Enable_OAM_Interrupt)
+                        PPU.EnableLCDCStatusInterrupt();
+
                     PPU.EnableVBlankInterrupt();
                     fs.Flush();
                 }
@@ -79,6 +83,9 @@ namespace emulator
                     PPU.LY++;
 
                 if (PPU.LY == PPU.LYC) PPU.LYCInterrupt = true;
+                if (PPU.LYCInterrupt && PPU.Enable_LYC_Compare)
+                    PPU.EnableLCDCStatusInterrupt();
+
                 if (PPU.LY == 154)
                 {
                     PPU.LY = 0;
@@ -90,7 +97,8 @@ namespace emulator
 
             if (PPU.Mode == Mode.HBlank)
             {
-                SetStatInterruptForMode();
+                if (PPU.Enable_HBlankInterrupt)
+                    PPU.EnableLCDCStatusInterrupt();
                 TimeUntilWhichToPause += 376 - Stage3TickCount;
 
                 ScheduledModeChange = PPU.LY == 143 ? Mode.VBlank : Mode.OAMSearch;
@@ -98,7 +106,8 @@ namespace emulator
             }
             else if (PPU.Mode == Mode.OAMSearch)
             {
-                SetStatInterruptForMode();
+                if (PPU.Enable_OAM_Interrupt)
+                    PPU.EnableLCDCStatusInterrupt();
                 SpriteAttributes = PPU.OAM.SpritesOnLine(PPU.LY, PPU.SpriteHeight);
                 TimeUntilWhichToPause += 80;
                 ScheduledModeChange = Mode.Transfer;
@@ -143,13 +152,6 @@ namespace emulator
 
                 return;
             }
-        }
-
-        private void SetStatInterruptForMode()
-        {
-            if (PPU.Mode == Mode.OAMSearch && PPU.STAT.GetBit(5)) PPU.EnableLCDCStatusInterrupt();
-            else if (PPU.Mode == Mode.VBlank && PPU.STAT.GetBit(4) || PPU.STAT.GetBit(5)) PPU.EnableLCDCStatusInterrupt();
-            else if (PPU.Mode == Mode.HBlank && PPU.STAT.GetBit(3)) PPU.EnableLCDCStatusInterrupt();
         }
 
         private readonly Shade[] background = new Shade[DisplayWidth];
