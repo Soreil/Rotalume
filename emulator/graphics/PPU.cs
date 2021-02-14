@@ -54,6 +54,11 @@ namespace emulator
             set => _stat = (byte)((value & 0x7f) | 0x80);
         }
 
+        public bool Enable_LYC_Compare => STAT.GetBit(6);
+        public bool Enable_OAM_Interrupt => STAT.GetBit(5);
+        public bool Enable_VBlankInterrupt => STAT.GetBit(4);
+        public bool Enable_HBlankInterrupt => STAT.GetBit(3);
+
         public byte SCY; //FF42
         public byte SCX; //FF43
 
