@@ -9,7 +9,6 @@ namespace emulator
     public class Renderer
     {
         readonly PPU PPU;
-        readonly Func<long> Clock;
         public int TimeUntilWhichToPause;
         readonly Stream fs = Stream.Null;
 
@@ -27,8 +26,6 @@ namespace emulator
             fs = destination ?? Stream.Null;
             PPU = ppu;
             ppu.Mode = Mode.OAMSearch;
-            var startTime = PPU.Clock();
-            Clock = () => ppu.Clock() - startTime;
         }
 
         public List<SpriteAttributes> SpriteAttributes = new();
@@ -37,15 +34,16 @@ namespace emulator
 
         public int PixelsPopped = 0;
         public int PixelsSentToLCD = 0;
+
+        Mode? ScheduledModeChange = null;
         public void Render()
         {
-            if (PPU.Mode == Mode.HBlank)
+            if (ScheduledModeChange is not null)
             {
-                SetStatInterruptForMode();
-                TimeUntilWhichToPause += 376 - Stage3TickCount;
-                PPU.Mode = PPU.LY == 143 ? Mode.VBlank : PPU.Mode = Mode.OAMSearch;
-                return;
+                PPU.Mode = (Mode)ScheduledModeChange;
+                ScheduledModeChange = null;
             }
+
             //We only want to increment the line register if we aren't on the very first line
             //We should be handling this during the transition from HBlank to OAMSearch
             if ((PPU.Mode == Mode.OAMSearch && fs.Position != 0) || PPU.Mode == Mode.VBlank)
@@ -55,6 +53,7 @@ namespace emulator
                 if (PPU.LY == 144)
                 {
                     PPU.EnableVBlankInterrupt();
+                    SetStatInterruptForMode();
                     fs.Flush();
                 }
                 if (PPU.LY == 154)
@@ -63,17 +62,24 @@ namespace emulator
                     PPU.LY = 0;
                 }
             }
+            if (PPU.Mode == Mode.HBlank)
+            {
+                SetStatInterruptForMode();
+                TimeUntilWhichToPause += 376 - Stage3TickCount;
+
+                ScheduledModeChange = PPU.LY == 143 ? Mode.VBlank : PPU.Mode = Mode.OAMSearch;
+                return;
+            }
             if (PPU.Mode == Mode.OAMSearch)
             {
                 SetStatInterruptForMode();
                 SpriteAttributes = PPU.OAM.SpritesOnLine(PPU.LY, PPU.SpriteHeight);
                 TimeUntilWhichToPause += 80;
-                PPU.Mode = Mode.Transfer;
+                ScheduledModeChange = Mode.Transfer;
                 return;
             }
             if (PPU.Mode == Mode.VBlank)
             {
-                SetStatInterruptForMode();
                 TimeUntilWhichToPause += TicksPerScanline;
                 return;
             }
@@ -114,16 +120,10 @@ namespace emulator
                 for (int i = 0; i < output.Length; i++)
                     output[i] = ShadeToGray(background[i]);
                 fs.Write(output);
-                PPU.Mode = Mode.HBlank;
+                ScheduledModeChange = Mode.HBlank;
                 fetcher = null;
                 return;
             }
-            else if (PPU.Mode == Mode.Transfer)
-            {
-                return; //This is to let it keep drawing the line
-            }
-
-            throw new Exception("");
         }
 
         private void SetStatInterruptForMode()
