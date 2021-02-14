@@ -39,40 +39,55 @@ namespace emulator
         Mode? ScheduledModeChange = null;
         public void Render()
         {
+            //Increment mode and set lock states
             if (ScheduledModeChange is not null)
             {
                 PPU.Mode = (Mode)ScheduledModeChange;
                 ScheduledModeChange = null;
 
+                if (PPU.Mode == Mode.OAMSearch)
+                {
+                    PPU.OAM.Locked = true;
+                    PPU.VRAM.Locked = false;
+                }
                 if (PPU.Mode == Mode.Transfer)
                 {
                     PPU.OAM.Locked = true;
                     PPU.VRAM.Locked = true;
-                    Stage3TickCount = 0;
-                    PixelsPopped = 0;
-                    PixelsSentToLCD = 0;
+                }
+
+                if (PPU.Mode == Mode.HBlank)
+                {
+                    PPU.OAM.Locked = false;
+                    PPU.VRAM.Locked = false;
+                }
+                if (PPU.Mode == Mode.VBlank)
+                {
+                    PPU.OAM.Locked = false;
+                    PPU.VRAM.Locked = false;
+                    SetStatInterruptForMode();
+                    PPU.EnableVBlankInterrupt();
+                    fs.Flush();
                 }
             }
 
-            //We only want to increment the line register if we aren't on the very first line
             //We should be handling this during the transition from HBlank to OAMSearch
-            if ((PPU.Mode == Mode.OAMSearch && fs.Position != 0) || PPU.Mode == Mode.VBlank)
+            if (PPU.Mode == Mode.OAMSearch || PPU.Mode == Mode.VBlank)
             {
-                PPU.LY++;
+                //We only want to increment the line register if we aren't on the very first line
+                if (fs.Position != 0 || PPU.Mode == Mode.VBlank)
+                    PPU.LY++;
+
                 if (PPU.LY == PPU.LYC) PPU.LYCInterrupt = true;
-                if (PPU.LY == 144)
-                {
-                    PPU.EnableVBlankInterrupt();
-                    SetStatInterruptForMode();
-                    fs.Flush();
-                }
                 if (PPU.LY == 154)
                 {
-                    PPU.Mode = Mode.OAMSearch;
                     PPU.LY = 0;
                     fetcher.FrameFinished();
+                    ScheduledModeChange = Mode.OAMSearch;
+                    return;
                 }
             }
+
             if (PPU.Mode == Mode.HBlank)
             {
                 SetStatInterruptForMode();
@@ -81,7 +96,7 @@ namespace emulator
                 ScheduledModeChange = PPU.LY == 143 ? Mode.VBlank : Mode.OAMSearch;
                 return;
             }
-            if (PPU.Mode == Mode.OAMSearch)
+            else if (PPU.Mode == Mode.OAMSearch)
             {
                 SetStatInterruptForMode();
                 SpriteAttributes = PPU.OAM.SpritesOnLine(PPU.LY, PPU.SpriteHeight);
@@ -89,13 +104,12 @@ namespace emulator
                 ScheduledModeChange = Mode.Transfer;
                 return;
             }
-            if (PPU.Mode == Mode.VBlank)
+            else if (PPU.Mode == Mode.VBlank)
             {
                 TimeUntilWhichToPause += TicksPerScanline;
                 return;
             }
-
-            if (PPU.Mode == Mode.Transfer)
+            else if (PPU.Mode == Mode.Transfer)
             {
                 var count = fetcher.Fetch();
                 for (int i = 0; i < count && PixelsSentToLCD < 160; i++)
@@ -113,16 +127,20 @@ namespace emulator
                 TimeUntilWhichToPause += count;
                 //We have to execute this until the full line is drawn by renderpixel calls
             }
+
             if (PPU.Mode == Mode.Transfer && PixelsSentToLCD == 160)
             {
-                PPU.OAM.Locked = false;
-                PPU.VRAM.Locked = false;
+                ScheduledModeChange = Mode.HBlank;
+
                 var output = new byte[background.Length];
                 for (int i = 0; i < output.Length; i++)
                     output[i] = ShadeToGray(background[i]);
                 fs.Write(output);
-                ScheduledModeChange = Mode.HBlank;
                 fetcher.LineFinished();
+                Stage3TickCount = 0;
+                PixelsPopped = 0;
+                PixelsSentToLCD = 0;
+
                 return;
             }
         }
