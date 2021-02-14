@@ -9,7 +9,7 @@ namespace emulator
     public class Renderer
     {
         readonly PPU PPU;
-        public int TimeUntilWhichToPause;
+        public long TimeUntilWhichToPause;
         readonly Stream fs = Stream.Null;
 
         public const int TileWidth = 8;
@@ -21,12 +21,13 @@ namespace emulator
         public const int TicksPerScanline = 456;
         public const int TicksPerFrame = ScanlinesPerFrame * TicksPerScanline;
 
-        public Renderer(PPU ppu, Stream destination = null)
+        public Renderer(PPU ppu, Stream destination = null, long offset = 0)
         {
             fs = destination ?? Stream.Null;
             PPU = ppu;
             ppu.Mode = Mode.OAMSearch;
             fetcher = new PixelFetcher(PPU);
+            TimeUntilWhichToPause += offset;
         }
 
         public List<SpriteAttributes> SpriteAttributes = new();
@@ -35,6 +36,8 @@ namespace emulator
 
         public int PixelsPopped = 0;
         public int PixelsSentToLCD = 0;
+
+        public int TotalTimeSpentInStage3 { get; private set; } = 0;
 
         Mode? ScheduledModeChange = null;
         public void Render()
@@ -82,7 +85,7 @@ namespace emulator
                 if (fs.Position != 0 || PPU.Mode == Mode.VBlank)
                     PPU.LY++;
 
-                if (PPU.LY == PPU.LYC) PPU.LYCInterrupt = true;
+                PPU.LYCInterrupt = PPU.LY == PPU.LYC;
                 if (PPU.LYCInterrupt && PPU.Enable_LYC_Compare)
                     PPU.EnableLCDCStatusInterrupt();
 
@@ -99,7 +102,7 @@ namespace emulator
             {
                 if (PPU.Enable_HBlankInterrupt)
                     PPU.EnableLCDCStatusInterrupt();
-                TimeUntilWhichToPause += 376 - Stage3TickCount;
+                TimeUntilWhichToPause += 376 - TotalTimeSpentInStage3;
 
                 ScheduledModeChange = PPU.LY == 143 ? Mode.VBlank : Mode.OAMSearch;
                 return;
@@ -146,10 +149,10 @@ namespace emulator
                     output[i] = ShadeToGray(background[i]);
                 fs.Write(output);
                 fetcher.LineFinished();
-                Stage3TickCount = 0;
                 PixelsPopped = 0;
                 PixelsSentToLCD = 0;
-
+                TotalTimeSpentInStage3 = Stage3TickCount;
+                Stage3TickCount = 0;
                 return;
             }
         }

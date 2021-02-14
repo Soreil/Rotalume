@@ -30,7 +30,7 @@ namespace emulator
             {
                 _LCDC = value;
                 if (ScreenJustTurnedOn)
-                    Renderer = new Renderer(this, Writer); //We want a new renderer so all the internal state resets including clocking
+                    Renderer = new Renderer(this, Writer, Clock()); //We want a new renderer so all the internal state resets including clocking
                 else if ((!LCDEnable) && Renderer is not null)
                 {
                     Writer.Flush(); //If there is a partially written frame when we delete the old renderer the next
