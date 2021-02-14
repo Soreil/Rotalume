@@ -131,7 +131,7 @@ namespace emulator
             set
             {
                 STAT = STAT.SetBit(2, value);
-                if (STAT.GetBit(6))
+                if (Enable_LYC_Compare && value)
                     EnableLCDCStatusInterrupt();
             }
         }

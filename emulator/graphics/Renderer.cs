@@ -85,9 +85,7 @@ namespace emulator
                 if (fs.Position != 0 || PPU.Mode == Mode.VBlank)
                     PPU.LY++;
 
-                PPU.LYCInterrupt = PPU.LY == PPU.LYC;
-                if (PPU.LYCInterrupt && PPU.Enable_LYC_Compare)
-                    PPU.EnableLCDCStatusInterrupt();
+                if (PPU.LY == PPU.LYC) PPU.LYCInterrupt = true;
 
                 if (PPU.LY == 154)
                 {
