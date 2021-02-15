@@ -133,6 +133,13 @@ namespace emulator
                         PixelsPopped++;
                         if (PixelsPopped > (PPU.SCX & 7))
                             background[PixelsSentToLCD++] = (Shade)pix;
+                        bool windowStart = PixelsSentToLCD == PPU.WX - 7 && PPU.LY >= PPU.WY && PPU.WindowDisplayEnable;
+                        if (windowStart)
+                        {
+                            fetcher.FetcherStep = 0;
+                            fetcher.scanlineX = PixelsSentToLCD;
+                            fetcher.BGFIFO.Clear();
+                        }
                     }
                 }
 
@@ -155,7 +162,6 @@ namespace emulator
                 }
                 return;
             }
-
         }
 
         private readonly Shade[] background = new Shade[DisplayWidth];

@@ -10,14 +10,14 @@ namespace emulator
     {
         const int tileWidth = 8;
         readonly PPU p;
-        private readonly FIFO<FIFOPixel> BGFIFO = new();
+        public readonly FIFO<FIFOPixel> BGFIFO = new();
         private readonly FIFO<FIFOSpritePixel> SpriteFIFO = new();
         public PixelFetcher(PPU P)
         {
             p = P;
         }
 
-        private int scanlineX = 0;
+        public int scanlineX = 0;
 
         byte tileIndex;
         byte tileDataLow;
@@ -79,7 +79,7 @@ namespace emulator
         //Only uses the BG FIFO for now
         public Shade? RenderPixel()
         {
-            if (BGFIFO.count > 8)
+            if (BGFIFO.count != 0)
             {
                 var pix = BGFIFO.Pop();
                 //Do we need to pop in order to do this?
@@ -131,7 +131,7 @@ namespace emulator
 
         private bool Pushrow()
         {
-            if (BGFIFO.count <= 8)
+            if (BGFIFO.count == 0)
             {
                 for (var i = tileWidth; i > 0; i--)
                 {
