@@ -17,6 +17,7 @@ namespace emulator
         int RAMBankNumber = 0;
         int RTCRegisterNumber = 0;
         readonly Func<long> GetRTC;
+        private bool hasClock => GetRTC != null;
         const long TicksPerSecond = 1 << 22;
         const long TicksPerMinute = TicksPerSecond * 60;
         const long TicksPerHour = TicksPerMinute * 60;
@@ -71,7 +72,7 @@ namespace emulator
                         }
                         break;
                     case var v when v < 0x8000:
-                        if (PreviousLatchControlWriteValue == 0 && value == 1)
+                        if (PreviousLatchControlWriteValue == 0 && value == 1 && hasClock)
                         {
                             if (CurrentClock >= TicksPerDay * 0x200)
                             {
