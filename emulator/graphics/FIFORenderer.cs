@@ -104,7 +104,7 @@ namespace emulator
         private byte FetchTileID()
         {
             int tilemap;
-            bool inWindow = scanlineX >= (p.WX + 7) && p.LY >= p.WY && p.WindowDisplayEnable;
+            bool inWindow = scanlineX >= (p.WX - 7) && p.LY >= p.WY && p.WindowDisplayEnable;
             if (inWindow)
             {
                 WindowLY.Add(p.LY);
@@ -117,7 +117,8 @@ namespace emulator
 
             var windowStartX = p.WX - 7;
             var windowStartY = WindowLY.Count - 1;
-            if (windowStartX < 0) windowStartX = 0;
+            if (windowStartX < 0)
+                windowStartX = 0;
 
             var tileX = inWindow ? (scanlineX / 8) - (windowStartX / 8) :
                                    ((p.SCX / 8) + (scanlineX / 8)) & 0x1f;
