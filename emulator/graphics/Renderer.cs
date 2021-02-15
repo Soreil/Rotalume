@@ -122,6 +122,9 @@ namespace emulator
             else if (PPU.Mode == Mode.Transfer)
             {
                 var count = fetcher.Fetch();
+
+                //We should probably be doing this in a more clean way since it just needs
+                //to handle on every cycle
                 for (int i = 0; i < count && PixelsSentToLCD < 160; i++)
                 {
                     var pix = fetcher.RenderPixel();

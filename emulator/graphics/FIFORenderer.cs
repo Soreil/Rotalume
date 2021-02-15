@@ -20,7 +20,6 @@ namespace emulator
         private int scanlineX = 0;
 
         byte tileIndex;
-        int at;
         byte tileDataLow;
         byte tileDataHigh;
 
@@ -57,7 +56,6 @@ namespace emulator
                     FetcherStep = 1;
                     return 2;
                 case 1:
-                    at = GetAdress();
                     tileDataLow = FetchLow();
                     FetcherStep = 2;
                     return 2;
@@ -81,7 +79,7 @@ namespace emulator
         //Only uses the BG FIFO for now
         public Shade? RenderPixel()
         {
-            if (BGFIFO.count != 0)
+            if (BGFIFO.count > 8)
             {
                 var pix = BGFIFO.Pop();
                 //Do we need to pop in order to do this?
@@ -91,8 +89,8 @@ namespace emulator
             return null;
         }
 
-        private byte FetchHigh() => p.VRAM[at + 1];
-        private byte FetchLow() => p.VRAM[at];
+        private byte FetchHigh() => p.VRAM[GetAdress() + 1];
+        private byte FetchLow() => p.VRAM[GetAdress()];
 
         private int GetAdress()
         {
@@ -133,7 +131,7 @@ namespace emulator
 
         private bool Pushrow()
         {
-            if (BGFIFO.count == 0)
+            if (BGFIFO.count <= 8)
             {
                 for (var i = tileWidth; i > 0; i--)
                 {
