@@ -95,25 +95,25 @@ namespace emulator
             AddTicks(duration);
         };
 
-        public Action INC((Register, Traits) p0, int duration)
+        public Action INC(Register p0, int duration)
         => () =>
         {
-            var before = Registers.Get(p0.Item1);
+            var before = Registers.Get(p0);
             var arg = (byte)(before + 1);
 
             Registers.Set(Flag.Z, arg == 0);
             Registers.Mark(Flag.NN);
             Registers.Set(Flag.H, before.IsHalfCarryAdd(1));
-            Registers.Set(p0.Item1, (byte)(Registers.Get(p0.Item1) + 1));
+            Registers.Set(p0, (byte)(Registers.Get(p0) + 1));
             AddTicks(duration);
         };
 
-        public Action DEC((Register, Traits) p0, int duration)
+        public Action DEC(Register p0, int duration)
         => () =>
         {
-            var before = Registers.Get(p0.Item1);
+            var before = Registers.Get(p0);
             var arg = before == 0 ? (byte)0xff : (byte)(before - 1);
-            Registers.Set(p0.Item1, arg);
+            Registers.Set(p0, arg);
 
             Registers.Set(Flag.Z, arg == 0);
             Registers.Mark(Flag.N);
@@ -323,12 +323,12 @@ namespace emulator
             return A;
         }
 
-        public Action JR((Flag, Traits) p0, int duration, int alternativeDuration)
+        public Action JR(Flag p0, int duration, int alternativeDuration)
         {
             return () =>
             {
                 var offset = (sbyte)Memory.Fetch(DMGInteger.r8);
-                if (Registers.Get(p0.Item1))
+                if (Registers.Get(p0))
                 {
                     SetPC((ushort)(GetPC() + offset));
                     AddTicks(duration);
@@ -475,27 +475,27 @@ namespace emulator
                 halt();
             };
         }
-        public Action ADD((Register, Traits) p0, (Register, Traits) p1, int duration)
+        public Action ADD(Register p0, Register p1, int duration)
         {
             return () =>
             {
 
-                var lhs = Registers.Get(p0.Item1);
-                var rhs = Registers.Get(p1.Item1);
+                var lhs = Registers.Get(p0);
+                var rhs = Registers.Get(p1);
 
-                Registers.Set(p0.Item1, ADD(lhs, rhs));
+                Registers.Set(p0, ADD(lhs, rhs));
                 AddTicks(duration);
             };
         }
-        public Action ADD((Register, Traits) p0, (WideRegister, Traits) p1, int duration)
+        public Action ADD(Register p0, WideRegister p1, int duration)
         {
             return () =>
             {
 
-                var lhs = Registers.Get(p0.Item1);
-                var rhs = Memory.Read(Registers.Get(p1.Item1));
+                var lhs = Registers.Get(p0);
+                var rhs = Memory.Read(Registers.Get(p1));
 
-                Registers.Set(p0.Item1, ADD(lhs, rhs));
+                Registers.Set(p0, ADD(lhs, rhs));
                 AddTicks(duration);
             };
         }
@@ -511,43 +511,43 @@ namespace emulator
             return (byte)sum;
         }
 
-        public Action ADC((Register, Traits) p1, int duration)
+        public Action ADC(Register p1, int duration)
         {
             return () =>
             {
-                var rhs = Registers.Get(p1.Item1);
+                var rhs = Registers.Get(p1);
 
                 ADC(rhs);
                 AddTicks(duration);
             };
         }
-        public Action ADC((WideRegister, Traits) p1, int duration)
+        public Action ADC(WideRegister p1, int duration)
         {
             return () =>
             {
-                var rhs = Memory.Read(Registers.Get(p1.Item1));
+                var rhs = Memory.Read(Registers.Get(p1));
 
                 ADC(rhs);
                 AddTicks(duration);
             };
         }
-        public Action SUB((Register, Traits) p0, int duration)
+        public Action SUB(Register p0, int duration)
         {
             return () =>
             {
                 var lhs = Registers.A;
-                var rhs = Registers.Get(p0.Item1);
+                var rhs = Registers.Get(p0);
 
                 Registers.A = SUB(lhs, rhs);
                 AddTicks(duration);
             };
         }
-        public Action SUB((WideRegister, Traits) p0, int duration)
+        public Action SUB(WideRegister p0, int duration)
         {
             return () =>
             {
                 var lhs = Registers.A;
-                var rhs = Memory.Read(Registers.Get(p0.Item1));
+                var rhs = Memory.Read(Registers.Get(p0));
 
                 Registers.A = SUB(lhs, rhs);
                 AddTicks(duration);
@@ -565,21 +565,21 @@ namespace emulator
             return sum;
         }
 
-        public Action SBC((Register, Traits) p1, int duration)
+        public Action SBC(Register p1, int duration)
         {
             return () =>
             {
-                var rhs = Registers.Get(p1.Item1);
+                var rhs = Registers.Get(p1);
 
                 SBC(rhs);
                 AddTicks(duration);
             };
         }
-        public Action SBC((WideRegister, Traits) p1, int duration)
+        public Action SBC(WideRegister p1, int duration)
         {
             return () =>
             {
-                var rhs = Memory.Read(Registers.Get(p1.Item1));
+                var rhs = Memory.Read(Registers.Get(p1));
 
                 SBC(rhs);
                 AddTicks(duration);
@@ -610,23 +610,23 @@ namespace emulator
             Registers.Set(Flag.C, (lhs - rhs - carry) > 0xff || (lhs - rhs - carry) < 0);
         }
 
-        public Action AND((Register, Traits) p0, int duration)
+        public Action AND(Register p0, int duration)
         {
             return () =>
             {
                 var lhs = Registers.A;
-                var rhs = Registers.Get(p0.Item1);
+                var rhs = Registers.Get(p0);
 
                 AND(lhs, rhs);
                 AddTicks(duration);
             };
         }
-        public Action AND((WideRegister, Traits) p0, int duration)
+        public Action AND(WideRegister p0, int duration)
         {
             return () =>
             {
                 var lhs = Registers.A;
-                var rhs = Memory.Read(Registers.Get(p0.Item1));
+                var rhs = Memory.Read(Registers.Get(p0));
 
                 AND(lhs, rhs);
                 AddTicks(duration);
@@ -643,23 +643,23 @@ namespace emulator
             Registers.A = ((byte)result);
         }
 
-        public Action XOR((Register, Traits) p0, int duration)
+        public Action XOR(Register p0, int duration)
         {
             return () =>
             {
                 var lhs = Registers.A;
-                var rhs = Registers.Get(p0.Item1);
+                var rhs = Registers.Get(p0);
 
                 XOR(lhs, rhs);
                 AddTicks(duration);
             };
         }
-        public Action XOR((WideRegister, Traits) p0, int duration)
+        public Action XOR(WideRegister p0, int duration)
         {
             return () =>
             {
                 var lhs = Registers.A;
-                var rhs = Memory.Read(Registers.Get(p0.Item1));
+                var rhs = Memory.Read(Registers.Get(p0));
 
                 XOR(lhs, rhs);
                 AddTicks(duration);
@@ -677,22 +677,22 @@ namespace emulator
             Registers.A = ((byte)result);
         }
 
-        public Action OR((Register, Traits) p0, int duration)
+        public Action OR(Register p0, int duration)
         {
             return () =>
             {
                 var lhs = Registers.A;
-                var rhs = Registers.Get(p0.Item1);
+                var rhs = Registers.Get(p0);
                 OR(lhs, rhs);
                 AddTicks(duration);
             };
         }
-        public Action OR((WideRegister, Traits) p0, int duration)
+        public Action OR(WideRegister p0, int duration)
         {
             return () =>
             {
                 var lhs = Registers.A;
-                var rhs = Memory.Read(Registers.Get(p0.Item1));
+                var rhs = Memory.Read(Registers.Get(p0));
                 OR(lhs, rhs);
                 AddTicks(duration);
             };
@@ -709,31 +709,31 @@ namespace emulator
 
             Registers.A = ((byte)result);
         }
-        public Action CP((Register, Traits) p0, int duration)
+        public Action CP(Register p0, int duration)
         {
             return () =>
                 {
                     var lhs = Registers.A;
-                    var rhs = Registers.Get(p0.Item1);
+                    var rhs = Registers.Get(p0);
                     CP(lhs, rhs);
                     AddTicks(duration);
                 };
         }
-        public Action CP((WideRegister, Traits) p0, int duration)
+        public Action CP(WideRegister p0, int duration)
         {
             return () =>
             {
                 var lhs = Registers.A;
-                var rhs = Memory.Read(Registers.Get(p0.Item1));
+                var rhs = Memory.Read(Registers.Get(p0));
                 CP(lhs, rhs);
                 AddTicks(duration);
             };
         }
-        public Action RET((Flag, Traits) p0, int duration, int alternativeDuration)
+        public Action RET(Flag p0, int duration, int alternativeDuration)
         {
             return () =>
             {
-                if (Registers.Get(p0.Item1))
+                if (Registers.Get(p0))
                 {
                     SetPC(Pop());
                     AddTicks(duration);
@@ -741,23 +741,23 @@ namespace emulator
                 else AddTicks(alternativeDuration);
             };
         }
-        public Action POP((WideRegister, Traits) p0, int duration)
+        public Action POP(WideRegister p0, int duration)
         {
             return () =>
             {
                 var SP = Registers.SP;
-                Registers.Set(p0.Item1, Memory.ReadWide(SP));
+                Registers.Set(p0, Memory.ReadWide(SP));
                 Registers.SP = (ushort)(SP + 2);
 
                 AddTicks(duration);
             };
         }
-        public Action JP((Flag, Traits) p0, (DMGInteger, Traits) p1, int duration, int alternativeDuration)
+        public Action JP(Flag  p0, DMGInteger p1, int duration, int alternativeDuration)
         {
             return () =>
             {
-                var addr = (ushort)Memory.Fetch(p1.Item1);
-                if (Registers.Get(p0.Item1))
+                var addr = (ushort)Memory.Fetch(p1);
+                if (Registers.Get(p0))
                 {
                     SetPC(addr);
                     AddTicks(duration);
@@ -765,53 +765,53 @@ namespace emulator
                 else AddTicks(alternativeDuration);
             };
         }
-        public Action JP((DMGInteger, Traits) p0, int duration)
+        public Action JP(DMGInteger p0, int duration)
         {
             return () =>
             {
-                var addr = (ushort)Memory.Fetch(p0.Item1);
+                var addr = (ushort)Memory.Fetch(p0);
                 SetPC(addr);
                 AddTicks(duration);
             };
         }
-        public Action CALL((Flag, Traits) p0, (DMGInteger, Traits) p1, int duration, int alternativeDuration)
+        public Action CALL(Flag p0, DMGInteger p1, int duration, int alternativeDuration)
         {
             return () =>
             {
-                var addr = (ushort)Memory.Fetch(p1.Item1);
-                if (Registers.Get(p0.Item1))
+                var addr = (ushort)Memory.Fetch(p1);
+                if (Registers.Get(p0))
                 {
                     Call(duration, addr);
                 }
                 else AddTicks(alternativeDuration);
             };
         }
-        public Action PUSH((WideRegister, Traits) p0, int duration)
+        public Action PUSH(WideRegister p0, int duration)
         {
             return () =>
             {
-                Push(Registers.Get(p0.Item1));
+                Push(Registers.Get(p0));
                 AddTicks(duration);
             };
         }
-        public Action ADD((Register, Traits) p0, (DMGInteger, Traits) p1, int duration)
+        public Action ADD(Register p0, DMGInteger p1, int duration)
         {
             return () =>
             {
                 Registers.Mark(Flag.NN);
 
-                var lhs = Registers.Get(p0.Item1);
-                var rhs = (byte)Memory.Fetch(p1.Item1);
+                var lhs = Registers.Get(p0);
+                var rhs = (byte)Memory.Fetch(p1);
 
-                Registers.Set(p0.Item1, ADD(lhs, rhs));
+                Registers.Set(p0, ADD(lhs, rhs));
                 AddTicks(duration);
             };
         }
-        public Action RST((byte, Traits) p0, int duration)
+        public Action RST(byte p0, int duration)
         {
             return () =>
             {
-                Call(duration, p0.Item1);
+                Call(duration, p0);
             };
         }
         public Action RET(int duration)
