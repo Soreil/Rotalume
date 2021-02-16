@@ -13,6 +13,20 @@ namespace emulator
         readonly public Action disableInterrupts;
         readonly private Action<long> AddTicks;
         readonly public Action halt;
+
+        //Wrapper to allow easier handling of (HL) usage
+        public byte GetRegister(Register r)
+        {
+            if (r == Register.HL) return Memory.Read(Registers.HL);
+            else return Registers.Get(r);
+        }
+
+        public void SetRegister(Register r, byte b)
+        {
+            if (r == Register.HL) Memory.Write(Registers.HL, b);
+            else Registers.Set(r, b);
+        }
+
         private ushort Pop()
         {
             var SP = Registers.SP;
@@ -752,7 +766,7 @@ namespace emulator
                 AddTicks(duration);
             };
         }
-        public Action JP(Flag  p0, DMGInteger p1, int duration, int alternativeDuration)
+        public Action JP(Flag p0, DMGInteger p1, int duration, int alternativeDuration)
         {
             return () =>
             {
@@ -1148,135 +1162,66 @@ namespace emulator
             Registers.Set(Flag.H, lhs.IsHalfCarrySub(rhs));
         }
 
-        public Action RLC((Register, Traits) p0, int duration)
+        public Action RLC(Register p0, int duration)
         {
             return () =>
             {
-                var reg = Registers.Get(p0.Item1);
+                var reg = GetRegister(p0);
 
                 var res = RLC(reg);
                 Registers.Set(Flag.Z, res == 0);
 
-                Registers.Set(p0.Item1, res);
+                SetRegister(p0, res);
                 AddTicks(duration);
             };
         }
-        public Action RLC((WideRegister, Traits) p0, int duration)
+        public Action RRC(Register p0, int duration)
         {
             return () =>
             {
-                var addr = Registers.Get(p0.Item1);
-                var reg = Memory.Read(addr);
-
-                var res = RLC(reg);
-                Registers.Set(Flag.Z, res == 0);
-
-                Memory.Write(addr, res);
-                AddTicks(duration);
-            };
-        }
-        public Action RRC((Register, Traits) p0, int duration)
-        {
-            return () =>
-            {
-                var reg = Registers.Get(p0.Item1);
+                var reg = GetRegister(p0);
 
                 var res = RRC(reg);
                 Registers.Set(Flag.Z, res == 0);
 
-                Registers.Set(p0.Item1, res);
+                SetRegister(p0, res);
                 AddTicks(duration);
             };
         }
-        public Action RRC((WideRegister, Traits) p0, int duration)
+        public Action RL(Register p0, int duration)
         {
             return () =>
             {
-                var addr = Registers.Get(p0.Item1);
-                var reg = Memory.Read(addr);
-
-                var res = RRC(reg);
-                Registers.Set(Flag.Z, res == 0);
-
-                Memory.Write(addr, res);
-                AddTicks(duration);
-            };
-        }
-        public Action RL((Register, Traits) p0, int duration)
-        {
-            return () =>
-            {
-                var reg = Registers.Get(p0.Item1);
+                var reg = GetRegister(p0);
 
                 var res = RL(reg);
                 Registers.Set(Flag.Z, res == 0);
 
-                Registers.Set(p0.Item1, res);
+                SetRegister(p0, res);
                 AddTicks(duration);
             };
         }
-        public Action RL((WideRegister, Traits) p0, int duration)
+        public Action RR(Register p0, int duration)
         {
             return () =>
             {
-                var addr = Registers.Get(p0.Item1);
-                var reg = Memory.Read(addr);
-
-                var res = RL(reg);
-                Registers.Set(Flag.Z, res == 0);
-
-                Memory.Write(addr, res);
-                AddTicks(duration);
-            };
-        }
-        public Action RR((Register, Traits) p0, int duration)
-        {
-            return () =>
-            {
-                var reg = Registers.Get(p0.Item1);
+                var reg = GetRegister(p0);
 
                 var res = RR(reg);
                 Registers.Set(Flag.Z, res == 0);
 
-                Registers.Set(p0.Item1, res);
+                SetRegister(p0, res);
                 AddTicks(duration);
             };
         }
-        public Action RR((WideRegister, Traits) p0, int duration)
+        public Action SLA(Register p0, int duration)
         {
             return () =>
             {
-                var addr = Registers.Get(p0.Item1);
-                var reg = Memory.Read(addr);
-
-                var res = RR(reg);
-                Registers.Set(Flag.Z, res == 0);
-
-                Memory.Write(addr, res);
-                AddTicks(duration);
-            };
-        }
-        public Action SLA((Register, Traits) p0, int duration)
-        {
-            return () =>
-            {
-                var reg = Registers.Get(p0.Item1);
+                var reg = GetRegister(p0);
                 var res = SLA(reg);
 
-                Registers.Set(p0.Item1, res);
-                AddTicks(duration);
-            };
-        }
-        public Action SLA((WideRegister, Traits) p0, int duration)
-        {
-            return () =>
-            {
-                var addr = Registers.Get(p0.Item1);
-                var reg = Memory.Read(addr);
-
-                var res = SLA(reg);
-
-                Memory.Write(addr, res);
+                SetRegister(p0, res);
                 AddTicks(duration);
             };
         }
@@ -1292,11 +1237,11 @@ namespace emulator
             Registers.Set(Flag.Z, reg == 0);
             return reg;
         }
-        public Action SRA((Register, Traits) p0, int duration)
+        public Action SRA(Register p0, int duration)
         {
             return () =>
             {
-                var lhs = Registers.Get(p0.Item1);
+                var lhs = GetRegister(p0);
                 byte bit7 = (byte)(lhs & 0x80);
 
                 Registers.Mark(Flag.NN);
@@ -1304,55 +1249,20 @@ namespace emulator
                 Registers.Set(Flag.C, lhs.GetBit(0));
 
                 lhs = (byte)((lhs >> 1) | bit7);
-                Registers.Set(p0.Item1, lhs);
+                SetRegister(p0, lhs);
 
                 Registers.Set(Flag.Z, lhs == 0);
 
                 AddTicks(duration);
             };
         }
-        public Action SRA((WideRegister, Traits) p0, int duration)
+        public Action SWAP(Register p0, int duration)
         {
             return () =>
             {
-                var addr = Registers.Get(p0.Item1);
-                var lhs = Memory.Read(addr);
-
-                byte bit7 = (byte)(lhs & 0x80);
-
-                Registers.Mark(Flag.NN);
-                Registers.Mark(Flag.NH);
-                Registers.Set(Flag.C, lhs.GetBit(0));
-
-                lhs = (byte)((lhs >> 1) | bit7);
-                Memory.Write(addr, lhs);
-
-                Registers.Set(Flag.Z, lhs == 0);
-
-                AddTicks(duration);
-            };
-        }
-
-        public Action SWAP((Register, Traits) p0, int duration)
-        {
-            return () =>
-            {
-                var reg = Registers.Get(p0.Item1);
+                var reg = GetRegister(p0);
                 var res = SWAP(reg);
-                Registers.Set(p0.Item1, res);
-                AddTicks(duration);
-            };
-        }
-        public Action SWAP((WideRegister, Traits) p0, int duration)
-        {
-            return () =>
-            {
-                var addr = Registers.Get(p0.Item1);
-                var reg = Memory.Read(addr);
-
-                var res = SWAP(reg);
-
-                Memory.Write(addr, res);
+                SetRegister(p0, res);
                 AddTicks(duration);
             };
         }
@@ -1370,53 +1280,27 @@ namespace emulator
             return (byte)swapped;
         }
 
-        public Action SRL((Register, Traits) p0, int duration)
+        public Action SRL(Register p0, int duration)
         {
             return () =>
             {
-                var lhs = Registers.Get(p0.Item1);
+                var lhs = GetRegister(p0);
 
                 Registers.Mark(Flag.NN);
                 Registers.Mark(Flag.NH);
                 Registers.Set(Flag.C, lhs.GetBit(0));
                 Registers.Set(Flag.Z, lhs >> 1 == 0);
 
-                Registers.Set(p0.Item1, (byte)(lhs >> 1));
+                SetRegister(p0, (byte)(lhs >> 1));
                 AddTicks(duration);
             };
         }
-        public Action SRL((WideRegister, Traits) p0, int duration)
+        public Action BIT(byte p0, Register p1, int duration)
         {
             return () =>
             {
-                var addr = Registers.Get(p0.Item1);
-                var lhs = Memory.Read(addr);
-
-                Registers.Mark(Flag.NN);
-                Registers.Mark(Flag.NH);
-                Registers.Set(Flag.C, lhs.GetBit(0));
-                Registers.Set(Flag.Z, lhs >> 1 == 0);
-
-                Memory.Write(addr, (byte)(lhs >> 1));
-                AddTicks(duration);
-            };
-        }
-        public Action BIT((byte, Traits) p0, (Register, Traits) p1, int duration)
-        {
-            return () =>
-            {
-                var reg = Registers.Get(p1.Item1);
-                BIT(p0.Item1, reg);
-                AddTicks(duration);
-            };
-        }
-        public Action BIT((byte, Traits) p0, (WideRegister, Traits) p1, int duration)
-        {
-            return () =>
-            {
-                var addr = Registers.Get(p1.Item1);
-                var reg = Memory.Read(addr);
-                BIT(p0.Item1, reg);
+                var reg = GetRegister(p1);
+                BIT(p0, reg);
                 AddTicks(duration);
             };
         }
@@ -1430,47 +1314,23 @@ namespace emulator
         private static byte RES(int at, byte b) => b.ClearBit(at);
         private static byte SET(int at, byte b) => b.SetBit(at);
 
-        public Action RES((byte, Traits) p0, (Register, Traits) p1, int duration)
+        public Action RES(byte p0, Register p1, int duration)
         {
             return () =>
             {
-                var reg = Registers.Get(p1.Item1);
-                var res = RES(p0.Item1, reg);
-                Registers.Set(p1.Item1, res);
+                var reg = GetRegister(p1);
+                var res = RES(p0, reg);
+                SetRegister(p1, res);
                 AddTicks(duration);
             };
         }
-        public Action RES((byte, Traits) p0, (WideRegister, Traits) p1, int duration)
+        public Action SET(byte p0, Register p1, int duration)
         {
             return () =>
             {
-                var addr = Registers.Get(p1.Item1);
-                var reg = Memory.Read(addr);
-
-                var res = RES(p0.Item1, reg);
-                Memory.Write(addr, res);
-                AddTicks(duration);
-            };
-        }
-        public Action SET((byte, Traits) p0, (Register, Traits) p1, int duration)
-        {
-            return () =>
-            {
-                var reg = Registers.Get(p1.Item1);
-                var res = SET(p0.Item1, reg);
-                Registers.Set(p1.Item1, res);
-                AddTicks(duration);
-            };
-        }
-        public Action SET((byte, Traits) p0, (WideRegister, Traits) p1, int duration)
-        {
-            return () =>
-            {
-                var addr = Registers.Get(p1.Item1);
-                var reg = Memory.Read(addr);
-
-                var res = SET(p0.Item1, reg);
-                Memory.Write(addr, res);
+                var reg = GetRegister(p1);
+                var res = SET(p0, reg);
+                SetRegister(p1, res);
                 AddTicks(duration);
             };
         }
