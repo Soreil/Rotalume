@@ -121,47 +121,63 @@ namespace emulator
             }
             else if (PPU.Mode == Mode.Transfer)
             {
-                var count = fetcher.Fetch();
+                if (PPU.LY != 0 && Stage3TickCount == 0)
+                {
+                    Stage3TickCount += 4;
+                    TimeUntilWhichToPause += 4;
+                    return;
+                }
+
+                var cycles = fetcher.Fetch();
 
                 //We should probably be doing this in a more clean way since it just needs
                 //to handle on every cycle
-                for (int i = 0; i < count && PixelsSentToLCD < 160; i++)
+                for (int i = 0; i < cycles && PixelsSentToLCD < 160; i++)
                 {
-                    var pix = fetcher.RenderPixel();
-                    if (pix != null)
-                    {
-                        PixelsPopped++;
-                        fetcher.scanlineX++;
-                        if (PixelsPopped > (PPU.SCX & 7))
-                            background[PixelsSentToLCD++] = (Shade)pix;
-                        bool windowStart = PixelsSentToLCD == PPU.WX - 7 && PPU.LY >= PPU.WY && PPU.WindowDisplayEnable;
-                        if (windowStart)
-                        {
-                            fetcher.FetcherStep = 0;
-                            //fetcher.scanlineX = PixelsSentToLCD;
-                            fetcher.BGFIFO.Clear();
-                        }
-                    }
+                    AttemptToPushAPixel();
                 }
 
-                Stage3TickCount += count;
-                TimeUntilWhichToPause += count;
+                Stage3TickCount += cycles;
+                TimeUntilWhichToPause += cycles;
 
                 if (PixelsSentToLCD == 160)
                 {
-                    ScheduledModeChange = Mode.HBlank;
-
-                    var output = new byte[background.Length];
-                    for (int i = 0; i < output.Length; i++)
-                        output[i] = ShadeToGray(background[i]);
-                    fs.Write(output);
-                    fetcher.LineFinished();
-                    PixelsPopped = 0;
-                    PixelsSentToLCD = 0;
-                    TotalTimeSpentInStage3 = Stage3TickCount;
-                    Stage3TickCount = 0;
+                    ResetLineSpecificState();
                 }
                 return;
+            }
+        }
+
+        private void ResetLineSpecificState()
+        {
+            ScheduledModeChange = Mode.HBlank;
+
+            var output = new byte[background.Length];
+            for (int i = 0; i < output.Length; i++)
+                output[i] = ShadeToGray(background[i]);
+            fs.Write(output);
+            fetcher.LineFinished();
+            PixelsPopped = 0;
+            PixelsSentToLCD = 0;
+            TotalTimeSpentInStage3 = Stage3TickCount;
+            Stage3TickCount = 0;
+        }
+
+        private void AttemptToPushAPixel()
+        {
+            var pix = fetcher.RenderPixel();
+            if (pix != null)
+            {
+                PixelsPopped++;
+                fetcher.scanlineX++;
+                if (PixelsPopped > (PPU.SCX & 7))
+                    background[PixelsSentToLCD++] = (Shade)pix;
+                bool windowStart = PixelsSentToLCD == PPU.WX - 7 && PPU.LY >= PPU.WY && PPU.WindowDisplayEnable;
+                if (windowStart)
+                {
+                    fetcher.FetcherStep = 0;
+                    fetcher.BGFIFO.Clear();
+                }
             }
         }
 
