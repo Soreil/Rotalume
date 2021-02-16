@@ -76,7 +76,6 @@ namespace emulator
             }
         }
 
-        //Only uses the BG FIFO for now
         public Shade? RenderPixel()
         {
             if (BGFIFO.count != 0 && SpriteFIFO.count != 0)
@@ -99,10 +98,7 @@ namespace emulator
                     }
 
                 }
-                else
-                {
-                    return p.BackgroundColor(p.BGDisplayEnable ? bp.color : 0);
-                }
+                else return p.BackgroundColor(p.BGDisplayEnable ? bp.color : 0);
             }
             else if (BGFIFO.count != 0)
             {
