@@ -79,14 +79,39 @@ namespace emulator
         //Only uses the BG FIFO for now
         public Shade? RenderPixel()
         {
-            if (BGFIFO.count != 0)
+            if (BGFIFO.count != 0 && SpriteFIFO.count != 0)
+            {
+                var bp = BGFIFO.Pop();
+                var sp = SpriteFIFO.Pop();
+                if (sp.color != 0 && p.OBJDisplayEnable)
+                {
+                    //obj to bg priority bit is set to true so the sprite pixel
+                    //will be behind bg color 1,2,3
+                    if (sp.priority && bp.color != 0)
+                        return p.BackgroundColor(p.BGDisplayEnable ? bp.color : 0);
+                    else
+                    {
+                        if (sp.Palette == 0)
+                            return p.SpritePalette0(sp.color);
+                        else if (sp.Palette == 1)
+                            return p.SpritePalette1(sp.color);
+                        else throw new Exception();
+                    }
+
+                }
+                else
+                {
+                    return p.BackgroundColor(p.BGDisplayEnable ? bp.color : 0);
+                }
+            }
+            else if (BGFIFO.count != 0)
             {
                 var pix = BGFIFO.Pop();
                 //Do we need to pop in order to do this?
                 //Do we need pixels in the fifo to do this?
                 return p.BackgroundColor(p.BGDisplayEnable ? pix.color : 0);
             }
-            return null;
+            else return null;
         }
 
         private byte FetchHigh() => p.VRAM[GetAdress() + 1];
