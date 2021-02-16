@@ -78,7 +78,7 @@ namespace emulator
 
         public Shade? RenderPixel()
         {
-            if (BGFIFO.count != 0 && SpriteFIFO.count != 0)
+            if (BGFIFO.count != 0 && SpriteFIFO.count > 8)
             {
                 var bp = BGFIFO.Pop();
                 var sp = SpriteFIFO.Pop();
@@ -100,7 +100,7 @@ namespace emulator
                 }
                 else return p.BackgroundColor(p.BGDisplayEnable ? bp.color : 0);
             }
-            else if (BGFIFO.count != 0)
+            else if (BGFIFO.count > 8)
             {
                 var pix = BGFIFO.Pop();
                 //Do we need to pop in order to do this?
@@ -125,7 +125,7 @@ namespace emulator
         private byte FetchTileID()
         {
             int tilemap;
-            bool inWindow = scanlineX >= (p.WX - 7) && p.LY >= p.WY && p.WindowDisplayEnable;
+            bool inWindow = (scanlineX+BGFIFO.count) >= (p.WX - 7) && p.LY >= p.WY && p.WindowDisplayEnable;
             if (inWindow)
             {
                 WindowLY.Add(p.LY);
@@ -141,8 +141,8 @@ namespace emulator
             if (windowStartX < 0)
                 windowStartX = 0;
 
-            var tileX = inWindow ? (scanlineX / 8) - (windowStartX / 8) :
-                                   ((p.SCX / 8) + (scanlineX / 8)) & 0x1f;
+            var tileX = inWindow ? ((scanlineX + BGFIFO.count) / 8) - (windowStartX / 8) :
+                                   ((p.SCX / 8) + ((scanlineX + BGFIFO.count) / 8)) & 0x1f;
             var tileY = inWindow ? windowStartY :
                                    (p.LY + p.SCY) & 0xff;
 
@@ -152,7 +152,7 @@ namespace emulator
 
         private bool Pushrow()
         {
-            if (BGFIFO.count == 0)
+            if (BGFIFO.count <= 8)
             {
                 for (var i = tileWidth; i > 0; i--)
                 {
@@ -161,7 +161,6 @@ namespace emulator
 
                     BGFIFO.Push(new((byte)paletteIndex));
                 }
-                scanlineX += 8;
                 return true;
             }
             else return false;

@@ -131,13 +131,14 @@ namespace emulator
                     if (pix != null)
                     {
                         PixelsPopped++;
+                        fetcher.scanlineX++;
                         if (PixelsPopped > (PPU.SCX & 7))
                             background[PixelsSentToLCD++] = (Shade)pix;
                         bool windowStart = PixelsSentToLCD == PPU.WX - 7 && PPU.LY >= PPU.WY && PPU.WindowDisplayEnable;
                         if (windowStart)
                         {
                             fetcher.FetcherStep = 0;
-                            fetcher.scanlineX = PixelsSentToLCD;
+                            //fetcher.scanlineX = PixelsSentToLCD;
                             fetcher.BGFIFO.Clear();
                         }
                     }
