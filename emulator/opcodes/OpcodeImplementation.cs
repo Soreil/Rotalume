@@ -998,7 +998,7 @@ namespace emulator
                 AddTicks(duration);
             };
         }
-        public Action LDH((Register, Traits) p0, (DMGInteger, Traits) p1, int duration)
+        public Action LDH_A_AT_a8(int duration)
         {
             return () =>
             {

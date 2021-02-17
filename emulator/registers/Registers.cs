@@ -142,23 +142,14 @@ namespace emulator
         public void Set(Flag f, bool b)
         {
             var FReg = F;
-            switch (f)
+            FReg = f switch
             {
-                case Flag.Z:
-                    FReg = FReg.SetBit(7, b);
-                    break;
-                case Flag.N:
-                    FReg = FReg.SetBit(6, b);
-                    break;
-                case Flag.H:
-                    FReg = FReg.SetBit(5, b);
-                    break;
-                case Flag.C:
-                    FReg = FReg.SetBit(4, b);
-                    break;
-                default:
-                    throw new Exception("Flag argument can only be a flag name, not a state");
-            }
+                Flag.Z => FReg.SetBit(7, b),
+                Flag.N => FReg.SetBit(6, b),
+                Flag.H => FReg.SetBit(5, b),
+                Flag.C => FReg.SetBit(4, b),
+                _ => throw new Exception("Flag argument can only be a flag name, not a state"),
+            };
             F = FReg;
         }
 

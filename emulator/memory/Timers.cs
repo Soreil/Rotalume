@@ -80,6 +80,7 @@ namespace emulator
             1 => 3,
             2 => 5,
             3 => 7,
+            _ => throw new NotImplementedException(),
         };
 
         private byte _tma;

@@ -99,6 +99,7 @@ namespace emulator
             1 => 2 / 8d,
             2 => 4 / 8d,
             3 => 6 / 8d,
+            _ => throw new NotImplementedException(),
         };
         private TimeSpan Channel1SoundLength => TimeSpan.FromSeconds((64 - (NR11 & 0x3f)) * (1 / 256d));
 

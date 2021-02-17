@@ -285,7 +285,7 @@ namespace emulator
             m[(int)Unprefixed.ILLEGAL_ED] = ILLEGAL_ED(4);
             m[(int)Unprefixed.XOR_d8] = XOR(8);
             m[(int)Unprefixed.RST_28H] = RST(0x28, 16);
-            m[(int)Unprefixed.LDH_A_AT_a8] = LDH((Register.A, new Traits(true, Postfix.unchanged)), (DMGInteger.a8, new Traits(false, Postfix.unchanged)), 12);
+            m[(int)Unprefixed.LDH_A_AT_a8] = LDH_A_AT_a8(12);
             m[(int)Unprefixed.POP_AF] = POP(WideRegister.AF, 12);
             m[(int)Unprefixed.LD_A_AT_C] = LD((Register.A, new Traits(true, Postfix.unchanged)), (Register.C, new Traits(false, Postfix.unchanged)), 8);
             m[(int)Unprefixed.DI] = DI(4);
