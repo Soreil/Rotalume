@@ -1047,19 +1047,12 @@ namespace emulator
                 }
                 else
                 {
+                    //TODO: why is this here?
                     if (offset == -128) throw new Exception("Can't abs this");
 
                     Registers.Set(Flag.C, (sum & 0xff) <= (Registers.SP & 0xff));
                     Registers.Set(Flag.H, (sum & 0xf) <= (Registers.SP & 0xf));
                 }
-
-                //var offset = (sbyte)Memory.Fetch(DMGInteger.r8);
-                //var SP = Registers.SP;
-
-                //Registers.Set(Flag.Z, false);
-                //Registers.Set(Flag.N, false);
-                //Registers.Set(Flag.H, SP.IsHalfCarryAdd((ushort)offset));
-                //Registers.Set(Flag.C, offset + SP > 0xFFFF);
 
                 Registers.Set(WideRegister.HL, (ushort)sum);
 
