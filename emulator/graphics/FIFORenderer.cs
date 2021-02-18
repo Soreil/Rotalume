@@ -37,7 +37,6 @@ namespace emulator
             scanlineX = 0;
             BGFIFO.Clear();
             SpriteFIFO.Clear();
-            if (SpriteAttributes.Any()) throw new Exception("Failed to draw some sprites!");
         }
 
         //Frame finished resets all state relevant for an entire frame
@@ -111,14 +110,14 @@ namespace emulator
         public Shade? RenderPixel()
         {
             //Sprites are enabled and there is a sprite starting on the current X position
-            if (p.OBJDisplayEnable && SpriteAttributes.Any(x => x.X == (scanlineX + BGFIFO.count - 8)))
+            if (p.OBJDisplayEnable && SpriteAttributes.Any(x => x.X == scanlineX + 8 - (p.SCX & 7)))
             {
                 //We can't start the sprite fetching yet if the background fifo is empty
                 if (BGFIFO.count == 0) return null;
                 for (int i = SpriteFIFO.count; i < 8; i = SpriteFIFO.count)
                     SpriteFIFO.Push(new FIFOSpritePixel(0, false, 0));
 
-                var sprite = SpriteAttributes.First(x => x.X == (scanlineX + BGFIFO.count - 8));
+                var sprite = SpriteAttributes.First(x => x.X == scanlineX + 8 - (p.SCX & 7));
 
                 var y = p.LY - (sprite.Y - 16);
                 if (sprite.YFlipped)
@@ -195,6 +194,8 @@ namespace emulator
 
             var windowStartX = p.WX - 7;
             var windowStartY = WindowLY.Count - 1;
+
+            //TODO: handle tick cost of this condition
             if (windowStartX < 0)
                 windowStartX = 0;
 
