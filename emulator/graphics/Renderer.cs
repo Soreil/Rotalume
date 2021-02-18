@@ -30,7 +30,6 @@ namespace emulator
             TimeUntilWhichToPause += offset;
         }
 
-        public List<SpriteAttributes> SpriteAttributes = new();
         public PixelFetcher fetcher;
         public int Stage3TickCount = 0;
 
@@ -109,7 +108,7 @@ namespace emulator
             {
                 if (PPU.Enable_OAM_Interrupt)
                     PPU.EnableLCDCStatusInterrupt();
-                SpriteAttributes = PPU.OAM.SpritesOnLine(PPU.LY, PPU.SpriteHeight);
+                fetcher.SpriteAttributes = PPU.OAM.SpritesOnLine(PPU.LY, PPU.SpriteHeight);
                 TimeUntilWhichToPause += 80;
                 ScheduledModeChange = Mode.Transfer;
                 return;

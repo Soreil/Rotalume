@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace emulator
 {
@@ -76,9 +77,58 @@ namespace emulator
             }
         }
 
+        public List<SpriteAttributes> SpriteAttributes = new();
+
+        private bool PushSpriteRow(byte low, byte high, SpriteAttributes sprite)
+        {
+            if (SpriteFIFO.count <= 8)
+            {
+                for (var i = tileWidth; i > 0; i--)
+                {
+                    var paletteIndex = low.GetBit(i - 1) ? 1 : 0;
+                    paletteIndex += high.GetBit(i - 1) ? 2 : 0;
+
+                    var pos = sprite.XFlipped ? (i - 1) : tileWidth - i;
+                    var existingSpritePixel = SpriteFIFO.At(pos);
+                    var candidate = new FIFOSpritePixel((byte)paletteIndex, sprite.SpriteToBackgroundPriority, sprite.Palette);
+
+                    if (shouldReplace(existingSpritePixel, candidate))
+                        SpriteFIFO.Replace(pos, candidate);
+                }
+                return true;
+            }
+            else return false;
+        }
+
+        private bool shouldReplace(FIFOSpritePixel existingSpritePixel, FIFOSpritePixel candidate)
+        {
+            if (candidate.color != 0 && existingSpritePixel.color == 0) return true;
+            if (candidate.priority && !existingSpritePixel.priority) return true;
+            return false;
+        }
+
         public Shade? RenderPixel()
         {
-            if (BGFIFO.count != 0 && SpriteFIFO.count > 8)
+            //Sprites are enabled and there is a sprite starting on the current X position
+            if (p.OBJDisplayEnable && SpriteAttributes.Any(x => x.X == (scanlineX+BGFIFO.count-8)))
+            {
+                //We can't start the sprite fetching yet if the background fifo is empty
+                if (BGFIFO.count == 0) return null;
+                for (int i = SpriteFIFO.count; i < 8; i = SpriteFIFO.count)
+                    SpriteFIFO.Push(new FIFOSpritePixel(0, false, 0));
+
+                var sprite = SpriteAttributes.First(x => x.X == (scanlineX + BGFIFO.count-8));
+                var y = p.LY - (sprite.Y - 16);
+                if (sprite.YFlipped)
+                    y = 7 - y;
+                var addr = 0x8000 + sprite.ID * 16 + (2 * y);
+                var low = p.VRAM[addr];
+                var high = p.VRAM[addr + 1];
+                PushSpriteRow(low, high, sprite);
+                SpriteAttributes.Remove(sprite);
+            }
+
+            if (BGFIFO.count != 0 && SpriteFIFO.count != 0)
             {
                 var bp = BGFIFO.Pop();
                 var sp = SpriteFIFO.Pop();
@@ -125,7 +175,7 @@ namespace emulator
         private byte FetchTileID()
         {
             int tilemap;
-            bool inWindow = (scanlineX+BGFIFO.count) >= (p.WX - 7) && p.LY >= p.WY && p.WindowDisplayEnable;
+            bool inWindow = (scanlineX + BGFIFO.count) >= (p.WX - 7) && p.LY >= p.WY && p.WindowDisplayEnable;
             if (inWindow)
             {
                 WindowLY.Add(p.LY);
@@ -191,6 +241,14 @@ namespace emulator
                 buffer[i] = buffer[i + 1];
 
             return res;
+        }
+        public void Replace(int at, T p)
+        {
+            buffer[at] = p;
+        }
+        public T At(int at)
+        {
+            return buffer[at];
         }
     }
 }
