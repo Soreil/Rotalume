@@ -37,6 +37,7 @@ namespace emulator
             scanlineX = 0;
             BGFIFO.Clear();
             SpriteFIFO.Clear();
+            if (SpriteAttributes.Any()) throw new Exception("Failed to draw some sprites!");
         }
 
         //Frame finished resets all state relevant for an entire frame
@@ -110,18 +111,24 @@ namespace emulator
         public Shade? RenderPixel()
         {
             //Sprites are enabled and there is a sprite starting on the current X position
-            if (p.OBJDisplayEnable && SpriteAttributes.Any(x => x.X == (scanlineX+BGFIFO.count-8)))
+            if (p.OBJDisplayEnable && SpriteAttributes.Any(x => x.X == (scanlineX + BGFIFO.count - 8)))
             {
                 //We can't start the sprite fetching yet if the background fifo is empty
                 if (BGFIFO.count == 0) return null;
                 for (int i = SpriteFIFO.count; i < 8; i = SpriteFIFO.count)
                     SpriteFIFO.Push(new FIFOSpritePixel(0, false, 0));
 
-                var sprite = SpriteAttributes.First(x => x.X == (scanlineX + BGFIFO.count-8));
+                var sprite = SpriteAttributes.First(x => x.X == (scanlineX + BGFIFO.count - 8));
+
                 var y = p.LY - (sprite.Y - 16);
                 if (sprite.YFlipped)
-                    y = 7 - y;
-                var addr = 0x8000 + sprite.ID * 16 + (2 * y);
+                    if (p.SpriteHeight == 8)
+                        y = 7 - y;
+                    else
+                        y = 15 - y;
+
+                var ID = p.SpriteHeight == 8 ? sprite.ID : sprite.ID & 0xfe;
+                var addr = 0x8000 + ID * 16 + (2 * y);
                 var low = p.VRAM[addr];
                 var high = p.VRAM[addr + 1];
                 PushSpriteRow(low, high, sprite);
