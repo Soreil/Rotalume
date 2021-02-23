@@ -35,6 +35,7 @@ namespace emulator
             FetcherStep = 0;
             PushedEarly = false;
             scanlineX = 0;
+            doneWithFirstSpriteFetch = false;
             BGFIFO.Clear();
             SpriteFIFO.Clear();
         }
@@ -47,12 +48,20 @@ namespace emulator
         }
 
 
+        bool doneWithFirstSpriteFetch = false;
         //Fetch runs one of the steps of the background fetcher and returns the amount of cycles used
         public int Fetch()
         {
             switch (FetcherStep)
             {
                 case 0:
+                    //We only want this to happen on the second background tile fetch
+                    if (!doneWithFirstSpriteFetch && BGFIFO.count != 0)
+                    {
+                        RenderSpriteToTheLeftOfTheVisibleArea();
+                        doneWithFirstSpriteFetch = true;
+                    }
+
                     tileIndex = FetchTileID();
                     FetcherStep = 1;
                     return 2;
@@ -99,12 +108,64 @@ namespace emulator
             }
             else return false;
         }
+        private bool PushSpriteRowPartial(byte low, byte high, SpriteAttributes sprite, int count)
+        {
+            if (SpriteFIFO.count + count < 16)
+            {
+                for (var i = count; i > 0; i--)
+                {
+                    var paletteIndex = low.GetBit(i - 1) ? 1 : 0;
+                    paletteIndex += high.GetBit(i - 1) ? 2 : 0;
+
+                    var pos = sprite.XFlipped ? (i - 1) : count - i;
+                    var existingSpritePixel = SpriteFIFO.At(pos);
+                    var candidate = new FIFOSpritePixel((byte)paletteIndex, sprite.SpriteToBackgroundPriority, sprite.Palette);
+
+                    if (shouldReplace(existingSpritePixel, candidate))
+                        SpriteFIFO.Replace(pos, candidate);
+                }
+                return true;
+            }
+            else return false;
+        }
 
         private bool shouldReplace(FIFOSpritePixel existingSpritePixel, FIFOSpritePixel candidate)
         {
             if (candidate.color != 0 && existingSpritePixel.color == 0) return true;
             if (candidate.priority && !existingSpritePixel.priority) return true;
             return false;
+        }
+
+        public void RenderSpriteToTheLeftOfTheVisibleArea()
+        {
+            //Sprites are enabled and there is a sprite starting on the current X position
+            if (p.OBJDisplayEnable && SpriteAttributes.Any(x => x.X < 8))
+            {
+                //We can't start the sprite fetching yet if the background fifo is empty
+                if (BGFIFO.count == 0) throw new Exception("wrong stage");
+
+
+                var sprite = SpriteAttributes.First(x => x.X < 8);
+
+                var pixelsVisible = sprite.X;
+
+                for (int i = SpriteFIFO.count; i < pixelsVisible; i = SpriteFIFO.count)
+                    SpriteFIFO.Push(new FIFOSpritePixel(0, false, 0));
+
+                var y = p.LY - (sprite.Y - 16);
+                if (sprite.YFlipped)
+                    if (p.SpriteHeight == 8)
+                        y = 7 - y;
+                    else
+                        y = 15 - y;
+
+                var ID = p.SpriteHeight == 8 ? sprite.ID : sprite.ID & 0xfe;
+                var addr = 0x8000 + ID * 16 + (2 * y);
+                var low = p.VRAM[addr];
+                var high = p.VRAM[addr + 1];
+                PushSpriteRowPartial(low, high, sprite, pixelsVisible);
+                SpriteAttributes.Remove(sprite);
+            }
         }
 
         public Shade? RenderPixel()
@@ -229,34 +290,5 @@ namespace emulator
             return;
         }
 
-    }
-
-    public class FIFO<T>
-    {
-        public const int capacity = 16;
-        public int count = 0;
-        private readonly T[] buffer = new T[capacity];
-        public void Clear() => count = 0;
-        public void Push(T p) => buffer[count++] = p;
-        public T Pop()
-        {
-            if (count == 0) throw new Exception("Empty FIFO");
-
-            var res = buffer[0];
-
-            count--;
-            for (int i = 0; i < count; i++)
-                buffer[i] = buffer[i + 1];
-
-            return res;
-        }
-        public void Replace(int at, T p)
-        {
-            buffer[at] = p;
-        }
-        public T At(int at)
-        {
-            return buffer[at];
-        }
     }
 }
