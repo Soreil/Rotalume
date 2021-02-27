@@ -24,8 +24,7 @@ namespace emulator
         public Timers Timers;
 
         byte keypadFlags = 0x30;
-
-        Func<bool> GetKeyboardInterrupt = () => false;
+        readonly Func<bool> GetKeyboardInterrupt = () => false;
 
         private byte _dma = 0xff;
         private byte serialControl = 0x7e;
@@ -48,10 +47,10 @@ namespace emulator
 
         public Core(byte[] gameROM, byte[] bootROM, Func<byte, byte> GetJoyPad, Func<bool> getKeyboardInterrupt)
         {
-            Func<ushort> GetProgramCounter = () => PC;
-            Action<ushort> SetProgramCounter = (x) => { PC = x; };
+            ushort GetProgramCounter() => PC;
+            void SetProgramCounter(ushort x) { PC = x; }
             //Maybe adding to the timers should be handled by a clock object rather than just this one lambda
-            Action<long> IncrementClock = (x) => { Clock += x; Timers.Add(x); };
+            void IncrementClock(long x) { Clock += x; Timers.Add(x); }
             Read = () => CPU.Memory[PC++];
             ReadHaltBug = () =>
             {
@@ -59,7 +58,7 @@ namespace emulator
                 return CPU.Memory[PC];
             };
 
-            APU = new APU();
+            APU = new APU(() => Clock);
             PPU = new PPU(() => Clock, () => CPU.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(0),
                                        () => CPU.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(1));
 
@@ -180,42 +179,10 @@ namespace emulator
 
         private ControlRegister SetupControlRegisters(Func<byte, byte> GetJoyPad)
         {
-
-            Action<byte> BootROMFlagController = (byte b) =>
+            void BootROMFlagController(byte b)
             {
                 if (b == 1) bootROMActive = false;
-            };
-
-            Action<byte> LCDControlController = (byte b) => PPU.LCDC = b;
-            Func<byte> ReadLCDControl = () => PPU.LCDC;
-
-            Action<byte> LCDStatController = (byte b) => PPU.STAT = (byte)((b & 0xf8) | (PPU.STAT & 0x7));
-            Func<byte> ReadLCDStat = () => PPU.STAT;
-
-            Action<byte> ScrollYController = (byte b) => PPU.SCY = b;
-            Func<byte> ReadScrollY = () => PPU.SCY;
-            Action<byte> ScrollXController = (byte b) => PPU.SCX = b;
-            Func<byte> ReadScrollX = () => PPU.SCX;
-            Action<byte> LCDLineController = (byte b) => PPU.LY = b;
-            Func<byte> ReadLine = () => PPU.LY;
-
-            Action<byte> PaletteController = (byte b) => PPU.BGP = b;
-            Func<byte> ReadPalette = () => PPU.BGP;
-
-            Action<byte> OBP0Controller = (byte b) => PPU.OBP0 = b;
-            Func<byte> ReadOBP0 = () => PPU.OBP0;
-
-            Action<byte> OBP1Controller = (byte b) => PPU.OBP1 = b;
-            Func<byte> ReadOBP1 = () => PPU.OBP1;
-
-            Action<byte> WYController = (byte b) => PPU.WY = b;
-            Func<byte> ReadWY = () => PPU.WY;
-
-            Action<byte> WXController = (byte b) => PPU.WX = b;
-            Func<byte> ReadWX = () => PPU.WX;
-
-            Action<byte> LYCController = (byte b) => PPU.LYC = b;
-            Func<byte> ReadLYC = () => PPU.LYC;
+            }
 
             ControlRegister controlRegisters = new ControlRegister(0xff00, 0x80);
 
@@ -229,6 +196,37 @@ namespace emulator
 
             controlRegisters.Writer[0x50] = BootROMFlagController;
             controlRegisters.Reader[0x50] = () => 0xff;
+
+            void LCDControlController(byte b) => PPU.LCDC = b;
+            byte ReadLCDControl() => PPU.LCDC;
+
+            void LCDStatController(byte b) => PPU.STAT = (byte)((b & 0xf8) | (PPU.STAT & 0x7));
+            byte ReadLCDStat() => PPU.STAT;
+
+            void ScrollYController(byte b) => PPU.SCY = b;
+            byte ReadScrollY() => PPU.SCY;
+            void ScrollXController(byte b) => PPU.SCX = b;
+            byte ReadScrollX() => PPU.SCX;
+            void LCDLineController(byte b) => PPU.LY = b;
+            byte ReadLine() => PPU.LY;
+
+            void PaletteController(byte b) => PPU.BGP = b;
+            byte ReadPalette() => PPU.BGP;
+
+            void OBP0Controller(byte b) => PPU.OBP0 = b;
+            byte ReadOBP0() => PPU.OBP0;
+
+            void OBP1Controller(byte b) => PPU.OBP1 = b;
+            byte ReadOBP1() => PPU.OBP1;
+
+            void WYController(byte b) => PPU.WY = b;
+            byte ReadWY() => PPU.WY;
+
+            void WXController(byte b) => PPU.WX = b;
+            byte ReadWX() => PPU.WX;
+
+            void LYCController(byte b) => PPU.LYC = b;
+            byte ReadLYC() => PPU.LYC;
 
             HookUpGraphics(controlRegisters, LCDControlController, ReadLCDControl, LCDStatController, ReadLCDStat, ScrollYController, ReadScrollY, ScrollXController, ReadScrollX, LCDLineController, ReadLine, PaletteController, ReadPalette, OBP0Controller, ReadOBP0, OBP1Controller, ReadOBP1, WYController, ReadWY, WXController, ReadWX, LYCController, ReadLYC);
 
@@ -452,6 +450,5 @@ namespace emulator
             }
             PPU.Do();
         }
-
     }
 }

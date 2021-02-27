@@ -1,4 +1,9 @@
 ﻿using System;
+using System.Linq;
+
+using NAudio;
+using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
 
 namespace emulator
 {
@@ -81,7 +86,15 @@ namespace emulator
         private byte _nr52 = 0xf1;
         public byte NR52
         {
-            get => _nr52;
+            get
+            {
+                byte channels = (byte)(((Sound1OnEnabled ? 1 : 0) << 3) |
+                                ((Sound2OnEnabled ? 1 : 0) << 2) |
+                                ((Sound3OnEnabled ? 1 : 0) << 1) |
+                                ((Sound4OnEnabled ? 1 : 0) << 0));
+
+               return (byte)(_nr52 | channels);
+            }
             set => _nr52 = (byte)(value & 0x80 | (_nr52 & 0x7f));
         }
 
@@ -126,10 +139,10 @@ namespace emulator
         private bool Sound4OnRightChannel => NR51.GetBit(3);
 
         private bool MasterSoundDisable => NR52.GetBit(7);
-        private bool Sound1OnEnabled => NR52.GetBit(0);
-        private bool Sound2OnEnabled => NR52.GetBit(1);
-        private bool Sound3OnEnabled => NR52.GetBit(2);
-        private bool Sound4OnEnabled => NR52.GetBit(3);
+        private bool Sound1OnEnabled = false;
+        private bool Sound2OnEnabled = false;
+        private bool Sound3OnEnabled = false;
+        private bool Sound4OnEnabled = false;
 
         public byte NR23 { get; internal set; }
         public byte NR31 { get; internal set; }
@@ -137,9 +150,10 @@ namespace emulator
         public byte NR41 { get; internal set; }
         public byte[] Wave { get; internal set; } = new byte[0x10];
 
-        public APU()
+        private Func<long> Clock;
+        public APU(Func<long> clock)
         {
-
+            Clock = clock;
         }
     }
 }

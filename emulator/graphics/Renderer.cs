@@ -10,7 +10,7 @@ namespace emulator
     {
         readonly PPU PPU;
         public long TimeUntilWhichToPause;
-        readonly Stream fs = Stream.Null;
+        readonly FrameSink fs;
 
         public const int TileWidth = 8;
         public const int DisplayWidth = 160;
@@ -21,9 +21,9 @@ namespace emulator
         public const int TicksPerScanline = 456;
         public const int TicksPerFrame = ScanlinesPerFrame * TicksPerScanline;
 
-        public Renderer(PPU ppu, Stream destination = null, long offset = 0)
+        public Renderer(PPU ppu, FrameSink destination = null, long offset = 0)
         {
-            fs = destination ?? Stream.Null;
+            fs = destination ?? new();
             PPU = ppu;
             ppu.Mode = Mode.OAMSearch;
             fetcher = new PixelFetcher(PPU);

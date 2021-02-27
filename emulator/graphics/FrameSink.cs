@@ -1,64 +1,47 @@
-﻿using System.IO;
-using System;
-
+﻿using System;
 
 namespace emulator
 {
-    public class FrameSink : Stream
+    public class FrameSink
     {
         private readonly byte[] frameData;
-        private long position;
+        private int position;
         private Action<byte[]> Render;
-        public int frameCount { get; set; }
+        public int FrameCount { get; set; }
         public FrameSink(Action<byte[]> render)
         {
             frameData = new byte[144 * 160];
             position = 0;
-            frameCount = 0;
+            FrameCount = 0;
             Render = render;
+            Write = WriteNormal;
         }
 
-        public override bool CanRead { get => true; }
-        public override bool CanSeek { get => true; }
-        public override bool CanWrite { get => true; }
-        public override long Length { get => frameData.Length; }
-        public override long Position { get => position; set => position = value; }
-        public override void Flush()
+        public int Position => position;
+        public FrameSink()
+        {
+            frameData = Array.Empty<byte>();
+            position = 0;
+            Render = (x) => { };
+            Write = WriteEmpty;
+        }
+
+        public long Length { get => frameData.Length; }
+        public void Flush()
         {
             Render(frameData);
             position = 0;
-            frameCount++;
+            FrameCount++;
         }
-        public override int Read(byte[] buffer, int offset, int count)
+        public delegate void Writer(byte[] buffer);
+        public Writer Write;
+        private void WriteNormal(byte[] buffer)
         {
-            var buf = frameData[offset..(offset + count)];
-            buf.CopyTo(buffer, 0);
-            return Math.Max(buf.Length, count);
+            buffer.CopyTo(frameData, position);
+            position += buffer.Length;
         }
-        public override long Seek(long offset, SeekOrigin origin)
+        private void WriteEmpty(byte[] buffer)
         {
-            switch (origin)
-            {
-                case SeekOrigin.Begin:
-                    position = offset;
-                    break;
-                case SeekOrigin.Current:
-                    position += offset;
-                    break;
-                case SeekOrigin.End:
-                    position = frameData.Length - offset - 1;
-                    break;
-            }
-            return position;
-        }
-        public override void SetLength(long value) => throw new NotImplementedException();
-        public override void Write(byte[] buffer, int offset, int count)
-        {
-            //if (position + count > frameData.Length) return; //This shouldn't ever happen!
-
-            var slice = buffer[offset..(offset + count)];
-            slice.CopyTo(frameData, position);
-            position += count;
         }
     }
 }

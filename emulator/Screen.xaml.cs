@@ -31,7 +31,6 @@ namespace GUI
         public MainWindow()
         {
             InitializeComponent();
-
         }
 
         volatile bool paused = false;
@@ -58,7 +57,7 @@ namespace GUI
 
             byte[] bootrom = bootromEnabled ? Core.LoadBootROM() : null;
 
-            var gameboy = new Core(System.IO.File.ReadAllBytes(path),
+            var gameboy = new Core(File.ReadAllBytes(path),
                 bootrom, updateJoyPad, keyBoardInterruptFired);
 
             Dispatcher.BeginInvoke(new UpdateImageCb(RunGameboy),
@@ -85,7 +84,7 @@ namespace GUI
                     System.Windows.Threading.DispatcherPriority.Render);
             }
 
-            gameboy.PPU.Writer = new emulator.FrameSink(fpsLimit ? updateWithLimiting : update);
+            gameboy.PPU.Writer = new FrameSink(fpsLimit ? updateWithLimiting : update);
 
             frameNumber = 0;
 
@@ -150,7 +149,6 @@ namespace GUI
                 //Check that the file isn't a folder
                 if (fileNames.Length == 1 && File.Exists(fileNames[0]))
                     SpinUpNewGameboy(fileNames[0]);
-
             }
 
         }
