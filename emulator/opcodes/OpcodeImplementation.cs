@@ -11,8 +11,9 @@ namespace emulator
         readonly public Action enableInterruptsDelayed;
         readonly public Action enableInterrupts;
         readonly public Action disableInterrupts;
-        readonly private Action<long> AddTicks;
         readonly public Action halt;
+        public long TicksWeAreWaitingFor = 0;
+        public void AddTicks(int n) => TicksWeAreWaitingFor += n;
 
         //Wrapper to allow easier handling of (HL) usage
         public byte GetRegister(Register r)

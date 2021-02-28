@@ -33,7 +33,7 @@ namespace emulator
                     Renderer = new Renderer(this, Writer, Clock()); //We want a new renderer so all the internal state resets including clocking
                 else if ((!LCDEnable) && Renderer is not null)
                 {
-                    Writer.Flush(); //If there is a partially written frame when we delete the old renderer the next
+                    Writer.PushFrame(); //If there is a partially written frame when we delete the old renderer the next
                                     //instantiation of renderer will overwrite the end of the buffer because LY starts at 0 despite
                                     //there already being data written to the output buffer
 

@@ -16,7 +16,7 @@ namespace emulator
         public Action Op(Unprefixed op) => StdOps[(int)op];
         public Action Op(Cbprefixed op) => CbOps[(int)op];
 
-        public CPU(Func<ushort> getPC, Action<ushort> setPC, Action<long> TickClock, MMU memory)
+        public CPU(Func<ushort> getPC, Action<ushort> setPC, MMU memory)
         {
             StdOps = MakeTable();
             CbOps = MakeTableCb();
@@ -39,7 +39,6 @@ namespace emulator
                     else Halted = HaltState.haltbug;
                 }
             };
-            AddTicks = TickClock;
         }
 
         private Action[] MakeTable()

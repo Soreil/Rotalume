@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+
+using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
 
 namespace emulator
 {
-    public class Core
+    public class Core : ISampleProvider
     {
         public ushort PC;
 
@@ -12,10 +16,10 @@ namespace emulator
         bool bootROMActive = true;
 
         //Global clock from which all timing derives
-        public long Clock;
+        long masterclock = 0;
 
         //Opcode fetcher
-        public Func<byte> Read;
+        public Func<byte> ReadOp;
         public Func<byte> ReadHaltBug;
 
         public CPU CPU;
@@ -31,10 +35,7 @@ namespace emulator
 
         readonly ControlRegister interruptRegisters = new ControlRegister(0xffff, 0x1); //This is only being used for two registers.
 
-        public Core(List<byte> bwah) : this(bwah.ToArray())
-        { }
-        //Constructor just for tests which don't care about a functioning bootrom
-        public Core(byte[] l, byte[] bootrom = null) : this(l.Length < 0x8000 ? PadAndMoveTo0x100(l) : l, bootrom, (x) => 0x01f, () => false)
+        public Core(List<byte> l, byte[] bootrom = null) : this(l.Count < 0x8000 ? PadAndMoveTo0x100(l.ToArray()) : l.ToArray(), bootrom, (x) => 0x01f, () => false)
         { }
 
         private static byte[] PadAndMoveTo0x100(byte[] l)
@@ -50,16 +51,15 @@ namespace emulator
             ushort GetProgramCounter() => PC;
             void SetProgramCounter(ushort x) { PC = x; }
             //Maybe adding to the timers should be handled by a clock object rather than just this one lambda
-            void IncrementClock(long x) { Clock += x; Timers.Add(x); }
-            Read = () => CPU.Memory[PC++];
+            ReadOp = () => CPU.Memory[PC++];
             ReadHaltBug = () =>
             {
                 CPU.Halted = HaltState.off;
                 return CPU.Memory[PC];
             };
 
-            APU = new APU(() => Clock);
-            PPU = new PPU(() => Clock, () => CPU.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(0),
+            APU = new APU(() => masterclock);
+            PPU = new PPU(() => masterclock, () => CPU.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(0),
                                        () => CPU.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(1));
 
             Timers = new Timers(() => CPU.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(2));
@@ -78,7 +78,7 @@ namespace emulator
             if (Header is null) Card = MakeFakeMBC(gameROM);
             else Card = MakeMBC(Header, gameROM, m);
 
-            var memory = new MMU(Read,
+            var memory = new MMU(ReadOp,
     bootROM,
     () => bootROMActive,
     Card,
@@ -88,7 +88,7 @@ namespace emulator
     interruptRegisters
     );
 
-            CPU = new CPU(GetProgramCounter, SetProgramCounter, IncrementClock, memory);
+            CPU = new CPU(GetProgramCounter, SetProgramCounter, memory);
 
             //We have to replicate the state of the system post boot without running the bootrom
             if (bootROM == null)
@@ -403,8 +403,8 @@ namespace emulator
             CartType.MBC3 => new MBC3(header, gameROM),
             CartType.MBC3_RAM => new MBC3(header, gameROM),
             CartType.MBC3_RAM_BATTERY => new MBC3(header, gameROM, file),
-            CartType.MBC3_TIMER_BATTERY => new MBC3(header, gameROM, file, () => Clock),
-            CartType.MBC3_TIMER_RAM_BATTERY => new MBC3(header, gameROM, file, () => Clock),
+            CartType.MBC3_TIMER_BATTERY => new MBC3(header, gameROM, file, () => masterclock),
+            CartType.MBC3_TIMER_RAM_BATTERY => new MBC3(header, gameROM, file, () => masterclock),
             CartType.MBC5 => new MBC5(header, gameROM),
             CartType.MBC5_RAM => new MBC5(header, gameROM),
             CartType.MBC5_RAM_BATTERY => new MBC5(header, gameROM, file),
@@ -415,40 +415,78 @@ namespace emulator
         {
             if (CPU.Halted != HaltState.off)
             {
-                Clock += 4; //Just take some time so the interrupt handling and gpu keep going otherwise
-                //We can never get to a situation where the halt state stops.
-                Timers.Add(4);
-
                 if (CPU.Halted != HaltState.haltbug)
                     return;
             }
 
-            var op = CPU.Halted == HaltState.haltbug ? ReadHaltBug() : Read();
+            var op = CPU.Halted == HaltState.haltbug ? ReadHaltBug() : ReadOp();
             if (op != 0xcb)
                 CPU.Op((Unprefixed)op)();
             else
             {
-                var CBop = Read(); //Because of the CB prefix we encountered in the previous case we already skipped the extra byte of a cb instruction here
+                var CBop = ReadOp(); //Because of the CB prefix we encountered in the previous case we already skipped the extra byte of a cb instruction here
                 CPU.Op((Cbprefixed)CBop)();
             }
         }
 
         public static byte[] LoadBootROM() => System.IO.File.ReadAllBytes(@"..\..\..\..\emulator\bootrom\DMG_ROM_BOOT.bin");
 
+        private readonly object tickLock = new object();
+
+        //We have to make Step take one tick per subsystem
         public void Step()
         {
-            DoNextOP();
-            //We really should have the GUI thread somehow do this logic but polling like this should work
-            if (!CPU.InterruptFireRegister.GetBit(4) && GetKeyboardInterrupt())
-                CPU.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(4);
-
-            CPU.DoInterrupt();
-            if (CPU.InterruptEnableScheduled)
+            //Because there might be multiple loops calling Step from the Sound read function
+            //We need to lock so they don't try to step at the same time.
+            lock (tickLock)
             {
-                CPU.IME = true;
-                CPU.InterruptEnableScheduled = false;
+                masterclock++;
+                Timers.Tick();
+                if (CPU.TicksWeAreWaitingFor == 0)
+                {
+                    DoNextOP();
+                    //We really should have the GUI thread somehow do this logic but polling like this should work
+                    if (!CPU.InterruptFireRegister.GetBit(4) && GetKeyboardInterrupt())
+                        CPU.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(4);
+
+                    CPU.DoInterrupt();
+                    if (CPU.InterruptEnableScheduled)
+                    {
+                        CPU.IME = true;
+                        CPU.InterruptEnableScheduled = false;
+                    }
+                }
+                else CPU.TicksWeAreWaitingFor--;
+
+                PPU.Do();
             }
-            PPU.Do();
+        }
+
+        public WaveFormat WaveFormat { get; init; } = WaveFormat.CreateIeeeFloatWaveFormat(44100, 2);
+
+        private readonly SignalGenerator source = new SignalGenerator
+        {
+            Gain = 0.1,
+            Frequency = 300,
+            Type = SignalGeneratorType.Pink,
+        };
+
+        public int Read(float[] buffer, int offset, int count)
+        {
+            var ratio = count / (double)WaveFormat.SampleRate;
+
+            Task.Factory.StartNew(() =>
+            {
+                var ticksNeeded = (int)(ratio * (1 << 22));
+                for (int i = 0; i < ticksNeeded; i++)
+                    Step();
+            });
+
+            var duration = TimeSpan.FromSeconds(ratio);
+            //if (elapsed > duration) throw new Exception("Emulator running too slow for sound");
+
+            var took = source.Take(duration);
+            return took.Read(buffer, 0, count);
         }
     }
 }

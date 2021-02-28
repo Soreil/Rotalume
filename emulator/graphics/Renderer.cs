@@ -73,7 +73,7 @@ namespace emulator
                         PPU.EnableLCDCStatusInterrupt();
 
                     PPU.EnableVBlankInterrupt();
-                    fs.Flush();
+                    fs.PushFrame();
                 }
             }
 

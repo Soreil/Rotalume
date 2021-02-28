@@ -6,7 +6,7 @@ namespace emulator
     {
         private readonly byte[] frameData;
         private int position;
-        private Action<byte[]> Render;
+        private readonly Action<byte[]> Render;
         public int FrameCount { get; set; }
         public FrameSink(Action<byte[]> render)
         {
@@ -27,7 +27,7 @@ namespace emulator
         }
 
         public long Length { get => frameData.Length; }
-        public void Flush()
+        public void PushFrame()
         {
             Render(frameData);
             position = 0;

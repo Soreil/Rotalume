@@ -8,32 +8,20 @@ namespace emulator
         public ushort InternalCounter;
 
         readonly Action EnableTimerInterrupt;
-        public Timers(Action enableTimerInterrupt)
-        {
-            EnableTimerInterrupt = enableTimerInterrupt;
-        }
+        public Timers(Action enableTimerInterrupt) => EnableTimerInterrupt = enableTimerInterrupt;
 
-        private void Tick()
+        public void Tick()
         {
             if (DelayTicks > 0)
-            {
-                DelayTicks--;
-                if (DelayTicks == 0) Tima = TMA;
-            }
+                if (DelayTicks-- == 0) Tima = TMA;
 
             var before = (InternalCounter & (1 << TACBitSelected)) == 0;
             InternalCounter++;
             var overflow = (InternalCounter & (1 << TACBitSelected)) == 0;
             if (before == false && overflow == true && TimerEnabled)
-            {
                 IncrementTIMA();
-            }
         }
 
-        public void Add(long n)
-        {
-            for (long i = 0; i < n; i++) Tick();
-        }
         public byte DIV
         {
             get => (byte)((InternalCounter & 0xff00) >> 8);
@@ -56,15 +44,10 @@ namespace emulator
                 else
                 {
                     if (!value.GetBit(2))
-                    {
                         glitch = (InternalCounter & (1 << (TACBitSelected))) != 0;
-                    }
                     else
-                    {
                         glitch = ((InternalCounter & (1 << (TACBitSelected))) != 0) &&
                                  ((InternalCounter & (1 << (BitPosition(value)))) == 0);
-
-                    }
                 }
                 if (glitch) IncrementTIMA();
                 _tac = (byte)((value & 0x7) | 0xf8);
@@ -87,10 +70,7 @@ namespace emulator
         public byte TMA
         {
             get => _tma;
-            set
-            {
-                _tma = value;
-            }
+            set => _tma = value;
         }
 
         private byte Tima
@@ -101,10 +81,7 @@ namespace emulator
         public byte TIMA
         {
             get => Tima;
-            set
-            {
-                Tima = value;
-            }
+            set => Tima = value;
         }
 
         //When TIMA overflows it should delay writing the value for 4 cycles

@@ -17,6 +17,8 @@ using System.Windows.Shapes;
 
 using emulator;
 
+using NAudio.Wave;
+
 namespace GUI
 {
     /// <summary>
@@ -64,17 +66,7 @@ namespace GUI
                 System.Windows.Threading.DispatcherPriority.Render);
 
             DateTime lastFrame = DateTime.MinValue;
-            void updateWithLimiting(byte[] x)
-            {
-                const double TargetFPS = 4194304.0 / 70224.0;
-                const long TargetFrameTime = (long)((1.0 / TargetFPS) * 1000.0 * 10000.0);
-                var elapsed = DateTime.Now - lastFrame;
-                if (elapsed.Ticks < TargetFrameTime)
-                    Thread.Sleep((int)((TargetFrameTime - elapsed.Ticks) / 10000L));
-                lastFrame = DateTime.Now;
 
-                update(x);
-            }
             void update(byte[] x)
             {
                 Dispatcher.BeginInvoke(new UpdateImagePixelsCb(UpdatePixels),
@@ -84,16 +76,39 @@ namespace GUI
                     System.Windows.Threading.DispatcherPriority.Render);
             }
 
-            gameboy.PPU.Writer = new FrameSink(fpsLimit ? updateWithLimiting : update);
+            gameboy.PPU.Writer = new FrameSink(update);
 
             frameNumber = 0;
 
-            while (!CancelRequested)
+            using var wo = new WaveOutEvent
             {
-                if (!paused)
-                    gameboy.Step();
-                else Thread.Sleep(10);
+                DesiredLatency = 300
+            };
+            wo.Init(gameboy);
+            wo.Play();
+
+            //We can only stop at a ms granularity this way, if we don't
+            //have some check interval we will consume full CPU resources
+            //Maybe some smarter waiting condition would help?
+            while (wo.PlaybackState == PlaybackState.Playing)
+            {
+                if (CancelRequested)
+                {
+                    wo.Stop();
+                    break;
+                }
+
+                if (paused)
+                {
+                    wo.Pause();
+                    while (paused)
+                    {
+                        Thread.Sleep(10);
+                    }
+                    wo.Play();
+                }
             }
+
         }
 
         WriteableBitmap bmp;
