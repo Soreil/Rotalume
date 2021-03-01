@@ -80,9 +80,12 @@ namespace GUI
 
             frameNumber = 0;
 
+            //Using a high buffer count makes it so the audio doesn't stutter, 5 seems
+            //to be just about enough to prevent stutter. Gusboy uses 50 so I'll go with that.
             using var wo = new WaveOutEvent
             {
-                DesiredLatency = 300
+                DesiredLatency = 100,
+                NumberOfBuffers = 50,
             };
             wo.Init(gameboy);
             wo.Play();

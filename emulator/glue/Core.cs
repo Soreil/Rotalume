@@ -462,7 +462,8 @@ namespace emulator
             }
         }
 
-        public WaveFormat WaveFormat { get; init; } = WaveFormat.CreateIeeeFloatWaveFormat(44100, 2);
+        //Gusboy uses this frequency because it aligns well with the gameboy clock
+        public WaveFormat WaveFormat { get; init; } = WaveFormat.CreateIeeeFloatWaveFormat(32768, 2);
 
         private readonly SignalGenerator source = new SignalGenerator
         {
@@ -475,18 +476,14 @@ namespace emulator
         {
             var ratio = count / (double)WaveFormat.SampleRate;
 
-            Task.Factory.StartNew(() =>
-            {
-                var ticksNeeded = (int)(ratio * (1 << 22));
-                for (int i = 0; i < ticksNeeded; i++)
-                    Step();
-            });
+            //We only need half the ticks one would expect for a time slice
+            //because sound is in stereo and so the count is double because
+            //it is interleaved data, hence 1<<21 instead of 1<<22
+            var ticksNeeded = (int)(ratio * (1 << 21));
+            for (int i = 0; i < ticksNeeded; i++)
+                Step();
 
-            var duration = TimeSpan.FromSeconds(ratio);
-            //if (elapsed > duration) throw new Exception("Emulator running too slow for sound");
-
-            var took = source.Take(duration);
-            return took.Read(buffer, 0, count);
+            return source.Read(buffer, 0, count);
         }
     }
 }
