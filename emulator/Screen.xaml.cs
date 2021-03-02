@@ -14,6 +14,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Runtime.InteropServices;
 
 using emulator;
 
@@ -152,8 +153,16 @@ namespace GUI
 
         private void UpdatePixels(byte[] data)
         {
-            bmp.WritePixels(new Int32Rect(0, 0, (int)bmp.Width, (int)bmp.Height)
-                , data, bmp.BackBufferStride, 0);
+            bmp.Lock();
+            
+            unsafe
+            {
+                IntPtr p = bmp.BackBuffer;
+                Marshal.Copy(data, 0, p, data.Length);
+            }
+            bmp.AddDirtyRect(new Int32Rect(0, 0, (int)bmp.Width, (int)bmp.Height));
+
+            bmp.Unlock();
         }
 
         Task GameThread;
