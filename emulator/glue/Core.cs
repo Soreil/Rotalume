@@ -465,13 +465,6 @@ namespace emulator
         //Gusboy uses this frequency because it aligns well with the gameboy clock
         public WaveFormat WaveFormat { get; init; } = WaveFormat.CreateIeeeFloatWaveFormat(32768, 2);
 
-        private readonly SignalGenerator source = new SignalGenerator
-        {
-            Gain = 0.1,
-            Frequency = 300,
-            Type = SignalGeneratorType.Pink,
-        };
-
         public int Read(float[] buffer, int offset, int count)
         {
             var ratio = count / (double)WaveFormat.SampleRate;
@@ -483,7 +476,7 @@ namespace emulator
             for (int i = 0; i < ticksNeeded; i++)
                 Step();
 
-            return source.Read(buffer, 0, count);
+            return count;
         }
     }
 }
