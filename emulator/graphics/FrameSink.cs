@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 
 namespace emulator
 {
@@ -6,14 +7,21 @@ namespace emulator
     {
         private readonly byte[] frameData;
         private int position;
-        private readonly Action<byte[]> Render;
-        public int FrameCount { get; set; }
-        public FrameSink(Action<byte[]> render)
+        public int FrameCount { get; private set; }
+
+        private readonly Action Lock;
+        private readonly Action Unlock;
+        private readonly IntPtr Pointer = IntPtr.Zero;
+        public FrameSink(Action Lock, Action Unlock, IntPtr Pointer)
         {
             frameData = new byte[144 * 160];
             position = 0;
             FrameCount = 0;
-            Render = render;
+
+            this.Lock = Lock;
+            this.Unlock = Unlock;
+            this.Pointer = Pointer;
+
             Write = WriteNormal;
         }
 
@@ -22,14 +30,24 @@ namespace emulator
         {
             frameData = Array.Empty<byte>();
             position = 0;
-            Render = (x) => { };
             Write = WriteEmpty;
         }
 
         public long Length { get => frameData.Length; }
         public void PushFrame()
         {
-            Render(frameData);
+            if (Pointer != IntPtr.Zero)
+            {
+                Lock();
+
+                unsafe
+                {
+                    Marshal.Copy(frameData, 0, Pointer, frameData.Length);
+                }
+
+                Unlock();
+            }
+
             position = 0;
             FrameCount++;
         }

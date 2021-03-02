@@ -29,7 +29,6 @@ namespace GUI
     {
         delegate void UpdateImageCb();
         delegate byte UpdateJoypadCb(byte b);
-        delegate void UpdateImagePixelsCb(byte[] data);
         delegate void UpdateLabelCb();
         public MainWindow()
         {
@@ -47,7 +46,7 @@ namespace GUI
                     new TimeSpan(100000),
                     cb,
                     x);
-                return (byte)inv;
+                return (byte)(inv ?? x);
             }
 
             bool keyBoardInterruptFired()
@@ -59,26 +58,29 @@ namespace GUI
 
             byte[] bootrom = bootromEnabled ? Core.LoadBootROM() : null;
 
-            var gameboy = new Core(File.ReadAllBytes(path),
-                bootrom, updateJoyPad, keyBoardInterruptFired);
 
-            Dispatcher.Invoke(new UpdateImageCb(RunGameboy),
-                System.Windows.Threading.DispatcherPriority.Render);
+            Dispatcher.Invoke(new UpdateImageCb(SetBitmapBacking),
+        System.Windows.Threading.DispatcherPriority.Render);
+
 
             DateTime lastFrame = DateTime.MinValue;
 
-            void update(byte[] x)
+            void LockCB()
             {
-                Dispatcher.Invoke(new UpdateImagePixelsCb(UpdatePixels),
-            System.Windows.Threading.DispatcherPriority.Render,
-             x);
-                Dispatcher.Invoke(new UpdateLabelCb(UpdateLabel),
-                    System.Windows.Threading.DispatcherPriority.Render);
+                Dispatcher.Invoke(new UpdateImageCb(Lock));
+            }
+            void UnlockCB()
+            {
+                Dispatcher.Invoke(new UpdateImageCb(Unlock));
             }
 
-            gameboy.PPU.Writer = new FrameSink(update);
-
-            frameNumber = 0;
+            var gameboy = new Core(
+                File.ReadAllBytes(path),
+          bootrom,
+          updateJoyPad,
+          keyBoardInterruptFired,
+          new FrameSink(LockCB, UnlockCB, Dispatcher.Invoke(() => bmp.BackBuffer))
+          );
 
             //Using a high buffer count makes it so the audio doesn't stutter, 5 seems
             //to be just about enough to prevent stutter. Gusboy uses 50 so I'll go with that.
@@ -114,9 +116,20 @@ namespace GUI
 
         }
 
+        private void Lock()
+        {
+            bmp.Lock();
+        }
+        private void Unlock()
+        {
+            bmp.AddDirtyRect(new Int32Rect(0, 0, (int)bmp.Width, (int)bmp.Height));
+            bmp.Unlock();
+            UpdateLabel();
+        }
+
         WriteableBitmap bmp;
 
-        private void RunGameboy()
+        private void SetBitmapBacking()
         {
             Display.Source = bmp;
             RenderOptions.SetBitmapScalingMode(Display, BitmapScalingMode.NearestNeighbor);
@@ -148,20 +161,6 @@ namespace GUI
                 frameNumber,
                 Delta(15, 14).TotalMilliseconds,
                 AverageFPS());
-        }
-
-        private void UpdatePixels(byte[] data)
-        {
-            bmp.Lock();
-
-            unsafe
-            {
-                IntPtr p = bmp.BackBuffer;
-                Marshal.Copy(data, 0, p, data.Length);
-            }
-            bmp.AddDirtyRect(new Int32Rect(0, 0, (int)bmp.Width, (int)bmp.Height));
-
-            bmp.Unlock();
         }
 
         Task GameThread;
