@@ -171,7 +171,7 @@ namespace emulator
         public Shade? RenderPixel()
         {
             //Sprites are enabled and there is a sprite starting on the current X position
-            if (p.OBJDisplayEnable && SpriteAttributes.Any(x => x.X == scanlineX + 8 - (p.SCX & 7)))
+            if (p.OBJDisplayEnable && SpriteAttributes.Any() && SpriteAttributes.Any(x => x.X == scanlineX + 8 - (p.SCX & 7)))
             {
                 //We can't start the sprite fetching yet if the background fifo is empty
                 if (BGFIFO.count == 0) return null;

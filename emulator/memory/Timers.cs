@@ -15,11 +15,15 @@ namespace emulator
             if (DelayTicks > 0)
                 if (DelayTicks-- == 0) Tima = TMA;
 
-            var before = (InternalCounter & (1 << TACBitSelected)) == 0;
-            InternalCounter++;
-            var overflow = (InternalCounter & (1 << TACBitSelected)) == 0;
-            if (before == false && overflow == true && TimerEnabled)
-                IncrementTIMA();
+            if (TimerEnabled)
+            {
+                var before = (InternalCounter & (1 << TACBitSelected)) == 0;
+                InternalCounter++;
+                var overflow = (InternalCounter & (1 << TACBitSelected)) == 0;
+                if (before == false && overflow == true)
+                    IncrementTIMA();
+            }
+            else InternalCounter++;
         }
 
         public byte DIV

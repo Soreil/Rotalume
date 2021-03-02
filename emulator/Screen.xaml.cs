@@ -104,6 +104,7 @@ namespace GUI
                     }
                     wo.Play();
                 }
+                Thread.Sleep(50);
             }
 
         }

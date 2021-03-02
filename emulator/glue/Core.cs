@@ -32,7 +32,7 @@ namespace emulator
 
         readonly ControlRegister interruptRegisters = new ControlRegister(0xffff, 0x1); //This is only being used for two registers.
 
-        public Core(List<byte> l, byte[] bootrom = null) : this(l.Count < 0x8000 ? PadAndMoveTo0x100(l.ToArray()) : l.ToArray(), bootrom, (x) => 0x01f, () => false,new())
+        public Core(List<byte> l, byte[] bootrom = null) : this(l.Count < 0x8000 ? PadAndMoveTo0x100(l.ToArray()) : l.ToArray(), bootrom, (x) => 0x01f, () => false, new())
         { }
 
         private static byte[] PadAndMoveTo0x100(byte[] l)
@@ -43,7 +43,7 @@ namespace emulator
             return buffer;
         }
 
-        public Core(byte[] gameROM, byte[] bootROM, Func<byte, byte> GetJoyPad, Func<bool> getKeyboardInterrupt,FrameSink frameSink)
+        public Core(byte[] gameROM, byte[] bootROM, Func<byte, byte> GetJoyPad, Func<bool> getKeyboardInterrupt, FrameSink frameSink)
         {
             ushort GetProgramCounter() => PC;
             void SetProgramCounter(ushort x) { PC = x; }
@@ -434,30 +434,25 @@ namespace emulator
         //We have to make Step take one tick per subsystem
         public void Step()
         {
-            //Because there might be multiple loops calling Step from the Sound read function
-            //We need to lock so they don't try to step at the same time.
-            lock (tickLock)
+            masterclock++;
+            Timers.Tick();
+            if (CPU.TicksWeAreWaitingFor == 0)
             {
-                masterclock++;
-                Timers.Tick();
-                if (CPU.TicksWeAreWaitingFor == 0)
+                DoNextOP();
+                //We really should have the GUI thread somehow do this logic but polling like this should work
+                if (!CPU.InterruptFireRegister.GetBit(4) && GetKeyboardInterrupt())
+                    CPU.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(4);
+
+                CPU.DoInterrupt();
+                if (CPU.InterruptEnableScheduled)
                 {
-                    DoNextOP();
-                    //We really should have the GUI thread somehow do this logic but polling like this should work
-                    if (!CPU.InterruptFireRegister.GetBit(4) && GetKeyboardInterrupt())
-                        CPU.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(4);
-
-                    CPU.DoInterrupt();
-                    if (CPU.InterruptEnableScheduled)
-                    {
-                        CPU.IME = true;
-                        CPU.InterruptEnableScheduled = false;
-                    }
+                    CPU.IME = true;
+                    CPU.InterruptEnableScheduled = false;
                 }
-                else CPU.TicksWeAreWaitingFor--;
-
-                PPU.Do();
             }
+            else CPU.TicksWeAreWaitingFor--;
+
+            PPU.Do();
         }
 
         //Gusboy uses this frequency because it aligns well with the gameboy clock
