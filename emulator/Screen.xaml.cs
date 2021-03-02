@@ -42,13 +42,12 @@ namespace GUI
         {
             byte updateJoyPad(byte x)
             {
-                var inv = Dispatcher.BeginInvoke(new UpdateJoypadCb(UpdateJoypadPresses),
-                    System.Windows.Threading.DispatcherPriority.Render,
+                var cb = new UpdateJoypadCb(UpdateJoypadPresses);
+                var inv = Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Render,
+                    new TimeSpan(100000),
+                    cb,
                     x);
-                inv.Wait(new TimeSpan(100000));
-                //TODO: Find a more clean way to handle program exit mid Invoke
-                if (inv.Status != System.Windows.Threading.DispatcherOperationStatus.Completed) return 0x0f;
-                return (byte)inv.Result;
+                return (byte)inv;
             }
 
             bool keyBoardInterruptFired()
@@ -63,17 +62,17 @@ namespace GUI
             var gameboy = new Core(File.ReadAllBytes(path),
                 bootrom, updateJoyPad, keyBoardInterruptFired);
 
-            Dispatcher.BeginInvoke(new UpdateImageCb(RunGameboy),
+            Dispatcher.Invoke(new UpdateImageCb(RunGameboy),
                 System.Windows.Threading.DispatcherPriority.Render);
 
             DateTime lastFrame = DateTime.MinValue;
 
             void update(byte[] x)
             {
-                Dispatcher.BeginInvoke(new UpdateImagePixelsCb(UpdatePixels),
+                Dispatcher.Invoke(new UpdateImagePixelsCb(UpdatePixels),
             System.Windows.Threading.DispatcherPriority.Render,
              x);
-                Dispatcher.BeginInvoke(new UpdateLabelCb(UpdateLabel),
+                Dispatcher.Invoke(new UpdateLabelCb(UpdateLabel),
                     System.Windows.Threading.DispatcherPriority.Render);
             }
 
@@ -154,7 +153,7 @@ namespace GUI
         private void UpdatePixels(byte[] data)
         {
             bmp.Lock();
-            
+
             unsafe
             {
                 IntPtr p = bmp.BackBuffer;
