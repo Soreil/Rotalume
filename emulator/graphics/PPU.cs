@@ -7,14 +7,15 @@ namespace emulator
         public readonly Func<long> Clock;
         public readonly Action EnableVBlankInterrupt;
         public readonly Action EnableLCDCStatusInterrupt;
-        public FrameSink Writer = new((x) => { });
-        public PPU(Func<long> clock, Action enableVBlankInterrupt, Action enableLCDCStatusInterrupt)
+        public readonly FrameSink Writer;
+        public PPU(Func<long> clock, Action enableVBlankInterrupt, Action enableLCDCStatusInterrupt, FrameSink frameSink)
         {
             Clock = clock;
             OAM = new OAM();
             VRAM = new VRAM();
             EnableVBlankInterrupt = enableVBlankInterrupt;
             EnableLCDCStatusInterrupt = enableLCDCStatusInterrupt;
+            Writer = frameSink;
         }
 
         public readonly OAM OAM;
@@ -34,8 +35,8 @@ namespace emulator
                 else if ((!LCDEnable) && Renderer is not null)
                 {
                     Writer.PushFrame(); //If there is a partially written frame when we delete the old renderer the next
-                                    //instantiation of renderer will overwrite the end of the buffer because LY starts at 0 despite
-                                    //there already being data written to the output buffer
+                                        //instantiation of renderer will overwrite the end of the buffer because LY starts at 0 despite
+                                        //there already being data written to the output buffer
 
                     Renderer = null; //We want to destroy the old renderer so it can't keep running after requested to turn off
                     LY = 0;
