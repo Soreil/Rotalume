@@ -35,7 +35,7 @@ namespace emulator
 
         readonly ControlRegister interruptRegisters = new ControlRegister(0xffff, 0x1); //This is only being used for two registers.
 
-        public Core(List<byte> l, byte[] bootrom = null) : this(l.Count < 0x8000 ? PadAndMoveTo0x100(l.ToArray()) : l.ToArray(), bootrom, (x) => 0x01f, () => false)
+        public Core(List<byte> l, byte[] bootrom = null) : this(l.Count < 0x8000 ? PadAndMoveTo0x100(l.ToArray()) : l.ToArray(), bootrom, (x) => 0x01f, () => false,new())
         { }
 
         private static byte[] PadAndMoveTo0x100(byte[] l)
@@ -46,7 +46,7 @@ namespace emulator
             return buffer;
         }
 
-        public Core(byte[] gameROM, byte[] bootROM, Func<byte, byte> GetJoyPad, Func<bool> getKeyboardInterrupt)
+        public Core(byte[] gameROM, byte[] bootROM, Func<byte, byte> GetJoyPad, Func<bool> getKeyboardInterrupt,FrameSink frameSink)
         {
             ushort GetProgramCounter() => PC;
             void SetProgramCounter(ushort x) { PC = x; }
@@ -60,7 +60,8 @@ namespace emulator
 
             APU = new APU(() => masterclock);
             PPU = new PPU(() => masterclock, () => CPU.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(0),
-                                       () => CPU.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(1));
+                                       () => CPU.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(1),
+                                       frameSink);
 
             Timers = new Timers(() => CPU.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(2));
 
