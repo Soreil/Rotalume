@@ -55,7 +55,7 @@ namespace emulator
                 return CPU.Memory[PC];
             };
 
-            APU = new APU(() => masterclock);
+            APU = new APU(WaveFormat.SampleRate*2);
             PPU = new PPU(() => masterclock, () => CPU.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(0),
                                        () => CPU.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(1),
                                        frameSink);
@@ -429,8 +429,6 @@ namespace emulator
 
         public static byte[] LoadBootROM() => System.IO.File.ReadAllBytes(@"..\..\..\..\emulator\bootrom\DMG_ROM_BOOT.bin");
 
-        private readonly object tickLock = new object();
-
         //We have to make Step take one tick per subsystem
         public void Step()
         {
@@ -452,6 +450,7 @@ namespace emulator
             }
             else CPU.TicksWeAreWaitingFor--;
 
+            APU.Tick();
             PPU.Do();
         }
 
@@ -460,14 +459,9 @@ namespace emulator
 
         public int Read(float[] buffer, int offset, int count)
         {
-            var ratio = count / (double)WaveFormat.SampleRate;
-
-            //We only need half the ticks one would expect for a time slice
-            //because sound is in stereo and so the count is double because
-            //it is interleaved data, hence 1<<21 instead of 1<<22
-            var ticksNeeded = (int)(ratio * (1 << 21));
-            for (int i = 0; i < ticksNeeded; i++)
+            while (APU.SampleCount < count)
                 Step();
+            APU.SampleCount -= count;
 
             return count;
         }

@@ -88,7 +88,7 @@ namespace emulator
                                 ((Sound3OnEnabled ? 1 : 0) << 1) |
                                 ((Sound4OnEnabled ? 1 : 0) << 0));
 
-               return (byte)(_nr52 | channels);
+                return (byte)(_nr52 | channels);
             }
             set => _nr52 = (byte)(value & 0x80 | (_nr52 & 0x7f));
         }
@@ -144,11 +144,24 @@ namespace emulator
         public byte NR33 { get; internal set; }
         public byte NR41 { get; internal set; }
         public byte[] Wave { get; internal set; } = new byte[0x10];
-
-        private Func<long> Clock;
-        public APU(Func<long> clock)
+        public int SampleCount { get; internal set; }
+        public APU(int sampleRate)
         {
-            Clock = clock;
+            SampleRate = sampleRate;
+            TicksPerSample = baseClock / sampleRate;
+
+            if (TicksPerSample * sampleRate != baseClock)
+                throw new Exception("We want a sample rate which is evenly divisible in to the base clock");
+        }
+
+        private long APUClock { get; set; }
+        private int SampleRate { get; }
+        public int TicksPerSample { get; }
+
+        internal void Tick()
+        {
+            APUClock++;
+            if (APUClock % TicksPerSample == 0) SampleCount++;
         }
     }
 }
