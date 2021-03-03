@@ -22,8 +22,16 @@ namespace GUI
         delegate void UpdateImageCb();
         delegate byte UpdateJoypadCb(byte b);
         delegate void UpdateLabelCb();
+
+        private readonly StreamWriter Logger;
         public MainWindow()
         {
+            var logPath = "frametimes.txt";
+
+            if (!File.Exists(logPath))
+                Logger = File.CreateText(logPath);
+            else Logger = new StreamWriter(File.Open(logPath, FileMode.Truncate, FileAccess.Write, FileShare.Read));
+
             InitializeComponent();
         }
 
@@ -50,21 +58,13 @@ namespace GUI
 
             byte[] bootrom = bootromEnabled ? Core.LoadBootROM() : null;
 
-
             Dispatcher.Invoke(new UpdateImageCb(SetBitmapBacking),
         System.Windows.Threading.DispatcherPriority.Render);
 
-
-            DateTime lastFrame = DateTime.MinValue;
-
-            void LockCB()
-            {
-                Dispatcher.Invoke(new UpdateImageCb(Lock));
-            }
-            void UnlockCB()
-            {
-                Dispatcher.Invoke(new UpdateImageCb(Unlock));
-            }
+            void LockCB() => Dispatcher.Invoke(new UpdateImageCb(Lock),
+        System.Windows.Threading.DispatcherPriority.Render);
+            void UnlockCB() => Dispatcher.Invoke(new UpdateImageCb(Unlock),
+        System.Windows.Threading.DispatcherPriority.Render);
 
             var gameboy = new Core(
                 File.ReadAllBytes(path),
@@ -117,7 +117,9 @@ namespace GUI
         {
             bmp.AddDirtyRect(new Int32Rect(0, 0, (int)bmp.Width, (int)bmp.Height));
             bmp.Unlock();
+            AddFrameTimeToQueue();
             UpdateLabel();
+            LogTime();
         }
 
         WriteableBitmap bmp;
@@ -131,6 +133,8 @@ namespace GUI
         int frameNumber = 0;
         readonly DateTime[] FrameTimes = new DateTime[16];
 
+        private void LogTime() => Logger.WriteLineAsync(DateTime.Now.Ticks.ToString());
+
         private double AverageFPS()
         {
             TimeSpan deltas = TimeSpan.Zero;
@@ -141,19 +145,22 @@ namespace GUI
 
             return TimeSpan.FromSeconds(1) / (deltas / (FrameTimes.Length - 1));
         }
-        private TimeSpan Delta(int i, int j) => (FrameTimes[i] - FrameTimes[j]);
+        private TimeSpan Delta(int i, int j) => FrameTimes[i] - FrameTimes[j];
         private void UpdateLabel()
+        {
+            FPS.Content = string.Format("Frame:{0} FrameTime:{1} FPS:{2}",
+                frameNumber,
+                Delta(15, 14).TotalMilliseconds,
+                AverageFPS());
+        }
+
+        private void AddFrameTimeToQueue()
         {
             frameNumber++;
             var time = DateTime.Now;
             for (int i = 1; i < FrameTimes.Length; i++)
                 FrameTimes[i - 1] = FrameTimes[i];
             FrameTimes[^1] = time;
-
-            FPS.Content = string.Format("Frame:{0} FrameTime:{1} FPS:{2}",
-                frameNumber,
-                Delta(15, 14).TotalMilliseconds,
-                AverageFPS());
         }
 
         Task GameThread;
@@ -216,22 +223,6 @@ namespace GUI
             {Key.Down, false},
         };
 
-        readonly Dictionary<Key, DateTime> ReleasedWhen = new Dictionary<Key, DateTime> {
-            {Key.A,    DateTime.Now},
-            {Key.S,    DateTime.Now},
-            {Key.D,    DateTime.Now},
-            {Key.F,    DateTime.Now},
-            {Key.Right,DateTime.Now},
-            {Key.Left, DateTime.Now},
-            {Key.Up,   DateTime.Now},
-            {Key.Down, DateTime.Now},
-        };
-
-        private static bool RecentEnough(DateTime now, DateTime then)
-        {
-            var span = now - then;
-            return span.TotalMilliseconds < 5;
-        }
         private byte UpdateJoypadPresses(byte Flags)
         {
             var selectButtons = !Flags.GetBit(5);
@@ -240,20 +231,19 @@ namespace GUI
             byte joypad = 0xf;
             if (!selectButtons && !selectArrows) return (byte)((joypad & 0xf) | 0xc0);
 
-            var now = DateTime.Now;
             if (selectArrows)
             {
-                if (Pressed[Key.Right] || RecentEnough(now, ReleasedWhen[Key.Right])) joypad = joypad.SetBit(0, false);
-                if (Pressed[Key.Left] || RecentEnough(now, ReleasedWhen[Key.Left])) joypad = joypad.SetBit(1, false);
-                if (Pressed[Key.Up] || RecentEnough(now, ReleasedWhen[Key.Up])) joypad = joypad.SetBit(2, false);
-                if (Pressed[Key.Down] || RecentEnough(now, ReleasedWhen[Key.Down])) joypad = joypad.SetBit(3, false);
+                if (Pressed[Key.Right]) joypad = joypad.SetBit(0, false);
+                if (Pressed[Key.Left]) joypad = joypad.SetBit(1, false);
+                if (Pressed[Key.Up]) joypad = joypad.SetBit(2, false);
+                if (Pressed[Key.Down]) joypad = joypad.SetBit(3, false);
             }
             if (selectButtons)
             {
-                if (Pressed[Key.A] || RecentEnough(now, ReleasedWhen[Key.A])) joypad = joypad.SetBit(0, false);
-                if (Pressed[Key.S] || RecentEnough(now, ReleasedWhen[Key.S])) joypad = joypad.SetBit(1, false);
-                if (Pressed[Key.D] || RecentEnough(now, ReleasedWhen[Key.D])) joypad = joypad.SetBit(2, false);
-                if (Pressed[Key.F] || RecentEnough(now, ReleasedWhen[Key.F])) joypad = joypad.SetBit(3, false);
+                if (Pressed[Key.A]) joypad = joypad.SetBit(0, false);
+                if (Pressed[Key.S]) joypad = joypad.SetBit(1, false);
+                if (Pressed[Key.D]) joypad = joypad.SetBit(2, false);
+                if (Pressed[Key.F]) joypad = joypad.SetBit(3, false);
             }
 
             return (byte)((joypad & 0xf) | 0xc0);
@@ -274,10 +264,7 @@ namespace GUI
         private void Window_KeyUp(object sender, KeyEventArgs e)
         {
             if (Pressed.ContainsKey(e.Key))
-            {
                 Pressed[e.Key] = false;
-                ReleasedWhen[e.Key] = DateTime.Now;
-            }
         }
     }
 }
