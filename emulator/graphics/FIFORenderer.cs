@@ -102,7 +102,9 @@ namespace emulator
             }
         }
 
-        public List<SpriteAttributes> SpriteAttributes = new();
+        public SpriteAttributes[] SpriteAttributes = new SpriteAttributes[10];
+        public int SpriteCount = 0;
+        public int SpritesFinished = 0;
 
         private bool PushSpriteRow(byte low, byte high, SpriteAttributes sprite)
         {
@@ -155,13 +157,13 @@ namespace emulator
         public void RenderSpriteToTheLeftOfTheVisibleArea()
         {
             //Sprites are enabled and there is a sprite starting on the current X position
-            if (p.OBJDisplayEnable && SpriteAttributes.Any(x => x.X < 8))
+            if (p.OBJDisplayEnable && SpriteCount - SpritesFinished != 0 && ContainsSprite())
             {
                 //We can't start the sprite fetching yet if the background fifo is empty
                 if (BGFIFO.count == 0) throw new Exception("wrong stage");
 
 
-                var sprite = SpriteAttributes.First(x => x.X < 8);
+                var sprite = FirstMatchingSprite();
 
                 var pixelsVisible = sprite.X;
 
@@ -180,21 +182,21 @@ namespace emulator
                 var low = p.VRAM[addr];
                 var high = p.VRAM[addr + 1];
                 PushSpriteRowPartial(low, high, sprite, pixelsVisible);
-                SpriteAttributes.Remove(sprite);
+                SpritesFinished++;
             }
         }
 
         public Shade RenderPixel()
         {
             //Sprites are enabled and there is a sprite starting on the current X position
-            if (p.OBJDisplayEnable && SpriteAttributes.Any() && ContainsSprite())
+            if (p.OBJDisplayEnable && SpriteCount - SpritesFinished != 0 && ContainsSprite())
             {
                 //We can't start the sprite fetching yet if the background fifo is empty
                 if (BGFIFO.count == 0) return Shade.Empty;
                 for (int i = SpriteFIFO.count; i < 8; i = SpriteFIFO.count)
                     SpriteFIFO.Push(new FIFOSpritePixel(0, false, 0));
 
-                var sprite = SpriteAttributes.First(x => x.X == scanlineX + 8 - (p.SCX & 7));
+                var sprite = FirstMatchingSprite();
 
                 var y = p.LY - (sprite.Y - 16);
                 if (sprite.YFlipped)
@@ -202,13 +204,13 @@ namespace emulator
                         y = 7 - y;
                     else
                         y = 15 - y;
-
+                if (y < 0) throw new Exception("Illegal Y position in sprite");
                 var ID = p.SpriteHeight == 8 ? sprite.ID : sprite.ID & 0xfe;
                 var addr = 0x8000 + ID * 16 + (2 * y);
                 var low = p.VRAM[addr];
                 var high = p.VRAM[addr + 1];
                 PushSpriteRow(low, high, sprite);
-                SpriteAttributes.Remove(sprite);
+                SpritesFinished++;
             }
 
             if (BGFIFO.count != 0 && SpriteFIFO.count != 0)
@@ -246,12 +248,22 @@ namespace emulator
         private bool ContainsSprite()
         {
             var wanted = scanlineX + 8 - (p.SCX & 7);
-            foreach (var x in SpriteAttributes)
+            for (int i = SpritesFinished; i < SpriteCount; i++)
             {
-                if (x.X == wanted) return true;
+                if (SpriteAttributes[i].X == wanted) return true;
             }
             return false;
         }
+        private SpriteAttributes FirstMatchingSprite()
+        {
+            var wanted = scanlineX + 8 - (p.SCX & 7);
+            for (int i = SpritesFinished; i < SpriteCount; i++)
+            {
+                if (SpriteAttributes[i].X == wanted) return SpriteAttributes[i];
+            }
+            throw new Exception("Illegal call");
+        }
+
         private byte FetchHigh() => p.VRAM[GetAdress() + 1];
         private byte FetchLow() => p.VRAM[GetAdress()];
 

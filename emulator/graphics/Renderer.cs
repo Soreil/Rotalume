@@ -104,7 +104,8 @@ namespace emulator
             {
                 if (PPU.Enable_OAM_Interrupt)
                     PPU.EnableLCDCStatusInterrupt();
-                fetcher.SpriteAttributes = PPU.OAM.SpritesOnLine(PPU.LY, PPU.SpriteHeight);
+                fetcher.SpriteCount = PPU.OAM.SpritesOnLine(fetcher.SpriteAttributes, PPU.LY, PPU.SpriteHeight);
+                fetcher.SpritesFinished = 0;
                 TimeUntilWhichToPause += 80;
                 ScheduledModeChange = Mode.Transfer;
                 return;

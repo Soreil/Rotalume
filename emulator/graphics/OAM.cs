@@ -1,45 +1,67 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System;
 
 namespace emulator
 {
     public class OAM
     {
-        private readonly byte[] mem;
+        private readonly SpriteAttributes[] sprites;
 
         public const int Start = 0xFE00;
         public const int Size = 0xa0;
         public bool Locked = false;
 
-        public OAM() { mem = new byte[Size]; for (int i = 0; i < Size; i++) mem[i] = 0xff; }
-
-        private SpriteAttributes Entry(int n) => new SpriteAttributes(mem[n * 4], mem[n * 4 + 1], mem[n * 4 + 2], mem[n * 4 + 3]);
-
-        private IEnumerable<SpriteAttributes> Entries()
+        public OAM()
         {
-            List<SpriteAttributes> res = new List<SpriteAttributes>(mem.Length / 4);
-            for (int i = 0; i < mem.Length / 4; i++)
-                res.Add(Entry(i));
-            return res;
+            sprites = new SpriteAttributes[Size / 4];
         }
 
         public byte this[int n]
         {
-            get => mem[n - Start];
-            set => mem[n - Start] = value;
+            get => (byte)((n - Start) % 4 switch
+            {
+                0 => sprites[(n - Start) / 4].Y,
+                1 => sprites[(n - Start) / 4].X,
+                2 => sprites[(n - Start) / 4].ID,
+                3 => sprites[(n - Start) / 4].Flags,
+            });
+            set
+            {
+                var old = sprites[(n - Start) / 4];
+
+                sprites[(n - Start) / 4] = ((n - Start) % 4) switch
+                {
+                    0 => new(value, old.X, old.ID, old.Flags),
+                    1 => new(old.Y, value, old.ID, old.Flags),
+                    2 => new(old.Y, old.X, value, old.Flags),
+                    3 => new(old.Y, old.X, old.ID, value),
+                };
+            }
         }
 
         const int maxSpritesOnLine = 10;
 
-        //Supposedly X = 0 sprites are still relevant for the 10 sprite limit so we have to match them.
-        public List<SpriteAttributes> SpritesOnLine(int line, int spriteHeight) => Entries().
-            Where(
-            s => (s.Y + spriteHeight) > 16 &&
-            s.Y < 160 &&
-            s.X != 0 &&
-            s.X < 168 &&
-            line >= s.Y - 16 &&
-            line < s.Y - 16 + spriteHeight).
-            Take(maxSpritesOnLine).OrderBy(x => x.X).ToList();
+        private static bool OnLine(SpriteAttributes s, int line, int spriteHeight) => 
+                (s.Y + spriteHeight) > 16 &&
+                s.Y < 160 &&
+                s.X != 0 &&
+                s.X < 168 &&
+                line >= s.Y - 16 &&
+                line < s.Y - 16 + spriteHeight;
+        public int SpritesOnLine(SpriteAttributes[] buffer, int line, int spriteHeight)
+        {
+            int spriteCount = 0;
+            foreach (var s in sprites)
+            {
+                if (OnLine(s, line, spriteHeight))
+                {
+                    buffer[spriteCount++] = s;
+                    if (spriteCount == 10) break;
+                }
+            }
+            Order(buffer, spriteCount);
+            return spriteCount;
+        }
+
+        private static void Order(SpriteAttributes[] buffer, int count) => Array.Sort(buffer, 0, count);
     }
 }
