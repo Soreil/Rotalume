@@ -4,8 +4,24 @@ using System.Linq;
 
 namespace emulator
 {
-    public record FIFOPixel(byte color);
-    public record FIFOSpritePixel(byte color, bool priority, int Palette) : FIFOPixel(color);
+    public struct FIFOPixel
+    {
+        public readonly byte color;
+        public FIFOPixel(byte color) => this.color = color;
+    }
+    public struct FIFOSpritePixel
+    {
+        public readonly int Palette;
+        public readonly byte color;
+        public readonly bool priority;
+
+        public FIFOSpritePixel(byte paletteIndex, bool spriteToBackgroundPriority, int palette)
+        {
+            color = paletteIndex;
+            priority = spriteToBackgroundPriority;
+            Palette = palette;
+        }
+    }
 
     public class PixelFetcher
     {
@@ -168,13 +184,13 @@ namespace emulator
             }
         }
 
-        public Shade? RenderPixel()
+        public Shade RenderPixel()
         {
             //Sprites are enabled and there is a sprite starting on the current X position
-            if (p.OBJDisplayEnable && SpriteAttributes.Any() && SpriteAttributes.Any(x => x.X == scanlineX + 8 - (p.SCX & 7)))
+            if (p.OBJDisplayEnable && SpriteAttributes.Any() && ContainsSprite())
             {
                 //We can't start the sprite fetching yet if the background fifo is empty
-                if (BGFIFO.count == 0) return null;
+                if (BGFIFO.count == 0) return Shade.Empty;
                 for (int i = SpriteFIFO.count; i < 8; i = SpriteFIFO.count)
                     SpriteFIFO.Push(new FIFOSpritePixel(0, false, 0));
 
@@ -224,9 +240,18 @@ namespace emulator
                 //Do we need pixels in the fifo to do this?
                 return p.BackgroundColor(p.BGDisplayEnable ? pix.color : 0);
             }
-            else return null;
+            else return Shade.Empty;
         }
 
+        private bool ContainsSprite()
+        {
+            var wanted = scanlineX + 8 - (p.SCX & 7);
+            foreach (var x in SpriteAttributes)
+            {
+                if (x.X == wanted) return true;
+            }
+            return false;
+        }
         private byte FetchHigh() => p.VRAM[GetAdress() + 1];
         private byte FetchLow() => p.VRAM[GetAdress()];
 
