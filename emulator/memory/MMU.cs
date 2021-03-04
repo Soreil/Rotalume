@@ -85,12 +85,18 @@ namespace emulator
         private readonly byte[] bootROM;
 
         private readonly Func<byte> ReadInput;
-        private readonly Func<ushort> ReadInputWide;
+
+        private readonly byte[] BitConverterBuffer = new byte[2];
+        private ushort ReadInputWide()
+        {
+            BitConverterBuffer[0] = ReadInput();
+            BitConverterBuffer[1] = ReadInput();
+            return BitConverter.ToUInt16(BitConverterBuffer);
+        }
 
         public MMU(Func<byte> readInput)
         {
             ReadInput = readInput;
-            ReadInputWide = () => BitConverter.ToUInt16(new byte[] { ReadInput(), ReadInput() });
 
             _bootROMActive = () => false;
         }
@@ -104,7 +110,6 @@ namespace emulator
             ControlRegister interruptEnable)
         {
             ReadInput = readInput;
-            ReadInputWide = () => BitConverter.ToUInt16(new byte[] { ReadInput(), ReadInput() });
 
             _bootROMActive = bootROMActive;
             bootROM = boot; //Bootrom should be 256 bytes
@@ -122,39 +127,41 @@ namespace emulator
             UnusableMEM = new UnusableMEM();
         }
 
-        internal object Fetch(DMGInteger arg)
-        {
-            return arg switch
-            {
-                DMGInteger.d16 => ReadInputWide(),
-                DMGInteger.d8 => ReadInput(),
-                DMGInteger.a16 => ReadInputWide(),
-                DMGInteger.a8 => this[0xFF00 + ReadInput()],
-                DMGInteger.r8 => (sbyte)ReadInput(),
-                _ => throw new Exception("Expected a valid DMGInteger"),
-            };
-        }
+        internal ushort FetchD16() => ReadInputWide();
+        internal byte FetchD8() => ReadInput();
+        internal ushort FetchA16() => ReadInputWide();
+        internal byte FetchA8() => this[0xFF00 + ReadInput()];
+        internal sbyte FetchR8() => (sbyte)ReadInput();
         public byte Read(ushort at) => this[at];
 
-        public ushort ReadWide(ushort at) => BitConverter.ToUInt16(new byte[] { this[at], this[at + 1] });
+        //Same problem as readinputwide
+        private readonly byte[] BitConverterBuffer2 = new byte[2];
+        public ushort ReadWide(ushort at)
+        {
+            BitConverterBuffer2[0] = this[at];
+            BitConverterBuffer2[1] = this[at + 1];
+            return BitConverter.ToUInt16(BitConverterBuffer2);
+        }
 
         public void Write(ushort at, byte arg) => this[at] = arg;
 
         public void Write(DMGInteger at, byte arg)
         {
             if (at == DMGInteger.a8)
-                Write((ushort)(0xff00 + (byte)Fetch(DMGInteger.d8)), arg);
+                Write((ushort)(0xff00 + FetchD8()), arg);
             else if (at == DMGInteger.a16)
-                Write((ushort)Fetch(DMGInteger.d16), arg);
+                Write(FetchD16(), arg);
             else
                 throw new Exception("Not an adress");
         }
 
         public void Write(ushort at, ushort arg)
         {
-            var bytes = BitConverter.GetBytes(arg);
-            for (int i = 0; i < bytes.Length; i++)
-                this[at + i] = bytes[i];
+            //var bytes = BitConverter.GetBytes(arg);
+            //for (int i = 0; i < bytes.Length; i++)
+            //    this[at + i] = bytes[i];
+            this[at] = (byte)(arg & 0xff);
+            this[at + 1] = (byte)((arg & 0xff00) >> 8);
         }
     }
 }
