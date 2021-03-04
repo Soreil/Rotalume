@@ -39,12 +39,17 @@ namespace GUI
         volatile bool CancelRequested = false;
         private void Gameboy(string path, bool bootromEnabled, bool fpsLimit)
         {
+            var joyCb = new UpdateJoypadCb(UpdateJoypadPresses);
+            var bmpCb = new UpdateImageCb(SetBitmapBacking);
+            var lockCb = new UpdateImageCb(Lock);
+            var unlockCb = new UpdateImageCb(Unlock);
+
+            var ts = new TimeSpan(100000);
             byte updateJoyPad(byte x)
             {
-                var cb = new UpdateJoypadCb(UpdateJoypadPresses);
                 var inv = Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Render,
-                    new TimeSpan(100000),
-                    cb,
+                    ts,
+                    joyCb,
                     x);
                 return (byte)(inv ?? x);
             }
@@ -58,12 +63,12 @@ namespace GUI
 
             byte[] bootrom = bootromEnabled ? Core.LoadBootROM() : null;
 
-            Dispatcher.Invoke(new UpdateImageCb(SetBitmapBacking),
+            Dispatcher.Invoke(bmpCb,
         System.Windows.Threading.DispatcherPriority.Render);
 
-            void LockCB() => Dispatcher.Invoke(new UpdateImageCb(Lock),
+            void LockCB() => Dispatcher.Invoke(lockCb,
         System.Windows.Threading.DispatcherPriority.Render);
-            void UnlockCB() => Dispatcher.Invoke(new UpdateImageCb(Unlock),
+            void UnlockCB() => Dispatcher.Invoke(unlockCb,
         System.Windows.Threading.DispatcherPriority.Render);
 
             var gameboy = new Core(
@@ -104,7 +109,6 @@ namespace GUI
                     }
                     wo.Play();
                 }
-                Thread.Sleep(50);
             }
 
         }
