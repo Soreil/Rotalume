@@ -46,11 +46,11 @@ namespace emulator
         {
             return () => { AddTicks(duration); };
         }
-        public Action LD(WideRegister p0, DMGInteger p1, int duration)
+        public Action LD_D16(WideRegister p0, int duration)
         {
             return () =>
             {
-                var arg = Memory.Fetch(p1);
+                var arg = Memory.FetchD16();
                 Registers.Set(p0, (ushort)arg);
                 AddTicks(duration);
             };
@@ -117,14 +117,14 @@ namespace emulator
             {
                 if (p1 == DMGInteger.a16)
                 {
-                    var addr = (ushort)Memory.Fetch(p1);
+                    var addr = Memory.FetchA16();
                     var arg = Memory.Read(addr);
                     SetRegister(p0, arg);
                     AddTicks(duration);
                 }
                 else
                 {
-                    var arg = (byte)Memory.Fetch(p1);
+                    var arg = Memory.FetchD8();
                     SetRegister(p0, arg);
                     AddTicks(duration);
                 }
@@ -155,7 +155,7 @@ namespace emulator
         public Action WriteSPToMem(int duration)
             => () =>
             {
-                var addr = (ushort)Memory.Fetch(DMGInteger.d16);
+                var addr = Memory.FetchD16();
                 var arg = Registers.SP;
 
                 Memory.Write(addr, arg);
@@ -265,7 +265,7 @@ namespace emulator
         {
             return () =>
             {
-                var offset = (sbyte)Memory.Fetch(DMGInteger.r8);
+                var offset = Memory.FetchR8();
                 SetPC((ushort)(GetPC() + offset));
                 AddTicks(duration);
             };
@@ -298,7 +298,7 @@ namespace emulator
         {
             return () =>
             {
-                var offset = (sbyte)Memory.Fetch(DMGInteger.r8);
+                var offset = Memory.FetchR8();
                 if (Registers.Get(p0))
                 {
                     SetPC((ushort)(GetPC() + offset));
@@ -723,11 +723,11 @@ namespace emulator
                 AddTicks(duration);
             };
         }
-        public Action JP(Flag p0, DMGInteger p1, int duration, int alternativeDuration)
+        public Action JP_A16(Flag p0, int duration, int alternativeDuration)
         {
             return () =>
             {
-                var addr = (ushort)Memory.Fetch(p1);
+                var addr = Memory.FetchA16();
                 if (Registers.Get(p0))
                 {
                     SetPC(addr);
@@ -740,16 +740,16 @@ namespace emulator
         {
             return () =>
             {
-                var addr = (ushort)Memory.Fetch(p0);
+                var addr = Memory.FetchA16();
                 SetPC(addr);
                 AddTicks(duration);
             };
         }
-        public Action CALL(Flag p0, DMGInteger p1, int duration, int alternativeDuration)
+        public Action CALL_A16(Flag p0, int duration, int alternativeDuration)
         {
             return () =>
             {
-                var addr = (ushort)Memory.Fetch(p1);
+                var addr = Memory.FetchA16();
                 if (Registers.Get(p0))
                 {
                     Call(duration, addr);
@@ -772,7 +772,7 @@ namespace emulator
                 Registers.Mark(Flag.NN);
 
                 var lhs = Registers.Get(Register.A);
-                var rhs = (byte)Memory.Fetch(DMGInteger.d8);
+                var rhs = Memory.FetchD8();
 
                 Registers.Set(Register.A, ADD(lhs, rhs));
                 AddTicks(duration);
@@ -809,7 +809,7 @@ namespace emulator
         {
             return () =>
             {
-                var addr = (ushort)Memory.Fetch(DMGInteger.d16);
+                var addr = Memory.FetchD16();
                 Call(duration, addr);
             };
         }
@@ -825,7 +825,7 @@ namespace emulator
         {
             return () =>
             {
-                var rhs = (byte)Memory.Fetch(DMGInteger.d8);
+                var rhs = Memory.FetchD8();
 
                 ADC(rhs);
                 AddTicks(duration);
@@ -848,7 +848,7 @@ namespace emulator
                 Registers.Mark(Flag.N);
 
                 var lhs = Registers.A;
-                var rhs = (byte)Memory.Fetch(DMGInteger.d8);
+                var rhs = Memory.FetchD8();
 
                 Registers.A = SUB(lhs, rhs);
                 AddTicks(duration);
@@ -883,7 +883,7 @@ namespace emulator
         {
             return () =>
             {
-                var rhs = (byte)Memory.Fetch(DMGInteger.d8);
+                var rhs = Memory.FetchD8();
 
                 SBC(rhs);
                 AddTicks(duration);
@@ -917,7 +917,7 @@ namespace emulator
         {
             return () =>
             {
-                var andWith = (byte)Memory.Fetch(DMGInteger.d8);
+                var andWith = Memory.FetchD8();
 
                 AND(Registers.A, andWith);
                 AddTicks(duration);
@@ -928,7 +928,7 @@ namespace emulator
         {
             return () =>
             {
-                var offset = (sbyte)Memory.Fetch(DMGInteger.r8);
+                var offset = Memory.FetchR8();
                 var sum = Registers.SP + offset;
 
                 Registers.Mark(Flag.NZ);
@@ -995,7 +995,7 @@ namespace emulator
         {
             return () =>
             {
-                XOR(Registers.A, (byte)Memory.Fetch(DMGInteger.d8));
+                XOR(Registers.A, Memory.FetchD8());
                 AddTicks(duration);
             };
         }
@@ -1003,7 +1003,7 @@ namespace emulator
         {
             return () =>
             {
-                Registers.A = (byte)Memory.Fetch(DMGInteger.a8);
+                Registers.A = Memory.FetchA8();
                 AddTicks(duration);
             };
         }
@@ -1027,7 +1027,7 @@ namespace emulator
         {
             return () =>
             {
-                OR(Registers.A, (byte)Memory.Fetch(DMGInteger.d8));
+                OR(Registers.A, Memory.FetchD8());
                 AddTicks(duration);
             };
         }
@@ -1036,7 +1036,7 @@ namespace emulator
         {
             return () =>
             {
-                var offset = (sbyte)Memory.Fetch(DMGInteger.r8);
+                var offset = Memory.FetchR8();
                 var sum = Registers.SP + offset;
                 Registers.Set(Flag.Z, false);
                 Registers.Set(Flag.N, false);
@@ -1099,7 +1099,7 @@ namespace emulator
             return () =>
             {
                 var lhs = Registers.A;
-                var rhs = (byte)Memory.Fetch(DMGInteger.d8);
+                var rhs = Memory.FetchD8();
                 CP(lhs, rhs);
                 AddTicks(duration);
             };
