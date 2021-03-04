@@ -345,3 +345,4 @@ healthchecksdb
 /rgbds
 *.gbc
 /Tests/rom
+*.diagsession
