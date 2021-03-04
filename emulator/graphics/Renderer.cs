@@ -143,11 +143,12 @@ namespace emulator
             }
         }
 
+        //Reusable buffer
+        readonly byte[] output = new byte[DisplayWidth];
         private void ResetLineSpecificState()
         {
             ScheduledModeChange = Mode.HBlank;
 
-            var output = new byte[background.Length];
             for (int i = 0; i < output.Length; i++)
                 output[i] = ShadeToGray(background[i]);
             fs.Write(output);
@@ -161,7 +162,7 @@ namespace emulator
         private void AttemptToPushAPixel()
         {
             var pix = fetcher.RenderPixel();
-            if (pix != null)
+            if (pix != Shade.Empty)
             {
                 PixelsPopped++;
                 fetcher.scanlineX++;
