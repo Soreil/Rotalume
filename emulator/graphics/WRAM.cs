@@ -11,7 +11,10 @@
         public WRAM()
         {
             mem = new byte[Size];
-            for (int i = 0; i < Size; i++) mem[i] = 0xff;
+            for (int i = 0; i < Size; i++)
+            {
+                mem[i] = 0xff;
+            }
         }
         public byte this[int n]
         {
@@ -19,9 +22,13 @@
             set
             {
                 if (n < MirrorStart)
+                {
                     mem[n - Start] = value;
+                }
                 else
+                {
                     mem[n - MirrorStart] = value;
+                }
             }
         }
     }

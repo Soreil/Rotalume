@@ -1,7 +1,7 @@
 ﻿namespace emulator
 {
     public record Operand
-    { 
+    {
         public string Name;
         public int? Size;
         public bool Pointer;

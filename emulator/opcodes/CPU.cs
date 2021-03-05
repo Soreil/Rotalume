@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace emulator
 {
@@ -14,6 +13,7 @@ namespace emulator
         public bool InterruptEnableScheduled = false;
 
         public Action Op(Unprefixed op) => StdOps[(int)op];
+
         public Action Op(Cbprefixed op) => CbOps[(int)op];
 
         public CPU(Func<ushort> getPC, Action<ushort> setPC, MMU memory)
@@ -31,12 +31,19 @@ namespace emulator
             halt = () =>
             {
                 if (IME)
+                {
                     Halted = HaltState.normal;
+                }
                 else
                 {
                     if ((InterruptFireRegister & InterruptControlRegister & 0x1f) == 0)
+                    {
                         Halted = HaltState.normalIME0;
-                    else Halted = HaltState.haltbug;
+                    }
+                    else
+                    {
+                        Halted = HaltState.haltbug;
+                    }
                 }
             };
         }
@@ -248,7 +255,7 @@ namespace emulator
             m[(int)Unprefixed.RET] = RET(16);
             m[(int)Unprefixed.JP_Zero_a16] = JP_A16(Flag.Z, 16, 12);
             m[(int)Unprefixed.PREFIX] = PREFIX(4);
-            m[(int)Unprefixed.CALL_Zero_a16] = CALL_A16(Flag.Z,  24, 12);
+            m[(int)Unprefixed.CALL_Zero_a16] = CALL_A16(Flag.Z, 24, 12);
             m[(int)Unprefixed.CALL_a16] = CALL_a16(24);
             m[(int)Unprefixed.ADC_A_d8] = ADC(8);
             m[(int)Unprefixed.RST_08H] = RST(0x08, 16);
@@ -256,7 +263,7 @@ namespace emulator
             m[(int)Unprefixed.POP_DE] = POP(WideRegister.DE, 12);
             m[(int)Unprefixed.JP_NC_a16] = JP_A16(Flag.NC, 16, 12);
             m[(int)Unprefixed.ILLEGAL_D3] = ILLEGAL_D3(4);
-            m[(int)Unprefixed.CALL_NC_a16] = CALL_A16(Flag.NC,  24, 12);
+            m[(int)Unprefixed.CALL_NC_a16] = CALL_A16(Flag.NC, 24, 12);
             m[(int)Unprefixed.PUSH_DE] = PUSH(WideRegister.DE, 16);
             m[(int)Unprefixed.SUB_d8] = SUB(8);
             m[(int)Unprefixed.RST_10H] = RST(0x10, 16);

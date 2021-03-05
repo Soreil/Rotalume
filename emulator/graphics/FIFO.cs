@@ -15,15 +15,20 @@ namespace emulator
         }
 
         public void Push(T p) => buffer[(position + count++) & (capacity - 1)] = p;
+
         public T Pop()
         {
-            
-            if (count == 0) throw new Exception("Empty FIFO");
+
+            if (count == 0)
+            {
+                throw new Exception("Empty FIFO");
+            }
 
             count--;
-            return buffer[position++&(capacity-1)];
+            return buffer[position++ & (capacity - 1)];
         }
         public void Replace(int at, T p) => buffer[(position + at) & (capacity - 1)] = p;
+
         public T At(int at) => buffer[(position + at) & (capacity - 1)];
     }
 }

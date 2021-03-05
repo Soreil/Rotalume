@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 
 namespace emulator
 {
@@ -12,14 +11,14 @@ namespace emulator
         private int position;
         public int FrameCount { get; private set; }
 
-        private readonly Action Lock;
-        private readonly Action Unlock;
+        private readonly Action? Lock;
+        private readonly Action? Unlock;
         private readonly IntPtr Pointer = IntPtr.Zero;
 
         private readonly long timePerFrame;
         private readonly Stopwatch stopWatch = new();
         private readonly bool LimitFPS;
-        private readonly StreamWriter Logger;
+        private readonly StreamWriter? Logger;
         public FrameSink(Action Lock, Action Unlock, IntPtr Pointer, bool LimitFPS)
         {
             frameData = new byte[144 * 160];
@@ -40,10 +39,18 @@ namespace emulator
             {
                 var logPath = "frametimes.txt";
                 if (!File.Exists(logPath))
+                {
                     Logger = File.CreateText(logPath);
-                else Logger = new StreamWriter(File.Open(logPath, FileMode.Truncate, FileAccess.Write, FileShare.Read));
+                }
+                else
+                {
+                    Logger = new StreamWriter(File.Open(logPath, FileMode.Truncate, FileAccess.Write, FileShare.Read));
+                }
             }
-            else Logger = null;
+            else
+            {
+                Logger = null;
+            }
 
             stopWatch.Start();
         }
@@ -61,7 +68,7 @@ namespace emulator
         {
         }
 
-        public long Length { get => frameData.Length; }
+        public long Length => frameData.Length;
         private void PushFrame()
         {
             if (LimitFPS)
@@ -71,20 +78,22 @@ namespace emulator
 
                 }
                 var spent = stopWatch.ElapsedTicks;
-                if (spent > timePerFrame * 2) Debugger.Break();
-                Logger.WriteLineAsync(spent.ToString());
+                if (spent > timePerFrame * 2)
+                {
+                    Debugger.Break();
+                }
+
+                Logger!.WriteLineAsync(spent.ToString());
             }
             stopWatch.Restart();
 
-            new Task(() =>
+            Lock!();
+            unsafe
             {
-                Lock();
-                unsafe
-                {
-                    Marshal.Copy(frameData, 0, Pointer, frameData.Length);
-                }
-                Unlock();
-            }).Start();
+                Marshal.Copy(frameData, 0, Pointer, frameData.Length);
+            }
+            Unlock!();
+
             position = 0;
             FrameCount++;
         }

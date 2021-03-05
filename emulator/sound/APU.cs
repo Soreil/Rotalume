@@ -94,7 +94,7 @@ namespace emulator
         }
 
         //We should have this available as a namespace wide thing somehow
-        const int baseClock = 1 << 22;
+        private const int baseClock = 1 << 22;
 
         //All of the Channel 1 fields
         private int Channel1SweepTime => ((NR10 & 0x70) >> 4) * baseClock / 128;
@@ -134,10 +134,10 @@ namespace emulator
         private bool Sound4OnRightChannel => NR51.GetBit(3);
 
         private bool MasterSoundDisable => NR52.GetBit(7);
-        private bool Sound1OnEnabled = false;
-        private bool Sound2OnEnabled = false;
-        private bool Sound3OnEnabled = false;
-        private bool Sound4OnEnabled = false;
+        private readonly bool Sound1OnEnabled = false;
+        private readonly bool Sound2OnEnabled = false;
+        private readonly bool Sound3OnEnabled = false;
+        private readonly bool Sound4OnEnabled = false;
 
         public byte NR23 { get; internal set; }
         public byte NR31 { get; internal set; }
@@ -151,7 +151,9 @@ namespace emulator
             TicksPerSample = baseClock / sampleRate;
 
             if (TicksPerSample * sampleRate != baseClock)
+            {
                 throw new Exception("We want a sample rate which is evenly divisible in to the base clock");
+            }
         }
 
         private long APUClock { get; set; }
@@ -161,7 +163,10 @@ namespace emulator
         internal void Tick()
         {
             APUClock++;
-            if (APUClock % TicksPerSample == 0) SampleCount++;
+            if (APUClock % TicksPerSample == 0)
+            {
+                SampleCount++;
+            }
         }
     }
 }

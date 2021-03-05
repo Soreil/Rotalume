@@ -4,9 +4,9 @@ namespace emulator
 {
     public class Renderer
     {
-        readonly PPU PPU;
+        private readonly PPU PPU;
         public long TimeUntilWhichToPause;
-        readonly FrameSink fs;
+        private readonly FrameSink fs;
 
         public const int TileWidth = 8;
         public const int DisplayWidth = 160;
@@ -17,7 +17,7 @@ namespace emulator
         public const int TicksPerScanline = 456;
         public const int TicksPerFrame = ScanlinesPerFrame * TicksPerScanline;
 
-        public Renderer(PPU ppu, FrameSink destination = null, long offset = 0)
+        public Renderer(PPU ppu, FrameSink? destination = null, long offset = 0)
         {
             fs = destination ?? new();
             PPU = ppu;
@@ -34,7 +34,7 @@ namespace emulator
 
         public int TotalTimeSpentInStage3 { get; private set; } = 0;
 
-        Mode? ScheduledModeChange = null;
+        private Mode? ScheduledModeChange = null;
         public void Render()
         {
             //Increment mode and set lock states
@@ -66,7 +66,9 @@ namespace emulator
 
                     //According to TCAGBD the OAM flag is also triggering on this
                     if (PPU.Enable_VBlankInterrupt || PPU.Enable_OAM_Interrupt)
+                    {
                         PPU.EnableLCDCStatusInterrupt();
+                    }
 
                     PPU.EnableVBlankInterrupt();
                     fs.Draw();
@@ -78,9 +80,14 @@ namespace emulator
             {
                 //We only want to increment the line register if we aren't on the very first line
                 if (fs.Position != 0 || PPU.Mode == Mode.VBlank)
+                {
                     PPU.LY++;
+                }
 
-                if (PPU.LY == PPU.LYC) PPU.LYCInterrupt = true;
+                if (PPU.LY == PPU.LYC)
+                {
+                    PPU.LYCInterrupt = true;
+                }
 
                 if (PPU.LY == 154)
                 {
@@ -94,7 +101,10 @@ namespace emulator
             if (PPU.Mode == Mode.HBlank)
             {
                 if (PPU.Enable_HBlankInterrupt)
+                {
                     PPU.EnableLCDCStatusInterrupt();
+                }
+
                 TimeUntilWhichToPause += 376 - TotalTimeSpentInStage3;
 
                 ScheduledModeChange = PPU.LY == 143 ? Mode.VBlank : Mode.OAMSearch;
@@ -103,7 +113,10 @@ namespace emulator
             else if (PPU.Mode == Mode.OAMSearch)
             {
                 if (PPU.Enable_OAM_Interrupt)
+                {
                     PPU.EnableLCDCStatusInterrupt();
+                }
+
                 fetcher.SpriteCount = PPU.OAM.SpritesOnLine(fetcher.SpriteAttributes, PPU.LY, PPU.SpriteHeight);
                 fetcher.SpritesFinished = 0;
                 TimeUntilWhichToPause += 80;
@@ -145,13 +158,16 @@ namespace emulator
         }
 
         //Reusable buffer
-        readonly byte[] output = new byte[DisplayWidth];
+        private readonly byte[] output = new byte[DisplayWidth];
         private void ResetLineSpecificState()
         {
             ScheduledModeChange = Mode.HBlank;
 
             for (int i = 0; i < output.Length; i++)
+            {
                 output[i] = ShadeToGray(background[i]);
+            }
+
             fs.Write(output);
             fetcher.LineFinished();
             PixelsPopped = 0;
@@ -168,7 +184,10 @@ namespace emulator
                 PixelsPopped++;
                 fetcher.scanlineX++;
                 if (PixelsPopped > (PPU.SCX & 7))
-                    background[PixelsSentToLCD++] = (Shade)pix;
+                {
+                    background[PixelsSentToLCD++] = pix;
+                }
+
                 bool windowStart = PixelsSentToLCD == PPU.WX - 7 && PPU.LY >= PPU.WY && PPU.WindowDisplayEnable;
                 if (windowStart)
                 {

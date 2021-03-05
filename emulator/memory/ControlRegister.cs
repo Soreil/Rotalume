@@ -17,8 +17,15 @@ namespace emulator
             Start = startAddress;
             Size = size;
 
-            for (int i = 0; i < size; i++) Writer[i] = (x) => { };
-            for (int i = 0; i < size; i++) Reader[i] = () => 0xff;
+            for (int i = 0; i < size; i++)
+            {
+                Writer[i] = (x) => { };
+            }
+
+            for (int i = 0; i < size; i++)
+            {
+                Reader[i] = () => 0xff;
+            }
         }
         public byte this[int at]
         {

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace emulator
 {
@@ -25,25 +24,20 @@ namespace emulator
 
     public class PixelFetcher
     {
-        const int tileWidth = 8;
-        readonly PPU p;
+        private const int tileWidth = 8;
+        private readonly PPU p;
         public readonly FIFO<FIFOPixel> BGFIFO = new();
         private readonly FIFO<FIFOSpritePixel> SpriteFIFO = new();
-        public PixelFetcher(PPU P)
-        {
-            p = P;
-        }
+        public PixelFetcher(PPU P) => p = P;
 
         public int scanlineX = 0;
-
-        byte tileIndex;
-        byte tileDataLow;
-        byte tileDataHigh;
+        private byte tileIndex;
+        private byte tileDataLow;
+        private byte tileDataHigh;
 
         public int FetcherStep = 0;
         public bool PushedEarly = false;
-
-        HashSet<int> WindowLY = new();
+        private readonly HashSet<int> WindowLY = new();
 
         //Line finished resets all state which is only relevant for a single line
         internal void LineFinished()
@@ -63,42 +57,41 @@ namespace emulator
             WindowLY.Clear();
         }
 
-
-        bool doneWithFirstSpriteFetch = false;
+        private bool doneWithFirstSpriteFetch = false;
         //Fetch runs one of the steps of the background fetcher and returns the amount of cycles used
         public int Fetch()
         {
             switch (FetcherStep)
             {
                 case 0:
-                    //We only want this to happen on the second background tile fetch
-                    if (!doneWithFirstSpriteFetch && BGFIFO.count != 0)
-                    {
-                        RenderSpriteToTheLeftOfTheVisibleArea();
-                        doneWithFirstSpriteFetch = true;
-                    }
+                //We only want this to happen on the second background tile fetch
+                if (!doneWithFirstSpriteFetch && BGFIFO.count != 0)
+                {
+                    RenderSpriteToTheLeftOfTheVisibleArea();
+                    doneWithFirstSpriteFetch = true;
+                }
 
-                    tileIndex = FetchTileID();
-                    FetcherStep = 1;
-                    return 2;
+                tileIndex = FetchTileID();
+                FetcherStep = 1;
+                return 2;
                 case 1:
-                    tileDataLow = FetchLow();
-                    FetcherStep = 2;
-                    return 2;
+                tileDataLow = FetchLow();
+                FetcherStep = 2;
+                return 2;
                 case 2:
-                    tileDataHigh = FetchHigh();
-                    PushedEarly = Pushrow();
-                    FetcherStep = 3;
-                    return 2;
+                tileDataHigh = FetchHigh();
+                PushedEarly = Pushrow();
+                FetcherStep = 3;
+                return 2;
                 case 3:
-                    Sleep();
-                    FetcherStep = PushedEarly ? 0 : 4;
-                    return 2;
+                Sleep();
+                FetcherStep = PushedEarly ? 0 : 4;
+                return 2;
                 case 4:
-                    FetcherStep = Pushrow() ? 0 : 4;
-                    return 1;
+                FetcherStep = Pushrow() ? 0 : 4;
+                return 1;
                 default:
-                    throw new Exception("Illegal fetcher state");
+                throw new Exception("Illegal fetcher state");
             }
         }
 
@@ -120,11 +113,16 @@ namespace emulator
                     var candidate = new FIFOSpritePixel((byte)paletteIndex, sprite.SpriteToBackgroundPriority, sprite.Palette);
 
                     if (shouldReplace(existingSpritePixel, candidate))
+                    {
                         SpriteFIFO.Replace(pos, candidate);
+                    }
                 }
                 return true;
             }
-            else return false;
+            else
+            {
+                return false;
+            }
         }
         private bool PushSpriteRowPartial(byte low, byte high, SpriteAttributes sprite, int count)
         {
@@ -140,17 +138,30 @@ namespace emulator
                     var candidate = new FIFOSpritePixel((byte)paletteIndex, sprite.SpriteToBackgroundPriority, sprite.Palette);
 
                     if (shouldReplace(existingSpritePixel, candidate))
+                    {
                         SpriteFIFO.Replace(pos, candidate);
+                    }
                 }
                 return true;
             }
-            else return false;
+            else
+            {
+                return false;
+            }
         }
 
         private bool shouldReplace(FIFOSpritePixel existingSpritePixel, FIFOSpritePixel candidate)
         {
-            if (candidate.color != 0 && existingSpritePixel.color == 0) return true;
-            if (candidate.priority && !existingSpritePixel.priority) return true;
+            if (candidate.color != 0 && existingSpritePixel.color == 0)
+            {
+                return true;
+            }
+
+            if (candidate.priority && !existingSpritePixel.priority)
+            {
+                return true;
+            }
+
             return false;
         }
 
@@ -160,22 +171,32 @@ namespace emulator
             if (p.OBJDisplayEnable && SpriteCount - SpritesFinished != 0 && ContainsSprite())
             {
                 //We can't start the sprite fetching yet if the background fifo is empty
-                if (BGFIFO.count == 0) throw new Exception("wrong stage");
-
+                if (BGFIFO.count == 0)
+                {
+                    throw new Exception("wrong stage");
+                }
 
                 var sprite = FirstMatchingSprite();
 
                 var pixelsVisible = sprite.X;
 
                 for (int i = SpriteFIFO.count; i < pixelsVisible; i = SpriteFIFO.count)
+                {
                     SpriteFIFO.Push(new FIFOSpritePixel(0, false, 0));
+                }
 
                 var y = p.LY - (sprite.Y - 16);
                 if (sprite.YFlipped)
+                {
                     if (p.SpriteHeight == 8)
+                    {
                         y = 7 - y;
+                    }
                     else
+                    {
                         y = 15 - y;
+                    }
+                }
 
                 var ID = p.SpriteHeight == 8 ? sprite.ID : sprite.ID & 0xfe;
                 var addr = 0x8000 + ID * 16 + (2 * y);
@@ -192,19 +213,36 @@ namespace emulator
             if (p.OBJDisplayEnable && SpriteCount - SpritesFinished != 0 && ContainsSprite())
             {
                 //We can't start the sprite fetching yet if the background fifo is empty
-                if (BGFIFO.count == 0) return Shade.Empty;
+                if (BGFIFO.count == 0)
+                {
+                    return Shade.Empty;
+                }
+
                 for (int i = SpriteFIFO.count; i < 8; i = SpriteFIFO.count)
+                {
                     SpriteFIFO.Push(new FIFOSpritePixel(0, false, 0));
+                }
 
                 var sprite = FirstMatchingSprite();
 
                 var y = p.LY - (sprite.Y - 16);
                 if (sprite.YFlipped)
+                {
                     if (p.SpriteHeight == 8)
+                    {
                         y = 7 - y;
+                    }
                     else
+                    {
                         y = 15 - y;
-                if (y < 0) throw new Exception("Illegal Y position in sprite");
+                    }
+                }
+
+                if (y < 0)
+                {
+                    throw new Exception("Illegal Y position in sprite");
+                }
+
                 var ID = p.SpriteHeight == 8 ? sprite.ID : sprite.ID & 0xfe;
                 var addr = 0x8000 + ID * 16 + (2 * y);
                 var low = p.VRAM[addr];
@@ -222,18 +260,30 @@ namespace emulator
                     //obj to bg priority bit is set to true so the sprite pixel
                     //will be behind bg color 1,2,3
                     if (sp.priority && bp.color != 0)
+                    {
                         return p.BackgroundColor(p.BGDisplayEnable ? bp.color : 0);
+                    }
                     else
                     {
                         if (sp.Palette == 0)
+                        {
                             return p.SpritePalette0(sp.color);
+                        }
                         else if (sp.Palette == 1)
+                        {
                             return p.SpritePalette1(sp.color);
-                        else throw new Exception();
+                        }
+                        else
+                        {
+                            throw new Exception();
+                        }
                     }
 
                 }
-                else return p.BackgroundColor(p.BGDisplayEnable ? bp.color : 0);
+                else
+                {
+                    return p.BackgroundColor(p.BGDisplayEnable ? bp.color : 0);
+                }
             }
             else if (BGFIFO.count > 8)
             {
@@ -242,7 +292,10 @@ namespace emulator
                 //Do we need pixels in the fifo to do this?
                 return p.BackgroundColor(p.BGDisplayEnable ? pix.color : 0);
             }
-            else return Shade.Empty;
+            else
+            {
+                return Shade.Empty;
+            }
         }
 
         private bool ContainsSprite()
@@ -250,7 +303,10 @@ namespace emulator
             var wanted = scanlineX + 8 - (p.SCX & 7);
             for (int i = SpritesFinished; i < SpriteCount; i++)
             {
-                if (SpriteAttributes[i].X == wanted) return true;
+                if (SpriteAttributes[i].X == wanted)
+                {
+                    return true;
+                }
             }
             return false;
         }
@@ -259,12 +315,16 @@ namespace emulator
             var wanted = scanlineX + 8 - (p.SCX & 7);
             for (int i = SpritesFinished; i < SpriteCount; i++)
             {
-                if (SpriteAttributes[i].X == wanted) return SpriteAttributes[i];
+                if (SpriteAttributes[i].X == wanted)
+                {
+                    return SpriteAttributes[i];
+                }
             }
             throw new Exception("Illegal call");
         }
 
         private byte FetchHigh() => p.VRAM[GetAdress() + 1];
+
         private byte FetchLow() => p.VRAM[GetAdress()];
 
         private int GetAdress()
@@ -272,8 +332,15 @@ namespace emulator
             var tiledatamap = p.BGAndWindowTileDataSelect;
 
             int at;
-            if (tiledatamap != 0x8800) at = tiledatamap + (tileIndex * 16) + ((((p.LY + p.SCY) & 0xff) & 7) * 2);
-            else at = 0x9000 + (((sbyte)tileIndex) * 16) + ((((p.LY + p.SCY) & 0xff) & 7) * 2);
+            if (tiledatamap != 0x8800)
+            {
+                at = tiledatamap + (tileIndex * 16) + ((((p.LY + p.SCY) & 0xff) & 7) * 2);
+            }
+            else
+            {
+                at = 0x9000 + (((sbyte)tileIndex) * 16) + ((((p.LY + p.SCY) & 0xff) & 7) * 2);
+            }
+
             return at;
         }
         private byte FetchTileID()
@@ -295,7 +362,9 @@ namespace emulator
 
             //TODO: handle tick cost of this condition
             if (windowStartX < 0)
+            {
                 windowStartX = 0;
+            }
 
             var tileX = inWindow ? ((scanlineX + BGFIFO.count) / 8) - (windowStartX / 8) :
                                    ((p.SCX / 8) + ((scanlineX + BGFIFO.count) / 8)) & 0x1f;
@@ -319,7 +388,10 @@ namespace emulator
                 }
                 return true;
             }
-            else return false;
+            else
+            {
+                return false;
+            }
         }
 
         private void Sleep()

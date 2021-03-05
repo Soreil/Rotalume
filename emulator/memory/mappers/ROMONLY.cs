@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace emulator
+﻿namespace emulator
 {
     internal class ROMONLY : MBC
     {
@@ -18,7 +16,10 @@ namespace emulator
             get => n >= RAMStart && n < RAMStart + RAMSize ? _RAMBanks[n - RAMStart] : gameROM[n];
             set
             {
-                if (n >= RAMStart && n < RAMStart + RAMSize) _RAMBanks[n - RAMStart] = value;
+                if (n >= RAMStart && n < RAMStart + RAMSize)
+                {
+                    _RAMBanks[n - RAMStart] = value;
+                }
             }
         }
     }

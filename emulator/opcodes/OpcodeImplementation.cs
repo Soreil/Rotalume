@@ -4,28 +4,40 @@ namespace emulator
 {
     public partial class CPU
     {
-        readonly public Registers Registers;
-        readonly public MMU Memory;
-        readonly public Action<ushort> SetPC;
-        readonly public Func<ushort> GetPC;
-        readonly public Action enableInterruptsDelayed;
-        readonly public Action enableInterrupts;
-        readonly public Action disableInterrupts;
-        readonly public Action halt;
+        public readonly Registers Registers;
+        public readonly MMU Memory;
+        public readonly Action<ushort> SetPC;
+        public readonly Func<ushort> GetPC;
+        public readonly Action enableInterruptsDelayed;
+        public readonly Action enableInterrupts;
+        public readonly Action disableInterrupts;
+        public readonly Action halt;
         public long TicksWeAreWaitingFor = 0;
         public void AddTicks(int n) => TicksWeAreWaitingFor += n;
 
         //Wrapper to allow easier handling of (HL) usage
         public byte GetRegister(Register r)
         {
-            if (r == Register.HL) return Memory.Read(Registers.HL);
-            else return Registers.Get(r);
+            if (r == Register.HL)
+            {
+                return Memory.Read(Registers.HL);
+            }
+            else
+            {
+                return Registers.Get(r);
+            }
         }
 
         public void SetRegister(Register r, byte b)
         {
-            if (r == Register.HL) Memory.Write(Registers.HL, b);
-            else Registers.Set(r, b);
+            if (r == Register.HL)
+            {
+                Memory.Write(Registers.HL, b);
+            }
+            else
+            {
+                Registers.Set(r, b);
+            }
         }
 
         private ushort Pop()
@@ -42,102 +54,90 @@ namespace emulator
             Registers.SP -= 2;
             Memory.Write(Registers.SP, s);
         }
-        public Action NOP(int duration)
-        {
-            return () => { AddTicks(duration); };
-        }
-        public Action LD_D16(WideRegister p0, int duration)
-        {
-            return () =>
-            {
-                var arg = Memory.FetchD16();
-                Registers.Set(p0, (ushort)arg);
-                AddTicks(duration);
-            };
-        }
-        public Action LD((WideRegister, Traits) p0, (Register, Traits) p1, int duration)
-        {
-            return () =>
-            {
-                var address = Registers.Get(p0.Item1);
-                var value = Registers.Get(p1.Item1);
+        public Action NOP(int duration) => () => { AddTicks(duration); };
+        public Action LD_D16(WideRegister p0, int duration) => () =>
+                                                                         {
+                                                                             var arg = Memory.FetchD16();
+                                                                             Registers.Set(p0, arg);
+                                                                             AddTicks(duration);
+                                                                         };
+        public Action LD((WideRegister, Traits) p0, (Register, Traits) p1, int duration) => () =>
+                                                                                                      {
+                                                                                                          var address = Registers.Get(p0.Item1);
+                                                                                                          var value = Registers.Get(p1.Item1);
 
-                Memory.Write(address, value);
+                                                                                                          Memory.Write(address, value);
 
-                switch (p0.Item2.Postfix)
-                {
-                    case Postfix.increment:
-                        Registers.Set(p0.Item1, (ushort)(address + 1));
-                        break;
-                    case Postfix.decrement:
-                        Registers.Set(p0.Item1, (ushort)(address - 1));
-                        break;
-                    default:
-                        break;
-                }
-                AddTicks(duration);
-            };
-        }
-        public Action INC(WideRegister p0, int duration)
-        => () =>
-        {
-            var hl = Registers.Get(p0);
-            var target = (ushort)(hl + 1);
-            Registers.Set(p0, target);
-            AddTicks(duration);
-        };
+                                                                                                          switch (p0.Item2.Postfix)
+                                                                                                          {
+                                                                                                              case Postfix.increment:
+                                                                                                              Registers.Set(p0.Item1, (ushort)(address + 1));
+                                                                                                              break;
+                                                                                                              case Postfix.decrement:
+                                                                                                              Registers.Set(p0.Item1, (ushort)(address - 1));
+                                                                                                              break;
+                                                                                                              default:
+                                                                                                              break;
+                                                                                                          }
+                                                                                                          AddTicks(duration);
+                                                                                                      };
+        public Action INC(WideRegister p0, int duration) => () =>
+                                                                              {
+                                                                                  var hl = Registers.Get(p0);
+                                                                                  var target = (ushort)(hl + 1);
+                                                                                  Registers.Set(p0, target);
+                                                                                  AddTicks(duration);
+                                                                              };
 
-        public Action INC(Register p0, int duration)
-        => () =>
-        {
-            var before = GetRegister(p0);
-            var arg = (byte)(before + 1);
+        public Action INC(Register p0, int duration) => () =>
+                                                                          {
+                                                                              var before = GetRegister(p0);
+                                                                              var arg = (byte)(before + 1);
 
-            Registers.Set(Flag.Z, arg == 0);
-            Registers.Mark(Flag.NN);
-            Registers.Set(Flag.H, before.IsHalfCarryAdd(1));
-            SetRegister(p0, (byte)(before + 1));
-            AddTicks(duration);
-        };
+                                                                              Registers.Set(Flag.Z, arg == 0);
+                                                                              Registers.Mark(Flag.NN);
+                                                                              Registers.Set(Flag.H, before.IsHalfCarryAdd(1));
+                                                                              SetRegister(p0, (byte)(before + 1));
+                                                                              AddTicks(duration);
+                                                                          };
 
-        public Action DEC(Register p0, int duration)
-        => () =>
-        {
-            var before = GetRegister(p0);
-            var arg = before == 0 ? (byte)0xff : (byte)(before - 1);
-            SetRegister(p0, arg);
+        public Action DEC(Register p0, int duration) => () =>
+                                                                          {
+                                                                              var before = GetRegister(p0);
+                                                                              var arg = before == 0 ? (byte)0xff : (byte)(before - 1);
+                                                                              SetRegister(p0, arg);
 
-            Registers.Set(Flag.Z, arg == 0);
-            Registers.Mark(Flag.N);
-            Registers.Set(Flag.H, before.IsHalfCarrySub(1));
-            AddTicks(duration);
-        };
-        public Action LD(Register p0, DMGInteger p1, int duration)
-            => () =>
-            {
-                if (p1 == DMGInteger.a16)
-                {
-                    var addr = Memory.FetchA16();
-                    var arg = Memory.Read(addr);
-                    SetRegister(p0, arg);
-                    AddTicks(duration);
-                }
-                else
-                {
-                    var arg = Memory.FetchD8();
-                    SetRegister(p0, arg);
-                    AddTicks(duration);
-                }
-            };
-        public Action RLCA(int duration)
-            => () =>
-            {
-                var A = Registers.A;
-                Registers.Mark(Flag.NZ);
-                var res = RLC(A);
-                Registers.A = (res);
-                AddTicks(duration);
-            };
+                                                                              Registers.Set(Flag.Z, arg == 0);
+                                                                              Registers.Mark(Flag.N);
+                                                                              Registers.Set(Flag.H, before.IsHalfCarrySub(1));
+                                                                              AddTicks(duration);
+                                                                          };
+
+        public Action LD(Register p0, DMGInteger p1, int duration) => () =>
+                                                                                            {
+                                                                                                if (p1 == DMGInteger.a16)
+                                                                                                {
+                                                                                                    var addr = Memory.FetchA16();
+                                                                                                    var arg = Memory.Read(addr);
+                                                                                                    SetRegister(p0, arg);
+                                                                                                    AddTicks(duration);
+                                                                                                }
+                                                                                                else
+                                                                                                {
+                                                                                                    var arg = Memory.FetchD8();
+                                                                                                    SetRegister(p0, arg);
+                                                                                                    AddTicks(duration);
+                                                                                                }
+                                                                                            };
+
+        public Action RLCA(int duration) => () =>
+                                                                  {
+                                                                      var A = Registers.A;
+                                                                      Registers.Mark(Flag.NZ);
+                                                                      var res = RLC(A);
+                                                                      Registers.A = (res);
+                                                                      AddTicks(duration);
+                                                                  };
 
         private byte RLC(byte reg)
         {
@@ -148,73 +148,68 @@ namespace emulator
             Registers.Set(Flag.C, TopBit);
 
             reg <<= 1;
-            reg += TopBit ? 1 : 0;
+            reg += (byte)(TopBit ? 1 : 0);
             return reg;
         }
 
-        public Action WriteSPToMem(int duration)
-            => () =>
-            {
-                var addr = Memory.FetchD16();
-                var arg = Registers.SP;
+        public Action WriteSPToMem(int duration) => () =>
+                                                                          {
+                                                                              var addr = Memory.FetchD16();
+                                                                              var arg = Registers.SP;
 
-                Memory.Write(addr, arg);
-                AddTicks(duration);
-            };
+                                                                              Memory.Write(addr, arg);
+                                                                              AddTicks(duration);
+                                                                          };
 
-        public Action ADD(WideRegister rhs, int duration)
-        => () =>
-            {
-                var target = Registers.Get(WideRegister.HL);
-                var arg = Registers.Get(rhs);
+        public Action ADD(WideRegister rhs, int duration) => () =>
+                                                                                   {
+                                                                                       var target = Registers.Get(WideRegister.HL);
+                                                                                       var arg = Registers.Get(rhs);
 
-                Registers.Set(Flag.N, false);
-                Registers.Set(Flag.H, target.IsHalfCarryAdd(arg));
-                Registers.Set(Flag.C, target + arg > 0xFFFF);
+                                                                                       Registers.Set(Flag.N, false);
+                                                                                       Registers.Set(Flag.H, target.IsHalfCarryAdd(arg));
+                                                                                       Registers.Set(Flag.C, target + arg > 0xFFFF);
 
-                Registers.HL += arg;
+                                                                                       Registers.HL += arg;
 
-                AddTicks(duration);
-            };
-        public Action LD(Register p0, (WideRegister, Traits) p1, int duration)
-        {
-            return () =>
-            {
-                var addr = Registers.Get(p1.Item1);
-                var value = Memory.Read(addr);
+                                                                                       AddTicks(duration);
+                                                                                   };
 
-                Registers.Set(p0, value);
-                switch (p1.Item2.Postfix)
-                {
-                    case Postfix.decrement:
-                        Registers.Set(p1.Item1, (ushort)(addr - 1));
-                        break;
-                    case Postfix.increment:
-                        Registers.Set(p1.Item1, (ushort)(addr + 1));
-                        break;
-                    default:
-                        break;
-                }
-                AddTicks(duration);
-            };
-        }
-        public Action DEC(WideRegister p0, int duration)
-        => () =>
-        {
-            var v = Registers.Get(p0);
-            ushort result = v == 0 ? 0xffff : (ushort)(v - 1);
-            Registers.Set(p0, result);
-            AddTicks(duration);
-        };
-        public Action RRCA(int duration)
-            => () =>
-            {
-                var A = Registers.A;
-                Registers.Mark(Flag.NZ);
-                A = RRC(A);
-                Registers.A = (A);
-                AddTicks(duration);
-            };
+        public Action LD(Register p0, (WideRegister, Traits) p1, int duration) => () =>
+                                                                                            {
+                                                                                                var addr = Registers.Get(p1.Item1);
+                                                                                                var value = Memory.Read(addr);
+
+                                                                                                Registers.Set(p0, value);
+                                                                                                switch (p1.Item2.Postfix)
+                                                                                                {
+                                                                                                    case Postfix.decrement:
+                                                                                                    Registers.Set(p1.Item1, (ushort)(addr - 1));
+                                                                                                    break;
+                                                                                                    case Postfix.increment:
+                                                                                                    Registers.Set(p1.Item1, (ushort)(addr + 1));
+                                                                                                    break;
+                                                                                                    default:
+                                                                                                    break;
+                                                                                                }
+                                                                                                AddTicks(duration);
+                                                                                            };
+        public Action DEC(WideRegister p0, int duration) => () =>
+                                                                              {
+                                                                                  var v = Registers.Get(p0);
+                                                                                  ushort result = (ushort)(v == 0 ? 0xffff : v - 1);
+                                                                                  Registers.Set(p0, result);
+                                                                                  AddTicks(duration);
+                                                                              };
+
+        public Action RRCA(int duration) => () =>
+                                                                  {
+                                                                      var A = Registers.A;
+                                                                      Registers.Mark(Flag.NZ);
+                                                                      A = RRC(A);
+                                                                      Registers.A = (A);
+                                                                      AddTicks(duration);
+                                                                  };
 
         private byte RRC(byte reg)
         {
@@ -225,27 +220,27 @@ namespace emulator
             Registers.Set(Flag.C, BottomBit);
 
             reg >>= 1;
-            if (BottomBit) reg += 0x80;
+            if (BottomBit)
+            {
+                reg += 0x80;
+            }
+
             return reg;
         }
 
-        public Action STOP(int duration)
-        {
-            return () =>
-            {
-                AddTicks(duration);
-                //throw new Exception("Yea we ain't stopping clean partner");
-            };
-        }
-        public Action RLA(int duration)
-            => () =>
-            {
-                var A = Registers.A;
-                Registers.Mark(Flag.NZ);
-                A = RL(A);
-                Registers.A = (A);
-                AddTicks(duration);
-            };
+        public Action STOP(int duration) => () =>
+                                                      {
+                                                          AddTicks(duration);
+                                                          //throw new Exception("Yea we ain't stopping clean partner");
+                                                      };
+        public Action RLA(int duration) => () =>
+                                                                 {
+                                                                     var A = Registers.A;
+                                                                     Registers.Mark(Flag.NZ);
+                                                                     A = RL(A);
+                                                                     Registers.A = (A);
+                                                                     AddTicks(duration);
+                                                                 };
 
         private byte RL(byte A)
         {
@@ -257,28 +252,24 @@ namespace emulator
             Registers.Set(Flag.C, TopBit);
 
             A <<= 1;
-            A += OldBit ? 1 : 0;
+            A += (byte)(OldBit ? 1 : 0);
             return A;
         }
 
-        public Action JR(int duration)
-        {
-            return () =>
-            {
-                var offset = Memory.FetchR8();
-                SetPC((ushort)(GetPC() + offset));
-                AddTicks(duration);
-            };
-        }
-        public Action RRA(int duration)
-            => () =>
-            {
-                var A = Registers.A;
-                Registers.Mark(Flag.NZ);
-                A = RR(A);
-                Registers.A = (A);
-                AddTicks(duration);
-            };
+        public Action JR(int duration) => () =>
+                                                    {
+                                                        var offset = Memory.FetchR8();
+                                                        SetPC((ushort)(GetPC() + offset));
+                                                        AddTicks(duration);
+                                                    };
+        public Action RRA(int duration) => () =>
+                                                                 {
+                                                                     var A = Registers.A;
+                                                                     Registers.Mark(Flag.NZ);
+                                                                     A = RR(A);
+                                                                     Registers.A = (A);
+                                                                     AddTicks(duration);
+                                                                 };
 
         private byte RR(byte A)
         {
@@ -290,72 +281,81 @@ namespace emulator
             Registers.Set(Flag.C, TopBit);
 
             A >>= 1;
-            if (OldBit) A += 0x80;
+            if (OldBit)
+            {
+                A += 0x80;
+            }
+
             return A;
         }
 
-        public Action JR(Flag p0, int duration, int alternativeDuration)
-        {
-            return () =>
-            {
-                var offset = Memory.FetchR8();
-                if (Registers.Get(p0))
-                {
-                    SetPC((ushort)(GetPC() + offset));
-                    AddTicks(duration);
-                }
-                else AddTicks(alternativeDuration);
-            };
-        }
-        public Action DAA(int duration)
-        {
-            return () =>
-            {
-                var wasSub = Registers.Get(Flag.N);
+        public Action JR(Flag p0, int duration, int alternativeDuration) => () =>
+                                                                                      {
+                                                                                          var offset = Memory.FetchR8();
+                                                                                          if (Registers.Get(p0))
+                                                                                          {
+                                                                                              SetPC((ushort)(GetPC() + offset));
+                                                                                              AddTicks(duration);
+                                                                                          }
+                                                                                          else
+                                                                                          {
+                                                                                              AddTicks(alternativeDuration);
+                                                                                          }
+                                                                                      };
+        public Action DAA(int duration) => () =>
+                                                     {
+                                                         var wasSub = Registers.Get(Flag.N);
 
-                if (!wasSub && Registers.A >= 0x9a) Registers.Set(Flag.C, true);
-                if (!wasSub && (Registers.A & 0x0f) >= 0x0a) Registers.Set(Flag.H, true);
+                                                         if (!wasSub && Registers.A >= 0x9a)
+                                                         {
+                                                             Registers.Set(Flag.C, true);
+                                                         }
 
-                byte adjustment = (byte)(
-                (Registers.Get(Flag.H) ? 0x06 : 0x00) |
-                (Registers.Get(Flag.C) ? 0x60 : 0x00)
-                );
+                                                         if (!wasSub && (Registers.A & 0x0f) >= 0x0a)
+                                                         {
+                                                             Registers.Set(Flag.H, true);
+                                                         }
 
-                if (wasSub) Registers.A -= adjustment;
-                else
-                {
-                    if (adjustment + Registers.A > 0xff) Registers.Set(Flag.C, true);
-                    Registers.A += adjustment;
-                }
+                                                         byte adjustment = (byte)(
+                                                         (Registers.Get(Flag.H) ? 0x06 : 0x00) |
+                                                         (Registers.Get(Flag.C) ? 0x60 : 0x00)
+                                                         );
+
+                                                         if (wasSub)
+                                                         {
+                                                             Registers.A -= adjustment;
+                                                         }
+                                                         else
+                                                         {
+                                                             if (adjustment + Registers.A > 0xff)
+                                                             {
+                                                                 Registers.Set(Flag.C, true);
+                                                             }
+
+                                                             Registers.A += adjustment;
+                                                         }
 
 
-                Registers.Set(Flag.Z, Registers.A == 0);
+                                                         Registers.Set(Flag.Z, Registers.A == 0);
 
-                Registers.Set(Flag.H, false);
-                AddTicks(duration);
-            };
-        }
-        public Action CPL(int duration)
-        {
-            return () =>
-          {
-              Registers.A = ((byte)~Registers.A);
-              Registers.Mark(Flag.N);
-              Registers.Mark(Flag.H);
-              AddTicks(duration);
-          };
-        }
+                                                         Registers.Set(Flag.H, false);
+                                                         AddTicks(duration);
+                                                     };
+        public Action CPL(int duration) => () =>
+                                                   {
+                                                       Registers.A = ((byte)~Registers.A);
+                                                       Registers.Mark(Flag.N);
+                                                       Registers.Mark(Flag.H);
+                                                       AddTicks(duration);
+                                                   };
 
-        public Action SCF(int duration)
-        {
-            return () =>
-            {
-                Registers.Mark(Flag.NN);
-                Registers.Mark(Flag.NH);
-                Registers.Mark(Flag.C);
-                AddTicks(duration);
-            };
-        }
+        public Action SCF(int duration) => () =>
+                                                     {
+                                                         Registers.Mark(Flag.NN);
+                                                         Registers.Mark(Flag.NH);
+                                                         Registers.Mark(Flag.C);
+                                                         AddTicks(duration);
+                                                     };
 
         private byte _IE = 0xe0;
         public byte InterruptFireRegister
@@ -387,7 +387,11 @@ namespace emulator
                 }
             }
 
-            if (!IME || coincidence == 0) return; //Interrupts have to be globally enabled to use them
+            if (!IME || coincidence == 0)
+            {
+                return; //Interrupts have to be globally enabled to use them
+            }
+
             for (int bit = 0; bit < 5; bit++) //Bit 0 has highest priority, we only handle one interrupt at a time
             {
                 if (coincidence.GetBit(bit))
@@ -403,73 +407,67 @@ namespace emulator
             }
         }
 
-        public Action CCF(int duration)
-        {
-            return () =>
-            {
-                Registers.Mark(Flag.NN);
-                Registers.Mark(Flag.NH);
-                Registers.Set(Flag.C, !Registers.Get(Flag.C));
-                AddTicks(duration);
-            };
-        }
+        public Action CCF(int duration) => () =>
+                                                     {
+                                                         Registers.Mark(Flag.NN);
+                                                         Registers.Mark(Flag.NH);
+                                                         Registers.Set(Flag.C, !Registers.Get(Flag.C));
+                                                         AddTicks(duration);
+                                                     };
         public Action LD((Register, Traits) p0, (Register, Traits) p1, int duration)
         {
             if (p0.Item2.Immediate && p1.Item2.Immediate)
+            {
                 return () =>
                 {
                     var arg = Registers.Get(p1.Item1);
                     Registers.Set(p0.Item1, arg);
                     AddTicks(duration);
                 };
+            }
             else
             {
                 if (p0.Item2.Immediate)
+                {
                     return () =>
                     {
                         Registers.Set(p0.Item1, Memory.Read((ushort)(0xFF00 + Registers.Get(p1.Item1))));
                         AddTicks(duration);
                     };
+                }
                 else
+                {
                     return () =>
                     {
                         Memory.Write((ushort)(0xFF00 + Registers.Get(p0.Item1)), Registers.Get(p1.Item1));
                         AddTicks(duration);
                     };
+                }
             }
         }
-        public Action HALT(int duration)
-        {
-            return () =>
-            {
-                AddTicks(duration);
-                halt();
-            };
-        }
-        public Action ADD(Register p0, Register p1, int duration)
-        {
-            return () =>
-            {
+        public Action HALT(int duration) => () =>
+                                                      {
+                                                          AddTicks(duration);
+                                                          halt();
+                                                      };
+        public Action ADD(Register p0, Register p1, int duration) => () =>
+                                                                               {
 
-                var lhs = Registers.Get(p0);
-                var rhs = Registers.Get(p1);
+                                                                                   var lhs = Registers.Get(p0);
+                                                                                   var rhs = Registers.Get(p1);
 
-                Registers.Set(p0, ADD(lhs, rhs));
-                AddTicks(duration);
-            };
-        }
-        public Action ADD(Register p0, WideRegister p1, int duration)
-        {
-            return () =>
-            {
+                                                                                   Registers.Set(p0, ADD(lhs, rhs));
+                                                                                   AddTicks(duration);
+                                                                               };
+        public Action ADD(Register p0, WideRegister p1, int duration) => () =>
+                                                                                   {
 
-                var lhs = Registers.Get(p0);
-                var rhs = Memory.Read(Registers.Get(p1));
+                                                                                       var lhs = Registers.Get(p0);
+                                                                                       var rhs = Memory.Read(Registers.Get(p1));
 
-                Registers.Set(p0, ADD(lhs, rhs));
-                AddTicks(duration);
-            };
-        }
+                                                                                       Registers.Set(p0, ADD(lhs, rhs));
+                                                                                       AddTicks(duration);
+                                                                                   };
 
         private byte ADD(byte lhs, byte rhs)
         {
@@ -482,48 +480,36 @@ namespace emulator
             return (byte)sum;
         }
 
-        public Action ADC(Register p1, int duration)
-        {
-            return () =>
-            {
-                var rhs = Registers.Get(p1);
+        public Action ADC(Register p1, int duration) => () =>
+                                                                  {
+                                                                      var rhs = Registers.Get(p1);
 
-                ADC(rhs);
-                AddTicks(duration);
-            };
-        }
-        public Action ADC(WideRegister p1, int duration)
-        {
-            return () =>
-            {
-                var rhs = Memory.Read(Registers.Get(p1));
+                                                                      ADC(rhs);
+                                                                      AddTicks(duration);
+                                                                  };
+        public Action ADC(WideRegister p1, int duration) => () =>
+                                                                      {
+                                                                          var rhs = Memory.Read(Registers.Get(p1));
 
-                ADC(rhs);
-                AddTicks(duration);
-            };
-        }
-        public Action SUB(Register p0, int duration)
-        {
-            return () =>
-            {
-                var lhs = Registers.A;
-                var rhs = Registers.Get(p0);
+                                                                          ADC(rhs);
+                                                                          AddTicks(duration);
+                                                                      };
+        public Action SUB(Register p0, int duration) => () =>
+                                                                  {
+                                                                      var lhs = Registers.A;
+                                                                      var rhs = Registers.Get(p0);
 
-                Registers.A = SUB(lhs, rhs);
-                AddTicks(duration);
-            };
-        }
-        public Action SUB(WideRegister p0, int duration)
-        {
-            return () =>
-            {
-                var lhs = Registers.A;
-                var rhs = Memory.Read(Registers.Get(p0));
+                                                                      Registers.A = SUB(lhs, rhs);
+                                                                      AddTicks(duration);
+                                                                  };
+        public Action SUB(WideRegister p0, int duration) => () =>
+                                                                      {
+                                                                          var lhs = Registers.A;
+                                                                          var rhs = Memory.Read(Registers.Get(p0));
 
-                Registers.A = SUB(lhs, rhs);
-                AddTicks(duration);
-            };
-        }
+                                                                          Registers.A = SUB(lhs, rhs);
+                                                                          AddTicks(duration);
+                                                                      };
 
         private byte SUB(byte lhs, byte rhs)
         {
@@ -536,26 +522,20 @@ namespace emulator
             return sum;
         }
 
-        public Action SBC(Register p1, int duration)
-        {
-            return () =>
-            {
-                var rhs = Registers.Get(p1);
+        public Action SBC(Register p1, int duration) => () =>
+                                                                  {
+                                                                      var rhs = Registers.Get(p1);
 
-                SBC(rhs);
-                AddTicks(duration);
-            };
-        }
-        public Action SBC(WideRegister p1, int duration)
-        {
-            return () =>
-            {
-                var rhs = Memory.Read(Registers.Get(p1));
+                                                                      SBC(rhs);
+                                                                      AddTicks(duration);
+                                                                  };
+        public Action SBC(WideRegister p1, int duration) => () =>
+                                                                      {
+                                                                          var rhs = Memory.Read(Registers.Get(p1));
 
-                SBC(rhs);
-                AddTicks(duration);
-            };
-        }
+                                                                          SBC(rhs);
+                                                                          AddTicks(duration);
+                                                                      };
 
         private void ADC(byte rhs)
         {
@@ -581,28 +561,22 @@ namespace emulator
             Registers.Set(Flag.C, (lhs - rhs - carry) > 0xff || (lhs - rhs - carry) < 0);
         }
 
-        public Action AND(Register p0, int duration)
-        {
-            return () =>
-            {
-                var lhs = Registers.A;
-                var rhs = Registers.Get(p0);
+        public Action AND(Register p0, int duration) => () =>
+                                                                  {
+                                                                      var lhs = Registers.A;
+                                                                      var rhs = Registers.Get(p0);
 
-                AND(lhs, rhs);
-                AddTicks(duration);
-            };
-        }
-        public Action AND(WideRegister p0, int duration)
-        {
-            return () =>
-            {
-                var lhs = Registers.A;
-                var rhs = Memory.Read(Registers.Get(p0));
+                                                                      AND(lhs, rhs);
+                                                                      AddTicks(duration);
+                                                                  };
+        public Action AND(WideRegister p0, int duration) => () =>
+                                                                      {
+                                                                          var lhs = Registers.A;
+                                                                          var rhs = Memory.Read(Registers.Get(p0));
 
-                AND(lhs, rhs);
-                AddTicks(duration);
-            };
-        }
+                                                                          AND(lhs, rhs);
+                                                                          AddTicks(duration);
+                                                                      };
         private void AND(byte lhs, byte rhs)
         {
             var result = lhs & rhs;
@@ -614,28 +588,22 @@ namespace emulator
             Registers.A = ((byte)result);
         }
 
-        public Action XOR(Register p0, int duration)
-        {
-            return () =>
-            {
-                var lhs = Registers.A;
-                var rhs = Registers.Get(p0);
+        public Action XOR(Register p0, int duration) => () =>
+                                                                  {
+                                                                      var lhs = Registers.A;
+                                                                      var rhs = Registers.Get(p0);
 
-                XOR(lhs, rhs);
-                AddTicks(duration);
-            };
-        }
-        public Action XOR(WideRegister p0, int duration)
-        {
-            return () =>
-            {
-                var lhs = Registers.A;
-                var rhs = Memory.Read(Registers.Get(p0));
+                                                                      XOR(lhs, rhs);
+                                                                      AddTicks(duration);
+                                                                  };
+        public Action XOR(WideRegister p0, int duration) => () =>
+                                                                      {
+                                                                          var lhs = Registers.A;
+                                                                          var rhs = Memory.Read(Registers.Get(p0));
 
-                XOR(lhs, rhs);
-                AddTicks(duration);
-            };
-        }
+                                                                          XOR(lhs, rhs);
+                                                                          AddTicks(duration);
+                                                                      };
 
         private void XOR(byte lhs, byte rhs)
         {
@@ -648,26 +616,20 @@ namespace emulator
             Registers.A = ((byte)result);
         }
 
-        public Action OR(Register p0, int duration)
-        {
-            return () =>
-            {
-                var lhs = Registers.A;
-                var rhs = Registers.Get(p0);
-                OR(lhs, rhs);
-                AddTicks(duration);
-            };
-        }
-        public Action OR(WideRegister p0, int duration)
-        {
-            return () =>
-            {
-                var lhs = Registers.A;
-                var rhs = Memory.Read(Registers.Get(p0));
-                OR(lhs, rhs);
-                AddTicks(duration);
-            };
-        }
+        public Action OR(Register p0, int duration) => () =>
+                                                                 {
+                                                                     var lhs = Registers.A;
+                                                                     var rhs = Registers.Get(p0);
+                                                                     OR(lhs, rhs);
+                                                                     AddTicks(duration);
+                                                                 };
+        public Action OR(WideRegister p0, int duration) => () =>
+                                                                     {
+                                                                         var lhs = Registers.A;
+                                                                         var rhs = Memory.Read(Registers.Get(p0));
+                                                                         OR(lhs, rhs);
+                                                                         AddTicks(duration);
+                                                                     };
 
         private void OR(byte lhs, byte rhs)
         {
@@ -680,139 +642,109 @@ namespace emulator
 
             Registers.A = ((byte)result);
         }
-        public Action CP(Register p0, int duration)
-        {
-            return () =>
-                {
-                    var lhs = Registers.A;
-                    var rhs = Registers.Get(p0);
-                    CP(lhs, rhs);
-                    AddTicks(duration);
-                };
-        }
-        public Action CP(WideRegister p0, int duration)
-        {
-            return () =>
-            {
-                var lhs = Registers.A;
-                var rhs = Memory.Read(Registers.Get(p0));
-                CP(lhs, rhs);
-                AddTicks(duration);
-            };
-        }
-        public Action RET(Flag p0, int duration, int alternativeDuration)
-        {
-            return () =>
-            {
-                if (Registers.Get(p0))
-                {
-                    SetPC(Pop());
-                    AddTicks(duration);
-                }
-                else AddTicks(alternativeDuration);
-            };
-        }
-        public Action POP(WideRegister p0, int duration)
-        {
-            return () =>
-            {
-                var SP = Registers.SP;
-                Registers.Set(p0, Memory.ReadWide(SP));
-                Registers.SP = (ushort)(SP + 2);
+        public Action CP(Register p0, int duration) => () =>
+                                                                     {
+                                                                         var lhs = Registers.A;
+                                                                         var rhs = Registers.Get(p0);
+                                                                         CP(lhs, rhs);
+                                                                         AddTicks(duration);
+                                                                     };
+        public Action CP(WideRegister p0, int duration) => () =>
+                                                                     {
+                                                                         var lhs = Registers.A;
+                                                                         var rhs = Memory.Read(Registers.Get(p0));
+                                                                         CP(lhs, rhs);
+                                                                         AddTicks(duration);
+                                                                     };
+        public Action RET(Flag p0, int duration, int alternativeDuration) => () =>
+                                                                                       {
+                                                                                           if (Registers.Get(p0))
+                                                                                           {
+                                                                                               SetPC(Pop());
+                                                                                               AddTicks(duration);
+                                                                                           }
+                                                                                           else
+                                                                                           {
+                                                                                               AddTicks(alternativeDuration);
+                                                                                           }
+                                                                                       };
+        public Action POP(WideRegister p0, int duration) => () =>
+                                                                      {
+                                                                          var SP = Registers.SP;
+                                                                          Registers.Set(p0, Memory.ReadWide(SP));
+                                                                          Registers.SP = (ushort)(SP + 2);
 
-                AddTicks(duration);
-            };
-        }
-        public Action JP_A16(Flag p0, int duration, int alternativeDuration)
-        {
-            return () =>
-            {
-                var addr = Memory.FetchA16();
-                if (Registers.Get(p0))
-                {
-                    SetPC(addr);
-                    AddTicks(duration);
-                }
-                else AddTicks(alternativeDuration);
-            };
-        }
-        public Action JP(DMGInteger p0, int duration)
-        {
-            return () =>
-            {
-                var addr = Memory.FetchA16();
-                SetPC(addr);
-                AddTicks(duration);
-            };
-        }
-        public Action CALL_A16(Flag p0, int duration, int alternativeDuration)
-        {
-            return () =>
-            {
-                var addr = Memory.FetchA16();
-                if (Registers.Get(p0))
-                {
-                    Call(duration, addr);
-                }
-                else AddTicks(alternativeDuration);
-            };
-        }
-        public Action PUSH(WideRegister p0, int duration)
-        {
-            return () =>
-            {
-                Push(Registers.Get(p0));
-                AddTicks(duration);
-            };
-        }
-        public Action ADD_A_d8(int duration)
-        {
-            return () =>
-            {
-                Registers.Mark(Flag.NN);
+                                                                          AddTicks(duration);
+                                                                      };
+        public Action JP_A16(Flag p0, int duration, int alternativeDuration) => () =>
+                                                                                          {
+                                                                                              var addr = Memory.FetchA16();
+                                                                                              if (Registers.Get(p0))
+                                                                                              {
+                                                                                                  SetPC(addr);
+                                                                                                  AddTicks(duration);
+                                                                                              }
+                                                                                              else
+                                                                                              {
+                                                                                                  AddTicks(alternativeDuration);
+                                                                                              }
+                                                                                          };
+        public Action JP(DMGInteger p0, int duration) => () =>
+                                                                   {
+                                                                       var addr = Memory.FetchA16();
+                                                                       SetPC(addr);
+                                                                       AddTicks(duration);
+                                                                   };
+        public Action CALL_A16(Flag p0, int duration, int alternativeDuration) => () =>
+                                                                                            {
+                                                                                                var addr = Memory.FetchA16();
+                                                                                                if (Registers.Get(p0))
+                                                                                                {
+                                                                                                    Call(duration, addr);
+                                                                                                }
+                                                                                                else
+                                                                                                {
+                                                                                                    AddTicks(alternativeDuration);
+                                                                                                }
+                                                                                            };
+        public Action PUSH(WideRegister p0, int duration) => () =>
+                                                                       {
+                                                                           Push(Registers.Get(p0));
+                                                                           AddTicks(duration);
+                                                                       };
+        public Action ADD_A_d8(int duration) => () =>
+                                                          {
+                                                              Registers.Mark(Flag.NN);
 
-                var lhs = Registers.Get(Register.A);
-                var rhs = Memory.FetchD8();
+                                                              var lhs = Registers.Get(Register.A);
+                                                              var rhs = Memory.FetchD8();
 
-                Registers.Set(Register.A, ADD(lhs, rhs));
-                AddTicks(duration);
-            };
-        }
-        public Action RST(byte p0, int duration)
-        {
-            return () =>
-            {
-                Call(duration, p0);
-            };
-        }
-        public Action RET(int duration)
-        {
-            return () =>
-            {
-                var addr = Pop();
-                SetPC(addr);
-                AddTicks(duration);
-            };
-        }
+                                                              Registers.Set(Register.A, ADD(lhs, rhs));
+                                                              AddTicks(duration);
+                                                          };
+        public Action RST(byte p0, int duration) => () =>
+                                                              {
+                                                                  Call(duration, p0);
+                                                              };
+        public Action RET(int duration) => () =>
+                                                     {
+                                                         var addr = Pop();
+                                                         SetPC(addr);
+                                                         AddTicks(duration);
+                                                     };
         //Not an actual instruction
-        public Action PREFIX(int duration)
-        {
-            return () =>
-            {
-                AddTicks(duration);
-                throw new Exception("unimplementable");
-            };
-        }
+        public Action PREFIX(int duration) => () =>
+                                                        {
+                                                            AddTicks(duration);
+                                                            throw new Exception("unimplementable");
+                                                        };
 
         //TODO: Check where this naming error originated
-        public Action CALL_a16(int duration)
-        {
-            return () =>
-            {
-                var addr = Memory.FetchD16();
-                Call(duration, addr);
-            };
-        }
+        public Action CALL_a16(int duration) => () =>
+                                                          {
+                                                              var addr = Memory.FetchD16();
+                                                              Call(duration, addr);
+                                                          };
 
         public void Call(int duration, ushort addr)
         {
@@ -821,289 +753,210 @@ namespace emulator
             AddTicks(duration);
         }
 
-        public Action ADC(int duration)
-        {
-            return () =>
-            {
-                var rhs = Memory.FetchD8();
+        public Action ADC(int duration) => () =>
+                                                     {
+                                                         var rhs = Memory.FetchD8();
 
-                ADC(rhs);
-                AddTicks(duration);
-            };
-        }
+                                                         ADC(rhs);
+                                                         AddTicks(duration);
+                                                     };
 
-        public Action ILLEGAL_D3(int duration)
-        {
-            return () =>
-            {
-                AddTicks(duration);
-                throw new Exception("illegal");
-            };
-        }
+        public Action ILLEGAL_D3(int duration) => () =>
+                                                            {
+                                                                AddTicks(duration);
+                                                                throw new Exception("illegal");
+                                                            };
 
-        public Action SUB(int duration)
-        {
-            return () =>
-            {
-                Registers.Mark(Flag.N);
+        public Action SUB(int duration) => () =>
+                                                     {
+                                                         Registers.Mark(Flag.N);
 
-                var lhs = Registers.A;
-                var rhs = Memory.FetchD8();
+                                                         var lhs = Registers.A;
+                                                         var rhs = Memory.FetchD8();
 
-                Registers.A = SUB(lhs, rhs);
-                AddTicks(duration);
-            };
-        }
-        public Action RETI(int duration)
-        {
-            return () =>
-            {
-                SetPC(Pop());
-                enableInterrupts();
-                AddTicks(duration);
-            };
-        }
-        public Action ILLEGAL_DB(int duration)
-        {
-            return () =>
-            {
-                AddTicks(duration);
-                throw new Exception("illegal");
-            };
-        }
-        public Action ILLEGAL_DD(int duration)
-        {
-            return () =>
-            {
-                AddTicks(duration);
-                throw new Exception("illegal");
-            };
-        }
-        public Action SBC(int duration)
-        {
-            return () =>
-            {
-                var rhs = Memory.FetchD8();
+                                                         Registers.A = SUB(lhs, rhs);
+                                                         AddTicks(duration);
+                                                     };
+        public Action RETI(int duration) => () =>
+                                                      {
+                                                          SetPC(Pop());
+                                                          enableInterrupts();
+                                                          AddTicks(duration);
+                                                      };
+        public Action ILLEGAL_DB(int duration) => () =>
+                                                            {
+                                                                AddTicks(duration);
+                                                                throw new Exception("illegal");
+                                                            };
+        public Action ILLEGAL_DD(int duration) => () =>
+                                                            {
+                                                                AddTicks(duration);
+                                                                throw new Exception("illegal");
+                                                            };
+        public Action SBC(int duration) => () =>
+                                                     {
+                                                         var rhs = Memory.FetchD8();
 
-                SBC(rhs);
-                AddTicks(duration);
-            };
-        }
-        public Action LDH(int duration)
-        {
-            return () =>
-            {
-                Memory.Write(DMGInteger.a8, Registers.Get(Register.A));
-                AddTicks(duration);
-            };
-        }
-        public Action ILLEGAL_E3(int duration)
-        {
-            return () =>
-            {
-                AddTicks(duration);
-                throw new Exception("illegal");
-            };
-        }
-        public Action ILLEGAL_E4(int duration)
-        {
-            return () =>
-            {
-                AddTicks(duration);
-                throw new Exception("illegal");
-            };
-        }
-        public Action AND(int duration)
-        {
-            return () =>
-            {
-                var andWith = Memory.FetchD8();
+                                                         SBC(rhs);
+                                                         AddTicks(duration);
+                                                     };
+        public Action LDH(int duration) => () =>
+                                                     {
+                                                         Memory.Write(DMGInteger.a8, Registers.Get(Register.A));
+                                                         AddTicks(duration);
+                                                     };
+        public Action ILLEGAL_E3(int duration) => () =>
+                                                            {
+                                                                AddTicks(duration);
+                                                                throw new Exception("illegal");
+                                                            };
+        public Action ILLEGAL_E4(int duration) => () =>
+                                                            {
+                                                                AddTicks(duration);
+                                                                throw new Exception("illegal");
+                                                            };
+        public Action AND(int duration) => () =>
+                                                     {
+                                                         var andWith = Memory.FetchD8();
 
-                AND(Registers.A, andWith);
-                AddTicks(duration);
-            };
-        }
+                                                         AND(Registers.A, andWith);
+                                                         AddTicks(duration);
+                                                     };
 
-        public Action ADD_SP_R8(int duration)
-        {
-            return () =>
-            {
-                var offset = Memory.FetchR8();
-                var sum = Registers.SP + offset;
+        public Action ADD_SP_R8(int duration) => () =>
+                                                           {
+                                                               var offset = Memory.FetchR8();
+                                                               var sum = Registers.SP + offset;
 
-                Registers.Mark(Flag.NZ);
-                Registers.Mark(Flag.NN);
+                                                               Registers.Mark(Flag.NZ);
+                                                               Registers.Mark(Flag.NN);
 
-                if (offset >= 0)
-                {
-                    Registers.Set(Flag.C, ((Registers.SP & 0xff) + offset) > 0xff);
-                    Registers.Set(Flag.H, ((Registers.SP & 0x0f) + (offset & 0xf)) > 0xf);
-                }
-                else
-                {
-                    if (offset == -128) throw new Exception("Can't abs this");
+                                                               if (offset >= 0)
+                                                               {
+                                                                   Registers.Set(Flag.C, ((Registers.SP & 0xff) + offset) > 0xff);
+                                                                   Registers.Set(Flag.H, ((Registers.SP & 0x0f) + (offset & 0xf)) > 0xf);
+                                                               }
+                                                               else
+                                                               {
+                                                                   if (offset == -128)
+                                                                   {
+                                                                       throw new Exception("Can't abs this");
+                                                                   }
 
-                    Registers.Set(Flag.C, (sum & 0xff) <= (Registers.SP & 0xff));
-                    Registers.Set(Flag.H, (sum & 0xf) <= (Registers.SP & 0xf));
-                }
+                                                                   Registers.Set(Flag.C, (sum & 0xff) <= (Registers.SP & 0xff));
+                                                                   Registers.Set(Flag.H, (sum & 0xf) <= (Registers.SP & 0xf));
+                                                               }
 
-                Registers.SP = (ushort)sum;
-                AddTicks(duration);
-            };
-        }
-        public Action JP(int duration)
-        {
-            return () =>
-            {
-                SetPC(Registers.HL);
-                AddTicks(duration);
-            };
-        }
-        public Action LD_AT_a16_A(int duration)
-        {
-            return () =>
-            {
-                Memory.Write(DMGInteger.a16, Registers.A);
-                AddTicks(duration);
-            };
-        }
-        public Action ILLEGAL_EB(int duration)
-        {
-            return () =>
-            {
-                AddTicks(duration);
-                throw new Exception("illegal");
-            };
-        }
-        public Action ILLEGAL_EC(int duration)
-        {
-            return () =>
-            {
-                AddTicks(duration);
-                throw new Exception("illegal");
-            };
-        }
-        public Action ILLEGAL_ED(int duration)
-        {
-            return () =>
-            {
-                AddTicks(duration);
-                throw new Exception("illegal");
-            };
-        }
-        public Action XOR(int duration)
-        {
-            return () =>
-            {
-                XOR(Registers.A, Memory.FetchD8());
-                AddTicks(duration);
-            };
-        }
-        public Action LDH_A_AT_a8(int duration)
-        {
-            return () =>
-            {
-                Registers.A = Memory.FetchA8();
-                AddTicks(duration);
-            };
-        }
-        public Action DI(int duration)
-        {
-            return () =>
-            {
-                disableInterrupts();
-                AddTicks(duration);
-            };
-        }
-        public Action ILLEGAL_F4(int duration)
-        {
-            return () =>
-            {
-                AddTicks(duration);
-                throw new Exception("illegal");
-            };
-        }
-        public Action OR(int duration)
-        {
-            return () =>
-            {
-                OR(Registers.A, Memory.FetchD8());
-                AddTicks(duration);
-            };
-        }
+                                                               Registers.SP = (ushort)sum;
+                                                               AddTicks(duration);
+                                                           };
+        public Action JP(int duration) => () =>
+                                                    {
+                                                        SetPC(Registers.HL);
+                                                        AddTicks(duration);
+                                                    };
+        public Action LD_AT_a16_A(int duration) => () =>
+                                                             {
+                                                                 Memory.Write(DMGInteger.a16, Registers.A);
+                                                                 AddTicks(duration);
+                                                             };
+        public Action ILLEGAL_EB(int duration) => () =>
+                                                            {
+                                                                AddTicks(duration);
+                                                                throw new Exception("illegal");
+                                                            };
+        public Action ILLEGAL_EC(int duration) => () =>
+                                                            {
+                                                                AddTicks(duration);
+                                                                throw new Exception("illegal");
+                                                            };
+        public Action ILLEGAL_ED(int duration) => () =>
+                                                            {
+                                                                AddTicks(duration);
+                                                                throw new Exception("illegal");
+                                                            };
+        public Action XOR(int duration) => () =>
+                                                     {
+                                                         XOR(Registers.A, Memory.FetchD8());
+                                                         AddTicks(duration);
+                                                     };
+        public Action LDH_A_AT_a8(int duration) => () =>
+                                                             {
+                                                                 Registers.A = Memory.FetchA8();
+                                                                 AddTicks(duration);
+                                                             };
+        public Action DI(int duration) => () =>
+                                                    {
+                                                        disableInterrupts();
+                                                        AddTicks(duration);
+                                                    };
+        public Action ILLEGAL_F4(int duration) => () =>
+                                                            {
+                                                                AddTicks(duration);
+                                                                throw new Exception("illegal");
+                                                            };
+        public Action OR(int duration) => () =>
+                                                    {
+                                                        OR(Registers.A, Memory.FetchD8());
+                                                        AddTicks(duration);
+                                                    };
 
-        public Action LD_HL_SP_i8(int duration)
-        {
-            return () =>
-            {
-                var offset = Memory.FetchR8();
-                var sum = Registers.SP + offset;
-                Registers.Set(Flag.Z, false);
-                Registers.Set(Flag.N, false);
+        public Action LD_HL_SP_i8(int duration) => () =>
+                                                             {
+                                                                 var offset = Memory.FetchR8();
+                                                                 var sum = Registers.SP + offset;
+                                                                 Registers.Set(Flag.Z, false);
+                                                                 Registers.Set(Flag.N, false);
 
-                if (offset >= 0)
-                {
-                    Registers.Set(Flag.C, ((Registers.SP & 0xff) + offset) > 0xff);
-                    Registers.Set(Flag.H, ((Registers.SP & 0x0f) + (offset & 0xf)) > 0xf);
-                }
-                else
-                {
-                    //TODO: why is this here?
-                    if (offset == -128) throw new Exception("Can't abs this");
+                                                                 if (offset >= 0)
+                                                                 {
+                                                                     Registers.Set(Flag.C, ((Registers.SP & 0xff) + offset) > 0xff);
+                                                                     Registers.Set(Flag.H, ((Registers.SP & 0x0f) + (offset & 0xf)) > 0xf);
+                                                                 }
+                                                                 else
+                                                                 {
+                                                                     //TODO: why is this here?
+                                                                     if (offset == -128)
+                                                                     {
+                                                                         throw new Exception("Can't abs this");
+                                                                     }
 
-                    Registers.Set(Flag.C, (sum & 0xff) <= (Registers.SP & 0xff));
-                    Registers.Set(Flag.H, (sum & 0xf) <= (Registers.SP & 0xf));
-                }
+                                                                     Registers.Set(Flag.C, (sum & 0xff) <= (Registers.SP & 0xff));
+                                                                     Registers.Set(Flag.H, (sum & 0xf) <= (Registers.SP & 0xf));
+                                                                 }
 
-                Registers.Set(WideRegister.HL, (ushort)sum);
+                                                                 Registers.Set(WideRegister.HL, (ushort)sum);
 
-                AddTicks(duration);
-            };
-        }
+                                                                 AddTicks(duration);
+                                                             };
 
-        public Action LD_SP_HL(int duration)
-        {
-            return () =>
-            {
-                Registers.SP = Registers.HL;
-                AddTicks(duration);
-            };
-
-        }
-        public Action EI(int duration)
-        {
-            return () =>
-            {
-                enableInterruptsDelayed();
-                AddTicks(duration);
-            };
-        }
-        public Action ILLEGAL_FC(int duration)
-        {
-            return () =>
-            {
-                AddTicks(duration);
-                throw new Exception("illegal");
-            };
-        }
-        public Action ILLEGAL_FD(int duration)
-        {
-            return () =>
-            {
-                AddTicks(duration);
-                throw new Exception("illegal");
-            };
-        }
-        public Action CP(int duration)
-        {
-            return () =>
-            {
-                var lhs = Registers.A;
-                var rhs = Memory.FetchD8();
-                CP(lhs, rhs);
-                AddTicks(duration);
-            };
-        }
+        public Action LD_SP_HL(int duration) => () =>
+                                                          {
+                                                              Registers.SP = Registers.HL;
+                                                              AddTicks(duration);
+                                                          };
+        public Action EI(int duration) => () =>
+                                                    {
+                                                        enableInterruptsDelayed();
+                                                        AddTicks(duration);
+                                                    };
+        public Action ILLEGAL_FC(int duration) => () =>
+                                                            {
+                                                                AddTicks(duration);
+                                                                throw new Exception("illegal");
+                                                            };
+        public Action ILLEGAL_FD(int duration) => () =>
+                                                            {
+                                                                AddTicks(duration);
+                                                                throw new Exception("illegal");
+                                                            };
+        public Action CP(int duration) => () =>
+                                                    {
+                                                        var lhs = Registers.A;
+                                                        var rhs = Memory.FetchD8();
+                                                        CP(lhs, rhs);
+                                                        AddTicks(duration);
+                                                    };
         private void CP(byte lhs, byte rhs)
         {
             Registers.Mark(Flag.N);
@@ -1113,69 +966,54 @@ namespace emulator
             Registers.Set(Flag.H, lhs.IsHalfCarrySub(rhs));
         }
 
-        public Action RLC(Register p0, int duration)
-        {
-            return () =>
-            {
-                var reg = GetRegister(p0);
+        public Action RLC(Register p0, int duration) => () =>
+                                                                  {
+                                                                      var reg = GetRegister(p0);
 
-                var res = RLC(reg);
-                Registers.Set(Flag.Z, res == 0);
+                                                                      var res = RLC(reg);
+                                                                      Registers.Set(Flag.Z, res == 0);
 
-                SetRegister(p0, res);
-                AddTicks(duration);
-            };
-        }
-        public Action RRC(Register p0, int duration)
-        {
-            return () =>
-            {
-                var reg = GetRegister(p0);
+                                                                      SetRegister(p0, res);
+                                                                      AddTicks(duration);
+                                                                  };
+        public Action RRC(Register p0, int duration) => () =>
+                                                                  {
+                                                                      var reg = GetRegister(p0);
 
-                var res = RRC(reg);
-                Registers.Set(Flag.Z, res == 0);
+                                                                      var res = RRC(reg);
+                                                                      Registers.Set(Flag.Z, res == 0);
 
-                SetRegister(p0, res);
-                AddTicks(duration);
-            };
-        }
-        public Action RL(Register p0, int duration)
-        {
-            return () =>
-            {
-                var reg = GetRegister(p0);
+                                                                      SetRegister(p0, res);
+                                                                      AddTicks(duration);
+                                                                  };
+        public Action RL(Register p0, int duration) => () =>
+                                                                 {
+                                                                     var reg = GetRegister(p0);
 
-                var res = RL(reg);
-                Registers.Set(Flag.Z, res == 0);
+                                                                     var res = RL(reg);
+                                                                     Registers.Set(Flag.Z, res == 0);
 
-                SetRegister(p0, res);
-                AddTicks(duration);
-            };
-        }
-        public Action RR(Register p0, int duration)
-        {
-            return () =>
-            {
-                var reg = GetRegister(p0);
+                                                                     SetRegister(p0, res);
+                                                                     AddTicks(duration);
+                                                                 };
+        public Action RR(Register p0, int duration) => () =>
+                                                                 {
+                                                                     var reg = GetRegister(p0);
 
-                var res = RR(reg);
-                Registers.Set(Flag.Z, res == 0);
+                                                                     var res = RR(reg);
+                                                                     Registers.Set(Flag.Z, res == 0);
 
-                SetRegister(p0, res);
-                AddTicks(duration);
-            };
-        }
-        public Action SLA(Register p0, int duration)
-        {
-            return () =>
-            {
-                var reg = GetRegister(p0);
-                var res = SLA(reg);
+                                                                     SetRegister(p0, res);
+                                                                     AddTicks(duration);
+                                                                 };
+        public Action SLA(Register p0, int duration) => () =>
+                                                                  {
+                                                                      var reg = GetRegister(p0);
+                                                                      var res = SLA(reg);
 
-                SetRegister(p0, res);
-                AddTicks(duration);
-            };
-        }
+                                                                      SetRegister(p0, res);
+                                                                      AddTicks(duration);
+                                                                  };
         private byte SLA(byte reg)
         {
             var TopBit = reg.GetBit(7);
@@ -1188,35 +1026,29 @@ namespace emulator
             Registers.Set(Flag.Z, reg == 0);
             return reg;
         }
-        public Action SRA(Register p0, int duration)
-        {
-            return () =>
-            {
-                var lhs = GetRegister(p0);
-                byte bit7 = (byte)(lhs & 0x80);
+        public Action SRA(Register p0, int duration) => () =>
+                                                                  {
+                                                                      var lhs = GetRegister(p0);
+                                                                      byte bit7 = (byte)(lhs & 0x80);
 
-                Registers.Mark(Flag.NN);
-                Registers.Mark(Flag.NH);
-                Registers.Set(Flag.C, lhs.GetBit(0));
+                                                                      Registers.Mark(Flag.NN);
+                                                                      Registers.Mark(Flag.NH);
+                                                                      Registers.Set(Flag.C, lhs.GetBit(0));
 
-                lhs = (byte)((lhs >> 1) | bit7);
-                SetRegister(p0, lhs);
+                                                                      lhs = (byte)((lhs >> 1) | bit7);
+                                                                      SetRegister(p0, lhs);
 
-                Registers.Set(Flag.Z, lhs == 0);
+                                                                      Registers.Set(Flag.Z, lhs == 0);
 
-                AddTicks(duration);
-            };
-        }
-        public Action SWAP(Register p0, int duration)
-        {
-            return () =>
-            {
-                var reg = GetRegister(p0);
-                var res = SWAP(reg);
-                SetRegister(p0, res);
-                AddTicks(duration);
-            };
-        }
+                                                                      AddTicks(duration);
+                                                                  };
+        public Action SWAP(Register p0, int duration) => () =>
+                                                                   {
+                                                                       var reg = GetRegister(p0);
+                                                                       var res = SWAP(reg);
+                                                                       SetRegister(p0, res);
+                                                                       AddTicks(duration);
+                                                                   };
 
         private byte SWAP(byte b)
         {
@@ -1231,30 +1063,24 @@ namespace emulator
             return (byte)swapped;
         }
 
-        public Action SRL(Register p0, int duration)
-        {
-            return () =>
-            {
-                var lhs = GetRegister(p0);
+        public Action SRL(Register p0, int duration) => () =>
+                                                                  {
+                                                                      var lhs = GetRegister(p0);
 
-                Registers.Mark(Flag.NN);
-                Registers.Mark(Flag.NH);
-                Registers.Set(Flag.C, lhs.GetBit(0));
-                Registers.Set(Flag.Z, lhs >> 1 == 0);
+                                                                      Registers.Mark(Flag.NN);
+                                                                      Registers.Mark(Flag.NH);
+                                                                      Registers.Set(Flag.C, lhs.GetBit(0));
+                                                                      Registers.Set(Flag.Z, lhs >> 1 == 0);
 
-                SetRegister(p0, (byte)(lhs >> 1));
-                AddTicks(duration);
-            };
-        }
-        public Action BIT(byte p0, Register p1, int duration)
-        {
-            return () =>
-            {
-                var reg = GetRegister(p1);
-                BIT(p0, reg);
-                AddTicks(duration);
-            };
-        }
+                                                                      SetRegister(p0, (byte)(lhs >> 1));
+                                                                      AddTicks(duration);
+                                                                  };
+        public Action BIT(byte p0, Register p1, int duration) => () =>
+                                                                           {
+                                                                               var reg = GetRegister(p1);
+                                                                               BIT(p0, reg);
+                                                                               AddTicks(duration);
+                                                                           };
 
         private void BIT(int at, byte b)
         {
@@ -1263,27 +1089,22 @@ namespace emulator
             Registers.Mark(Flag.H);
         }
         private static byte RES(int at, byte b) => b.ClearBit(at);
+
         private static byte SET(int at, byte b) => b.SetBit(at);
 
-        public Action RES(byte p0, Register p1, int duration)
-        {
-            return () =>
-            {
-                var reg = GetRegister(p1);
-                var res = RES(p0, reg);
-                SetRegister(p1, res);
-                AddTicks(duration);
-            };
-        }
-        public Action SET(byte p0, Register p1, int duration)
-        {
-            return () =>
-            {
-                var reg = GetRegister(p1);
-                var res = SET(p0, reg);
-                SetRegister(p1, res);
-                AddTicks(duration);
-            };
-        }
+        public Action RES(byte p0, Register p1, int duration) => () =>
+                                                                           {
+                                                                               var reg = GetRegister(p1);
+                                                                               var res = RES(p0, reg);
+                                                                               SetRegister(p1, res);
+                                                                               AddTicks(duration);
+                                                                           };
+        public Action SET(byte p0, Register p1, int duration) => () =>
+                                                                           {
+                                                                               var reg = GetRegister(p1);
+                                                                               var res = SET(p0, reg);
+                                                                               SetRegister(p1, res);
+                                                                               AddTicks(duration);
+                                                                           };
     }
 }

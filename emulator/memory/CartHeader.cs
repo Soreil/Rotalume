@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace emulator
 {
@@ -73,7 +72,10 @@ namespace emulator
         {
             char[] t = new char[16];
             for (int i = 0; i < 16; i++)
+            {
                 t[i] = gameROM[0x134 + i] == '\0' ? ' ' : (char)gameROM[0x134 + i];
+            }
+
             Title = new string(t);
 
             Type = (CartType)gameROM[0x147];

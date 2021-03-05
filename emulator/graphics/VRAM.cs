@@ -11,7 +11,10 @@
         public VRAM()
         {
             mem = new byte[Size];
-            for (int i = 0; i < Size; i++) mem[i] = 0x00;
+            for (int i = 0; i < Size; i++)
+            {
+                mem[i] = 0x00;
+            }
         }
         public byte this[int n]
         {

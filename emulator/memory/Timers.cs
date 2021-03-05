@@ -6,14 +6,18 @@ namespace emulator
     public class Timers
     {
         public ushort InternalCounter;
-
-        readonly Action EnableTimerInterrupt;
+        private readonly Action EnableTimerInterrupt;
         public Timers(Action enableTimerInterrupt) => EnableTimerInterrupt = enableTimerInterrupt;
 
         public void Tick()
         {
             if (DelayTicks > 0)
-                if (DelayTicks-- == 0) Tima = TMA;
+            {
+                if (DelayTicks-- == 0)
+                {
+                    Tima = TMA;
+                }
+            }
 
             if (TimerEnabled)
             {
@@ -21,9 +25,14 @@ namespace emulator
                 InternalCounter++;
                 var overflow = (InternalCounter & (1 << TACBitSelected)) == 0;
                 if (before == false && overflow == true)
+                {
                     IncrementTIMA();
+                }
             }
-            else InternalCounter++;
+            else
+            {
+                InternalCounter++;
+            }
         }
 
         public byte DIV
@@ -32,7 +41,11 @@ namespace emulator
             set
             {
                 var overflow = (InternalCounter & (1 << TACBitSelected)) != 0;
-                if (overflow) IncrementTIMA();
+                if (overflow)
+                {
+                    IncrementTIMA();
+                }
+
                 InternalCounter = 0;
             }
         }
@@ -44,22 +57,34 @@ namespace emulator
             set
             {
                 bool glitch;
-                if (!TimerEnabled) glitch = false;
+                if (!TimerEnabled)
+                {
+                    glitch = false;
+                }
                 else
                 {
                     if (!value.GetBit(2))
+                    {
                         glitch = (InternalCounter & (1 << (TACBitSelected))) != 0;
+                    }
                     else
+                    {
                         glitch = ((InternalCounter & (1 << (TACBitSelected))) != 0) &&
                                  ((InternalCounter & (1 << (BitPosition(value)))) == 0);
+                    }
                 }
-                if (glitch) IncrementTIMA();
+                if (glitch)
+                {
+                    IncrementTIMA();
+                }
+
                 _tac = (byte)((value & 0x7) | 0xf8);
             }
         }
 
-        bool TimerEnabled => TAC.GetBit(2);
-        int TACBitSelected => BitPosition(TAC);
+        private bool TimerEnabled => TAC.GetBit(2);
+
+        private int TACBitSelected => BitPosition(TAC);
 
         private static byte BitPosition(byte b) => (b & 0x03) switch
         {
@@ -89,9 +114,8 @@ namespace emulator
         }
 
         //When TIMA overflows it should delay writing the value for 4 cycles
-        const int DelayDuration = 4;
-
-        int DelayTicks = 0;
+        private const int DelayDuration = 4;
+        private int DelayTicks = 0;
         private void IncrementTIMA()
         {
             if (Tima == 0xff)

@@ -5,8 +5,11 @@ namespace emulator
     public class Registers
     {
         private static byte Low(ushort s) => (byte)(s & 0x00ff);
+
         private static byte High(ushort s) => (byte)((s & 0xff00) >> 8);
+
         private static ushort SetLow(ushort s, byte b) => (ushort)((s & 0xff00) | b);
+
         private static ushort SetHigh(ushort s, byte b) => (ushort)((s & 0x00ff) | (b << 8));
 
         private ushort _AF;
@@ -113,29 +116,29 @@ namespace emulator
             switch (f)
             {
                 case Flag.Z:
-                    FReg = FReg.SetBit(7);
-                    break;
+                FReg = FReg.SetBit(7);
+                break;
                 case Flag.NZ:
-                    FReg = FReg.ClearBit(7);
-                    break;
+                FReg = FReg.ClearBit(7);
+                break;
                 case Flag.N:
-                    FReg = FReg.SetBit(6);
-                    break;
+                FReg = FReg.SetBit(6);
+                break;
                 case Flag.NN:
-                    FReg = FReg.ClearBit(6);
-                    break;
+                FReg = FReg.ClearBit(6);
+                break;
                 case Flag.H:
-                    FReg = FReg.SetBit(5);
-                    break;
+                FReg = FReg.SetBit(5);
+                break;
                 case Flag.NH:
-                    FReg = FReg.ClearBit(5);
-                    break;
+                FReg = FReg.ClearBit(5);
+                break;
                 case Flag.C:
-                    FReg = FReg.SetBit(4);
-                    break;
+                FReg = FReg.SetBit(4);
+                break;
                 case Flag.NC:
-                    FReg = FReg.ClearBit(4);
-                    break;
+                FReg = FReg.ClearBit(4);
+                break;
             }
             F = FReg;
         }

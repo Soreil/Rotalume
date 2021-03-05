@@ -1,4 +1,8 @@
-﻿using System;
+﻿using emulator;
+
+using NAudio.Wave;
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -8,10 +12,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-using emulator;
-
-using NAudio.Wave;
-
 namespace GUI
 {
     /// <summary>
@@ -19,16 +19,15 @@ namespace GUI
     /// </summary>
     public partial class MainWindow : Window
     {
-        delegate void UpdateImageCb();
-        delegate byte UpdateJoypadCb(byte b);
-        delegate void UpdateLabelCb();
-        public MainWindow()
-        {
-            InitializeComponent();
-        }
+        private delegate void UpdateImageCb();
 
-        volatile bool paused = false;
-        volatile bool CancelRequested = false;
+        private delegate byte UpdateJoypadCb(byte b);
+
+        private delegate void UpdateLabelCb();
+        public MainWindow() => InitializeComponent();
+
+        private volatile bool paused = false;
+        private volatile bool CancelRequested = false;
         private void Gameboy(string path, bool bootromEnabled, bool fpsLimit)
         {
             var joyCb = new UpdateJoypadCb(UpdateJoypadPresses);
@@ -53,22 +52,23 @@ namespace GUI
                 return res;
             }
 
-            byte[] bootrom = bootromEnabled ? Core.LoadBootROM() : null;
+            byte[]? bootrom = bootromEnabled ? Core.LoadBootROM() : null;
 
             Dispatcher.Invoke(bmpCb,
         System.Windows.Threading.DispatcherPriority.Render);
 
             void LockCB() => Dispatcher.Invoke(lockCb,
-        System.Windows.Threading.DispatcherPriority.Render);
+System.Windows.Threading.DispatcherPriority.Render);
+
             void UnlockCB() => Dispatcher.Invoke(unlockCb,
-        System.Windows.Threading.DispatcherPriority.Render);
+System.Windows.Threading.DispatcherPriority.Render);
 
             var gameboy = new Core(
                 File.ReadAllBytes(path),
           bootrom,
           updateJoyPad,
           keyBoardInterruptFired,
-          new FrameSink(LockCB, UnlockCB, Dispatcher.Invoke(() => bmp.BackBuffer), fpsLimit)
+          new FrameSink(LockCB, UnlockCB, Dispatcher.Invoke(() => bmp!.BackBuffer), fpsLimit)
           );
 
             new Task(() =>
@@ -114,25 +114,28 @@ namespace GUI
                     while (!CancelRequested)
                     {
                         gameboy.Step();
-                        if (paused) while (paused) Thread.Sleep(10);
+                        if (paused)
+                        {
+                            while (paused)
+                            {
+                                Thread.Sleep(10);
+                            }
+                        }
                     }
                 }
             }).Start();
         }
 
-        private void Lock()
-        {
-            bmp.Lock();
-        }
+        private void Lock() => bmp!.Lock();
         private void Unlock()
         {
-            bmp.AddDirtyRect(new Int32Rect(0, 0, (int)bmp.Width, (int)bmp.Height));
-            bmp.Unlock();
+            bmp!.AddDirtyRect(new Int32Rect(0, 0, (int)bmp.Width, (int)bmp.Height));
+            bmp!.Unlock();
             AddFrameTimeToQueue();
             UpdateLabel();
         }
 
-        WriteableBitmap bmp;
+        private WriteableBitmap? bmp;
 
         private void SetBitmapBacking()
         {
@@ -140,8 +143,8 @@ namespace GUI
             RenderOptions.SetBitmapScalingMode(Display, BitmapScalingMode.NearestNeighbor);
         }
 
-        int frameNumber = 0;
-        readonly DateTime[] FrameTimes = new DateTime[16];
+        private int frameNumber = 0;
+        private readonly DateTime[] FrameTimes = new DateTime[16];
 
         private double AverageFPS()
         {
@@ -154,34 +157,37 @@ namespace GUI
             return TimeSpan.FromSeconds(1) / (deltas / (FrameTimes.Length - 1));
         }
         private TimeSpan Delta(int i, int j) => FrameTimes[i] - FrameTimes[j];
-        private void UpdateLabel()
-        {
-            FPS.Content = string.Format("Frame:{0} FrameTime:{1} FPS:{2}",
+
+        private void UpdateLabel() => FPS.Content = string.Format("Frame:{0} FrameTime:{1} FPS:{2}",
                 frameNumber,
                 Delta(15, 14).TotalMilliseconds,
                 AverageFPS());
-        }
 
         private void AddFrameTimeToQueue()
         {
             frameNumber++;
             var time = DateTime.Now;
             for (int i = 1; i < FrameTimes.Length; i++)
+            {
                 FrameTimes[i - 1] = FrameTimes[i];
+            }
+
             FrameTimes[^1] = time;
         }
 
-        Task GameThread;
+        private Task? GameThread;
         private void LoadROM(object sender, DragEventArgs e)
         {
             // If the DataObject contains string data, extract it.
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
-                string[] fileNames = e.Data.GetData(DataFormats.FileDrop, true) as string[];
+                string[]? fileNames = e.Data.GetData(DataFormats.FileDrop, true) as string[];
 
                 //Check that the file isn't a folder
-                if (fileNames.Length == 1 && File.Exists(fileNames[0]))
+                if (fileNames is not null && fileNames.Length == 1 && File.Exists(fileNames[0]))
+                {
                     SpinUpNewGameboy(fileNames[0]);
+                }
             }
 
         }
@@ -190,15 +196,18 @@ namespace GUI
 
             var ofd = new Microsoft.Win32.OpenFileDialog() { DefaultExt = ".gb", Filter = "ROM Files (*.gb;*.gbc)|*.gb;*.gbc" };
             var result = ofd.ShowDialog();
-            if (result == false) return;
+            if (result == false)
+            {
+                return;
+            }
 
             SpinUpNewGameboy(ofd.FileName);
         }
 
         private void SpinUpNewGameboy(string fn)
         {
-            bool br = (bool)bootromCheckbox.IsChecked;
-            bool fps = (bool)fpsLimit.IsChecked;
+            bool br = (bool)bootromCheckbox.IsChecked!;
+            bool fps = (bool)fpsLimit.IsChecked!;
             if (GameThread is not null)
             {
                 CancelRequested = true;
@@ -218,17 +227,17 @@ namespace GUI
             GameThread.Start();
         }
 
-        volatile bool keyboardInterruptReady = false;
-
-        readonly Dictionary<Key, bool> Pressed = new Dictionary<Key, bool> {
-            {Key.A,    false},
-            {Key.S,    false},
-            {Key.D,    false},
-            {Key.F,    false},
-            {Key.Right,false},
-            {Key.Left, false},
-            {Key.Up,   false},
-            {Key.Down, false},
+        private volatile bool keyboardInterruptReady = false;
+        private readonly Dictionary<Key, bool> Pressed = new()
+        {
+            { Key.A, false },
+            { Key.S, false },
+            { Key.D, false },
+            { Key.F, false },
+            { Key.Right, false },
+            { Key.Left, false },
+            { Key.Up, false },
+            { Key.Down, false },
         };
 
         private byte UpdateJoypadPresses(byte Flags)
@@ -237,21 +246,54 @@ namespace GUI
             var selectArrows = !Flags.GetBit(4);
 
             byte joypad = 0xf;
-            if (!selectButtons && !selectArrows) return (byte)((joypad & 0xf) | 0xc0);
+            if (!selectButtons && !selectArrows)
+            {
+                return (byte)((joypad & 0xf) | 0xc0);
+            }
 
             if (selectArrows)
             {
-                if (Pressed[Key.Right]) joypad = joypad.SetBit(0, false);
-                if (Pressed[Key.Left]) joypad = joypad.SetBit(1, false);
-                if (Pressed[Key.Up]) joypad = joypad.SetBit(2, false);
-                if (Pressed[Key.Down]) joypad = joypad.SetBit(3, false);
+                if (Pressed[Key.Right])
+                {
+                    joypad = joypad.SetBit(0, false);
+                }
+
+                if (Pressed[Key.Left])
+                {
+                    joypad = joypad.SetBit(1, false);
+                }
+
+                if (Pressed[Key.Up])
+                {
+                    joypad = joypad.SetBit(2, false);
+                }
+
+                if (Pressed[Key.Down])
+                {
+                    joypad = joypad.SetBit(3, false);
+                }
             }
             if (selectButtons)
             {
-                if (Pressed[Key.A]) joypad = joypad.SetBit(0, false);
-                if (Pressed[Key.S]) joypad = joypad.SetBit(1, false);
-                if (Pressed[Key.D]) joypad = joypad.SetBit(2, false);
-                if (Pressed[Key.F]) joypad = joypad.SetBit(3, false);
+                if (Pressed[Key.A])
+                {
+                    joypad = joypad.SetBit(0, false);
+                }
+
+                if (Pressed[Key.S])
+                {
+                    joypad = joypad.SetBit(1, false);
+                }
+
+                if (Pressed[Key.D])
+                {
+                    joypad = joypad.SetBit(2, false);
+                }
+
+                if (Pressed[Key.F])
+                {
+                    joypad = joypad.SetBit(3, false);
+                }
             }
 
             return (byte)((joypad & 0xf) | 0xc0);
@@ -263,16 +305,23 @@ namespace GUI
             {
                 Pressed[e.Key] = true;
                 if (GameThread is not null)
+                {
                     keyboardInterruptReady = true;
+                }
             }
-            if (e.Key == Key.P) paused = !paused;
+            if (e.Key == Key.P)
+            {
+                paused = !paused;
+            }
         }
 
         //There is a bouncing issue here which might be fixed by a delay
         private void Window_KeyUp(object sender, KeyEventArgs e)
         {
             if (Pressed.ContainsKey(e.Key))
+            {
                 Pressed[e.Key] = false;
+            }
         }
     }
 }

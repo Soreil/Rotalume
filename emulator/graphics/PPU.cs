@@ -31,12 +31,14 @@ namespace emulator
             {
                 _LCDC = value;
                 if (ScreenJustTurnedOn)
+                {
                     Renderer = new Renderer(this, Writer, Clock()); //We want a new renderer so all the internal state resets including clocking
+                }
                 else if ((!LCDEnable) && Renderer is not null)
                 {
                     Writer.Draw(); //If there is a partially written frame when we delete the old renderer the next
-                                        //instantiation of renderer will overwrite the end of the buffer because LY starts at 0 despite
-                                        //there already being data written to the output buffer
+                                   //instantiation of renderer will overwrite the end of the buffer because LY starts at 0 despite
+                                   //there already being data written to the output buffer
 
                     Renderer = null; //We want to destroy the old renderer so it can't keep running after requested to turn off
                     LY = 0;
@@ -70,7 +72,11 @@ namespace emulator
             get => _ly;
             set
             {
-                if (value > 154) throw new Exception("monkas");
+                if (value > 154)
+                {
+                    throw new Exception("monkas");
+                }
+
                 _ly = value;
             }
         }
@@ -93,6 +99,7 @@ namespace emulator
             3 => (Shade)((OBP0 & 0xC0) >> 6),
             _ => throw new IndexOutOfRangeException()
         };
+
         public Shade SpritePalette1(int n) => n switch
         {
             0 => throw new Exception("Unused"),
@@ -112,10 +119,10 @@ namespace emulator
         };
 
         public bool LCDEnable => LCDC.GetBit(7);
-        public ushort TileMapDisplaySelect => LCDC.GetBit(6) ? 0x9C00 : 0x9800;
+        public ushort TileMapDisplaySelect => (ushort)(LCDC.GetBit(6) ? 0x9C00 : 0x9800);
         public bool WindowDisplayEnable => LCDC.GetBit(5);
-        public ushort BGAndWindowTileDataSelect => LCDC.GetBit(4) ? 0x8000 : 0x8800;
-        public ushort BGTileMapDisplaySelect => LCDC.GetBit(3) ? 0x9c00 : 0x9800;
+        public ushort BGAndWindowTileDataSelect => (ushort)(LCDC.GetBit(4) ? 0x8000 : 0x8800);
+        public ushort BGTileMapDisplaySelect => (ushort)(LCDC.GetBit(3) ? 0x9c00 : 0x9800);
         public int SpriteHeight => LCDC.GetBit(2) ? 16 : 8;
         public bool OBJDisplayEnable => LCDC.GetBit(1);
         public bool BGDisplayEnable => LCDC.GetBit(0);
@@ -133,16 +140,21 @@ namespace emulator
             {
                 STAT = STAT.SetBit(2, value);
                 if (Enable_LYC_Compare && value)
+                {
                     EnableLCDCStatusInterrupt();
+                }
             }
         }
 
-        public Renderer Renderer;
+        public Renderer? Renderer;
         public void Do()
         {
             if (Renderer is not null)
             {
-                while (Clock() >= Renderer.TimeUntilWhichToPause) Renderer.Render();
+                while (Clock() >= Renderer.TimeUntilWhichToPause)
+                {
+                    Renderer.Render();
+                }
             }
         }
 
