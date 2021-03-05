@@ -1,5 +1,7 @@
 ﻿using emulator;
 
+using Hardware;
+
 using NAudio.Wave;
 
 using System;
@@ -14,29 +16,24 @@ using System.Windows.Media.Imaging;
 
 namespace GUI
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
+
     public partial class MainWindow : Window
     {
         private delegate void UpdateImageCb();
 
-        private delegate byte UpdateJoypadCb(byte b);
-
-        private delegate void UpdateLabelCb();
         public MainWindow()
         {
             InitializeComponent();
 
             Pressed = new(2, 8);
-            Pressed.TryAdd(Key.A, false);
-            Pressed.TryAdd(Key.S, false);
-            Pressed.TryAdd(Key.D, false);
-            Pressed.TryAdd(Key.F, false);
-            Pressed.TryAdd(Key.Right, false);
-            Pressed.TryAdd(Key.Left, false);
-            Pressed.TryAdd(Key.Up, false);
-            Pressed.TryAdd(Key.Down, false);
+            Pressed.TryAdd(JoypadKey.A, false);
+            Pressed.TryAdd(JoypadKey.B, false);
+            Pressed.TryAdd(JoypadKey.Select, false);
+            Pressed.TryAdd(JoypadKey.Start, false);
+            Pressed.TryAdd(JoypadKey.Right, false);
+            Pressed.TryAdd(JoypadKey.Left, false);
+            Pressed.TryAdd(JoypadKey.Up, false);
+            Pressed.TryAdd(JoypadKey.Down, false);
         }
 
         private volatile bool paused = false;
@@ -230,19 +227,19 @@ namespace GUI
         }
 
         private volatile bool keyboardInterruptReady = false;
-        private readonly ConcurrentDictionary<Key, bool> Pressed;
+        private readonly ConcurrentDictionary<JoypadKey, bool> Pressed;
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
-            if (Pressed.ContainsKey(e.Key))
+            if (Abstraction.Map(e.Key) is JoypadKey p)
             {
-                Pressed[e.Key] = true;
+                Pressed[p] = true;
                 if (GameThread is not null)
                 {
                     keyboardInterruptReady = true;
                 }
             }
-            if (e.Key == Key.P)
+            else if (e.Key == Key.P)
             {
                 paused = !paused;
             }
@@ -251,9 +248,9 @@ namespace GUI
         //There is a bouncing issue here which might be fixed by a delay
         private void Window_KeyUp(object sender, KeyEventArgs e)
         {
-            if (Pressed.ContainsKey(e.Key))
+            if (Abstraction.Map(e.Key) is JoypadKey p)
             {
-                Pressed[e.Key] = false;
+                Pressed[p] = false;
             }
         }
     }

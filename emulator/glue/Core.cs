@@ -1,10 +1,11 @@
-﻿using NAudio.Wave;
+﻿using Hardware;
+
+using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Windows.Input;
 
 namespace emulator
 {
@@ -44,7 +45,7 @@ namespace emulator
             return buffer;
         }
 
-        private readonly ConcurrentDictionary<Key, bool> Pressed;
+        private readonly ConcurrentDictionary<JoypadKey, bool> Pressed;
         private byte UpdateJoypadPresses(byte Flags)
         {
             var selectButtons = !Flags.GetBit(5);
@@ -58,44 +59,44 @@ namespace emulator
 
             if (selectArrows)
             {
-                if (Pressed[Key.Right])
+                if (Pressed[JoypadKey.Right])
                 {
                     joypad = joypad.SetBit(0, false);
                 }
 
-                if (Pressed[Key.Left])
+                if (Pressed[JoypadKey.Left])
                 {
                     joypad = joypad.SetBit(1, false);
                 }
 
-                if (Pressed[Key.Up])
+                if (Pressed[JoypadKey.Up])
                 {
                     joypad = joypad.SetBit(2, false);
                 }
 
-                if (Pressed[Key.Down])
+                if (Pressed[JoypadKey.Down])
                 {
                     joypad = joypad.SetBit(3, false);
                 }
             }
             if (selectButtons)
             {
-                if (Pressed[Key.A])
+                if (Pressed[JoypadKey.A])
                 {
                     joypad = joypad.SetBit(0, false);
                 }
 
-                if (Pressed[Key.S])
+                if (Pressed[JoypadKey.B])
                 {
                     joypad = joypad.SetBit(1, false);
                 }
 
-                if (Pressed[Key.D])
+                if (Pressed[JoypadKey.Select])
                 {
                     joypad = joypad.SetBit(2, false);
                 }
 
-                if (Pressed[Key.F])
+                if (Pressed[JoypadKey.Start])
                 {
                     joypad = joypad.SetBit(3, false);
                 }
@@ -104,7 +105,7 @@ namespace emulator
             return (byte)((joypad & 0xf) | 0xc0);
         }
 
-        public Core(byte[] gameROM, byte[]? bootROM, ConcurrentDictionary<Key, bool> Pressed, Func<bool> getKeyboardInterrupt, FrameSink frameSink)
+        public Core(byte[] gameROM, byte[]? bootROM, ConcurrentDictionary<JoypadKey, bool> Pressed, Func<bool> getKeyboardInterrupt, FrameSink frameSink)
         {
             this.Pressed = Pressed;
 
