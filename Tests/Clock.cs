@@ -1,14 +1,14 @@
-﻿using System.Collections.Generic;
-
-using emulator;
+﻿using emulator;
 
 using NUnit.Framework;
 
+using System.Collections.Generic;
+
 namespace Tests
 {
-    class Clock
+    internal class Clock
     {
-        readonly List<Unprefixed> illegalOps = new List<Unprefixed> {Unprefixed.PREFIX,Unprefixed.ILLEGAL_D3,Unprefixed.ILLEGAL_DB,Unprefixed.ILLEGAL_DD,Unprefixed.ILLEGAL_E3,
+        private readonly List<Unprefixed> illegalOps = new List<Unprefixed> {Unprefixed.PREFIX,Unprefixed.ILLEGAL_D3,Unprefixed.ILLEGAL_DB,Unprefixed.ILLEGAL_DD,Unprefixed.ILLEGAL_E3,
             Unprefixed.ILLEGAL_E4,Unprefixed.ILLEGAL_EB, Unprefixed.ILLEGAL_EC,Unprefixed.ILLEGAL_ED,Unprefixed.ILLEGAL_F4,Unprefixed.ILLEGAL_FC,Unprefixed.ILLEGAL_FD,
         Unprefixed.STOP,Unprefixed.HALT};
 
@@ -22,7 +22,7 @@ namespace Tests
         [Test]
         public void All_Opcodes_Take_time()
         {
-            for (int i = 0; i < 0x100; i++)
+            for (var i = 0; i < 0x100; i++)
             {
                 if (illegalOps.Contains((Unprefixed)i)) continue; //FIXME: when we implement halt and stop there should be some time taken here most likely.
 
@@ -31,7 +31,7 @@ namespace Tests
                 p.DoNextOP();
                 Assert.AreNotEqual(0, p.Clock);
             }
-            for (int i = 0; i < 0x100; i++)
+            for (var i = 0; i < 0x100; i++)
             {
                 var p = new Core(new List<byte> { 0xCB, (byte)i, 0, 0 });
 

@@ -1,14 +1,14 @@
-﻿using System.IO;
-using System.Linq;
-
-using emulator;
+﻿using emulator;
 
 using NUnit.Framework;
+
+using System.IO;
+using System.Linq;
 
 
 namespace Tests
 {
-    class Boot
+    internal class Boot
     {
         public static byte[] LoadGameROM() => File.ReadAllBytes(@"..\..\..\rom\Tetris (World) (Rev A).gb");
 

@@ -4,13 +4,12 @@ namespace emulator
 {
     public class PPU
     {
-        public readonly Func<long> Clock;
+        private long Clock;
         public readonly Action EnableVBlankInterrupt;
         public readonly Action EnableLCDCStatusInterrupt;
-        public readonly FrameSink Writer;
-        public PPU(Func<long> clock, Action enableVBlankInterrupt, Action enableLCDCStatusInterrupt, FrameSink frameSink)
+        private readonly FrameSink Writer;
+        public PPU(Action enableVBlankInterrupt, Action enableLCDCStatusInterrupt, FrameSink frameSink)
         {
-            Clock = clock;
             OAM = new OAM();
             VRAM = new VRAM();
             EnableVBlankInterrupt = enableVBlankInterrupt;
@@ -32,7 +31,7 @@ namespace emulator
                 _LCDC = value;
                 if (ScreenJustTurnedOn)
                 {
-                    Renderer = new Renderer(this, Writer, Clock()); //We want a new renderer so all the internal state resets including clocking
+                    Renderer = new Renderer(this, Writer, Clock); //We want a new renderer so all the internal state resets including clocking
                 }
                 else if ((!LCDEnable) && Renderer is not null)
                 {
@@ -64,22 +63,9 @@ namespace emulator
 
         public byte SCY; //FF42
         public byte SCX; //FF43
+                         //FF44
 
-        private byte _ly;
-        //FF44
-        public byte LY
-        {
-            get => _ly;
-            set
-            {
-                if (value > 154)
-                {
-                    throw new Exception("monkas");
-                }
-
-                _ly = value;
-            }
-        }
+        public byte LY { get; set; }
         public byte LYC; //FF45
 
         public byte DMA; //FF46
@@ -93,7 +79,6 @@ namespace emulator
 
         public Shade SpritePalette0(int n) => n switch
         {
-            0 => throw new Exception("Unused"),
             1 => (Shade)((OBP0 & 0xC) >> 2),
             2 => (Shade)((OBP0 & 0x30) >> 4),
             3 => (Shade)((OBP0 & 0xC0) >> 6),
@@ -102,7 +87,6 @@ namespace emulator
 
         public Shade SpritePalette1(int n) => n switch
         {
-            0 => throw new Exception("Unused"),
             1 => (Shade)((OBP1 & 0xC) >> 2),
             2 => (Shade)((OBP1 & 0x30) >> 4),
             3 => (Shade)((OBP1 & 0xC0) >> 6),
@@ -147,11 +131,12 @@ namespace emulator
         }
 
         public Renderer? Renderer;
-        public void Do()
+        public void Tick()
         {
+            Clock++;
             if (Renderer is not null)
             {
-                while (Clock() >= Renderer.TimeUntilWhichToPause)
+                while (Clock >= Renderer.TimeUntilWhichToPause)
                 {
                     Renderer.Render();
                 }

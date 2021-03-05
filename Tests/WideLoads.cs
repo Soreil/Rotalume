@@ -1,9 +1,8 @@
-using System;
-using System.Collections.Generic;
-
 using emulator;
 
 using NUnit.Framework;
+
+using System.Collections.Generic;
 
 namespace Tests
 {

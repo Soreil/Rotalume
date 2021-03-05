@@ -6,7 +6,7 @@
 
         public const int Start = 0x8000;
         public const int Size = 0x2000;
-        public bool Locked = false;
+        public bool Locked;
 
         public VRAM()
         {

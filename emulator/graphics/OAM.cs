@@ -14,14 +14,14 @@ namespace emulator
 
         public byte this[int n]
         {
-            get => ((byte)((n - Start) % 4) switch
+            get => (byte)((n - Start) % 4) switch
             {
                 0 => sprites[(n - Start) / 4].Y,
                 1 => sprites[(n - Start) / 4].X,
                 2 => sprites[(n - Start) / 4].ID,
                 3 => sprites[(n - Start) / 4].Flags,
                 _ => throw new NotImplementedException(),
-            });
+            };
             set
             {
                 var old = sprites[(n - Start) / 4];
@@ -60,10 +60,8 @@ line < s.Y - 16 + spriteHeight;
                     }
                 }
             }
-            Order(buffer, spriteCount);
+            Array.Sort(buffer, 0, spriteCount);
             return spriteCount;
         }
-
-        private static void Order(SpriteAttributes[] buffer, int count) => Array.Sort(buffer, 0, count);
     }
 }

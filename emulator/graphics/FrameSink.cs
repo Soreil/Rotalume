@@ -8,7 +8,7 @@ namespace emulator
     public class FrameSink
     {
         private readonly byte[] frameData;
-        private int position;
+
         public int FrameCount { get; private set; }
 
         private readonly Action? Lock;
@@ -22,7 +22,7 @@ namespace emulator
         public FrameSink(Action Lock, Action Unlock, IntPtr Pointer, bool LimitFPS)
         {
             frameData = new byte[144 * 160];
-            position = 0;
+            Position = 0;
             FrameCount = 0;
 
             this.Lock = Lock;
@@ -38,14 +38,9 @@ namespace emulator
             if (LimitFPS)
             {
                 var logPath = "frametimes.txt";
-                if (!File.Exists(logPath))
-                {
-                    Logger = File.CreateText(logPath);
-                }
-                else
-                {
-                    Logger = new StreamWriter(File.Open(logPath, FileMode.Truncate, FileAccess.Write, FileShare.Read));
-                }
+                Logger = !File.Exists(logPath)
+                    ? File.CreateText(logPath)
+                    : new StreamWriter(File.Open(logPath, FileMode.Truncate, FileAccess.Write, FileShare.Read));
             }
             else
             {
@@ -55,11 +50,11 @@ namespace emulator
             stopWatch.Start();
         }
 
-        public int Position => position;
+        public int Position { get; private set; }
         public FrameSink()
         {
             frameData = Array.Empty<byte>();
-            position = 0;
+            Position = 0;
             Write = WriteEmpty;
             Draw = DrawEmpty;
         }
@@ -83,7 +78,7 @@ namespace emulator
                     Debugger.Break();
                 }
 
-                Logger!.WriteLineAsync(spent.ToString());
+                _ = Logger!.WriteLineAsync(spent.ToString());
             }
             stopWatch.Restart();
 
@@ -94,7 +89,7 @@ namespace emulator
             }
             Unlock!();
 
-            position = 0;
+            Position = 0;
             FrameCount++;
         }
         public delegate void Writer(byte[] buffer);
@@ -103,8 +98,8 @@ namespace emulator
         public Drawer Draw;
         private void WriteNormal(byte[] buffer)
         {
-            buffer.CopyTo(frameData, position);
-            position += buffer.Length;
+            buffer.CopyTo(frameData, Position);
+            Position += buffer.Length;
         }
         private void WriteEmpty(byte[] buffer)
         {

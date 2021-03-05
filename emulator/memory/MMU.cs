@@ -152,25 +152,21 @@ namespace emulator
 
         public void Write(DMGInteger at, byte arg)
         {
-            if (at == DMGInteger.a8)
+            switch (at)
             {
+                case DMGInteger.a8:
                 Write((ushort)(0xff00 + FetchD8()), arg);
-            }
-            else if (at == DMGInteger.a16)
-            {
+                break;
+                case DMGInteger.a16:
                 Write(FetchD16(), arg);
-            }
-            else
-            {
+                break;
+                default:
                 throw new Exception("Not an adress");
             }
         }
 
         public void Write(ushort at, ushort arg)
         {
-            //var bytes = BitConverter.GetBytes(arg);
-            //for (int i = 0; i < bytes.Length; i++)
-            //    this[at + i] = bytes[i];
             this[at] = (byte)(arg & 0xff);
             this[at + 1] = (byte)((arg & 0xff00) >> 8);
         }

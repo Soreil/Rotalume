@@ -24,7 +24,7 @@ namespace emulator
                 var before = (InternalCounter & (1 << TACBitSelected)) == 0;
                 InternalCounter++;
                 var overflow = (InternalCounter & (1 << TACBitSelected)) == 0;
-                if (before == false && overflow == true)
+                if (before == false && overflow)
                 {
                     IncrementTIMA();
                 }

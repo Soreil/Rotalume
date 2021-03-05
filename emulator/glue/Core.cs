@@ -56,7 +56,7 @@ namespace emulator
             };
 
             APU = new APU(WaveFormat.SampleRate * 2);
-            PPU = new PPU(() => masterclock, () => CPU!.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(0),
+            PPU = new PPU(() => CPU!.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(0),
                                        () => CPU!.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(1),
                                        frameSink);
 
@@ -511,7 +511,7 @@ namespace emulator
             }
 
             APU.Tick();
-            PPU.Do();
+            PPU.Tick();
         }
 
         //Gusboy uses this frequency because it aligns well with the gameboy clock

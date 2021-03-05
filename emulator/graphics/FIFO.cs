@@ -4,31 +4,31 @@ namespace emulator
 {
     public class FIFO<T>
     {
-        public const int capacity = 16;
-        public int position = 0;
-        public int count = 0;
-        private readonly T[] buffer = new T[capacity];
+        private const int Capacity = 16;
+        private int Position;
+        public int Count { get; private set; }
+        private readonly T[] buffer = new T[Capacity];
         public void Clear()
         {
-            count = 0;
-            position = 0;
+            Count = 0;
+            Position = 0;
         }
 
-        public void Push(T p) => buffer[(position + count++) & (capacity - 1)] = p;
+        public void Push(T p) => buffer[(Position + Count++) & (Capacity - 1)] = p;
 
         public T Pop()
         {
 
-            if (count == 0)
+            if (Count == 0)
             {
                 throw new Exception("Empty FIFO");
             }
 
-            count--;
-            return buffer[position++ & (capacity - 1)];
+            Count--;
+            return buffer[Position++ & (Capacity - 1)];
         }
-        public void Replace(int at, T p) => buffer[(position + at) & (capacity - 1)] = p;
+        public void Replace(int at, T p) => buffer[(Position + at) & (Capacity - 1)] = p;
 
-        public T At(int at) => buffer[(position + at) & (capacity - 1)];
+        public T At(int at) => buffer[(Position + at) & (Capacity - 1)];
     }
 }

@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
-
-using emulator;
+﻿using emulator;
 
 using NUnit.Framework;
+
+using System.Collections.Generic;
 
 namespace Tests
 {
@@ -64,7 +64,7 @@ namespace Tests
             var p = new Core(inst);
             p.CPU.Registers.SP = 0xffff;
 
-            while (p.PC != 0x100+inst.Count)
+            while (p.PC != 0x100 + inst.Count)
                 p.DoNextOP();
             Assert.AreEqual(0x10b, p.PC);
             Assert.IsTrue(p.CPU.Registers.Get(Flag.Z));
@@ -111,7 +111,7 @@ namespace Tests
         public void CALL()
         {
             var p = new Core(new List<byte> {
-            (byte)Unprefixed.CALL_a16,(byte)0xab,(byte)0xcd
+            (byte)Unprefixed.CALL_a16,0xab,0xcd
             });
 
             p.CPU.Registers.SP = 0xffff;

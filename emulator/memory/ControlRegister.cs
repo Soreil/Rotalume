@@ -7,8 +7,8 @@ namespace emulator
 
         public Action<byte>[] Writer;
         public Func<byte>[] Reader;
-        public int Start;
-        public int Size;
+        public readonly int Start;
+        public readonly int Size;
 
         public ControlRegister(ushort startAddress, int size)
         {

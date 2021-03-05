@@ -8,14 +8,14 @@ namespace emulator
         public long TimeUntilWhichToPause;
         private readonly FrameSink fs;
 
-        public const int TileWidth = 8;
-        public const int DisplayWidth = 160;
-        public const int TilesPerLine = DisplayWidth / TileWidth;
-        public const int DisplayHeight = 144;
-        public const int ScanlinesPerFrame = DisplayHeight + 10;
+        private const int TileWidth = 8;
+        private const int DisplayWidth = 160;
+        private const int TilesPerLine = DisplayWidth / TileWidth;
+        private const int DisplayHeight = 144;
+        private const int ScanlinesPerFrame = DisplayHeight + 10;
 
-        public const int TicksPerScanline = 456;
-        public const int TicksPerFrame = ScanlinesPerFrame * TicksPerScanline;
+        private const int TicksPerScanline = 456;
+        private const int TicksPerFrame = ScanlinesPerFrame * TicksPerScanline;
 
         public Renderer(PPU ppu, FrameSink? destination = null, long offset = 0)
         {
@@ -27,14 +27,14 @@ namespace emulator
         }
 
         public PixelFetcher fetcher;
-        public int Stage3TickCount = 0;
+        public int Stage3TickCount;
 
-        public int PixelsPopped = 0;
-        public int PixelsSentToLCD = 0;
+        public int PixelsPopped;
+        public int PixelsSentToLCD;
 
-        public int TotalTimeSpentInStage3 { get; private set; } = 0;
+        public int TotalTimeSpentInStage3 { get; private set; }
 
-        private Mode? ScheduledModeChange = null;
+        private Mode? ScheduledModeChange;
         public void Render()
         {
             //Increment mode and set lock states
@@ -76,7 +76,7 @@ namespace emulator
             }
 
             //We should be handling this during the transition from HBlank to OAMSearch
-            if (PPU.Mode == Mode.OAMSearch || PPU.Mode == Mode.VBlank)
+            if (PPU.Mode is Mode.OAMSearch or Mode.VBlank)
             {
                 //We only want to increment the line register if we aren't on the very first line
                 if (fs.Position != 0 || PPU.Mode == Mode.VBlank)
@@ -98,62 +98,51 @@ namespace emulator
                 }
             }
 
-            if (PPU.Mode == Mode.HBlank)
+            switch (PPU.Mode)
             {
+                case Mode.HBlank:
                 if (PPU.Enable_HBlankInterrupt)
-                {
                     PPU.EnableLCDCStatusInterrupt();
-                }
 
                 TimeUntilWhichToPause += 376 - TotalTimeSpentInStage3;
 
                 ScheduledModeChange = PPU.LY == 143 ? Mode.VBlank : Mode.OAMSearch;
                 return;
-            }
-            else if (PPU.Mode == Mode.OAMSearch)
-            {
+                case Mode.OAMSearch:
                 if (PPU.Enable_OAM_Interrupt)
-                {
                     PPU.EnableLCDCStatusInterrupt();
-                }
 
                 fetcher.SpriteCount = PPU.OAM.SpritesOnLine(fetcher.SpriteAttributes, PPU.LY, PPU.SpriteHeight);
                 fetcher.SpritesFinished = 0;
                 TimeUntilWhichToPause += 80;
                 ScheduledModeChange = Mode.Transfer;
                 return;
-            }
-            else if (PPU.Mode == Mode.VBlank)
-            {
+                case Mode.VBlank:
                 TimeUntilWhichToPause += TicksPerScanline;
                 return;
-            }
-            else if (PPU.Mode == Mode.Transfer)
-            {
-                if (PPU.LY != 0 && Stage3TickCount == 0)
+                case Mode.Transfer:
                 {
-                    Stage3TickCount += 4;
-                    TimeUntilWhichToPause += 4;
+                    if (PPU.LY != 0 && Stage3TickCount == 0)
+                    {
+                        Stage3TickCount += 4;
+                        TimeUntilWhichToPause += 4;
+                        return;
+                    }
+
+                    var cycles = fetcher.Fetch();
+
+                    //We should probably be doing this in a more clean way since it just needs
+                    //to handle on every cycle
+                    for (var i = 0; i < cycles && PixelsSentToLCD < 160; i++)
+                        AttemptToPushAPixel();
+
+                    Stage3TickCount += cycles;
+                    TimeUntilWhichToPause += cycles;
+
+                    if (PixelsSentToLCD == 160)
+                        ResetLineSpecificState();
                     return;
                 }
-
-                var cycles = fetcher.Fetch();
-
-                //We should probably be doing this in a more clean way since it just needs
-                //to handle on every cycle
-                for (int i = 0; i < cycles && PixelsSentToLCD < 160; i++)
-                {
-                    AttemptToPushAPixel();
-                }
-
-                Stage3TickCount += cycles;
-                TimeUntilWhichToPause += cycles;
-
-                if (PixelsSentToLCD == 160)
-                {
-                    ResetLineSpecificState();
-                }
-                return;
             }
         }
 
@@ -179,21 +168,22 @@ namespace emulator
         private void AttemptToPushAPixel()
         {
             var pix = fetcher.RenderPixel();
-            if (pix != Shade.Empty)
+            if (pix == Shade.Empty)
             {
-                PixelsPopped++;
-                fetcher.scanlineX++;
-                if (PixelsPopped > (PPU.SCX & 7))
-                {
-                    background[PixelsSentToLCD++] = pix;
-                }
+                return;
+            }
+            PixelsPopped++;
+            fetcher.scanlineX++;
+            if (PixelsPopped > (PPU.SCX & 7))
+            {
+                background[PixelsSentToLCD++] = pix;
+            }
 
-                bool windowStart = PixelsSentToLCD == PPU.WX - 7 && PPU.LY >= PPU.WY && PPU.WindowDisplayEnable;
-                if (windowStart)
-                {
-                    fetcher.FetcherStep = 0;
-                    fetcher.BGFIFO.Clear();
-                }
+            bool windowStart = PixelsSentToLCD == PPU.WX - 7 && PPU.LY >= PPU.WY && PPU.WindowDisplayEnable;
+            if (windowStart)
+            {
+                fetcher.FetcherStep = 0;
+                fetcher.BGFIFO.Clear();
             }
         }
 

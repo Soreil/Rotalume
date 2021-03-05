@@ -3,16 +3,16 @@ using NUnit.Framework;
 
 namespace Tests
 {
-    class FIFORendererTests
+    internal class FIFORendererTests
     {
         [Test]
         public void RenderBackGroundTile()
         {
             //gradient from white to black and back
-            byte[] expected = new byte[8] { 0, 1, 2, 3, 3, 2, 1, 0 };
-            byte[] got = new byte[8];
+            var expected = new byte[8] { 0, 1, 2, 3, 3, 2, 1, 0 };
+            var got = new byte[8];
 
-            int clock = 0;
+            var clock = 0;
             var ppu = new emulator.PPU(() => clock, () => { }, () => { });
             var fetcher = new emulator.PixelFetcher(ppu);
 
@@ -50,7 +50,7 @@ namespace Tests
 
             Assert.AreEqual(8, totalElapsed);
 
-            for (int i = 0; i < 8; i++)
+            for (var i = 0; i < 8; i++)
             {
                 var s = fetcher.RenderPixel();
                 Assert.NotNull(s);
@@ -63,10 +63,10 @@ namespace Tests
         public void RenderBackGroundTileWithYScrollNotDivisibleByTileSize()
         {
             //gradient from white to black and back
-            byte[] expected = new byte[8] { 0, 1, 2, 3, 3, 2, 1, 0 };
-            byte[] got = new byte[8];
+            var expected = new byte[8] { 0, 1, 2, 3, 3, 2, 1, 0 };
+            var got = new byte[8];
 
-            int clock = 0;
+            var clock = 0;
             var ppu = new emulator.PPU(() => clock, () => { }, () => { });
             var fetcher = new emulator.PixelFetcher(ppu);
 
@@ -105,7 +105,7 @@ namespace Tests
 
             Assert.AreEqual(8, totalElapsed);
 
-            for (int i = 0; i < 8; i++)
+            for (var i = 0; i < 8; i++)
             {
                 var s = fetcher.RenderPixel();
                 Assert.NotNull(s);
@@ -118,10 +118,10 @@ namespace Tests
         public void RenderBackGroundTileWithYScrollOfMultipleTiles()
         {
             //gradient from white to black and back
-            byte[] expected = new byte[8] { 0, 1, 2, 3, 3, 2, 1, 0 };
-            byte[] got = new byte[8];
+            var expected = new byte[8] { 0, 1, 2, 3, 3, 2, 1, 0 };
+            var got = new byte[8];
 
-            int clock = 0;
+            var clock = 0;
             var ppu = new emulator.PPU(() => clock, () => { }, () => { });
             var fetcher = new emulator.PixelFetcher(ppu);
 
@@ -163,7 +163,7 @@ namespace Tests
 
             Assert.AreEqual(8, totalElapsed);
 
-            for (int i = 0; i < 8; i++)
+            for (var i = 0; i < 8; i++)
             {
                 var s = fetcher.RenderPixel();
                 Assert.NotNull(s);
@@ -177,10 +177,10 @@ namespace Tests
         public void RenderBackGroundTileWithYScrollOfMultipleTilesNotOnTileBoundary()
         {
             //gradient from white to black and back
-            byte[] expected = new byte[8] { 0, 1, 2, 3, 3, 2, 1, 0 };
-            byte[] got = new byte[8];
+            var expected = new byte[8] { 0, 1, 2, 3, 3, 2, 1, 0 };
+            var got = new byte[8];
 
-            int clock = 0;
+            var clock = 0;
             var ppu = new emulator.PPU(() => clock, () => { }, () => { });
             var fetcher = new emulator.PixelFetcher(ppu);
 
@@ -222,7 +222,7 @@ namespace Tests
 
             Assert.AreEqual(8, totalElapsed);
 
-            for (int i = 0; i < 8; i++)
+            for (var i = 0; i < 8; i++)
             {
                 var s = fetcher.RenderPixel();
                 Assert.NotNull(s);
@@ -236,10 +236,10 @@ namespace Tests
         public void RenderBackgroundLineWithXScroll()
         {
             //gradient from white to black and back
-            byte[] expected = new byte[8] { 1, 2, 3, 3, 2, 1, 0, 0 };
-            byte[] got = new byte[160];
+            var expected = new byte[8] { 1, 2, 3, 3, 2, 1, 0, 0 };
+            var got = new byte[160];
 
-            int clock = 0;
+            var clock = 0;
             var ppu = new emulator.PPU(() => clock, () => { }, () => { });
             var fetcher = new emulator.PixelFetcher(ppu);
 
@@ -254,9 +254,9 @@ namespace Tests
             ppu.SCX = 1;
 
             var totalElapsed = 0;
-            int read = 0;
+            var read = 0;
 
-            for (int tick = 0; tick < 289; tick++)
+            for (var tick = 0; tick < 289; tick++)
             {
                 var s = fetcher.RenderPixel();
                 if (read >= (ppu.SCX & 7) && s is not null)
@@ -273,7 +273,7 @@ namespace Tests
         [Test]
         public void RenderBackGroundLine()
         {
-            byte[] expected = new byte[160] {
+            var expected = new byte[160] {
             0, 1, 2, 3, 3, 2, 1, 0,
             0, 0, 0, 0, 0, 0, 0, 0,
             3, 3, 3, 3, 3, 3, 3, 3,
@@ -295,7 +295,7 @@ namespace Tests
             0, 1, 2, 3, 3, 2, 1, 0,
             0, 1, 2, 3, 3, 2, 1, 0
             };
-            byte[] expectedLY1 = new byte[160] {
+            var expectedLY1 = new byte[160] {
             0, 1, 2, 3, 3, 2, 1, 0,
             0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0,
@@ -317,9 +317,9 @@ namespace Tests
             0, 1, 2, 3, 3, 2, 1, 0,
             0, 1, 2, 3, 3, 2, 1, 0
             };
-            byte[] got = new byte[160];
+            var got = new byte[160];
 
-            int clock = 0;
+            var clock = 0;
             var ppu = new emulator.PPU(() => clock, () => { }, () => { });
             var fetcher = new emulator.PixelFetcher(ppu);
 
@@ -352,7 +352,7 @@ namespace Tests
             //Make the second to last map entry point to the third tile (pure white)
             ppu.VRAM[ppu.TileMapDisplaySelect + 2] = 0x02;
 
-            for (int tile = 0; tile < 20; tile++)
+            for (var tile = 0; tile < 20; tile++)
             {
                 var totalElapsed = 0;
 
@@ -379,7 +379,7 @@ namespace Tests
 
                 Assert.AreEqual(8, totalElapsed);
 
-                for (int i = 0; i < 8; i++)
+                for (var i = 0; i < 8; i++)
                 {
                     var s = fetcher.RenderPixel();
                     Assert.NotNull(s);
@@ -387,7 +387,7 @@ namespace Tests
                 }
 
             }
-            string line = "";
+            var line = "";
             foreach (var v in expected) line += v.ToString();
             System.Console.WriteLine(line);
             line = "";
@@ -398,7 +398,7 @@ namespace Tests
             ppu.LY = 1;
             fetcher = new emulator.PixelFetcher(ppu);
 
-            for (int tile = 0; tile < 20; tile++)
+            for (var tile = 0; tile < 20; tile++)
             {
                 var totalElapsed = 0;
 
@@ -425,7 +425,7 @@ namespace Tests
 
                 //Assert.AreEqual(8, totalElapsed);
 
-                for (int i = 0; i < 8; i++)
+                for (var i = 0; i < 8; i++)
                 {
                     var s = fetcher.RenderPixel();
                     Assert.NotNull(s);
@@ -445,10 +445,10 @@ namespace Tests
         public void RenderBackGroundTileOnSecondRow()
         {
             //gradient from white to black and back
-            byte[] expected = new byte[8] { 0, 1, 2, 3, 3, 2, 1, 0 };
-            byte[] got = new byte[8];
+            var expected = new byte[8] { 0, 1, 2, 3, 3, 2, 1, 0 };
+            var got = new byte[8];
 
-            int clock = 0;
+            var clock = 0;
             var ppu = new emulator.PPU(() => clock, () => { }, () => { });
             var fetcher = new emulator.PixelFetcher(ppu);
 
@@ -492,7 +492,7 @@ namespace Tests
 
             Assert.AreEqual(8, totalElapsed);
 
-            for (int i = 0; i < 8; i++)
+            for (var i = 0; i < 8; i++)
             {
                 var s = fetcher.RenderPixel();
                 Assert.NotNull(s);

@@ -167,7 +167,7 @@ namespace emulator
                                                                                        var arg = Registers.Get(rhs);
 
                                                                                        Registers.Set(Flag.N, false);
-                                                                                       Registers.Set(Flag.H, target.IsHalfCarryAdd(arg));
+                                                                                       Registers.Set(Flag.H, (((target & 0x0fff) + (arg & 0x0fff)) & 0x1000) == 0x1000);
                                                                                        Registers.Set(Flag.C, target + arg > 0xFFFF);
 
                                                                                        Registers.HL += arg;
