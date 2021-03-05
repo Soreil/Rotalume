@@ -2,7 +2,9 @@
 using NAudio.Wave.SampleProviders;
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Windows.Input;
 
 namespace emulator
 {
@@ -31,7 +33,7 @@ namespace emulator
         private byte serialControl = 0x7e;
         private readonly ControlRegister interruptRegisters = new(0xffff, 0x1); //This is only being used for two registers.
 
-        public Core(List<byte> l, byte[]? bootrom = null) : this(l.Count < 0x8000 ? PadAndMoveTo0x100(l.ToArray()) : l.ToArray(), bootrom, (x) => 0x01f, () => false, new())
+        public Core(List<byte> l, byte[]? bootrom = null) : this(l.Count < 0x8000 ? PadAndMoveTo0x100(l.ToArray()) : l.ToArray(), bootrom, new(), () => false, new())
         { }
 
         private static byte[] PadAndMoveTo0x100(byte[] l)
@@ -42,8 +44,70 @@ namespace emulator
             return buffer;
         }
 
-        public Core(byte[] gameROM, byte[]? bootROM, Func<byte, byte> GetJoyPad, Func<bool> getKeyboardInterrupt, FrameSink frameSink)
+        private readonly ConcurrentDictionary<Key, bool> Pressed;
+        private byte UpdateJoypadPresses(byte Flags)
         {
+            var selectButtons = !Flags.GetBit(5);
+            var selectArrows = !Flags.GetBit(4);
+
+            byte joypad = 0xf;
+            if (!selectButtons && !selectArrows)
+            {
+                return (byte)((joypad & 0xf) | 0xc0);
+            }
+
+            if (selectArrows)
+            {
+                if (Pressed[Key.Right])
+                {
+                    joypad = joypad.SetBit(0, false);
+                }
+
+                if (Pressed[Key.Left])
+                {
+                    joypad = joypad.SetBit(1, false);
+                }
+
+                if (Pressed[Key.Up])
+                {
+                    joypad = joypad.SetBit(2, false);
+                }
+
+                if (Pressed[Key.Down])
+                {
+                    joypad = joypad.SetBit(3, false);
+                }
+            }
+            if (selectButtons)
+            {
+                if (Pressed[Key.A])
+                {
+                    joypad = joypad.SetBit(0, false);
+                }
+
+                if (Pressed[Key.S])
+                {
+                    joypad = joypad.SetBit(1, false);
+                }
+
+                if (Pressed[Key.D])
+                {
+                    joypad = joypad.SetBit(2, false);
+                }
+
+                if (Pressed[Key.F])
+                {
+                    joypad = joypad.SetBit(3, false);
+                }
+            }
+
+            return (byte)((joypad & 0xf) | 0xc0);
+        }
+
+        public Core(byte[] gameROM, byte[]? bootROM, ConcurrentDictionary<Key, bool> Pressed, Func<bool> getKeyboardInterrupt, FrameSink frameSink)
+        {
+            this.Pressed = Pressed;
+
             ushort GetProgramCounter() => PC;
 
             void SetProgramCounter(ushort x) => PC = x;
@@ -67,7 +131,7 @@ namespace emulator
             interruptRegisters.Writer[0x00] = x => CPU!.InterruptControlRegister = x;
             interruptRegisters.Reader[0x00] = () => CPU!.InterruptControlRegister;
 
-            var ioRegisters = SetupControlRegisters(GetJoyPad);
+            var ioRegisters = SetupControlRegisters();
 
             if (gameROM.Length < 0x8000)
             {
@@ -202,7 +266,7 @@ namespace emulator
             return System.IO.MemoryMappedFiles.MemoryMappedFile.CreateFromFile(path);
         }
 
-        private ControlRegister SetupControlRegisters(Func<byte, byte> GetJoyPad)
+        private ControlRegister SetupControlRegisters()
         {
             void BootROMFlagController(byte b)
             {
@@ -215,7 +279,7 @@ namespace emulator
             ControlRegister controlRegisters = new ControlRegister(0xff00, 0x80);
 
             controlRegisters.Writer[0] = x => keypadFlags = (byte)(x & 0xf0);
-            controlRegisters.Reader[0] = () => GetJoyPad(keypadFlags);
+            controlRegisters.Reader[0] = () => UpdateJoypadPresses(keypadFlags);
 
             controlRegisters.Writer[0xF] = x => CPU.InterruptFireRegister = x;
             controlRegisters.Reader[0xF] = () => CPU.InterruptFireRegister;

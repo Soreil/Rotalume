@@ -3,7 +3,7 @@
 using NAudio.Wave;
 
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,26 +24,28 @@ namespace GUI
         private delegate byte UpdateJoypadCb(byte b);
 
         private delegate void UpdateLabelCb();
-        public MainWindow() => InitializeComponent();
+        public MainWindow()
+        {
+            InitializeComponent();
+
+            Pressed = new(2, 8);
+            Pressed.TryAdd(Key.A, false);
+            Pressed.TryAdd(Key.S, false);
+            Pressed.TryAdd(Key.D, false);
+            Pressed.TryAdd(Key.F, false);
+            Pressed.TryAdd(Key.Right, false);
+            Pressed.TryAdd(Key.Left, false);
+            Pressed.TryAdd(Key.Up, false);
+            Pressed.TryAdd(Key.Down, false);
+        }
 
         private volatile bool paused = false;
         private volatile bool CancelRequested = false;
         private void Gameboy(string path, bool bootromEnabled, bool fpsLimit)
         {
-            var joyCb = new UpdateJoypadCb(UpdateJoypadPresses);
             var bmpCb = new UpdateImageCb(SetBitmapBacking);
             var lockCb = new UpdateImageCb(Lock);
             var unlockCb = new UpdateImageCb(Unlock);
-
-            var ts = new TimeSpan(100000);
-            byte updateJoyPad(byte x)
-            {
-                var inv = Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Render,
-                    ts,
-                    joyCb,
-                    x);
-                return (byte)(inv ?? x);
-            }
 
             bool keyBoardInterruptFired()
             {
@@ -58,15 +60,15 @@ namespace GUI
         System.Windows.Threading.DispatcherPriority.Render);
 
             void LockCB() => Dispatcher.Invoke(lockCb,
-System.Windows.Threading.DispatcherPriority.Render);
+        System.Windows.Threading.DispatcherPriority.Render);
 
             void UnlockCB() => Dispatcher.Invoke(unlockCb,
-System.Windows.Threading.DispatcherPriority.Render);
+        System.Windows.Threading.DispatcherPriority.Render);
 
             var gameboy = new Core(
                 File.ReadAllBytes(path),
           bootrom,
-          updateJoyPad,
+          Pressed,
           keyBoardInterruptFired,
           new FrameSink(LockCB, UnlockCB, Dispatcher.Invoke(() => bmp!.BackBuffer), fpsLimit)
           );
@@ -228,76 +230,7 @@ System.Windows.Threading.DispatcherPriority.Render);
         }
 
         private volatile bool keyboardInterruptReady = false;
-        private readonly Dictionary<Key, bool> Pressed = new()
-        {
-            { Key.A, false },
-            { Key.S, false },
-            { Key.D, false },
-            { Key.F, false },
-            { Key.Right, false },
-            { Key.Left, false },
-            { Key.Up, false },
-            { Key.Down, false },
-        };
-
-        private byte UpdateJoypadPresses(byte Flags)
-        {
-            var selectButtons = !Flags.GetBit(5);
-            var selectArrows = !Flags.GetBit(4);
-
-            byte joypad = 0xf;
-            if (!selectButtons && !selectArrows)
-            {
-                return (byte)((joypad & 0xf) | 0xc0);
-            }
-
-            if (selectArrows)
-            {
-                if (Pressed[Key.Right])
-                {
-                    joypad = joypad.SetBit(0, false);
-                }
-
-                if (Pressed[Key.Left])
-                {
-                    joypad = joypad.SetBit(1, false);
-                }
-
-                if (Pressed[Key.Up])
-                {
-                    joypad = joypad.SetBit(2, false);
-                }
-
-                if (Pressed[Key.Down])
-                {
-                    joypad = joypad.SetBit(3, false);
-                }
-            }
-            if (selectButtons)
-            {
-                if (Pressed[Key.A])
-                {
-                    joypad = joypad.SetBit(0, false);
-                }
-
-                if (Pressed[Key.S])
-                {
-                    joypad = joypad.SetBit(1, false);
-                }
-
-                if (Pressed[Key.D])
-                {
-                    joypad = joypad.SetBit(2, false);
-                }
-
-                if (Pressed[Key.F])
-                {
-                    joypad = joypad.SetBit(3, false);
-                }
-            }
-
-            return (byte)((joypad & 0xf) | 0xc0);
-        }
+        private readonly ConcurrentDictionary<Key, bool> Pressed;
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
