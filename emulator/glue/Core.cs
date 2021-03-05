@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 
 using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
 
 namespace emulator
 {
@@ -457,13 +458,20 @@ namespace emulator
         //Gusboy uses this frequency because it aligns well with the gameboy clock
         public WaveFormat WaveFormat { get; init; } = WaveFormat.CreateIeeeFloatWaveFormat(32768, 2);
 
+        private readonly SignalGenerator wave = new SignalGenerator()
+        {
+            Gain = 0.1,
+            Frequency = 500,
+            Type = SignalGeneratorType.Sin
+        };
+
         public int Read(float[] buffer, int offset, int count)
         {
             while (APU.SampleCount < count)
                 Step();
             APU.SampleCount -= count;
 
-            return count;
+            return wave.Read(buffer, offset, count);
         }
     }
 }

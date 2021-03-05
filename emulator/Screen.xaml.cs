@@ -22,16 +22,8 @@ namespace GUI
         delegate void UpdateImageCb();
         delegate byte UpdateJoypadCb(byte b);
         delegate void UpdateLabelCb();
-
-        private readonly StreamWriter Logger;
         public MainWindow()
         {
-            var logPath = "frametimes.txt";
-
-            if (!File.Exists(logPath))
-                Logger = File.CreateText(logPath);
-            else Logger = new StreamWriter(File.Open(logPath, FileMode.Truncate, FileAccess.Write, FileShare.Read));
-
             InitializeComponent();
         }
 
@@ -76,41 +68,56 @@ namespace GUI
           bootrom,
           updateJoyPad,
           keyBoardInterruptFired,
-          new FrameSink(LockCB, UnlockCB, Dispatcher.Invoke(() => bmp.BackBuffer))
+          new FrameSink(LockCB, UnlockCB, Dispatcher.Invoke(() => bmp.BackBuffer), fpsLimit)
           );
 
-            //Using a high buffer count makes it so the audio doesn't stutter, 5 seems
-            //to be just about enough to prevent stutter. Gusboy uses 50 so I'll go with that.
-            using var wo = new WaveOutEvent
+            new Task(() =>
             {
-                DesiredLatency = 100,
-                NumberOfBuffers = 50,
-            };
-            wo.Init(gameboy);
-            wo.Play();
-
-            //We can only stop at a ms granularity this way, if we don't
-            //have some check interval we will consume full CPU resources
-            //Maybe some smarter waiting condition would help?
-            while (wo.PlaybackState == PlaybackState.Playing)
-            {
-                if (CancelRequested)
+                bool useSound = false;
+                if (useSound)
                 {
-                    wo.Stop();
-                    break;
-                }
 
-                if (paused)
-                {
-                    wo.Pause();
-                    while (paused)
+                    //Using a high buffer count makes it so the audio doesn't stutter, 5 seems
+                    //to be just about enough to prevent stutter. Gusboy uses 50 so I'll go with that.
+                    using var wo = new WaveOutEvent
                     {
-                        Thread.Sleep(10);
-                    }
+                        DesiredLatency = 100,
+                        NumberOfBuffers = 50,
+                    };
+                    wo.Init(gameboy);
                     wo.Play();
-                }
-            }
 
+                    //We can only stop at a ms granularity this way, if we don't
+                    //have some check interval we will consume full CPU resources
+                    //Maybe some smarter waiting condition would help?
+                    while (wo.PlaybackState == PlaybackState.Playing)
+                    {
+                        if (CancelRequested)
+                        {
+                            wo.Stop();
+                            break;
+                        }
+
+                        if (paused)
+                        {
+                            wo.Pause();
+                            while (paused)
+                            {
+                                Thread.Sleep(10);
+                            }
+                            wo.Play();
+                        }
+                    }
+                }
+                else
+                {
+                    while (!CancelRequested)
+                    {
+                        gameboy.Step();
+                        if (paused) while (paused) Thread.Sleep(10);
+                    }
+                }
+            }).Start();
         }
 
         private void Lock()
@@ -123,7 +130,6 @@ namespace GUI
             bmp.Unlock();
             AddFrameTimeToQueue();
             UpdateLabel();
-            LogTime();
         }
 
         WriteableBitmap bmp;
@@ -136,8 +142,6 @@ namespace GUI
 
         int frameNumber = 0;
         readonly DateTime[] FrameTimes = new DateTime[16];
-
-        private void LogTime() => Logger.WriteLineAsync(DateTime.Now.Ticks.ToString());
 
         private double AverageFPS()
         {

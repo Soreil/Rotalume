@@ -17,7 +17,7 @@ namespace emulator
 
         public byte this[int n]
         {
-            get => (byte)((n - Start) % 4 switch
+            get => ((byte)((n - Start) % 4) switch
             {
                 0 => sprites[(n - Start) / 4].Y,
                 1 => sprites[(n - Start) / 4].X,
@@ -40,7 +40,7 @@ namespace emulator
 
         const int maxSpritesOnLine = 10;
 
-        private static bool OnLine(SpriteAttributes s, int line, int spriteHeight) => 
+        private static bool OnLine(SpriteAttributes s, int line, int spriteHeight) =>
                 (s.Y + spriteHeight) > 16 &&
                 s.Y < 160 &&
                 s.X != 0 &&
@@ -55,7 +55,7 @@ namespace emulator
                 if (OnLine(s, line, spriteHeight))
                 {
                     buffer[spriteCount++] = s;
-                    if (spriteCount == 10) break;
+                    if (spriteCount == maxSpritesOnLine) break;
                 }
             }
             Order(buffer, spriteCount);
