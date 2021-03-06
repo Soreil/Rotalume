@@ -91,16 +91,16 @@ namespace emulator
         }
         private readonly byte[]? bootROM;
 
-        private readonly Func<byte> ReadInput;
+        public Func<byte>? ReadInput;
 
         private readonly byte[] BitConverterBuffer = new byte[2];
         private ushort ReadInputWide()
         {
-            BitConverterBuffer[0] = ReadInput();
-            BitConverterBuffer[1] = ReadInput();
+            BitConverterBuffer[0] = ReadInput!();
+            BitConverterBuffer[1] = ReadInput!();
             return BitConverter.ToUInt16(BitConverterBuffer);
         }
-        public MMU(Func<byte> readInput,
+        public MMU(
             byte[]? boot,
             Func<bool> bootROMActive,
             MBC card,
@@ -109,7 +109,6 @@ namespace emulator
             ControlRegister ioRegisters,
             ControlRegister interruptEnable)
         {
-            ReadInput = readInput;
 
             _bootROMActive = bootROMActive;
             bootROM = boot; //Bootrom should be 256 bytes
@@ -129,13 +128,13 @@ namespace emulator
 
         internal ushort FetchD16() => ReadInputWide();
 
-        internal byte FetchD8() => ReadInput();
+        internal byte FetchD8() => ReadInput!();
 
         internal ushort FetchA16() => ReadInputWide();
 
-        internal byte FetchA8() => this[0xFF00 + ReadInput()];
+        internal byte FetchA8() => this[0xFF00 + ReadInput!()];
 
-        internal sbyte FetchR8() => (sbyte)ReadInput();
+        internal sbyte FetchR8() => (sbyte)ReadInput!();
 
         public byte Read(ushort at) => this[at];
 

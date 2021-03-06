@@ -8,16 +8,19 @@ namespace emulator
         private readonly Action[] CbOps;
 
         public bool IME;
-        public HaltState Halted = HaltState.off;
+        private HaltState Halted = HaltState.off;
 
-        public bool InterruptEnableScheduled;
-
+        private bool InterruptEnableScheduled;
+        private readonly Func<bool> GetKeyboardInterrupt;
         public Action Op(Unprefixed op) => StdOps[(int)op];
 
         public Action Op(Cbprefixed op) => CbOps[(int)op];
 
-        public CPU(Func<ushort> getPC, Action<ushort> setPC, MMU memory)
+        public CPU(Func<bool> getKeyboardInterrupt, MMU memory)
         {
+            GetKeyboardInterrupt = getKeyboardInterrupt;
+            Memory = memory;
+
             StdOps = new Action[0x100];
             StdOps[(int)Unprefixed.NOP] = NOP(4);
             StdOps[(int)Unprefixed.LD_AT_DE_A] = LD((WideRegister.DE, new Traits(false, Postfix.unchanged)), (Register.A, new Traits(true, Postfix.unchanged)), 8);
@@ -535,9 +538,6 @@ namespace emulator
             CbOps[(int)Cbprefixed.SET_7_A] = SET(7, Register.A, 8);
 
             Registers = new Registers();
-            Memory = memory;
-            SetPC = setPC;
-            GetPC = getPC;
 
             enableInterruptsDelayed = () => InterruptEnableScheduled = true;
             enableInterrupts = () => IME = true;
@@ -545,6 +545,59 @@ namespace emulator
             halt = () => Halted = IME
                     ? HaltState.normal
                     : (InterruptFireRegister & InterruptControlRegister & 0x1f) == 0 ? HaltState.normalIME0 : HaltState.haltbug;
+        }
+
+        internal byte ReadOp() => Memory[PC++];
+
+        public ushort PC = 0;
+        private byte ReadHaltBug()
+        {
+            Halted = HaltState.off;
+            return Memory[PC];
+        }
+        internal void DoNextOP()
+        {
+            if (Halted != HaltState.off)
+            {
+                if (Halted != HaltState.haltbug)
+                {
+                    return;
+                }
+            }
+
+            var op = Halted == HaltState.haltbug ? ReadHaltBug() : Memory[PC++];
+            if (op != 0xcb)
+            {
+                Op((Unprefixed)op)();
+            }
+            else
+            {
+                var CBop = Memory[PC++]; //Because of the CB prefix we encountered in the previous case we already skipped the extra byte of a cb instruction here
+                Op((Cbprefixed)CBop)();
+            }
+        }
+        internal void Tick()
+        {
+            if (TicksWeAreWaitingFor == 0)
+            {
+                DoNextOP();
+                //We really should have the GUI thread somehow do this logic but polling like this should work
+                if (!InterruptFireRegister.GetBit(4) && GetKeyboardInterrupt())
+                {
+                    InterruptFireRegister = InterruptFireRegister.SetBit(4);
+                }
+
+                DoInterrupt();
+                if (InterruptEnableScheduled)
+                {
+                    IME = true;
+                    InterruptEnableScheduled = false;
+                }
+            }
+            else
+            {
+                TicksWeAreWaitingFor--;
+            }
         }
     }
 }

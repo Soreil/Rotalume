@@ -14,7 +14,7 @@ namespace Hardware
         Down
     }
 
-    class Abstraction
+    internal class Abstraction
     {
         public static JoypadKey? Map(Key k) => k switch
         {

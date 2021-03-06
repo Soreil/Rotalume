@@ -11,24 +11,17 @@ namespace emulator
 {
     public class Core : ISampleProvider
     {
-        public ushort PC;
-
         //Not sure where this special bit should go but it's not in memory and suposed to be hard to access
         private bool bootROMActive = true;
 
-        //Global clock from which all timing derives
+        //Global clock used by RTC carts
         private long masterclock = 0;
-
-        //Opcode fetcher
-        public Func<byte> ReadOp;
-        public Func<byte> ReadHaltBug;
 
         public CPU CPU;
         public APU APU;
         public PPU PPU;
         public Timers Timers;
         private byte keypadFlags = 0x30;
-        private readonly Func<bool> GetKeyboardInterrupt = () => false;
 
         private byte _dma = 0xff;
         private byte serialControl = 0x7e;
@@ -109,25 +102,12 @@ namespace emulator
         {
             this.Pressed = Pressed;
 
-            ushort GetProgramCounter() => PC;
-
-            void SetProgramCounter(ushort x) => PC = x;
-            //Maybe adding to the timers should be handled by a clock object rather than just this one lambda
-            ReadOp = () => CPU!.Memory[PC++];
-            ReadHaltBug = () =>
-            {
-                CPU!.Halted = HaltState.off;
-                return CPU.Memory[PC];
-            };
-
             APU = new APU(WaveFormat.SampleRate * 2);
             PPU = new PPU(() => CPU!.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(0),
                                        () => CPU!.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(1),
                                        frameSink);
 
             Timers = new Timers(() => CPU!.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(2));
-
-            GetKeyboardInterrupt = getKeyboardInterrupt;
 
             interruptRegisters.Writer[0x00] = x => CPU!.InterruptControlRegister = x;
             interruptRegisters.Reader[0x00] = () => CPU!.InterruptControlRegister;
@@ -151,7 +131,7 @@ namespace emulator
                 Card = MakeMBC(Header, gameROM, MakeMemoryMappedFile(Header));
             }
 
-            var memory = new MMU(ReadOp,
+            var memory = new MMU(
     bootROM,
     () => bootROMActive,
     Card,
@@ -161,7 +141,8 @@ namespace emulator
     interruptRegisters
     );
 
-            CPU = new CPU(GetProgramCounter, SetProgramCounter, memory);
+            CPU = new CPU(getKeyboardInterrupt, memory);
+            memory.ReadInput = CPU.ReadOp;
 
             //We have to replicate the state of the system post boot without running the bootrom
             if (bootROM == null)
@@ -169,7 +150,7 @@ namespace emulator
                 bootROMActive = false;
 
                 //registers
-                PC = 0x100;
+                CPU.PC = 0x100;
                 CPU.Registers.AF = 0x0100;
                 CPU.Registers.BC = 0xff13;
                 CPU.Registers.DE = 0x00c1;
@@ -525,27 +506,6 @@ namespace emulator
             _ => throw new NotImplementedException(),
         };
 
-        public void DoNextOP()
-        {
-            if (CPU.Halted != HaltState.off)
-            {
-                if (CPU.Halted != HaltState.haltbug)
-                {
-                    return;
-                }
-            }
-
-            var op = CPU.Halted == HaltState.haltbug ? ReadHaltBug() : ReadOp();
-            if (op != 0xcb)
-            {
-                CPU.Op((Unprefixed)op)();
-            }
-            else
-            {
-                var CBop = ReadOp(); //Because of the CB prefix we encountered in the previous case we already skipped the extra byte of a cb instruction here
-                CPU.Op((Cbprefixed)CBop)();
-            }
-        }
 
         public static byte[] LoadBootROM() => System.IO.File.ReadAllBytes(@"..\..\..\..\emulator\bootrom\DMG_ROM_BOOT.bin");
 
@@ -554,27 +514,7 @@ namespace emulator
         {
             masterclock++;
             Timers.Tick();
-            if (CPU.TicksWeAreWaitingFor == 0)
-            {
-                DoNextOP();
-                //We really should have the GUI thread somehow do this logic but polling like this should work
-                if (!CPU.InterruptFireRegister.GetBit(4) && GetKeyboardInterrupt())
-                {
-                    CPU.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(4);
-                }
-
-                CPU.DoInterrupt();
-                if (CPU.InterruptEnableScheduled)
-                {
-                    CPU.IME = true;
-                    CPU.InterruptEnableScheduled = false;
-                }
-            }
-            else
-            {
-                CPU.TicksWeAreWaitingFor--;
-            }
-
+            CPU.Tick();
             APU.Tick();
             PPU.Tick();
         }
