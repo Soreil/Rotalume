@@ -156,17 +156,51 @@ namespace emulator
             }
         }
 
-        private long APUClock { get; set; }
+        private int APUClock { get; set; }
         private int SampleRate { get; }
         public int TicksPerSample { get; }
 
+        const int FrameSequencerFrequency = baseClock / 512;
         internal void Tick()
         {
-            APUClock++;
             if (APUClock % TicksPerSample == 0)
             {
                 SampleCount++;
             }
+            if (APUClock == FrameSequencerFrequency)
+            {
+                TickFrameSequencer();
+                APUClock = 0;
+            }
+            APUClock++;
+        }
+
+        private byte FrameSequencerClock;
+        private void TickFrameSequencer()
+        {
+            //Length counter
+            //We have to disable the channel when NRx1 ticks to 0
+            //We should only be accessing the lower 6 bits of these channels, the top bits
+            //are used for a different function
+            if ((FrameSequencerClock & 1) == 0)
+            {
+                if ((NR11 & 0x3f) > 0) NR11 = (byte)((NR11 & 0xc0) | ((NR11 & 0x3f) - 1));
+                if ((NR21 & 0x3f) > 0) NR21 = (byte)((NR21 & 0xc0) | ((NR21 & 0x3f) - 1));
+                if (NR31 > 0) NR31--; //NR31 uses the full byte for the length counter
+                if ((NR41 & 0x3f) > 0) NR41 = (byte)((NR41 & 0xc0) | ((NR41 & 0x3f) - 1));
+            }
+            //Tick volume envelope internal counter
+            if (FrameSequencerClock == 7)
+            {
+
+            }
+            //Tick frequency sweep internal counter
+            if ((FrameSequencerClock & 2) == 2)
+            {
+
+            }
+
+            FrameSequencerClock = (byte)((FrameSequencerClock + 1) % 8);
         }
     }
 }

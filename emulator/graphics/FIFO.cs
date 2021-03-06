@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace emulator
+﻿namespace emulator
 {
     public class FIFO<T>
     {
@@ -18,12 +16,6 @@ namespace emulator
 
         public T Pop()
         {
-
-            if (Count == 0)
-            {
-                throw new Exception("Empty FIFO");
-            }
-
             Count--;
             return buffer[Position++ & (Capacity - 1)];
         }
