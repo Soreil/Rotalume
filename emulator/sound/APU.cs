@@ -147,7 +147,6 @@ namespace emulator
         public int SampleCount { get; internal set; }
         public APU(int sampleRate)
         {
-            SampleRate = sampleRate;
             TicksPerSample = baseClock / sampleRate;
 
             if (TicksPerSample * sampleRate != baseClock)
@@ -157,7 +156,6 @@ namespace emulator
         }
 
         private int APUClock { get; set; }
-        private int SampleRate { get; }
         public int TicksPerSample { get; }
 
         const int FrameSequencerFrequency = baseClock / 512;

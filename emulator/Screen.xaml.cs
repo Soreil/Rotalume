@@ -142,10 +142,23 @@ namespace GUI
             RenderOptions.SetBitmapScalingMode(Display, BitmapScalingMode.NearestNeighbor);
         }
 
-        private int frameNumber = 0;
+        private int currentFrame = 0;
+        private void AddFrameTimeToQueue()
+        {
+            FrameTimes[currentFrame++] = DateTime.Now;
+            if (currentFrame == 16)
+            {
+                FrameTime = Delta(15, 14).TotalMilliseconds;
+                AverageFPS();
+                currentFrame = 0;
+            }
+        }
+
         private readonly DateTime[] FrameTimes = new DateTime[16];
 
-        private double AverageFPS()
+        private double FrameTime;
+        private double GameboyFPS;
+        private void AverageFPS()
         {
             TimeSpan deltas = TimeSpan.Zero;
             for (int i = 1; i < FrameTimes.Length; i++)
@@ -153,26 +166,15 @@ namespace GUI
                 deltas += Delta(i, i - 1);
             }
 
-            return TimeSpan.FromSeconds(1) / (deltas / (FrameTimes.Length - 1));
+            GameboyFPS = TimeSpan.FromSeconds(1) / (deltas / (FrameTimes.Length - 1));
         }
         private TimeSpan Delta(int i, int j) => FrameTimes[i] - FrameTimes[j];
 
-        private void UpdateLabel() => FPS.Content = string.Format("Frame:{0} FrameTime:{1} FPS:{2}",
-                frameNumber,
-                Delta(15, 14).TotalMilliseconds,
-                AverageFPS());
-
-        private void AddFrameTimeToQueue()
-        {
-            frameNumber++;
-            var time = DateTime.Now;
-            for (int i = 1; i < FrameTimes.Length; i++)
-            {
-                FrameTimes[i - 1] = FrameTimes[i];
-            }
-
-            FrameTimes[^1] = time;
-        }
+        private int frameNumber = 0;
+        private void UpdateLabel() => FPS.Content = string.Format("Frame:{0}\t FrameTime:{1:N2}\t FPS:{2:N2}",
+                frameNumber++,
+                FrameTime,
+                GameboyFPS);
 
         private Task? GameThread;
         private void LoadROM(object sender, DragEventArgs e)
