@@ -2,10 +2,6 @@
 
 namespace Hardware
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
-
     public enum JoypadKey
     {
         A,

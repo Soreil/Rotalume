@@ -21,18 +21,15 @@ namespace emulator
 
             if (TimerEnabled)
             {
-                var before = (InternalCounter & (1 << TACBitSelected)) == 0;
-                InternalCounter++;
-                var overflow = (InternalCounter & (1 << TACBitSelected)) == 0;
-                if (before == false && overflow)
+
+                //Overflowing internalcounter shouldn't be an issue here.
+                var overflow = ((InternalCounter + 1) & (1 << TACBitSelected)) == 0;
+                if (overflow && (InternalCounter & (1 << TACBitSelected)) == 0 == false)
                 {
                     IncrementTIMA();
                 }
             }
-            else
-            {
-                InternalCounter++;
-            }
+            InternalCounter++;
         }
 
         public byte DIV
@@ -115,7 +112,7 @@ namespace emulator
 
         //When TIMA overflows it should delay writing the value for 4 cycles
         private const int DelayDuration = 4;
-        private int DelayTicks = 0;
+        private uint DelayTicks = 0;
         private void IncrementTIMA()
         {
             if (Tima == 0xff)
