@@ -2,7 +2,7 @@
 
 namespace J2i.Net.XInputWrapper
 {
-    public static class XInput
+    internal static class XInput
     {
         [DllImport("xinput1_4.dll")]
         internal static extern int XInputGetState

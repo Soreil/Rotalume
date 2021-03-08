@@ -5,5 +5,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <AssemblyName>J2i.Net.XInputWrapper</AssemblyName>
     <RootNamespace>J2i.Net.XInputWrapper</RootNamespace>
+    <Nullable>enable</Nullable>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
   </PropertyGroup>
 </Project>

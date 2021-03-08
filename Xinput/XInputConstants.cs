@@ -2,8 +2,6 @@
 
 namespace J2i.Net.XInputWrapper
 {
-
-
     [Flags]
     internal enum ButtonFlags : int
     {

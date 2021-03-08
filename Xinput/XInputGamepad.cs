@@ -1,5 +1,4 @@
-﻿using System;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
 namespace J2i.Net.XInputWrapper
 {
@@ -35,8 +34,6 @@ namespace J2i.Net.XInputWrapper
         internal short sThumbRY;
 
         internal bool IsButtonPressed(int buttonFlags) => (wButtons & buttonFlags) == buttonFlags;
-
-        internal bool IsButtonPresent(int buttonFlags) => (wButtons & buttonFlags) == buttonFlags;
 
         internal void Copy(XInputGamepad source)
         {

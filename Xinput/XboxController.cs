@@ -5,11 +5,11 @@ namespace J2i.Net.XInputWrapper
 {
     public class XboxController
     {
-        int _playerIndex;
+        readonly int _playerIndex;
         static bool keepRunning;
         static bool isRunning;
         static readonly object SyncLock;
-        static Thread pollingThread;
+        static Thread? pollingThread;
 
         bool _stopMotorTimerActive;
         DateTime _stopMotorTime;
@@ -33,25 +33,22 @@ namespace J2i.Net.XInputWrapper
             internal set => _batterInformationHeadset = value;
         }
 
-        public const int MAX_CONTROLLER_COUNT = 4;
-        public const int FIRST_CONTROLLER_INDEX = 0;
-        public const int LAST_CONTROLLER_INDEX = MAX_CONTROLLER_COUNT - 1;
+        private const int ControllerLimit = 4;
 
         static readonly XboxController[] Controllers;
 
-
         static XboxController()
         {
-            Controllers = new XboxController[MAX_CONTROLLER_COUNT];
+            Controllers = new XboxController[ControllerLimit];
             SyncLock = new object();
-            for (int i = FIRST_CONTROLLER_INDEX; i <= LAST_CONTROLLER_INDEX; ++i)
+            for (int i = 0; i < ControllerLimit; ++i)
             {
                 Controllers[i] = new XboxController(i);
             }
             UpdateFrequency = 25;
         }
 
-        public event EventHandler<XboxControllerStateChangedEventArgs> StateChanged;
+        public event EventHandler<XboxControllerStateChangedEventArgs>? StateChanged;
 
         public static XboxController RetrieveController(int index) => Controllers[index];
 
@@ -171,9 +168,9 @@ namespace J2i.Net.XInputWrapper
             keepRunning = true;
             while (keepRunning)
             {
-                for (int i = FIRST_CONTROLLER_INDEX; i <= LAST_CONTROLLER_INDEX; ++i)
+                foreach (var c in Controllers)
                 {
-                    Controllers[i].UpdateState();
+                    c.UpdateState();
                 }
                 Thread.Sleep(UpdateFrequency);
             }
