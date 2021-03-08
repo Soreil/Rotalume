@@ -101,7 +101,6 @@ namespace emulator
             return (byte)((joypad & 0xf) | 0xc0);
         }
 
-
         public Core(byte[] gameROM, byte[]? bootROM, ConcurrentDictionary<JoypadKey, bool> Pressed, Func<bool> getKeyboardInterrupt, FrameSink frameSink)
         {
             this.Pressed = Pressed;
@@ -132,7 +131,16 @@ namespace emulator
             }
             else
             {
-                Card = MakeMBC(Header, gameROM, MakeMemoryMappedFile(Header));
+                var mmf = MakeMemoryMappedFile(Header);
+                Card = MakeMBC(Header, gameROM, mmf);
+
+                if (Header.Type == CartType.MBC3_TIMER_RAM_BATTERY)
+                {
+                    var SaveRTC = ((MBC3)Card).SaveRTC();
+
+                    void h(object? x, EventArgs y) => SaveRTC();
+                    frameSink.FramePushed += h;
+                }
             }
 
             var memory = new MMU(
@@ -218,7 +226,7 @@ namespace emulator
             var root = Environment.GetEnvironmentVariable("AppData") + "\\rotalume";
             if (!System.IO.Directory.Exists(root))
             {
-                System.IO.Directory.CreateDirectory(root);
+                _ = System.IO.Directory.CreateDirectory(root);
             }
 
             //Filenames might be somewhat illegal depending on what characters are in the title?

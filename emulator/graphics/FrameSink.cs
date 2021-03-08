@@ -63,7 +63,14 @@ namespace emulator
         {
         }
 
-        public long Length => frameData.Length;
+        protected virtual void OnFramePushed(EventArgs e)
+        {
+            if (FramePushed is not null)
+                FramePushed(this, e);
+        }
+
+        public event EventHandler? FramePushed;
+
         private void PushFrame()
         {
             if (LimitFPS)
@@ -86,6 +93,7 @@ namespace emulator
 
             Position = 0;
             FrameCount++;
+            OnFramePushed(EventArgs.Empty);
         }
         public delegate void Writer(byte[] buffer);
         public Writer Write;

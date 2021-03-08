@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace emulator
 {
@@ -14,7 +15,7 @@ namespace emulator
         private int RAMBankNumber = 0;
         private int RTCRegisterNumber = 0;
         private readonly Func<long>? GetRTC;
-        private bool hasClock => GetRTC != null;
+        private readonly bool hasClock;
 
         private const long TicksPerSecond = 1 << 22;
         private const long TicksPerMinute = TicksPerSecond * 60;
@@ -28,10 +29,14 @@ namespace emulator
         private bool ClockIsPaused = false;
         private bool DateOverflow = false;
         private long PausedClock = 0;
+
+        private System.IO.MemoryMappedFiles.MemoryMappedViewAccessor? ClockStorage;
+
         public MBC3(CartHeader header, byte[] gameROM, System.IO.MemoryMappedFiles.MemoryMappedFile file, Func<long>? getClock = null)
         {
             this.gameROM = gameROM;
             RAMBanks = file.CreateViewAccessor(0, header.RAM_Size);
+
 
             //0x800 is the only alternative bank size
             if (header.RAM_Size == 0)
@@ -45,8 +50,29 @@ namespace emulator
                 RAMBankSize = 0x800;
             }
 
-            GetRTC = getClock;
+            if (getClock is not null)
+            {
+                ClockStorage = file.CreateViewAccessor(header.RAM_Size, 16);
+                hasClock = true;
+                var InitialOffsetFromSave = ClockStorage.ReadInt64(0);
+                var timeOfLastSave = ClockStorage.ReadInt64(8);
+                var DotNetTicksElapsed = DateTime.Now.Ticks - timeOfLastSave;
+                var GameboyTicksElapsed = (long)(DotNetTicksElapsed * (TicksPerSecond / 10000000.0));
+                InitialOffsetFromSave += GameboyTicksElapsed;
+
+                GetRTC = () => getClock() + InitialOffsetFromSave;
+            }
         }
+
+        public Action SaveRTC() => !hasClock
+                ? throw new Exception("No clock present")
+                : (() =>
+            {
+                var time = GetRTC!();
+                ClockStorage!.Write(0, time);
+                var realTime = DateTime.Now.Ticks;
+                ClockStorage!.Write(8, realTime);
+            });
 
         public override byte this[int n]
         {

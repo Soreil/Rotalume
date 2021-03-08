@@ -104,11 +104,31 @@ namespace GUI
             Dispatcher.Invoke(bmpCb,
         System.Windows.Threading.DispatcherPriority.Render);
 
-            void LockCB() => Dispatcher.Invoke(lockCb,
-        System.Windows.Threading.DispatcherPriority.Render);
+            void LockCB()
+            {
+                try
+                {
+                    Dispatcher.Invoke(lockCb,
+            System.Windows.Threading.DispatcherPriority.Render);
+                }
+                catch (TaskCanceledException)
+                {
 
-            void UnlockCB() => Dispatcher.Invoke(unlockCb,
-        System.Windows.Threading.DispatcherPriority.Render);
+                }
+            }
+
+            void UnlockCB()
+            {
+                try
+                {
+                    Dispatcher.Invoke(unlockCb,
+            System.Windows.Threading.DispatcherPriority.Render);
+                }
+                catch (TaskCanceledException)
+                {
+
+                }
+            }
 
             var gameboy = new Core(
                 File.ReadAllBytes(path),
