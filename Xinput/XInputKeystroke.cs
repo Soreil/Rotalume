@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Runtime.InteropServices;
 
 namespace J2i.Net.XInputWrapper
 {
     [StructLayout(LayoutKind.Explicit)]
-    public struct  XInputKeystroke
+    public struct XInputKeystroke
     {
         [MarshalAs(UnmanagedType.I2)]
         [FieldOffset(0)]
@@ -24,10 +19,10 @@ namespace J2i.Net.XInputWrapper
 
         [MarshalAs(UnmanagedType.I2)]
         [FieldOffset(5)]
-        public byte  UserIndex;
+        public byte UserIndex;
 
         [MarshalAs(UnmanagedType.I1)]
         [FieldOffset(6)]
-        public byte  HidCode;
+        public byte HidCode;
     }
 }
