@@ -41,7 +41,7 @@ namespace GUI
             Controller = XboxController.RetrieveController(0);
 
 #pragma warning disable CS8622 // Nullability of reference types in type of parameter doesn't match the target delegate (possibly because of nullability attributes).
-            Controller.StateChanged += _selectedController_StateChanged;
+            Controller.StateChanged += SelectedController_StateChanged;
 #pragma warning restore CS8622 // Nullability of reference types in type of parameter doesn't match the target delegate (possibly because of nullability attributes).
 
             PropertyChanged += MainWindow_PropertyChanged;
@@ -49,7 +49,7 @@ namespace GUI
 
         private void MainWindow_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName != "SelectedController") return;
+            if (e.PropertyName != "Buttons") return;
 
             if ((!Pressed[JoypadKey.Right] && Controller.IsDPadRightPressed) ||
                 (!Pressed[JoypadKey.Left] && Controller.IsDPadLeftPressed) ||
@@ -73,32 +73,26 @@ namespace GUI
             Pressed[JoypadKey.Start] = Controller.IsStartPressed;
         }
 
-        private XboxController Controller;
-        void _selectedController_StateChanged(object sender, XboxControllerStateChangedEventArgs e)
-        {
-            OnPropertyChanged("SelectedController");
-        }
+        private readonly XboxController Controller;
+        void SelectedController_StateChanged(object sender, XboxControllerStateChangedEventArgs e) => OnPropertyChanged("Buttons");
         public void OnPropertyChanged(string name)
         {
             if (PropertyChanged != null)
             {
-                Action a = () => { PropertyChanged(this, new PropertyChangedEventArgs(name)); };
-                Dispatcher.BeginInvoke(a, null);
-
+                Action a = () => PropertyChanged(this, new PropertyChangedEventArgs(name));
+                _ = Dispatcher.BeginInvoke(a);
             }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
-
-        private delegate void UpdateImageCb();
-        private volatile bool paused = false;
-        private volatile bool CancelRequested = false;
+        private volatile bool paused;
+        private volatile bool CancelRequested;
         private void Gameboy(string path, bool bootromEnabled, bool fpsLimit)
         {
-            var bmpCb = new UpdateImageCb(SetBitmapBacking);
-            var lockCb = new UpdateImageCb(Lock);
-            var unlockCb = new UpdateImageCb(Unlock);
+            var bmpCb = new Action(SetBitmapBacking);
+            var lockCb = new Action(Lock);
+            var unlockCb = new Action(Unlock);
 
             bool keyBoardInterruptFired()
             {

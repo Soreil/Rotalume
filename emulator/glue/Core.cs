@@ -21,6 +21,8 @@ namespace emulator
         public APU APU;
         public PPU PPU;
         public Timers Timers;
+
+        //0x3 sets the top selection bits for buttons and dpad
         private byte keypadFlags = 0x30;
 
         private byte _dma = 0xff;
