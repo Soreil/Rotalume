@@ -26,15 +26,70 @@ namespace GUI
             InitializeComponent();
 
             Pressed = new(2, 8);
-            Pressed.TryAdd(JoypadKey.A, false);
-            Pressed.TryAdd(JoypadKey.B, false);
-            Pressed.TryAdd(JoypadKey.Select, false);
-            Pressed.TryAdd(JoypadKey.Start, false);
-            Pressed.TryAdd(JoypadKey.Right, false);
-            Pressed.TryAdd(JoypadKey.Left, false);
-            Pressed.TryAdd(JoypadKey.Up, false);
-            Pressed.TryAdd(JoypadKey.Down, false);
+            _ = Pressed.TryAdd(JoypadKey.A, false);
+            _ = Pressed.TryAdd(JoypadKey.B, false);
+            _ = Pressed.TryAdd(JoypadKey.Select, false);
+            _ = Pressed.TryAdd(JoypadKey.Start, false);
+            _ = Pressed.TryAdd(JoypadKey.Right, false);
+            _ = Pressed.TryAdd(JoypadKey.Left, false);
+            _ = Pressed.TryAdd(JoypadKey.Up, false);
+            _ = Pressed.TryAdd(JoypadKey.Down, false);
+
+            XboxController.UpdateFrequency = 5;
+            XboxController.StartPolling();
+
+            Controller = XboxController.RetrieveController(0);
+
+#pragma warning disable CS8622 // Nullability of reference types in type of parameter doesn't match the target delegate (possibly because of nullability attributes).
+            Controller.StateChanged += _selectedController_StateChanged;
+#pragma warning restore CS8622 // Nullability of reference types in type of parameter doesn't match the target delegate (possibly because of nullability attributes).
+
+            PropertyChanged += MainWindow_PropertyChanged;
         }
+
+        private void MainWindow_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName != "SelectedController") return;
+
+            if ((!Pressed[JoypadKey.Right] && Controller.IsDPadRightPressed) ||
+                (!Pressed[JoypadKey.Left] && Controller.IsDPadLeftPressed) ||
+                (!Pressed[JoypadKey.Up] && Controller.IsDPadUpPressed) ||
+                (!Pressed[JoypadKey.Down] && Controller.IsDPadDownPressed) ||
+                (!Pressed[JoypadKey.B] && Controller.IsBPressed) ||
+                (!Pressed[JoypadKey.A] && Controller.IsAPressed) ||
+                (!Pressed[JoypadKey.Select] && Controller.IsBackPressed) ||
+                (!Pressed[JoypadKey.Start] && Controller.IsStartPressed))
+            {
+                keyboardInterruptReady = true;
+            }
+
+            Pressed[JoypadKey.Right] = Controller.IsDPadRightPressed;
+            Pressed[JoypadKey.Left] = Controller.IsDPadLeftPressed;
+            Pressed[JoypadKey.Up] = Controller.IsDPadUpPressed;
+            Pressed[JoypadKey.Down] = Controller.IsDPadDownPressed;
+            Pressed[JoypadKey.B] = Controller.IsBPressed;
+            Pressed[JoypadKey.A] = Controller.IsAPressed;
+            Pressed[JoypadKey.Select] = Controller.IsBackPressed;
+            Pressed[JoypadKey.Start] = Controller.IsStartPressed;
+        }
+
+        private XboxController Controller;
+        void _selectedController_StateChanged(object sender, XboxControllerStateChangedEventArgs e)
+        {
+            OnPropertyChanged("SelectedController");
+        }
+        public void OnPropertyChanged(string name)
+        {
+            if (PropertyChanged != null)
+            {
+                Action a = () => { PropertyChanged(this, new PropertyChangedEventArgs(name)); };
+                Dispatcher.BeginInvoke(a, null);
+
+            }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
 
         private delegate void UpdateImageCb();
         private volatile bool paused = false;

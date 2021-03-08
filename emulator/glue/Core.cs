@@ -1,7 +1,5 @@
 ﻿using Hardware;
 
-using J2i.Net.XInputWrapper;
-
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 
@@ -54,22 +52,22 @@ namespace emulator
 
             if (selectArrows)
             {
-                if (Pressed[JoypadKey.Right] || Controller.IsDPadRightPressed)
+                if (Pressed[JoypadKey.Right])
                 {
                     joypad = joypad.SetBit(0, false);
                 }
 
-                if (Pressed[JoypadKey.Left] || Controller.IsDPadLeftPressed)
+                if (Pressed[JoypadKey.Left])
                 {
                     joypad = joypad.SetBit(1, false);
                 }
 
-                if (Pressed[JoypadKey.Up] || Controller.IsDPadUpPressed)
+                if (Pressed[JoypadKey.Up])
                 {
                     joypad = joypad.SetBit(2, false);
                 }
 
-                if (Pressed[JoypadKey.Down] || Controller.IsDPadDownPressed)
+                if (Pressed[JoypadKey.Down])
                 {
                     joypad = joypad.SetBit(3, false);
                 }
@@ -77,22 +75,22 @@ namespace emulator
             if (selectButtons)
             {
 
-                if (Pressed[JoypadKey.B] || Controller.IsBPressed)
+                if (Pressed[JoypadKey.B])
                 {
                     joypad = joypad.SetBit(0, false);
                 }
 
-                if (Pressed[JoypadKey.A] || Controller.IsAPressed)
+                if (Pressed[JoypadKey.A])
                 {
                     joypad = joypad.SetBit(1, false);
                 }
 
-                if (Pressed[JoypadKey.Select] || Controller.IsBackPressed)
+                if (Pressed[JoypadKey.Select])
                 {
                     joypad = joypad.SetBit(2, false);
                 }
 
-                if (Pressed[JoypadKey.Start] || Controller.IsStartPressed)
+                if (Pressed[JoypadKey.Start])
                 {
                     joypad = joypad.SetBit(3, false);
                 }
@@ -101,13 +99,10 @@ namespace emulator
             return (byte)((joypad & 0xf) | 0xc0);
         }
 
-        readonly XboxController Controller;
 
         public Core(byte[] gameROM, byte[]? bootROM, ConcurrentDictionary<JoypadKey, bool> Pressed, Func<bool> getKeyboardInterrupt, FrameSink frameSink)
         {
             this.Pressed = Pressed;
-            XboxController.StartPolling();
-            Controller = XboxController.RetrieveController(0);
 
             APU = new APU(WaveFormat.SampleRate * 2);
             PPU = new PPU(() => CPU!.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(0),
