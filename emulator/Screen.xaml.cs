@@ -40,9 +40,7 @@ namespace GUI
 
             Controller = XboxController.RetrieveController(0);
 
-#pragma warning disable CS8622 // Nullability of reference types in type of parameter doesn't match the target delegate (possibly because of nullability attributes).
             Controller.StateChanged += SelectedController_StateChanged;
-#pragma warning restore CS8622 // Nullability of reference types in type of parameter doesn't match the target delegate (possibly because of nullability attributes).
 
             PropertyChanged += MainWindow_PropertyChanged;
         }
@@ -74,7 +72,7 @@ namespace GUI
         }
 
         private readonly XboxController Controller;
-        void SelectedController_StateChanged(object sender, XboxControllerStateChangedEventArgs e) => OnPropertyChanged("Buttons");
+        void SelectedController_StateChanged(object? sender, XboxControllerStateChangedEventArgs e) => OnPropertyChanged("Buttons");
         public void OnPropertyChanged(string name)
         {
             if (PropertyChanged != null)
