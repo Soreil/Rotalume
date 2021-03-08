@@ -73,11 +73,6 @@ namespace emulator
 
                 }
                 var spent = stopWatch.ElapsedTicks;
-                //if (spent > timePerFrame * 2)
-                //{
-                //    Debugger.Break();
-                //}
-
                 _ = Logger!.WriteLineAsync(spent.ToString());
             }
             stopWatch.Restart();

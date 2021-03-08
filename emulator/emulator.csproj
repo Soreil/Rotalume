@@ -28,4 +28,8 @@
     <Folder Include="codegen\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Xinput\J2i.Net.XInputWrapper.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -2,10 +2,13 @@
 
 using Hardware;
 
+using J2i.Net.XInputWrapper;
+
 using NAudio.Wave;
 
 using System;
 using System.Collections.Concurrent;
+using System.ComponentModel;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,11 +19,8 @@ using System.Windows.Media.Imaging;
 
 namespace GUI
 {
-
     public partial class MainWindow : Window
     {
-        private delegate void UpdateImageCb();
-
         public MainWindow()
         {
             InitializeComponent();
@@ -36,6 +36,7 @@ namespace GUI
             Pressed.TryAdd(JoypadKey.Down, false);
         }
 
+        private delegate void UpdateImageCb();
         private volatile bool paused = false;
         private volatile bool CancelRequested = false;
         private void Gameboy(string path, bool bootromEnabled, bool fpsLimit)
@@ -70,59 +71,56 @@ namespace GUI
           new FrameSink(LockCB, UnlockCB, Dispatcher.Invoke(() => bmp!.BackBuffer), fpsLimit)
           );
 
-            new Task(() =>
+            bool useSound = false;
+            if (useSound)
             {
-                bool useSound = false;
-                if (useSound)
+
+                //Using a high buffer count makes it so the audio doesn't stutter, 5 seems
+                //to be just about enough to prevent stutter. Gusboy uses 50 so I'll go with that.
+                using var wo = new WaveOutEvent
                 {
+                    DesiredLatency = 100,
+                    NumberOfBuffers = 50,
+                };
+                wo.Init(gameboy);
+                wo.Play();
 
-                    //Using a high buffer count makes it so the audio doesn't stutter, 5 seems
-                    //to be just about enough to prevent stutter. Gusboy uses 50 so I'll go with that.
-                    using var wo = new WaveOutEvent
+                //We can only stop at a ms granularity this way, if we don't
+                //have some check interval we will consume full CPU resources
+                //Maybe some smarter waiting condition would help?
+                while (wo.PlaybackState == PlaybackState.Playing)
+                {
+                    if (CancelRequested)
                     {
-                        DesiredLatency = 100,
-                        NumberOfBuffers = 50,
-                    };
-                    wo.Init(gameboy);
-                    wo.Play();
+                        wo.Stop();
+                        break;
+                    }
 
-                    //We can only stop at a ms granularity this way, if we don't
-                    //have some check interval we will consume full CPU resources
-                    //Maybe some smarter waiting condition would help?
-                    while (wo.PlaybackState == PlaybackState.Playing)
+                    if (paused)
                     {
-                        if (CancelRequested)
+                        wo.Pause();
+                        while (paused)
                         {
-                            wo.Stop();
-                            break;
+                            Thread.Sleep(10);
                         }
-
-                        if (paused)
+                        wo.Play();
+                    }
+                }
+            }
+            else
+            {
+                while (!CancelRequested)
+                {
+                    gameboy.Step();
+                    if (paused)
+                    {
+                        while (paused)
                         {
-                            wo.Pause();
-                            while (paused)
-                            {
-                                Thread.Sleep(10);
-                            }
-                            wo.Play();
+                            Thread.Sleep(10);
                         }
                     }
                 }
-                else
-                {
-                    while (!CancelRequested)
-                    {
-                        gameboy.Step();
-                        if (paused)
-                        {
-                            while (paused)
-                            {
-                                Thread.Sleep(10);
-                            }
-                        }
-                    }
-                }
-            }).Start();
+            }
         }
 
         private void Lock() => bmp!.Lock();
@@ -254,6 +252,17 @@ namespace GUI
             {
                 Pressed[p] = false;
             }
+        }
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            CancelRequested = true;
+
+            //This should be triggered by the thread shutting down but it gets stuck calling back in to this thread
+            //via the dispatcher before it even has a chance to acknowledge cancelrequested often.
+            //If we don't stop it from polling the xboxcontroller will keep polling in the background forever.
+            XboxController.StopPolling();
+            base.OnClosing(e);
         }
     }
 }
