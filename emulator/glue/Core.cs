@@ -1,10 +1,7 @@
-﻿using Hardware;
-
-using NAudio.Wave;
+﻿using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 
 using System;
-using System.Collections.Concurrent;
 
 namespace emulator
 {
@@ -17,20 +14,19 @@ namespace emulator
         private readonly APU APU;
         private readonly PPU PPU;
         private readonly Timers Timers;
-        private readonly Keypad Keypad;
 
+        //TODO: move DMA somewhere else, probably the PPU
         private byte _dma = 0xff;
+        //TODO: move serial in to it's own class when we implement it
         private byte serialControl = 0x7e;
-        private readonly ControlRegister interruptRegisters = new(0xffff, 0x1); //This is only being used for two registers.
 
-        public Core(byte[] gameROM, byte[]? bootROM, ConcurrentDictionary<JoypadKey, bool> Pressed, Func<bool> getKeyboardInterrupt, FrameSink frameSink)
+        public Core(byte[] gameROM, byte[]? bootROM, Keypad Keypad, Func<bool> getKeyboardInterrupt, FrameSink frameSink)
         {
             if (gameROM.Length < 0x8000)
             {
                 throw new Exception("Cartridge file has to be at least 8kb in size");
             }
 
-            Keypad = new(Pressed);
             APU = new APU(WaveFormat.SampleRate * 2);
             PPU = new PPU(() => CPU!.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(0),
                                        () => CPU!.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(1),
@@ -38,11 +34,11 @@ namespace emulator
 
             Timers = new Timers(() => CPU!.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(2));
 
+            ControlRegister interruptRegisters = new(0xffff, 0x1);
             interruptRegisters.Writer[0x00] = x => CPU!.InterruptControlRegister = x;
             interruptRegisters.Reader[0x00] = () => CPU!.InterruptControlRegister;
 
-            var ioRegisters = SetupControlRegisters();
-
+            var ioRegisters = SetupControlRegisters(Keypad);
 
             CartHeader Header = new CartHeader(gameROM);
 
@@ -129,7 +125,7 @@ namespace emulator
             }
         }
 
-        private ControlRegister SetupControlRegisters()
+        private ControlRegister SetupControlRegisters(Keypad Keypad)
         {
             ControlRegister controlRegisters = new ControlRegister(0xff00, 0x80);
 
@@ -140,9 +136,8 @@ namespace emulator
             controlRegisters.Writer[2] = (x) => serialControl = (byte)((x & 0x81) | 0x7e);
             controlRegisters.Reader[2] = () => serialControl;
 
-            controlRegisters.Reader[0x46] = () => _dma;
-
             //DMA
+            controlRegisters.Reader[0x46] = () => _dma;
             controlRegisters.Writer[0x46] = (x) =>
             {
                 if (x > 0xf1)
@@ -161,24 +156,10 @@ namespace emulator
             };
 
             Keypad.HookUpKeypad(controlRegisters);
-
             Timers.HookUpTimers(controlRegisters);
-
             PPU.HookUpGraphics(controlRegisters);
-
             APU.HookUpSound(controlRegisters);
 
-            //Not used on the DMG
-            for (ushort Unused = 0xff4c; Unused < 0xff80; Unused++)
-            {
-                if (Unused == 0xff50)
-                {
-                    continue;
-                }
-
-                controlRegisters.Writer[Unused & 0xff] = (x) => { };
-                controlRegisters.Reader[Unused & 0xff] = () => 0xff;
-            }
             return controlRegisters;
         }
 

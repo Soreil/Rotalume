@@ -133,7 +133,7 @@ namespace GUI
             var gameboy = new Core(
                 File.ReadAllBytes(path),
           bootrom,
-          Pressed,
+          new Keypad(Pressed),
           keyBoardInterruptFired,
           new FrameSink(LockCB, UnlockCB, Dispatcher.Invoke(() => bmp!.BackBuffer), fpsLimit)
           );
