@@ -54,6 +54,11 @@ namespace emulator
                 frameSink.FramePushed += h;
             }
 
+            if (Card is MBC5WithRumble rumble)
+            {
+                rumble.RumbleStateChange += Keypad.ToggleRumble;
+            }
+
             var memory = new MMU(
     bootROM,
     Card,

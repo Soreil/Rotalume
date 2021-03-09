@@ -37,6 +37,14 @@ namespace emulator
 
         public int ROM_Size { get; init; }
         public int RAM_Size { get; init; }
+        internal bool HasRumble() => Type switch
+        {
+            CartType.MBC5_RUMBLE => true,
+            CartType.MBC5_RUMBLE_RAM => true,
+            CartType.MBC5_RUMBLE_RAM_BATTERY => true,
+            _ => false
+        };
+
         public CartHeader(byte[] gameROM)
         {
             char[] t = new char[16];
@@ -92,6 +100,9 @@ namespace emulator
             CartType.MBC5 => new MBC5(this, gameROM, file!),
             CartType.MBC5_RAM => new MBC5(this, gameROM, file!),
             CartType.MBC5_RAM_BATTERY => new MBC5(this, gameROM, file!),
+            CartType.MBC5_RUMBLE_RAM_BATTERY => new MBC5WithRumble(this, gameROM, file!),
+            CartType.MBC5_RUMBLE => new MBC5WithRumble(this, gameROM, file!),
+            CartType.MBC5_RUMBLE_RAM => new MBC5WithRumble(this, gameROM, file!),
             _ => throw new NotImplementedException(),
         };
 

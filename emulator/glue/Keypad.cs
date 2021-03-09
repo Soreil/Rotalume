@@ -10,7 +10,11 @@ namespace emulator
         private byte keypadFlags = 0x30;
         private readonly ConcurrentDictionary<JoypadKey, bool> Pressed;
 
-        public Keypad(ConcurrentDictionary<JoypadKey, bool> pressed) => Pressed = pressed;
+        public Keypad(ConcurrentDictionary<JoypadKey, bool> pressed, J2i.Net.XInputWrapper.XboxController? controller)
+        {
+            Pressed = pressed;
+            Controller = controller;
+        }
 
         private byte UpdateJoypadPresses()
         {
@@ -76,6 +80,17 @@ namespace emulator
         {
             controlRegisters.Writer[0] = x => keypadFlags = (byte)(x & 0xf0);
             controlRegisters.Reader[0] = () => UpdateJoypadPresses();
+        }
+
+        private bool Rumbling = false;
+        readonly J2i.Net.XInputWrapper.XboxController? Controller;
+
+        internal void ToggleRumble(object? sender, System.EventArgs e)
+        {
+            if (!Rumbling)
+                Controller?.Vibrate(1, 1);
+            else Controller?.Vibrate(0, 0);
+            Rumbling = !Rumbling;
         }
     }
 }

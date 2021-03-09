@@ -9,13 +9,14 @@ namespace emulator
         private bool RAMEnabled = false;
         private const int ROMBankSize = 0x4000;
         private readonly int RAMBankSize = RAMSize;
-        private readonly int RAMBankCount;
+        protected readonly int RAMBankCount;
         private readonly int ROMBankCount;
         private int ROMBankNumber = 1;
-        private int RAMBankNumber = 0;
+        protected int RAMBankNumber = 0;
         public MBC5(CartHeader header, byte[] gameROM, System.IO.MemoryMappedFiles.MemoryMappedFile file)
         {
             this.gameROM = gameROM;
+
             ROMBankCount = this.gameROM.Length / 0x4000;
             RAMBankCount = Math.Max(1, header.RAM_Size / RAMBankSize);
             RAMBanks = file.CreateViewAccessor(0, header.RAM_Size);
@@ -54,7 +55,7 @@ namespace emulator
 
                     break;
                     case var v when v < 0x6000:
-                    RAMBankNumber = (value & 0xf) & (RAMBankCount - 1);
+                    SetRAMBank(value);
                     break;
                     case var v when v >= RAMStart:
                     SetRAM(n, value);
@@ -63,6 +64,7 @@ namespace emulator
             }
         }
 
+        public virtual void SetRAMBank(byte value) => RAMBankNumber = value & 0xf & (RAMBankCount - 1);
         public byte GetROM(int n) => IsUpperBank(n) ? ReadHighBank(n) : ReadLowBank(n);
 
         private byte ReadLowBank(int n) => gameROM[n];
