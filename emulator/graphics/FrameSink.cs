@@ -9,7 +9,6 @@ namespace emulator
     {
         private readonly byte[] frameData;
 
-        public int FrameCount { get; private set; }
 
         private readonly Action? Lock;
         private readonly Action? Unlock;
@@ -23,14 +22,10 @@ namespace emulator
         {
             frameData = new byte[144 * 160];
             Position = 0;
-            FrameCount = 0;
 
             this.Lock = Lock;
             this.Unlock = Unlock;
             this.Pointer = Pointer;
-
-            Write = WriteNormal;
-            Draw = PushFrame;
 
             timePerFrame = (TimeSpan.FromSeconds(1) / ((1 << 22) / 70224.0)).Ticks;
             this.LimitFPS = LimitFPS;
@@ -51,17 +46,6 @@ namespace emulator
         }
 
         public int Position { get; private set; }
-        public FrameSink()
-        {
-            frameData = Array.Empty<byte>();
-            Position = 0;
-            Write = WriteEmpty;
-            Draw = DrawEmpty;
-        }
-
-        private void DrawEmpty()
-        {
-        }
 
         protected virtual void OnFramePushed(EventArgs e)
         {
@@ -71,7 +55,7 @@ namespace emulator
 
         public event EventHandler? FramePushed;
 
-        private void PushFrame()
+        public void Draw()
         {
             if (LimitFPS)
             {
@@ -92,20 +76,13 @@ namespace emulator
             Unlock!();
 
             Position = 0;
-            FrameCount++;
             OnFramePushed(EventArgs.Empty);
         }
-        public delegate void Writer(byte[] buffer);
-        public Writer Write;
-        public delegate void Drawer();
-        public Drawer Draw;
-        private void WriteNormal(byte[] buffer)
+
+        public void Write(byte[] buffer)
         {
             buffer.CopyTo(frameData, Position);
             Position += buffer.Length;
-        }
-        private void WriteEmpty(byte[] buffer)
-        {
         }
     }
 }

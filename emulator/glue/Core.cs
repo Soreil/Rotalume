@@ -29,17 +29,6 @@ namespace emulator
         private byte serialControl = 0x7e;
         private readonly ControlRegister interruptRegisters = new(0xffff, 0x1); //This is only being used for two registers.
 
-        public Core(List<byte> l, byte[]? bootrom = null) : this(l.Count < 0x8000 ? PadAndMoveTo0x100(l.ToArray()) : l.ToArray(), bootrom, new(), () => false, new())
-        { }
-
-        private static byte[] PadAndMoveTo0x100(byte[] l)
-        {
-            byte[] buffer = new byte[0x8000];
-
-            l.CopyTo(buffer, 0x100);
-            return buffer;
-        }
-
         private readonly ConcurrentDictionary<JoypadKey, bool> Pressed;
         private byte UpdateJoypadPresses(byte Flags)
         {
@@ -119,7 +108,7 @@ namespace emulator
 
             if (gameROM.Length < 0x8000)
             {
-                throw new Exception();
+                throw new Exception("Cartridge file has to be at least 8kb in size");
             }
 
             CartHeader Header = new CartHeader(gameROM);
@@ -283,6 +272,48 @@ namespace emulator
             controlRegisters.Writer[0x50] = BootROMFlagController;
             controlRegisters.Reader[0x50] = () => 0xff;
 
+            HookUpGraphics(controlRegisters);
+
+            HookUpSound(controlRegisters);
+
+            //Serial
+            controlRegisters.Writer[1] = (x) => { };
+            controlRegisters.Reader[1] = () => 0;
+
+            controlRegisters.Writer[2] = (x) => serialControl = (byte)((x & 0x81) | 0x7e);
+            controlRegisters.Reader[2] = () => serialControl;
+
+            //Not used on the DMG
+            for (ushort Unused = 0xff4c; Unused < 0xff80; Unused++)
+            {
+                if (Unused == 0xff50)
+                {
+                    continue;
+                }
+
+                controlRegisters.Writer[Unused & 0xff] = (x) => { };
+                controlRegisters.Reader[Unused & 0xff] = () => 0xff;
+            }
+            return controlRegisters;
+        }
+
+        private void HookUpTimers(ControlRegister controlRegisters)
+        {
+            controlRegisters.Writer[0x04] = x => Timers.DIV = x;
+            controlRegisters.Reader[0x04] = () => Timers.DIV;
+
+            controlRegisters.Writer[0x05] = x => Timers.TIMA = x;
+            controlRegisters.Reader[0x05] = () => Timers.TIMA;
+
+            controlRegisters.Writer[0x06] = x => Timers.TMA = x;
+            controlRegisters.Reader[0x06] = () => Timers.TMA;
+
+            controlRegisters.Writer[0x07] = x => Timers.TAC = x;
+            controlRegisters.Reader[0x07] = () => Timers.TAC;
+        }
+
+        private void HookUpGraphics(ControlRegister controlRegisters)
+        {
             void LCDControlController(byte b) => PPU.LCDC = b;
 
             byte ReadLCDControl() => PPU.LCDC;
@@ -327,48 +358,6 @@ namespace emulator
 
             byte ReadLYC() => PPU.LYC;
 
-            HookUpGraphics(controlRegisters, LCDControlController, ReadLCDControl, LCDStatController, ReadLCDStat, ScrollYController, ReadScrollY, ScrollXController, ReadScrollX, LCDLineController, ReadLine, PaletteController, ReadPalette, OBP0Controller, ReadOBP0, OBP1Controller, ReadOBP1, WYController, ReadWY, WXController, ReadWX, LYCController, ReadLYC);
-
-            HookUpSound(controlRegisters);
-
-            //Serial
-            controlRegisters.Writer[1] = (x) => { };
-            controlRegisters.Reader[1] = () => 0;
-
-            controlRegisters.Writer[2] = (x) => serialControl = (byte)((x & 0x81) | 0x7e);
-            controlRegisters.Reader[2] = () => serialControl;
-
-            //Not used on the DMG
-            for (ushort Unused = 0xff4c; Unused < 0xff80; Unused++)
-            {
-                if (Unused == 0xff50)
-                {
-                    continue;
-                }
-
-                controlRegisters.Writer[Unused & 0xff] = (x) => { };
-                controlRegisters.Reader[Unused & 0xff] = () => 0xff;
-            }
-            return controlRegisters;
-        }
-
-        private void HookUpTimers(ControlRegister controlRegisters)
-        {
-            controlRegisters.Writer[0x04] = x => Timers.DIV = x;
-            controlRegisters.Reader[0x04] = () => Timers.DIV;
-
-            controlRegisters.Writer[0x05] = x => Timers.TIMA = x;
-            controlRegisters.Reader[0x05] = () => Timers.TIMA;
-
-            controlRegisters.Writer[0x06] = x => Timers.TMA = x;
-            controlRegisters.Reader[0x06] = () => Timers.TMA;
-
-            controlRegisters.Writer[0x07] = x => Timers.TAC = x;
-            controlRegisters.Reader[0x07] = () => Timers.TAC;
-        }
-
-        private void HookUpGraphics(ControlRegister controlRegisters, Action<byte> LCDControlController, Func<byte> ReadLCDControl, Action<byte> LCDStatController, Func<byte> ReadLCDStat, Action<byte> ScrollYController, Func<byte> ReadScrollY, Action<byte> ScrollXController, Func<byte> ReadScrollX, Action<byte> LCDLineController, Func<byte> ReadLine, Action<byte> PaletteController, Func<byte> ReadPalette, Action<byte> OBP0Controller, Func<byte> ReadOBP0, Action<byte> OBP1Controller, Func<byte> ReadOBP1, Action<byte> WYController, Func<byte> ReadWY, Action<byte> WXController, Func<byte> ReadWX, Action<byte> LYCController, Func<byte> ReadLYC)
-        {
             //PPU registers
             controlRegisters.Writer[0x40] = LCDControlController;
             controlRegisters.Reader[0x40] = ReadLCDControl;

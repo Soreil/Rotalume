@@ -17,9 +17,9 @@ namespace emulator
         private const int TicksPerScanline = 456;
         private const int TicksPerFrame = ScanlinesPerFrame * TicksPerScanline;
 
-        public Renderer(PPU ppu, FrameSink? destination = null, long offset = 0)
+        public Renderer(PPU ppu, FrameSink destination, long offset = 0)
         {
-            fs = destination ?? new();
+            fs = destination;
             PPU = ppu;
             ppu.Mode = Mode.OAMSearch;
             fetcher = new PixelFetcher(PPU);
