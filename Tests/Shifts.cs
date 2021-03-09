@@ -10,7 +10,7 @@ namespace Tests
         [Test]
         public void RLCA()
         {
-            var core = new Core(new System.Collections.Generic.List<byte> { });
+            var core = TestHelpers.NewCore(new byte[] { });
             var dec = core.CPU;
 
             {
@@ -44,7 +44,7 @@ namespace Tests
         [Test]
         public void RRCA()
         {
-            var core = new Core(new System.Collections.Generic.List<byte> { });
+            var core = TestHelpers.NewCore(new byte[] { });
             var dec = core.CPU;
 
             {
@@ -78,7 +78,7 @@ namespace Tests
         [Test]
         public void CPL()
         {
-            var core = new Core(new System.Collections.Generic.List<byte> { });
+            var core = TestHelpers.NewCore(new byte[] { });
             var dec = core.CPU;
 
             dec.Registers.A = (0xff);
@@ -89,7 +89,7 @@ namespace Tests
         [Test]
         public void SCF()
         {
-            var core = new Core(new System.Collections.Generic.List<byte> { });
+            var core = TestHelpers.NewCore(new byte[] { });
             var dec = core.CPU;
 
             dec.Op(Unprefixed.SCF)();
@@ -99,7 +99,7 @@ namespace Tests
         [Test]
         public void CCF()
         {
-            var core = new Core(new System.Collections.Generic.List<byte> { });
+            var core = TestHelpers.NewCore(new byte[] { });
             var dec = core.CPU;
             dec.Registers.Mark(Flag.NC);
 

@@ -8,9 +8,9 @@ namespace emulator
     public class Core : ISampleProvider
     {
         //Global clock used by RTC carts
-        private long masterclock = 0;
+        public long masterclock = 0;
 
-        private readonly CPU CPU;
+        public readonly CPU CPU;
         private readonly APU APU;
         private readonly PPU PPU;
         private readonly Timers Timers;

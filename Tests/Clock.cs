@@ -15,8 +15,8 @@ namespace Tests
         [Test]
         public void C2DoesNotThrow()
         {
-            var p = new Core(new List<byte> { 0xc2, 0, 0 });
-            p.DoNextOP();
+            var p = TestHelpers.NewCore(new byte[] { 0xc2, 0, 0 });
+            p.Step();
         }
 
         [Test]
@@ -26,17 +26,17 @@ namespace Tests
             {
                 if (illegalOps.Contains((Unprefixed)i)) continue; //FIXME: when we implement halt and stop there should be some time taken here most likely.
 
-                var p = new Core(new List<byte> { (byte)i, 0, 0 });
+                var p = TestHelpers.NewCore(new byte[] { (byte)i, 0, 0 });
 
-                p.DoNextOP();
-                Assert.AreNotEqual(0, p.Clock);
+                p.Step();
+                Assert.AreNotEqual(0, p.masterclock);
             }
             for (var i = 0; i < 0x100; i++)
             {
-                var p = new Core(new List<byte> { 0xCB, (byte)i, 0, 0 });
+                var p = TestHelpers.NewCore(new byte[] { 0xCB, (byte)i, 0, 0 });
 
-                p.DoNextOP();
-                Assert.AreNotEqual(0, p.Clock);
+                p.Step();
+                Assert.AreNotEqual(0, p.masterclock);
             }
         }
     }

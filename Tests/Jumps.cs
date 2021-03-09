@@ -11,26 +11,26 @@ namespace Tests
         [Test]
         public void NO_OP()
         {
-            var p = new Core(new List<byte> {
+            var p = TestHelpers.NewCore(new byte[] {
             (byte)Unprefixed.NOP
             });
-            p.DoNextOP();
-            Assert.AreEqual(0x101, p.PC);
-            Assert.AreEqual(4, p.Clock);
+            p.Step();
+            Assert.AreEqual(0x101, p.CPU.PC);
+            Assert.AreEqual(4, p.CPU.TicksWeAreWaitingFor);
         }
 
         [Test]
         public void POP()
         {
-            var p = new Core(new List<byte> {
+            var p = TestHelpers.NewCore(new byte[] {
             (byte)Unprefixed.POP_AF
             });
 
             p.CPU.Memory.Write(0x0fffd, 0x8020);
             p.CPU.Registers.SP = 0xfffd;
-            p.DoNextOP();
-            Assert.AreEqual(0x101, p.PC);
-            Assert.AreEqual(12, p.Clock);
+            p.Step();
+            Assert.AreEqual(0x101, p.CPU.PC);
+            Assert.AreEqual(12, p.CPU.TicksWeAreWaitingFor);
             Assert.AreEqual(0xffff, p.CPU.Registers.SP);
             Assert.AreEqual(0x8020, p.CPU.Registers.AF);
         }
@@ -51,7 +51,7 @@ namespace Tests
         [Test]
         public void POP_AF()
         {
-            var inst = new List<byte> {
+            var inst = new byte[] {
             (byte)Unprefixed.LD_BC_d16,00,0x12,
                 (byte)Unprefixed.PUSH_BC,
                 (byte)Unprefixed.POP_AF,
@@ -61,30 +61,28 @@ namespace Tests
                 (byte)Unprefixed.AND_d8,0xf0,
                 (byte)Unprefixed.CP_E,
             };
-            var p = new Core(inst);
+            var p = TestHelpers.NewCore(inst);
             p.CPU.Registers.SP = 0xffff;
 
-            while (p.PC != 0x100 + inst.Count)
-                p.DoNextOP();
-            Assert.AreEqual(0x10b, p.PC);
+            while (p.CPU.PC != 0x100 + inst.Length)
+                p.Step();
+            Assert.AreEqual(0x10b, p.CPU.PC);
             Assert.IsTrue(p.CPU.Registers.Get(Flag.Z));
         }
 
         [Test]
         public void PUSH()
         {
-            var p = new Core(new List<byte> {
-            (byte)Unprefixed.PUSH_AF
-            });
+            var p = TestHelpers.NewCore(new byte[] { (byte)Unprefixed.PUSH_AF });
 
             p.CPU.Registers.SP = 0xfffe;
             p.CPU.Registers.AF = 0x12f0;
 
-            p.DoNextOP();
+            p.Step();
             var read = p.CPU.Memory.ReadWide(0x0fffc);
 
-            Assert.AreEqual(0x101, p.PC);
-            Assert.AreEqual(16, p.Clock);
+            Assert.AreEqual(0x101, p.CPU.PC);
+            Assert.AreEqual(16, p.CPU.TicksWeAreWaitingFor);
             Assert.AreEqual(0xfffc, p.CPU.Registers.SP);
 
             Assert.AreEqual(0x12f0, read);
@@ -93,32 +91,30 @@ namespace Tests
         [Test]
         public void RET()
         {
-            var p = new Core(new List<byte> {
-            (byte)Unprefixed.RET
-            });
+            var p = TestHelpers.NewCore(new byte[] { (byte)Unprefixed.RET });
 
             p.CPU.Registers.SP = 0xfffd;
             p.CPU.Memory.Write(0xfffd, 0xfedc);
 
-            p.DoNextOP();
+            p.Step();
 
-            Assert.AreEqual(0xfedc, p.PC);
-            Assert.AreEqual(16, p.Clock);
+            Assert.AreEqual(0xfedc, p.CPU.PC);
+            Assert.AreEqual(16, p.CPU.TicksWeAreWaitingFor);
             Assert.AreEqual(0xffff, p.CPU.Registers.SP);
         }
 
         [Test]
         public void CALL()
         {
-            var p = new Core(new List<byte> {
+            var p = TestHelpers.NewCore(new byte[] {
             (byte)Unprefixed.CALL_a16,0xab,0xcd
             });
 
             p.CPU.Registers.SP = 0xffff;
-            p.DoNextOP();
+            p.Step();
 
-            Assert.AreEqual(0xcdab, p.PC);
-            Assert.AreEqual(24, p.Clock);
+            Assert.AreEqual(0xcdab, p.CPU.PC);
+            Assert.AreEqual(24, p.CPU.TicksWeAreWaitingFor);
             Assert.AreEqual(0xfffd, p.CPU.Registers.SP);
             Assert.AreEqual(0x103, p.CPU.Memory.ReadWide(0xfffd));
         }
@@ -126,53 +122,51 @@ namespace Tests
         [Test]
         public void JR_NZ_r8()
         {
-            var p = new Core(new List<byte>
+            var p = TestHelpers.NewCore(new byte[]
             {
                 (byte)Unprefixed.JR_NZ_r8, 0x05}
             );
             p.CPU.Registers.Set(Flag.Z, false);
 
-            p.DoNextOP();
-            Assert.AreEqual(0x107, p.PC);
-            Assert.AreEqual(12, p.Clock);
+            p.Step();
+            Assert.AreEqual(0x107, p.CPU.PC);
+            Assert.AreEqual(12, p.CPU.TicksWeAreWaitingFor);
 
-            p = new Core(new List<byte>
+            p = TestHelpers.NewCore(new byte[]
             { (byte)Unprefixed.JR_NZ_r8, unchecked((byte)-2)}
             );
             p.CPU.Registers.Mark(Flag.NZ);
 
-            p.DoNextOP();
-            Assert.AreEqual(0x100, p.PC);
-            Assert.AreEqual(12, p.Clock);
+            p.Step();
+            Assert.AreEqual(0x100, p.CPU.PC);
+            Assert.AreEqual(12, p.CPU.TicksWeAreWaitingFor);
 
-            p = new Core(new List<byte>
+            p = TestHelpers.NewCore(new byte[]
             { (byte)Unprefixed.JR_NZ_r8, 0x05}
             );
             p.CPU.Registers.Mark(Flag.Z);
 
-            p.DoNextOP();
-            Assert.AreEqual(0x102, p.PC);
-            Assert.AreEqual(8, p.Clock);
+            p.Step();
+            Assert.AreEqual(0x102, p.CPU.PC);
+            Assert.AreEqual(8, p.CPU.TicksWeAreWaitingFor);
         }
 
         [Test]
         public void JR_r8()
         {
-            var p = new Core(new List<byte>
+            var p = TestHelpers.NewCore(new byte[]
             { (byte)Unprefixed.JR_r8, 0x05}
             );
 
-            p.DoNextOP();
-            Assert.AreEqual(0x107, p.PC);
-            Assert.AreEqual(12, p.Clock);
+            p.Step();
+            Assert.AreEqual(0x107, p.CPU.PC);
+            Assert.AreEqual(12, p.CPU.TicksWeAreWaitingFor);
 
-            p = new Core(new List<byte>
-            { (byte)Unprefixed.JR_r8, unchecked((byte)-2)}
-            );
+            p = TestHelpers.NewCore(new byte[] { (byte)Unprefixed.JR_r8, unchecked((byte)-2) });
 
-            p.DoNextOP();
-            Assert.AreEqual(0x100, p.PC);
-            Assert.AreEqual(12, p.Clock);
+            p.Step();
+            Assert.AreEqual(0x100, p.CPU.PC);
+            Assert.AreEqual(12, p.CPU.TicksWeAreWaitingFor);
 
 
         }

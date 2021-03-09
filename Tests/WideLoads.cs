@@ -23,9 +23,9 @@ namespace Tests
             Assert.AreEqual(after, 0xa020);
         }
 
-        private CPU SetupA020Buffered()
+        private static CPU SetupA020Buffered()
         {
-            var c = new Core(new List<byte> { 0x20, 0xa0 });
+            var c = TestHelpers.NewCore(new byte[] { 0x20, 0xa0 });
             return c.CPU;
         }
 
@@ -74,14 +74,14 @@ namespace Tests
         [Test]
         public void LD_SP_d16_v2()
         {
-            var p = new emulator.Core(new List<byte>
+            var p = TestHelpers.NewCore(new byte[]
             { (byte)Unprefixed.LD_SP_d16, 0x12, 0x45 }
             );
 
-            p.DoNextOP();
-            Assert.AreEqual(0x103, p.PC);
+            p.Step();
+            Assert.AreEqual(0x103, p.CPU.PC);
             Assert.AreEqual(0x4512, p.CPU.Registers.SP);
-            Assert.AreEqual(12, p.Clock);
+            Assert.AreEqual(12, p.CPU.TicksWeAreWaitingFor);
         }
 
         [Test]
@@ -106,14 +106,14 @@ namespace Tests
 
         private CPU Setup0x77BufferedDecoder()
         {
-            var c = new Core(new List<byte> { 0x77 });
+            var c = TestHelpers.NewCore(new byte[] { 0x77 });
             return c.CPU;
         }
 
         [Test]
         public void LDD_AT_HL_A()
         {
-            var core = new Core(new List<byte> { });
+            var core = TestHelpers.NewCore(new byte[] { });
             var dec = core.CPU;
             dec.Registers.Set(WideRegister.HL, 0xa001);
             dec.Registers.Set(Register.A, 0x77);
@@ -138,7 +138,7 @@ namespace Tests
         [Test]
         public void LDI_AT_HL_A()
         {
-            var core = new Core(new List<byte> { });
+            var core = TestHelpers.NewCore(new byte[] { });
             var dec = core.CPU;
             dec.Registers.Set(WideRegister.HL, 0xa000);
             dec.Registers.Set(Register.A, 0x77);
@@ -174,7 +174,7 @@ namespace Tests
         [Test]
         public void ADD_HL_BC()
         {
-            var core = new Core(new System.Collections.Generic.List<byte> { });
+            var core = TestHelpers.NewCore(new byte[] { });
             var dec = core.CPU;
 
             dec.Registers.HL = (0x8a23);
@@ -190,7 +190,7 @@ namespace Tests
         [Test]
         public void ADD_HL_HL()
         {
-            var core = new Core(new System.Collections.Generic.List<byte> { });
+            var core = TestHelpers.NewCore(new byte[] { });
             var dec = core.CPU;
 
             dec.Registers.HL = (0x8a23);
@@ -206,7 +206,7 @@ namespace Tests
         [Test]
         public void LD_A_B()
         {
-            var core = new Core(new System.Collections.Generic.List<byte> { });
+            var core = TestHelpers.NewCore(new byte[] { });
             var dec = core.CPU;
 
             dec.Registers.B = (0x10);
@@ -219,7 +219,7 @@ namespace Tests
         [Test]
         public void LD_AT_C_A()
         {
-            var core = new Core(new System.Collections.Generic.List<byte> { });
+            var core = TestHelpers.NewCore(new byte[] { });
             var dec = core.CPU;
 
             dec.Registers.A = (0x10);
@@ -233,7 +233,7 @@ namespace Tests
         [Test]
         public void LD_A_AT_C()
         {
-            var core = new Core(new System.Collections.Generic.List<byte> { });
+            var core = TestHelpers.NewCore(new byte[] { });
             var dec = core.CPU;
 
             dec.Memory.Write(0xfffe, 0x10);
