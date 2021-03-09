@@ -109,7 +109,7 @@ namespace GUI
                 try
                 {
                     Dispatcher.Invoke(lockCb,
-            System.Windows.Threading.DispatcherPriority.Render);
+            System.Windows.Threading.DispatcherPriority.Render, CancellationTokenSource.Token);
                 }
                 catch (TaskCanceledException)
                 {
@@ -122,7 +122,7 @@ namespace GUI
                 try
                 {
                     Dispatcher.Invoke(unlockCb,
-            System.Windows.Threading.DispatcherPriority.Render);
+            System.Windows.Threading.DispatcherPriority.Render, CancellationTokenSource.Token);
                 }
                 catch (TaskCanceledException)
                 {
@@ -270,6 +270,8 @@ namespace GUI
             SpinUpNewGameboy(ofd.FileName);
         }
 
+        CancellationTokenSource CancellationTokenSource = new();
+
         private void SpinUpNewGameboy(string fn)
         {
             bool br = (bool)bootromCheckbox.IsChecked!;
@@ -277,9 +279,11 @@ namespace GUI
             if (GameThread is not null)
             {
                 CancelRequested = true;
+                CancellationTokenSource.Cancel();
                 GameThread.Wait();
                 CancelRequested = false;
             }
+            CancellationTokenSource = new();
 
             bmp = new WriteableBitmap(160, 144, 96, 96, PixelFormats.Gray8, null);
 
