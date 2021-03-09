@@ -17,7 +17,7 @@ namespace Tests
 
             return new Core(gamerom,
                 bootrom,
-                new(new System.Collections.Concurrent.ConcurrentDictionary<Hardware.JoypadKey, bool>()),
+                new(new System.Collections.Concurrent.ConcurrentDictionary<Hardware.JoypadKey, bool>(), null),
                 () => false, new(() => { }, () => { },
                     IntPtr.Zero,
                     false));
@@ -34,7 +34,7 @@ namespace Tests
 
             return new Core(gameromPaddedToSize,
                 null,
-                new(new System.Collections.Concurrent.ConcurrentDictionary<Hardware.JoypadKey, bool>()),
+                new(new System.Collections.Concurrent.ConcurrentDictionary<Hardware.JoypadKey, bool>(), null),
                 () => false, new(() => { }, () => { },
                     IntPtr.Zero,
                     false));
