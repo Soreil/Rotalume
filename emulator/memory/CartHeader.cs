@@ -75,5 +75,72 @@ namespace emulator
             CartType.MBC3_TIMER_RAM_BATTERY => true,
             _ => false,
         };
+
+        public MBC MakeMBC(byte[] gameROM, System.IO.MemoryMappedFiles.MemoryMappedFile? file, Func<long> clock) => Type switch
+        {
+            CartType.ROM_ONLY => new ROMONLY(gameROM),
+            CartType.MBC1 => new MBC1(this, gameROM),
+            CartType.MBC1_RAM => new MBC1(this, gameROM),
+            CartType.MBC1_RAM_BATTERY => new MBC1(this, gameROM, file),
+            CartType.MBC2 => new MBC2(gameROM, file!),
+            CartType.MBC2_BATTERY => new MBC2(gameROM, file!),
+            CartType.MBC3 => new MBC3(this, gameROM, file!),
+            CartType.MBC3_RAM => new MBC3(this, gameROM, file!),
+            CartType.MBC3_RAM_BATTERY => new MBC3(this, gameROM, file!),
+            CartType.MBC3_TIMER_BATTERY => new MBC3(this, gameROM, file!, clock),
+            CartType.MBC3_TIMER_RAM_BATTERY => new MBC3(this, gameROM, file!, clock),
+            CartType.MBC5 => new MBC5(this, gameROM, file!),
+            CartType.MBC5_RAM => new MBC5(this, gameROM, file!),
+            CartType.MBC5_RAM_BATTERY => new MBC5(this, gameROM, file!),
+            _ => throw new NotImplementedException(),
+        };
+
+        public System.IO.MemoryMappedFiles.MemoryMappedFile? MakeMemoryMappedFile()
+        {
+            //A cartridge requires a battery in order to be able to keep state while the system is off
+            if (!HasBattery())
+            {
+                return null;
+            }
+
+            //This retrieves %appdata% path
+            var root = Environment.GetEnvironmentVariable("AppData") + "\\rotalume";
+            if (!System.IO.Directory.Exists(root))
+            {
+                _ = System.IO.Directory.CreateDirectory(root);
+            }
+
+            //Filenames might be somewhat illegal depending on what characters are in the title?
+            var path = string.Format(@"{0}\{1}.sav", root, Title);
+            if (!System.IO.File.Exists(path))
+            {
+                int size = 0;
+                if (RAM_Size != 0)
+                {
+                    size += RAM_Size;
+                }
+                //MBC2 does not report a size in the header but instead has a fixed 2k internal RAM
+                else if (Type == CartType.MBC2_BATTERY)
+                {
+                    size += 0x2000;
+                }
+                //16 bytes to store clock should be plenty
+                if (HasClock())
+                {
+                    size += 16;
+                }
+
+                var buffer = new byte[size];
+                for (int i = 0; i < size; i++)
+                {
+                    buffer[i] = 0xff;
+                }
+
+                System.IO.File.WriteAllBytes(path, buffer);
+            }
+            return System.IO.MemoryMappedFiles.MemoryMappedFile.CreateFromFile(path);
+        }
+
+
     }
 }

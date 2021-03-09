@@ -4,6 +4,85 @@ namespace emulator
 {
     public class APU
     {
+        public void HookUpSound(ControlRegister controlRegisters)
+        {
+            controlRegisters.Writer[0x10] = (x) => NR10 = x;
+            controlRegisters.Reader[0x10] = () => NR10;
+            controlRegisters.Writer[0x11] = (x) => NR11 = x;
+            controlRegisters.Reader[0x11] = () => NR11;
+            controlRegisters.Writer[0x12] = (x) => NR12 = x;
+            controlRegisters.Reader[0x12] = () => NR12;
+            controlRegisters.Writer[0x13] = (x) => NR13 = x;
+            controlRegisters.Reader[0x13] = () => NR13;
+            controlRegisters.Writer[0x14] = (x) => NR14 = x;
+            controlRegisters.Reader[0x14] = () => NR14;
+            controlRegisters.Writer[0x16] = (x) => NR21 = x;
+            controlRegisters.Reader[0x16] = () => NR21;
+            controlRegisters.Writer[0x17] = (x) => NR22 = x;
+            controlRegisters.Reader[0x17] = () => NR22;
+            controlRegisters.Writer[0x18] = (x) => NR23 = x;
+            controlRegisters.Reader[0x18] = () => NR23;
+            controlRegisters.Writer[0x19] = (x) => NR24 = x;
+            controlRegisters.Reader[0x19] = () => NR24;
+            controlRegisters.Writer[0x1a] = (x) => NR30 = x;
+            controlRegisters.Reader[0x1a] = () => NR30;
+            controlRegisters.Writer[0x1b] = (x) => NR31 = x;
+            controlRegisters.Reader[0x1b] = () => NR31;
+            controlRegisters.Writer[0x1c] = (x) => NR32 = x;
+            controlRegisters.Reader[0x1c] = () => NR32;
+            controlRegisters.Writer[0x1d] = (x) => NR33 = x;
+            controlRegisters.Reader[0x1d] = () => NR33;
+            controlRegisters.Writer[0x1e] = (x) => NR34 = x;
+            controlRegisters.Reader[0x1e] = () => NR34;
+            controlRegisters.Writer[0x20] = (x) => NR41 = x;
+            controlRegisters.Reader[0x20] = () => NR41;
+            controlRegisters.Writer[0x21] = (x) => NR42 = x;
+            controlRegisters.Reader[0x21] = () => NR42;
+            controlRegisters.Writer[0x22] = (x) => NR43 = x;
+            controlRegisters.Reader[0x22] = () => NR43;
+            controlRegisters.Writer[0x23] = (x) => NR44 = x;
+            controlRegisters.Reader[0x23] = () => NR44;
+            controlRegisters.Writer[0x24] = (x) => NR50 = x;
+            controlRegisters.Reader[0x24] = () => NR50;
+            controlRegisters.Writer[0x25] = (x) => NR51 = x;
+            controlRegisters.Reader[0x25] = () => NR51;
+            controlRegisters.Writer[0x26] = (x) => NR52 = x;
+            controlRegisters.Reader[0x26] = () => NR52;
+
+            controlRegisters.Writer[0x30] = (x) => Wave[0] = x;
+            controlRegisters.Reader[0x30] = () => Wave[0];
+            controlRegisters.Writer[0x31] = (x) => Wave[1] = x;
+            controlRegisters.Reader[0x31] = () => Wave[1];
+            controlRegisters.Writer[0x32] = (x) => Wave[2] = x;
+            controlRegisters.Reader[0x32] = () => Wave[2];
+            controlRegisters.Writer[0x33] = (x) => Wave[3] = x;
+            controlRegisters.Reader[0x33] = () => Wave[3];
+            controlRegisters.Writer[0x34] = (x) => Wave[4] = x;
+            controlRegisters.Reader[0x34] = () => Wave[4];
+            controlRegisters.Writer[0x35] = (x) => Wave[5] = x;
+            controlRegisters.Reader[0x35] = () => Wave[5];
+            controlRegisters.Writer[0x36] = (x) => Wave[6] = x;
+            controlRegisters.Reader[0x36] = () => Wave[6];
+            controlRegisters.Writer[0x37] = (x) => Wave[7] = x;
+            controlRegisters.Reader[0x37] = () => Wave[7];
+            controlRegisters.Writer[0x38] = (x) => Wave[8] = x;
+            controlRegisters.Reader[0x38] = () => Wave[8];
+            controlRegisters.Writer[0x39] = (x) => Wave[9] = x;
+            controlRegisters.Reader[0x39] = () => Wave[9];
+            controlRegisters.Writer[0x3a] = (x) => Wave[10] = x;
+            controlRegisters.Reader[0x3a] = () => Wave[10];
+            controlRegisters.Writer[0x3b] = (x) => Wave[11] = x;
+            controlRegisters.Reader[0x3b] = () => Wave[11];
+            controlRegisters.Writer[0x3c] = (x) => Wave[12] = x;
+            controlRegisters.Reader[0x3c] = () => Wave[12];
+            controlRegisters.Writer[0x3d] = (x) => Wave[13] = x;
+            controlRegisters.Reader[0x3d] = () => Wave[13];
+            controlRegisters.Writer[0x3e] = (x) => Wave[14] = x;
+            controlRegisters.Reader[0x3e] = () => Wave[14];
+            controlRegisters.Writer[0x3f] = (x) => Wave[15] = x;
+            controlRegisters.Reader[0x3f] = () => Wave[15];
+        }
+
         private byte _nr10 = 0xff;
         public byte NR10
         {

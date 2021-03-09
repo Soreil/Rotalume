@@ -9,6 +9,21 @@ namespace emulator
         private readonly Action EnableTimerInterrupt;
         public Timers(Action enableTimerInterrupt) => EnableTimerInterrupt = enableTimerInterrupt;
 
+        public void HookUpTimers(ControlRegister controlRegisters)
+        {
+            controlRegisters.Writer[0x04] = x => DIV = x;
+            controlRegisters.Reader[0x04] = () => DIV;
+
+            controlRegisters.Writer[0x05] = x => TIMA = x;
+            controlRegisters.Reader[0x05] = () => TIMA;
+
+            controlRegisters.Writer[0x06] = x => TMA = x;
+            controlRegisters.Reader[0x06] = () => TMA;
+
+            controlRegisters.Writer[0x07] = x => TAC = x;
+            controlRegisters.Reader[0x07] = () => TAC;
+        }
+
         public void Tick()
         {
             if (DelayTicks > 0)

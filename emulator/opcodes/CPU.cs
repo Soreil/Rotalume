@@ -547,6 +547,11 @@ namespace emulator
                     : (InterruptFireRegister & InterruptControlRegister & 0x1f) == 0 ? HaltState.normalIME0 : HaltState.haltbug;
         }
 
+        internal void HookUpCPU(ControlRegister controlRegisters)
+        {
+            controlRegisters.Writer[0xF] = x => InterruptFireRegister = x;
+            controlRegisters.Reader[0xF] = () => InterruptFireRegister;
+        }
         internal byte ReadOp() => Memory[PC++];
 
         public ushort PC = 0;

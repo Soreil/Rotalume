@@ -20,6 +20,77 @@ namespace emulator
         public readonly OAM OAM;
         public readonly VRAM VRAM;
 
+        public void HookUpGraphics(ControlRegister controlRegisters)
+        {
+            void LCDControlController(byte b) => LCDC = b;
+
+            byte ReadLCDControl() => LCDC;
+
+            void LCDStatController(byte b) => STAT = (byte)((b & 0xf8) | (STAT & 0x7));
+
+            byte ReadLCDStat() => STAT;
+
+            void ScrollYController(byte b) => SCY = b;
+
+            byte ReadScrollY() => SCY;
+
+            void ScrollXController(byte b) => SCX = b;
+
+            byte ReadScrollX() => SCX;
+
+            void LCDLineController(byte b) => LY = b;
+
+            byte ReadLine() => LY;
+
+            void PaletteController(byte b) => BGP = b;
+
+            byte ReadPalette() => BGP;
+
+            void OBP0Controller(byte b) => OBP0 = b;
+
+            byte ReadOBP0() => OBP0;
+
+            void OBP1Controller(byte b) => OBP1 = b;
+
+            byte ReadOBP1() => OBP1;
+
+            void WYController(byte b) => WY = b;
+
+            byte ReadWY() => WY;
+
+            void WXController(byte b) => WX = b;
+
+            byte ReadWX() => WX;
+
+            void LYCController(byte b) => LYC = b;
+
+            byte ReadLYC() => LYC;
+
+            controlRegisters.Writer[0x40] = LCDControlController;
+            controlRegisters.Reader[0x40] = ReadLCDControl;
+            controlRegisters.Writer[0x41] = LCDStatController;
+            controlRegisters.Reader[0x41] = ReadLCDStat;
+            controlRegisters.Writer[0x42] = ScrollYController;
+            controlRegisters.Reader[0x42] = ReadScrollY;
+            controlRegisters.Writer[0x43] = ScrollXController;
+            controlRegisters.Reader[0x43] = ReadScrollX;
+            controlRegisters.Writer[0x44] = LCDLineController;
+            controlRegisters.Reader[0x44] = ReadLine;
+            controlRegisters.Writer[0x45] = LYCController;
+            controlRegisters.Reader[0x45] = ReadLYC;
+            controlRegisters.Writer[0x47] = PaletteController;
+            controlRegisters.Reader[0x47] = ReadPalette;
+            controlRegisters.Writer[0x48] = OBP0Controller;
+            controlRegisters.Reader[0x48] = ReadOBP0;
+            controlRegisters.Writer[0x49] = OBP1Controller;
+            controlRegisters.Reader[0x49] = ReadOBP1;
+            controlRegisters.Writer[0x4A] = WYController;
+            controlRegisters.Reader[0x4A] = ReadWY;
+            controlRegisters.Writer[0x4B] = WXController;
+            controlRegisters.Reader[0x4B] = ReadWX;
+        }
+
+
         //FF40 - FF4B, PPU control registers
         //FF40 
         private byte _LCDC;

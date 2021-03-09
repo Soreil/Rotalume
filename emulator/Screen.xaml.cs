@@ -99,7 +99,7 @@ namespace GUI
                 return res;
             }
 
-            byte[]? bootrom = bootromEnabled ? Core.LoadBootROM() : null;
+            byte[]? bootrom = bootromEnabled ? File.ReadAllBytes(@"..\..\..\..\emulator\bootrom\DMG_ROM_BOOT.bin") : null;
 
             Dispatcher.Invoke(bmpCb,
         System.Windows.Threading.DispatcherPriority.Render);
