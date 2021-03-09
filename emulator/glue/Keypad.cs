@@ -10,10 +10,7 @@ namespace emulator
         private byte keypadFlags = 0x30;
         private readonly ConcurrentDictionary<JoypadKey, bool> Pressed;
 
-        public Keypad(ConcurrentDictionary<JoypadKey, bool> pressed)
-        {
-            Pressed = pressed;
-        }
+        public Keypad(ConcurrentDictionary<JoypadKey, bool> pressed) => Pressed = pressed;
 
         private byte UpdateJoypadPresses()
         {

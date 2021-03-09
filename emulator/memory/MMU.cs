@@ -4,7 +4,6 @@ namespace emulator
 {
     public class MMU
     {
-        private readonly Func<bool> _bootROMActive;
         private readonly MBC Card;
         private readonly VRAM VRAM;
         private readonly WRAM WRAM;
@@ -18,7 +17,7 @@ namespace emulator
         {
             get
             {
-                if (_bootROMActive() && at < 0x100) //Bootrom is read only so we don't need a corresponding function in set
+                if (BootROMActive && at < 0x100) //Bootrom is read only so we don't need a corresponding function in set
                 {
                     return bootROM![at];
                 }
@@ -89,6 +88,21 @@ namespace emulator
                 }
             }
         }
+
+        private bool BootROMActive;
+        internal void HookUpMemory(ControlRegister ioRegisters)
+        {
+            void BootROMFlagController(byte b)
+            {
+                if (b == 1)
+                {
+                    BootROMActive = false;
+                }
+            }
+            ioRegisters.Writer[0x50] = BootROMFlagController;
+            ioRegisters.Reader[0x50] = () => 0xff;
+
+        }
         private readonly byte[]? bootROM;
 
         public Func<byte>? ReadInput;
@@ -102,7 +116,6 @@ namespace emulator
         }
         public MMU(
             byte[]? boot,
-            Func<bool> bootROMActive,
             MBC card,
             VRAM vram,
             OAM oam,
@@ -110,8 +123,8 @@ namespace emulator
             ControlRegister interruptEnable)
         {
 
-            _bootROMActive = bootROMActive;
             bootROM = boot; //Bootrom should be 256 bytes
+            BootROMActive = bootROM is not null;
 
             var wram = new WRAM();
             var hram = new HRAM();

@@ -10,9 +10,6 @@ namespace emulator
 {
     public class Core : ISampleProvider
     {
-        //Not sure where this special bit should go but it's not in memory and suposed to be hard to access
-        private bool bootROMActive = true;
-
         //Global clock used by RTC carts
         private long masterclock = 0;
 
@@ -28,6 +25,11 @@ namespace emulator
 
         public Core(byte[] gameROM, byte[]? bootROM, ConcurrentDictionary<JoypadKey, bool> Pressed, Func<bool> getKeyboardInterrupt, FrameSink frameSink)
         {
+            if (gameROM.Length < 0x8000)
+            {
+                throw new Exception("Cartridge file has to be at least 8kb in size");
+            }
+
             Keypad = new(Pressed);
             APU = new APU(WaveFormat.SampleRate * 2);
             PPU = new PPU(() => CPU!.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(0),
@@ -41,10 +43,6 @@ namespace emulator
 
             var ioRegisters = SetupControlRegisters();
 
-            if (gameROM.Length < 0x8000)
-            {
-                throw new Exception("Cartridge file has to be at least 8kb in size");
-            }
 
             CartHeader Header = new CartHeader(gameROM);
 
@@ -62,7 +60,6 @@ namespace emulator
 
             var memory = new MMU(
     bootROM,
-    () => bootROMActive,
     Card,
     PPU.VRAM,
     PPU.OAM,
@@ -74,12 +71,11 @@ namespace emulator
             CPU.HookUpCPU(ioRegisters);
 
             memory.ReadInput = CPU.ReadOp;
+            memory.HookUpMemory(ioRegisters);
 
             //We have to replicate the state of the system post boot without running the bootrom
             if (bootROM == null)
             {
-                bootROMActive = false;
-
                 //registers
                 CPU.PC = 0x100;
                 CPU.Registers.AF = 0x0100;
@@ -135,14 +131,6 @@ namespace emulator
 
         private ControlRegister SetupControlRegisters()
         {
-            void BootROMFlagController(byte b)
-            {
-                if (b == 1)
-                {
-                    bootROMActive = false;
-                }
-            }
-
             ControlRegister controlRegisters = new ControlRegister(0xff00, 0x80);
 
             //Serial
@@ -151,9 +139,6 @@ namespace emulator
 
             controlRegisters.Writer[2] = (x) => serialControl = (byte)((x & 0x81) | 0x7e);
             controlRegisters.Reader[2] = () => serialControl;
-
-            controlRegisters.Writer[0x50] = BootROMFlagController;
-            controlRegisters.Reader[0x50] = () => 0xff;
 
             controlRegisters.Reader[0x46] = () => _dma;
 
