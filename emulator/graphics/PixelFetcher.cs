@@ -270,14 +270,21 @@ namespace emulator
         {
             var tiledatamap = p.BGAndWindowTileDataSelect;
 
-            return tiledatamap != 0x8800
-                ? tiledatamap + (tileIndex * 16) + (((p.LY + p.SCY) & 0xff & 7) * 2)
-                : 0x9000 + (((sbyte)tileIndex) * 16) + (((p.LY + p.SCY) & 0xff & 7) * 2);
+            if (inWindow)
+                return tiledatamap != 0x8800
+                    ? tiledatamap + (tileIndex * 16) + (((WindowLY.Count - 1) & 7) * 2)
+                    : 0x9000 + (((sbyte)tileIndex) * 16) + (((WindowLY.Count - 1) & 7) * 2);
+            else
+                return tiledatamap != 0x8800
+                    ? tiledatamap + (tileIndex * 16) + (((p.LY + p.SCY) & 0xff & 7) * 2)
+                    : 0x9000 + (((sbyte)tileIndex) * 16) + (((p.LY + p.SCY) & 0xff & 7) * 2);
         }
+
+        private bool inWindow;
         private byte FetchTileID()
         {
             int tilemap;
-            bool inWindow = (scanlineX + BGFIFO.Count) >= (p.WX - 7) && p.LY >= p.WY && p.WindowDisplayEnable;
+            inWindow = (scanlineX + BGFIFO.Count) >= (p.WX - 7) && p.LY >= p.WY && p.WindowDisplayEnable;
             if (inWindow)
             {
                 WindowLY.Add(p.LY);
