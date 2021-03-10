@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO;
 using System.Runtime.InteropServices;
 
 namespace emulator
@@ -17,7 +16,6 @@ namespace emulator
         private readonly long timePerFrame;
         private readonly Stopwatch stopWatch = new();
         private readonly bool LimitFPS;
-        private readonly StreamWriter? Logger;
         public FrameSink(Action Lock, Action Unlock, IntPtr Pointer, bool LimitFPS)
         {
             frameData = new byte[144 * 160];
@@ -29,18 +27,6 @@ namespace emulator
 
             timePerFrame = (TimeSpan.FromSeconds(1) / ((1 << 22) / 70224.0)).Ticks;
             this.LimitFPS = LimitFPS;
-
-            if (LimitFPS)
-            {
-                var logPath = "frametimes.txt";
-                Logger = !File.Exists(logPath)
-                    ? File.CreateText(logPath)
-                    : new StreamWriter(File.Open(logPath, FileMode.Truncate, FileAccess.Write, FileShare.Read));
-            }
-            else
-            {
-                Logger = null;
-            }
 
             stopWatch.Start();
         }
@@ -63,8 +49,6 @@ namespace emulator
                 {
 
                 }
-                var spent = stopWatch.ElapsedTicks;
-                _ = Logger!.WriteLineAsync(spent.ToString());
             }
             stopWatch.Restart();
 
