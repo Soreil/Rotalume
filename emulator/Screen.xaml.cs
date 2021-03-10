@@ -315,9 +315,22 @@ namespace GUI
                     keyboardInterruptReady = true;
                 }
             }
-            else if (e.Key == Key.P)
+            if (e.Key == Key.P)
             {
                 paused = !paused;
+            }
+            if (e.Key == Key.S)
+            {
+                if (bmp is not null)
+                {
+                    string fileName = string.Format(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) +
+          @"\Screenshot" + "_" +
+          DateTime.Now.ToString("(dd_MMMM_hh_mm_ss_tt)") + ".png");
+                    using FileStream fs = new(fileName, FileMode.Create);
+                    PngBitmapEncoder encoder = new PngBitmapEncoder();
+                    encoder.Frames.Add(BitmapFrame.Create(bmp));
+                    encoder.Save(fs);
+                }
             }
         }
 
@@ -343,27 +356,14 @@ namespace GUI
 
         private void CommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e) => e.CanExecute = true;
 
-
         bool FPSLimit;
-        private void FPSLimit_Checked(object sender, RoutedEventArgs e)
-        {
-            FPSLimit = true;
-        }
+        private void FPSLimit_Checked(object sender, RoutedEventArgs e) => FPSLimit = true;
 
-        private void FPSLimit_Unchecked(object sender, RoutedEventArgs e)
-        {
-            FPSLimit = false;
-        }
+        private void FPSLimit_Unchecked(object sender, RoutedEventArgs e) => FPSLimit = false;
 
         bool UseBootrom;
-        private void Bootrom_Checked(object sender, RoutedEventArgs e)
-        {
-            UseBootrom = true;
-        }
+        private void Bootrom_Checked(object sender, RoutedEventArgs e) => UseBootrom = true;
 
-        private void Bootrom_Unchecked(object sender, RoutedEventArgs e)
-        {
-            UseBootrom = false;
-        }
+        private void Bootrom_Unchecked(object sender, RoutedEventArgs e) => UseBootrom = false;
     }
 }
