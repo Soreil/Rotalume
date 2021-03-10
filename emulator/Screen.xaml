@@ -4,27 +4,27 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="MainWindow" ResizeMode="NoResize" Height="720" Width="680" KeyDown="Window_KeyDown" KeyUp="Window_KeyUp">
-    <StackPanel AllowDrop="True" Drop="LoadROM" FocusManager.FocusedElement="{Binding ElementName=Display}">
+        Title="MainWindow" SizeToContent="WidthAndHeight" KeyDown="Window_KeyDown" KeyUp="Window_KeyUp">
+    <Window.CommandBindings>
+        <CommandBinding Command="ApplicationCommands.Open"
+                        Executed="LoadROMPopUp"
+                        CanExecute="CommandBinding_CanExecute"/>
+        <CommandBinding Command="MediaCommands.Stop"
+                        Executed="CloseGameboyRequest"
+                        CanExecute="CommandBinding_CanExecute"/>
+    </Window.CommandBindings>
+    <StackPanel AllowDrop="True" Drop="LoadROM">
+        <Menu>
+            <MenuItem Header="_File">
+                <MenuItem Header="_Open" InputGestureText="Ctrl+O" Command="ApplicationCommands.Open"/>
+                <MenuItem Header="_Stop" Command="MediaCommands.Stop"/>
+            </MenuItem>
+            <MenuItem Header="_Options">
+                <MenuItem Header="_Limit FPS" IsCheckable="True" IsChecked="True" Checked="FPSLimit_Checked" Unchecked="FPSLimit_Unchecked"/>
+                <MenuItem Header="_Use Bootrom" IsCheckable="True" IsChecked="False" Checked="Bootrom_Checked" Unchecked="Bootrom_Unchecked"/>
+            </MenuItem>
+        </Menu>
         <Label Name="FPS" Content="" Padding="0,0,0,4"/>
-        <Border BorderBrush="Orange"  BorderThickness="4" HorizontalAlignment="Center">
-            <Image Name="Display" Height="576" Width="640" Focusable="True" FocusVisualStyle="{x:Null}"/>
-        </Border>
-        <Grid Margin="20,20,20,20" HorizontalAlignment="Center">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
-            <Button    Grid.Row="0" Grid.Column="0"  Click="LoadROMPopUp"  Content="Open ROM"/>
-            <TextBlock Grid.Row="1" Grid.Column="0"  Text="Use bootrom"/>
-            <CheckBox  Grid.Row="1" Grid.Column="1" Name="bootromCheckbox"  IsChecked="False"/>
-            <TextBlock Grid.Row="2" Grid.Column="0"  Text="Limit FPS"/>
-            <CheckBox  Grid.Row="2" Grid.Column="1" Name="fpsLimit"  IsChecked="False"/>
-        </Grid>
+        <Image Name="Display" Height="576" Width="640"/>
     </StackPanel>
 </Window>

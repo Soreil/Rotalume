@@ -274,15 +274,7 @@ namespace GUI
 
         private void SpinUpNewGameboy(string fn)
         {
-            bool br = (bool)bootromCheckbox.IsChecked!;
-            bool fps = (bool)fpsLimit.IsChecked!;
-            if (GameThread is not null)
-            {
-                CancelRequested = true;
-                CancellationTokenSource.Cancel();
-                GameThread.Wait();
-                CancelRequested = false;
-            }
+            ShutdownGameboy();
             CancellationTokenSource = new();
 
             bmp = new WriteableBitmap(160, 144, 96, 96, PixelFormats.Gray8, null);
@@ -291,10 +283,23 @@ namespace GUI
             {
                 Thread.CurrentThread.IsBackground = true;
                 Thread.CurrentThread.Name = "Gaming";
-                Gameboy(fn, br, fps);
+                Gameboy(fn, UseBootrom, FPSLimit);
             });
 
             GameThread.Start();
+        }
+
+        private void CloseGameboyRequest(object sender, RoutedEventArgs e) => ShutdownGameboy();
+
+        private void ShutdownGameboy()
+        {
+            if (GameThread is not null)
+            {
+                CancelRequested = true;
+                CancellationTokenSource.Cancel();
+                GameThread.Wait();
+                CancelRequested = false;
+            }
         }
 
         private volatile bool keyboardInterruptReady = false;
@@ -334,6 +339,31 @@ namespace GUI
             //If we don't stop it from polling the xboxcontroller will keep polling in the background forever.
             XboxController.StopPolling();
             base.OnClosing(e);
+        }
+
+        private void CommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e) => e.CanExecute = true;
+
+
+        bool FPSLimit;
+        private void FPSLimit_Checked(object sender, RoutedEventArgs e)
+        {
+            FPSLimit = true;
+        }
+
+        private void FPSLimit_Unchecked(object sender, RoutedEventArgs e)
+        {
+            FPSLimit = false;
+        }
+
+        bool UseBootrom;
+        private void Bootrom_Checked(object sender, RoutedEventArgs e)
+        {
+            UseBootrom = true;
+        }
+
+        private void Bootrom_Unchecked(object sender, RoutedEventArgs e)
+        {
+            UseBootrom = false;
         }
     }
 }
