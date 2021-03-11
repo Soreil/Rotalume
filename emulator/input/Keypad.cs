@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 
 namespace emulator
 {
@@ -74,11 +75,7 @@ namespace emulator
             return (byte)((joypad & 0xf) | 0xc0);
         }
 
-        internal void HookUpKeypad(ControlRegister controlRegisters)
-        {
-            controlRegisters.Writer[0] = x => keypadFlags = (byte)(x & 0xf0);
-            controlRegisters.Reader[0] = () => UpdateJoypadPresses();
-        }
+        internal (Action<byte> Write, Func<byte> Read) HookUpKeypad() => (Write: x => keypadFlags = (byte)(x & 0xf0), Read: () => UpdateJoypadPresses());
 
         private bool Rumbling = false;
         readonly IGameController? Controller;

@@ -8,9 +8,9 @@ namespace emulator
         private readonly VRAM VRAM;
         private readonly WRAM WRAM;
         private readonly OAM OAM;
-        private readonly ControlRegister IORegisters;
+        private readonly (Action<byte> Write, Func<byte> Read)[] IORegisters;
         private readonly HRAM HRAM;
-        private readonly ControlRegister InterruptEnable;
+        private readonly (Action<byte> Write, Func<byte> Read) InterruptEnable;
         private readonly UnusableMEM UnusableMEM;
 
         public byte this[int at]
@@ -34,9 +34,9 @@ namespace emulator
                     >= 0xe000 and < 0xFE00 => WRAM[at],//wram mirror
                     >= 0xfe00 and < 0xfea0 => OAM.Locked ? (byte)0xff : OAM[at],
                     >= 0xfea0 and < 0xff00 => UnusableMEM[at],//This should be illegal?
-                    >= 0xff00 and < 0xff80 => IORegisters[at],
+                    >= 0xff00 and < 0xff80 => IORegisters[at - 0xff00].Read(),
                     >= 0xff80 and < 0xffff => HRAM[at],
-                    0xffff => InterruptEnable[at],
+                    0xffff => InterruptEnable.Read(),
                 };
             }
 
@@ -77,20 +77,20 @@ namespace emulator
                     UnusableMEM[at] = value; //This should be illegal?
                     break;
                     case >= 0xff00 and < 0xff80:
-                    IORegisters[at] = value;
+                    IORegisters[at - 0xff00].Write(value);
                     break;
                     case >= 0xff80 and < 0xffff:
                     HRAM[at] = value;
                     break;
                     case 0xffff:
-                    InterruptEnable[at] = value;
+                    InterruptEnable.Write(value);
                     break;
                 }
             }
         }
 
         private bool BootROMActive;
-        internal void HookUpMemory(ControlRegister ioRegisters)
+        internal (Action<byte> Write, Func<byte> Read) HookUpMemory()
         {
             void BootROMFlagController(byte b)
             {
@@ -99,9 +99,11 @@ namespace emulator
                     BootROMActive = false;
                 }
             }
-            ioRegisters.Writer[0x50] = BootROMFlagController;
-            ioRegisters.Reader[0x50] = () => 0xff;
-
+            return
+                (
+            BootROMFlagController,
+             () => 0xff
+             );
         }
         private readonly byte[]? bootROM;
 
@@ -119,8 +121,8 @@ namespace emulator
             MBC card,
             VRAM vram,
             OAM oam,
-            ControlRegister ioRegisters,
-            ControlRegister interruptEnable)
+            (Action<byte> Write, Func<byte> Read)[] ioRegisters,
+            (Action<byte> Write, Func<byte> Read) interruptEnable)
         {
 
             bootROM = boot; //Bootrom should be 256 bytes

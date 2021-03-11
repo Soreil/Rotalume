@@ -13,10 +13,10 @@
 
         public override byte this[int n]
         {
-            get => n >= RAMStart && n < RAMStart + RAMSize ? _RAMBanks[n - RAMStart] : gameROM[n];
+            get => n is >= RAMStart and < (RAMStart + RAMSize) ? _RAMBanks[n - RAMStart] : gameROM[n];
             set
             {
-                if (n >= RAMStart && n < RAMStart + RAMSize)
+                if (n is >= RAMStart and < (RAMStart + RAMSize))
                 {
                     _RAMBanks[n - RAMStart] = value;
                 }

@@ -21,6 +21,6 @@ namespace emulator
             this.Flags = Flags;
         }
 
-        public int CompareTo(SpriteAttributes obj) => X.CompareTo(obj.X);
+        int IComparable<SpriteAttributes>.CompareTo(SpriteAttributes other) => X.CompareTo(other.X);
     }
 }

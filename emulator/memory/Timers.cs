@@ -9,20 +9,19 @@ namespace emulator
         private readonly Action EnableTimerInterrupt;
         public Timers(Action enableTimerInterrupt) => EnableTimerInterrupt = enableTimerInterrupt;
 
-        public void HookUpTimers(ControlRegister controlRegisters)
-        {
-            controlRegisters.Writer[0x04] = x => DIV = x;
-            controlRegisters.Reader[0x04] = () => DIV;
+        public (Action<byte> Write, Func<byte> Read)[] HookUpTimers() => new (Action<byte> Write, Func<byte> Read)[] {
+            ( x => DIV = x,
+             () => DIV),
 
-            controlRegisters.Writer[0x05] = x => TIMA = x;
-            controlRegisters.Reader[0x05] = () => TIMA;
+            ( x => TIMA = x,
+             () => TIMA),
 
-            controlRegisters.Writer[0x06] = x => TMA = x;
-            controlRegisters.Reader[0x06] = () => TMA;
+            ( x => TMA = x,
+             () => TMA),
 
-            controlRegisters.Writer[0x07] = x => TAC = x;
-            controlRegisters.Reader[0x07] = () => TAC;
-        }
+            ( x => TAC = x,
+             () => TAC)
+        };
 
         public void Tick()
         {

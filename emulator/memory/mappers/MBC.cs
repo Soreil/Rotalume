@@ -2,11 +2,11 @@
 {
     public abstract class MBC
     {
-        public const int ROMStart = 0x0000;
-        public const int ROMSize = 0x8000;
-        public const int RAMStart = 0xa000;
-        public const int RAMSize = 0x2000;
-        public System.IO.MemoryMappedFiles.MemoryMappedViewAccessor? RAMBanks { get; init; }
+        protected const int ROMStart = 0x0000;
+        protected const int ROMSize = 0x8000;
+        protected const int RAMStart = 0xa000;
+        protected const int RAMSize = 0x2000;
+        protected System.IO.MemoryMappedFiles.MemoryMappedViewAccessor? RAMBanks { get; init; }
         public abstract byte this[int n]
         {
             get;

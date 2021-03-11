@@ -8,14 +8,9 @@ namespace emulator
         public long TimeUntilWhichToPause;
         private readonly FrameSink fs;
 
-        private const int TileWidth = 8;
         private const int DisplayWidth = 160;
-        private const int TilesPerLine = DisplayWidth / TileWidth;
-        private const int DisplayHeight = 144;
-        private const int ScanlinesPerFrame = DisplayHeight + 10;
 
         private const int TicksPerScanline = 456;
-        private const int TicksPerFrame = ScanlinesPerFrame * TicksPerScanline;
 
         public Renderer(PPU ppu, FrameSink destination, long offset = 0)
         {

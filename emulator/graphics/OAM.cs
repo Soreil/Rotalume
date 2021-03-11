@@ -46,7 +46,7 @@ s.X < 168 &&
 line >= s.Y - 16 &&
 line < s.Y - 16 + spriteHeight;
 
-        public int SpritesOnLine(SpriteAttributes[] buffer, int line, int spriteHeight)
+        public int SpritesOnLine(Span<SpriteAttributes> buffer, int line, int spriteHeight)
         {
             int spriteCount = 0;
             foreach (var s in sprites)
@@ -60,7 +60,8 @@ line < s.Y - 16 + spriteHeight;
                     }
                 }
             }
-            Array.Sort(buffer, 0, spriteCount);
+            var selected = buffer.Slice(0, spriteCount);
+            selected.Sort();
             return spriteCount;
         }
     }

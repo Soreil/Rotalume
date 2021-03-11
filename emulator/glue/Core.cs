@@ -31,10 +31,6 @@ namespace emulator
 
             Timers = new Timers(() => CPU!.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(2));
 
-            ControlRegister interruptRegisters = new(0xffff, 0x1);
-            interruptRegisters.Writer[0x00] = x => CPU!.InterruptControlRegister = x;
-            interruptRegisters.Reader[0x00] = () => CPU!.InterruptControlRegister;
-
             var ioRegisters = SetupControlRegisters(Keypad);
 
             CartHeader Header = new CartHeader(gameROM);
@@ -62,14 +58,17 @@ namespace emulator
     PPU.VRAM,
     PPU.OAM,
     ioRegisters,
-    interruptRegisters
+    (x => CPU!.InterruptControlRegister = x,
+    () => CPU!.InterruptControlRegister)
+
     );
 
             CPU = new CPU(getKeyboardInterrupt, memory);
-            CPU.HookUpCPU(ioRegisters);
+            ioRegisters[0x0f] = CPU.HookUpCPU();
+
 
             memory.ReadInput = CPU.ReadOp;
-            memory.HookUpMemory(ioRegisters);
+            ioRegisters[0x50] = memory.HookUpMemory();
 
             //We have to replicate the state of the system post boot without running the bootrom
             if (bootROM == null)
@@ -127,20 +126,43 @@ namespace emulator
             }
         }
 
-        private ControlRegister SetupControlRegisters(Keypad Keypad)
+        private (Action<byte> Write, Func<byte> Read)[] SetupControlRegisters(Keypad Keypad)
         {
-            ControlRegister controlRegisters = new ControlRegister(0xff00, 0x80);
+            (Action<byte> Write, Func<byte> Read)[] controlRegisters = new (Action<byte> Write, Func<byte> Read)[0x80];
+            for (int i = 0; i < controlRegisters.Length; i++)
+                controlRegisters[i] = (x => { }, () => 0xff);
+
+            //Keypad
+            controlRegisters[0] = Keypad.HookUpKeypad();
 
             //Serial
-            controlRegisters.Writer[1] = (x) => { };
-            controlRegisters.Reader[1] = () => 0;
+            var SerialRegisters = new (Action<byte> Write, Func<byte> Read)[] {
+            ((x) => { },
+            () => 0),
 
-            controlRegisters.Writer[2] = (x) => serialControl = (byte)((x & 0x81) | 0x7e);
-            controlRegisters.Reader[2] = () => serialControl;
+            ((x) => serialControl = (byte)((x & 0x81) | 0x7e),
+            () => serialControl),
+            };
+
+            SerialRegisters.CopyTo(controlRegisters, 1);
+
+            //Timers
+            var TimerRegisters = Timers.HookUpTimers();
+            TimerRegisters.CopyTo(controlRegisters, 4);
+
+            var SoundRegisters = APU.HookUpSound();
+            SoundRegisters[0].CopyTo(controlRegisters, 0x10);
+            SoundRegisters[1].CopyTo(controlRegisters, 0x16);
+            SoundRegisters[2].CopyTo(controlRegisters, 0x20);
+            SoundRegisters[3].CopyTo(controlRegisters, 0x30);
+
+            var GraphicsRegisters = PPU.HookUpGraphics();
+            GraphicsRegisters[0].CopyTo(controlRegisters, 0x40);
+            GraphicsRegisters[1].CopyTo(controlRegisters, 0x47);
 
             //DMA
-            controlRegisters.Reader[0x46] = () => _dma;
-            controlRegisters.Writer[0x46] = (x) =>
+            controlRegisters[0x46] =
+            ((x) =>
             {
                 if (x > 0xf1)
                 {
@@ -155,12 +177,9 @@ namespace emulator
                     var r = CPU.Memory.Read((ushort)(baseAddr + i));
                     PPU.OAM[OAM.Start + i] = r;
                 }
-            };
+            },
+            () => _dma);
 
-            Keypad.HookUpKeypad(controlRegisters);
-            Timers.HookUpTimers(controlRegisters);
-            PPU.HookUpGraphics(controlRegisters);
-            APU.HookUpSound(controlRegisters);
 
             return controlRegisters;
         }

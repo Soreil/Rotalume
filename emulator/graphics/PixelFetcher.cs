@@ -204,19 +204,14 @@ namespace emulator
                 {
                     //obj to bg priority bit is set to true so the sprite pixel
                     //will be behind bg color 1,2,3
-                    if (sp.priority && bp.color != 0)
-                    {
-                        return p.BackgroundColor(p.BGDisplayEnable ? bp.color : 0);
-                    }
-                    else
-                    {
-                        return sp.Palette switch
+                    return sp.priority && bp.color != 0
+                        ? p.BackgroundColor(p.BGDisplayEnable ? bp.color : 0)
+                        : sp.Palette switch
                         {
                             0 => p.SpritePalette0(sp.color),
                             1 => p.SpritePalette1(sp.color),
                             _ => throw new Exception()
                         };
-                    }
 
                 }
                 else
@@ -287,7 +282,7 @@ namespace emulator
             inWindow = (scanlineX + BGFIFO.Count) >= (p.WX - 7) && p.LY >= p.WY && p.WindowDisplayEnable;
             if (inWindow)
             {
-                WindowLY.Add(p.LY);
+                _ = WindowLY.Add(p.LY);
                 tilemap = p.TileMapDisplaySelect;
             }
             else

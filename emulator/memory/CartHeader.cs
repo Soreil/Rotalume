@@ -45,13 +45,14 @@ namespace emulator
             _ => false
         };
 
-        public CartHeader(byte[] gameROM)
+        public CartHeader(ReadOnlySpan<byte> gameROM)
         {
-            char[] t = new char[16];
-            for (int i = 0; i < 16; i++)
-            {
-                t[i] = gameROM[0x134 + i] == '\0' ? ' ' : (char)gameROM[0x134 + i];
-            }
+            var titleArea = gameROM.Slice(0x134, 16);
+
+            var t = new char[16];
+
+            for (int i = 0; i < titleArea.Length; i++)
+                t[i] = titleArea[i] == '\0' ? ' ' : (char)titleArea[i];
 
             Title = new string(t);
 

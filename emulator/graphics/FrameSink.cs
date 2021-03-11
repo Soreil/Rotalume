@@ -8,7 +8,6 @@ namespace emulator
     {
         private readonly byte[] frameData;
 
-
         private readonly Action? Lock;
         private readonly Action? Unlock;
         private readonly IntPtr Pointer = IntPtr.Zero;
@@ -63,9 +62,9 @@ namespace emulator
             OnFramePushed(EventArgs.Empty);
         }
 
-        public void Write(byte[] buffer)
+        public void Write(ReadOnlySpan<byte> buffer)
         {
-            buffer.CopyTo(frameData, Position);
+            buffer.CopyTo(new Span<byte>(frameData, Position, buffer.Length));
             Position += buffer.Length;
         }
     }
