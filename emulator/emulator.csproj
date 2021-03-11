@@ -1,9 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net5.0-windows</TargetFramework>
-    <UseWPF>true</UseWPF>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
     <AssemblyName>emulator</AssemblyName>
     <RootNamespace>emulator</RootNamespace>
     <Nullable>enable</Nullable>
@@ -19,17 +18,5 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="NAudio" Version="2.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="codegen\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Xinput\J2i.Net.XInputWrapper.csproj" />
-  </ItemGroup>
 
 </Project>

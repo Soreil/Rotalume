@@ -1,11 +1,8 @@
-﻿using NAudio.Wave;
-using NAudio.Wave.SampleProviders;
-
-using System;
+﻿using System;
 
 namespace emulator
 {
-    public class Core : ISampleProvider
+    public class Core
     {
         //Global clock used by RTC carts
         public long masterclock = 0;
@@ -27,7 +24,7 @@ namespace emulator
                 throw new Exception("Cartridge file has to be at least 8kb in size");
             }
 
-            APU = new APU(WaveFormat.SampleRate * 2);
+            APU = new APU(32768);
             PPU = new PPU(() => CPU!.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(0),
                                        () => CPU!.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(1),
                                        frameSink);
@@ -176,28 +173,6 @@ namespace emulator
             CPU.Tick();
             APU.Tick();
             PPU.Tick();
-        }
-
-        //Gusboy uses this frequency because it aligns well with the gameboy clock
-        public WaveFormat WaveFormat { get; init; } = WaveFormat.CreateIeeeFloatWaveFormat(32768, 2);
-
-        private readonly SignalGenerator wave = new()
-        {
-            Gain = 0.1,
-            Frequency = 500,
-            Type = SignalGeneratorType.Sin
-        };
-
-        public int Read(float[] buffer, int offset, int count)
-        {
-            while (APU.SampleCount < count)
-            {
-                Step();
-            }
-
-            APU.SampleCount -= count;
-
-            return wave.Read(buffer, offset, count);
         }
     }
 }

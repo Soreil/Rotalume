@@ -1,4 +1,4 @@
-﻿<Window x:Class="GUI.MainWindow"
+﻿<Window x:Class="WPFFrontend.Screen"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -20,11 +20,12 @@
                 <MenuItem Header="_Stop" Command="MediaCommands.Stop"/>
             </MenuItem>
             <MenuItem Header="_Options">
-                <MenuItem Header="_Limit FPS" IsCheckable="True" IsChecked="True" Checked="FPSLimit_Checked" Unchecked="FPSLimit_Unchecked"/>
-                <MenuItem Header="_Use Bootrom" IsCheckable="True" IsChecked="False" Checked="Bootrom_Checked" Unchecked="Bootrom_Unchecked"/>
+                <MenuItem Name="FPSLimitEnable" Header="_Limit FPS" IsCheckable="True" IsChecked="True"/>
+                <MenuItem Name="BootRomEnable" Header="_Use Bootrom" IsCheckable="True" IsChecked="False"/>
+                <MenuItem Name="FPSDisplayEnable" Header="_Show Performance Metrics" IsCheckable="True" IsChecked="False"/>
             </MenuItem>
         </Menu>
-        <Label Name="FPS" Content="" Padding="0,0,0,4"/>
+        <Label Name="FPS" Content="" Visibility="Collapsed"  Padding="0,0,0,4"/>
         <Image Name="Display" Height="576" Width="640"/>
     </StackPanel>
 </Window>

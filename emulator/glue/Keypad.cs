@@ -1,6 +1,4 @@
-﻿using Hardware;
-
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 
 namespace emulator
 {
@@ -10,7 +8,7 @@ namespace emulator
         private byte keypadFlags = 0x30;
         private readonly ConcurrentDictionary<JoypadKey, bool> Pressed;
 
-        public Keypad(ConcurrentDictionary<JoypadKey, bool> pressed, J2i.Net.XInputWrapper.XboxController? controller)
+        public Keypad(ConcurrentDictionary<JoypadKey, bool> pressed, IGameController? controller)
         {
             Pressed = pressed;
             Controller = controller;
@@ -83,7 +81,7 @@ namespace emulator
         }
 
         private bool Rumbling = false;
-        readonly J2i.Net.XInputWrapper.XboxController? Controller;
+        readonly IGameController? Controller;
 
         internal void ToggleRumble(object? sender, System.EventArgs e)
         {

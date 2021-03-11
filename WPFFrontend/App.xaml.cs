@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace GUI
+namespace WPFFrontend
 {
     /// <summary>
     /// Interaction logic for App.xaml

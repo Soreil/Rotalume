@@ -2,8 +2,6 @@ using emulator;
 
 using NUnit.Framework;
 
-using System.Collections.Generic;
-
 namespace Tests
 {
     public class WideLoads

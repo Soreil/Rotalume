@@ -1,10 +1,6 @@
 ﻿using emulator;
 
-using Hardware;
-
 using J2i.Net.XInputWrapper;
-
-using NAudio.Wave;
 
 using System;
 using System.Collections.Concurrent;
@@ -17,11 +13,14 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-namespace GUI
+namespace WPFFrontend
 {
-    public partial class MainWindow : Window
+    /// <summary>
+    /// Interaction logic for Screen.xaml
+    /// </summary>
+    public partial class Screen : Window
     {
-        public MainWindow()
+        public Screen()
         {
             InitializeComponent();
 
@@ -35,6 +34,9 @@ namespace GUI
             _ = Pressed.TryAdd(JoypadKey.Up, false);
             _ = Pressed.TryAdd(JoypadKey.Down, false);
 
+            FPSDisplayEnable.Checked += (x, y) => FPS.Visibility = Visibility.Visible;
+            FPSDisplayEnable.Unchecked += (x, y) => FPS.Visibility = Visibility.Collapsed;
+
             XboxController.UpdateFrequency = 5;
             XboxController.StartPolling();
 
@@ -44,6 +46,8 @@ namespace GUI
 
             PropertyChanged += MainWindow_PropertyChanged;
         }
+
+        private void FPSDisplayEnable_Checked(object sender, RoutedEventArgs e) => throw new NotImplementedException();
 
         private void MainWindow_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
@@ -133,63 +137,25 @@ namespace GUI
             var gameboy = new Core(
                 File.ReadAllBytes(path),
           bootrom,
-          new Keypad(Pressed, Controller),
+          new Keypad(Pressed, ToGameController(Controller)),
           keyBoardInterruptFired,
           new FrameSink(LockCB, UnlockCB, Dispatcher.Invoke(() => bmp!.BackBuffer), fpsLimit)
           );
 
-            bool useSound = false;
-            if (useSound)
+            while (!CancelRequested)
             {
-
-                //Using a high buffer count makes it so the audio doesn't stutter, 5 seems
-                //to be just about enough to prevent stutter. Gusboy uses 50 so I'll go with that.
-                using var wo = new WaveOutEvent
+                gameboy.Step();
+                if (paused)
                 {
-                    DesiredLatency = 100,
-                    NumberOfBuffers = 50,
-                };
-                wo.Init(gameboy);
-                wo.Play();
-
-                //We can only stop at a ms granularity this way, if we don't
-                //have some check interval we will consume full CPU resources
-                //Maybe some smarter waiting condition would help?
-                while (wo.PlaybackState == PlaybackState.Playing)
-                {
-                    if (CancelRequested)
+                    while (paused)
                     {
-                        wo.Stop();
-                        break;
-                    }
-
-                    if (paused)
-                    {
-                        wo.Pause();
-                        while (paused)
-                        {
-                            Thread.Sleep(10);
-                        }
-                        wo.Play();
-                    }
-                }
-            }
-            else
-            {
-                while (!CancelRequested)
-                {
-                    gameboy.Step();
-                    if (paused)
-                    {
-                        while (paused)
-                        {
-                            Thread.Sleep(10);
-                        }
+                        Thread.Sleep(10);
                     }
                 }
             }
         }
 
+        private IGameController? ToGameController(XboxController controller) => new IGameControllerBridge(controller);
         private void Lock() => bmp!.Lock();
         private void Unlock()
         {
@@ -279,11 +245,13 @@ namespace GUI
 
             bmp = new WriteableBitmap(160, 144, 96, 96, PixelFormats.Gray8, null);
 
+            var br = BootRomEnable.IsChecked;
+            var fps = FPSLimitEnable.IsChecked;
             GameThread = new Task(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
                 Thread.CurrentThread.Name = "Gaming";
-                Gameboy(fn, UseBootrom, FPSLimit);
+                Gameboy(fn, br, fps);
             });
 
             GameThread.Start();
@@ -307,7 +275,7 @@ namespace GUI
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
-            if (Abstraction.Map(e.Key) is JoypadKey p)
+            if (Map(e.Key) is JoypadKey p)
             {
                 Pressed[p] = true;
                 if (GameThread is not null)
@@ -334,10 +302,23 @@ namespace GUI
             }
         }
 
+        private static JoypadKey? Map(Key k) => k switch
+        {
+            Key.A => JoypadKey.A,
+            Key.S => JoypadKey.B,
+            Key.D => JoypadKey.Select,
+            Key.F => JoypadKey.Start,
+            Key.Right => JoypadKey.Right,
+            Key.Left => JoypadKey.Left,
+            Key.Up => JoypadKey.Up,
+            Key.Down => JoypadKey.Down,
+            _ => null
+        };
+
         //There is a bouncing issue here which might be fixed by a delay
         private void Window_KeyUp(object sender, KeyEventArgs e)
         {
-            if (Abstraction.Map(e.Key) is JoypadKey p)
+            if (Map(e.Key) is JoypadKey p)
             {
                 Pressed[p] = false;
             }
@@ -355,15 +336,5 @@ namespace GUI
         }
 
         private void CommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e) => e.CanExecute = true;
-
-        bool FPSLimit;
-        private void FPSLimit_Checked(object sender, RoutedEventArgs e) => FPSLimit = true;
-
-        private void FPSLimit_Unchecked(object sender, RoutedEventArgs e) => FPSLimit = false;
-
-        bool UseBootrom;
-        private void Bootrom_Checked(object sender, RoutedEventArgs e) => UseBootrom = true;
-
-        private void Bootrom_Unchecked(object sender, RoutedEventArgs e) => UseBootrom = false;
     }
 }
