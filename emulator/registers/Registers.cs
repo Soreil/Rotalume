@@ -19,10 +19,10 @@ namespace emulator
             get => _AF.High;
             set => _AF.High = value;
         }
-        public byte F
+        private byte F
         {
             get => _AF.Low;
-            set => _AF.Low = value;
+            set => _AF.Low = (byte)(value & 0xf0);
         }
 
         private UnionRegister _BC;
@@ -112,42 +112,33 @@ namespace emulator
             switch (f)
             {
                 case Flag.Z:
-                FReg = FReg.SetBit(7);
-                break;
+                FReg.SetBit(7); break;
                 case Flag.NZ:
-                FReg = FReg.ClearBit(7);
-                break;
+                FReg.ClearBit(7); break;
                 case Flag.N:
-                FReg = FReg.SetBit(6);
-                break;
+                FReg.SetBit(6); break;
                 case Flag.NN:
-                FReg = FReg.ClearBit(6);
-                break;
+                FReg.ClearBit(6); break;
                 case Flag.H:
-                FReg = FReg.SetBit(5);
-                break;
+                FReg.SetBit(5); break;
                 case Flag.NH:
-                FReg = FReg.ClearBit(5);
-                break;
+                FReg.ClearBit(5); break;
                 case Flag.C:
-                FReg = FReg.SetBit(4);
-                break;
+                FReg.SetBit(4); break;
                 case Flag.NC:
-                FReg = FReg.ClearBit(4);
-                break;
-            }
+                FReg.ClearBit(4); break;
+            };
             F = FReg;
         }
         public void Set(Flag f, bool b)
         {
             var FReg = F;
-            FReg = f switch
+            switch (f)
             {
-                Flag.Z => FReg.SetBit(7, b),
-                Flag.N => FReg.SetBit(6, b),
-                Flag.H => FReg.SetBit(5, b),
-                Flag.C => FReg.SetBit(4, b),
-                _ => throw new Exception("Flag argument can only be a flag name, not a state"),
+                case Flag.Z: FReg.SetBit(7, b); break;
+                case Flag.N: FReg.SetBit(6, b); break;
+                case Flag.H: FReg.SetBit(5, b); break;
+                case Flag.C: FReg.SetBit(4, b); break;
             };
             F = FReg;
         }
@@ -161,7 +152,7 @@ namespace emulator
                 case Register.C: C = v; break;
                 case Register.D: D = v; break;
                 case Register.E: E = v; break;
-                case Register.F: F = v; break;
+                case Register.F: throw new Exception("We didn't expect a write to F");
                 case Register.H: H = v; break;
                 case Register.L: L = v; break;
                 default: throw new NotImplementedException();

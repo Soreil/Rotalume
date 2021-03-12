@@ -148,9 +148,9 @@ namespace emulator
         {
             bool MSB = (days & 0x100) == 0x100;
             byte flags = 0;
-            flags = flags.SetBit(0, MSB);
-            flags = flags.SetBit(6, ClockIsPaused);
-            flags = flags.SetBit(7, DateOverflow);
+            flags.SetBit(0, MSB);
+            flags.SetBit(6, ClockIsPaused);
+            flags.SetBit(7, DateOverflow);
             return flags;
         }
 

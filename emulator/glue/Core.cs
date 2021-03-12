@@ -25,11 +25,27 @@ namespace emulator
             }
 
             APU = new APU(32768);
-            PPU = new PPU(() => CPU!.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(0),
-                                       () => CPU!.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(1),
+            PPU = new PPU(() =>
+            {
+                var IFR = CPU!.InterruptFireRegister;
+                IFR.SetBit(0);
+                CPU.InterruptFireRegister = IFR;
+            },
+                                       () =>
+                                       {
+                                           var IFR = CPU!.InterruptFireRegister;
+                                           IFR.SetBit(1);
+                                           CPU.InterruptFireRegister = IFR;
+                                       },
+
                                        frameSink);
 
-            Timers = new Timers(() => CPU!.InterruptFireRegister = CPU.InterruptFireRegister.SetBit(2));
+            Timers = new Timers(() =>
+            {
+                var IFR = CPU!.InterruptFireRegister;
+                IFR.SetBit(2);
+                CPU.InterruptFireRegister = IFR;
+            });
 
             var ioRegisters = SetupControlRegisters(Keypad);
 

@@ -175,7 +175,9 @@ namespace emulator
             get => STAT.GetBit(2);
             set
             {
-                STAT = STAT.SetBit(2, value);
+                var stat = STAT;
+                stat.SetBit(2, value);
+                STAT = stat;
                 if (Enable_LYC_Compare && value)
                 {
                     EnableLCDCStatusInterrupt();

@@ -575,7 +575,9 @@ namespace emulator
                 //We really should have the GUI thread somehow do this logic but polling like this should work
                 if (!InterruptFireRegister.GetBit(4) && GetKeyboardInterrupt())
                 {
-                    InterruptFireRegister = InterruptFireRegister.SetBit(4);
+                    var IFR = InterruptFireRegister;
+                    IFR.SetBit(4);
+                    InterruptFireRegister = IFR;
                 }
 
                 DoInterrupt();

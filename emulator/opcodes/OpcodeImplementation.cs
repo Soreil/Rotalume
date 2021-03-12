@@ -1011,15 +1011,15 @@ namespace emulator
         public Action RES(byte p0, Register p1, int duration) => () =>
                                                                            {
                                                                                var reg = GetRegister(p1);
-                                                                               var res = reg.ClearBit(p0);
-                                                                               SetRegister(p1, res);
+                                                                               reg.ClearBit(p0);
+                                                                               SetRegister(p1, reg);
                                                                                AddTicks(duration);
                                                                            };
         public Action SET(byte p0, Register p1, int duration) => () =>
                                                                            {
                                                                                var reg = GetRegister(p1);
-                                                                               var res = reg.SetBit(p0);
-                                                                               SetRegister(p1, res);
+                                                                               reg.SetBit(p0);
+                                                                               SetRegister(p1, reg);
                                                                                AddTicks(duration);
                                                                            };
     }

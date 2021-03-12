@@ -43,7 +43,9 @@
                 if (coincidence.GetBit(bit))
                 {
                     IME = false;
-                    InterruptFireRegister = InterruptFireRegister.SetBit(bit, false);
+                    var IFR = InterruptFireRegister;
+                    IFR.SetBit(bit, false);
+                    InterruptFireRegister = IFR;
 
                     var addr = (ushort)(0x40 + (0x8 * bit));
                     Call(20, addr); //We need a cleaner way to call functions without fetching

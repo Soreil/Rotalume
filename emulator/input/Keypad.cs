@@ -30,22 +30,22 @@ namespace emulator
             {
                 if (Pressed[JoypadKey.Right])
                 {
-                    joypad = joypad.SetBit(0, false);
+                    joypad.SetBit(0, false);
                 }
 
                 if (Pressed[JoypadKey.Left])
                 {
-                    joypad = joypad.SetBit(1, false);
+                    joypad.SetBit(1, false);
                 }
 
                 if (Pressed[JoypadKey.Up])
                 {
-                    joypad = joypad.SetBit(2, false);
+                    joypad.SetBit(2, false);
                 }
 
                 if (Pressed[JoypadKey.Down])
                 {
-                    joypad = joypad.SetBit(3, false);
+                    joypad.SetBit(3, false);
                 }
             }
             if (selectButtons)
@@ -53,22 +53,22 @@ namespace emulator
 
                 if (Pressed[JoypadKey.B])
                 {
-                    joypad = joypad.SetBit(0, false);
+                    joypad.SetBit(0, false);
                 }
 
                 if (Pressed[JoypadKey.A])
                 {
-                    joypad = joypad.SetBit(1, false);
+                    joypad.SetBit(1, false);
                 }
 
                 if (Pressed[JoypadKey.Select])
                 {
-                    joypad = joypad.SetBit(2, false);
+                    joypad.SetBit(2, false);
                 }
 
                 if (Pressed[JoypadKey.Start])
                 {
-                    joypad = joypad.SetBit(3, false);
+                    joypad.SetBit(3, false);
                 }
             }
 
