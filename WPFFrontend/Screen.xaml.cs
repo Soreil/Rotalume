@@ -34,6 +34,13 @@ namespace WPFFrontend
             _ = Pressed.TryAdd(JoypadKey.Up, false);
             _ = Pressed.TryAdd(JoypadKey.Down, false);
 
+            bmp = new WriteableBitmap(BitmapWidth, BitmapHeight, 96, 96, PixelFormats.Gray8, null);
+            var whitescreen = new byte[BitmapWidth * BitmapHeight];
+            for (int i = 0; i < whitescreen.Length; i++) whitescreen[i] = 0xff;
+            bmp.WritePixels(new Int32Rect(0, 0, BitmapWidth, BitmapHeight), whitescreen, BitmapWidth, 0);
+            Display.Source = bmp;
+            RenderOptions.SetBitmapScalingMode(Display, BitmapScalingMode.NearestNeighbor);
+
             FPSDisplayEnable.Checked += (x, y) => FPS.Visibility = Visibility.Visible;
             FPSDisplayEnable.Unchecked += (x, y) => FPS.Visibility = Visibility.Collapsed;
 
@@ -92,7 +99,6 @@ namespace WPFFrontend
         private volatile bool CancelRequested;
         private void Gameboy(string path, bool bootromEnabled, bool fpsLimit)
         {
-            var bmpCb = new Action(SetBitmapBacking);
             var lockCb = new Action(Lock);
             var unlockCb = new Action(Unlock);
 
@@ -104,9 +110,6 @@ namespace WPFFrontend
             }
 
             byte[]? bootrom = bootromEnabled ? File.ReadAllBytes(@"..\..\..\..\emulator\bootrom\DMG_ROM_BOOT.bin") : null;
-
-            Dispatcher.Invoke(bmpCb,
-        System.Windows.Threading.DispatcherPriority.Render);
 
             void LockCB()
             {
@@ -139,7 +142,7 @@ namespace WPFFrontend
           bootrom,
           new Keypad(Pressed, ToGameController(Controller)),
           keyBoardInterruptFired,
-          new FrameSink(LockCB, UnlockCB, Dispatcher.Invoke(() => bmp!.BackBuffer), fpsLimit)
+          new FrameSink(LockCB, UnlockCB, Dispatcher.Invoke(() => bmp.BackBuffer), fpsLimit)
           );
 
             while (!CancelRequested)
@@ -155,23 +158,17 @@ namespace WPFFrontend
             }
         }
 
-        private IGameController? ToGameController(XboxController controller) => new IGameControllerBridge(controller);
-        private void Lock() => bmp!.Lock();
+        private static IGameController? ToGameController(XboxController controller) => new IGameControllerBridge(controller);
+        private void Lock() => bmp.Lock();
         private void Unlock()
         {
-            bmp!.AddDirtyRect(new Int32Rect(0, 0, (int)bmp.Width, (int)bmp.Height));
-            bmp!.Unlock();
+            bmp.AddDirtyRect(new Int32Rect(0, 0, (int)bmp.Width, (int)bmp.Height));
+            bmp.Unlock();
             AddFrameTimeToQueue();
             UpdateLabel();
         }
 
-        private WriteableBitmap? bmp;
-
-        private void SetBitmapBacking()
-        {
-            Display.Source = bmp;
-            RenderOptions.SetBitmapScalingMode(Display, BitmapScalingMode.NearestNeighbor);
-        }
+        private readonly WriteableBitmap bmp;
 
         private int currentFrame = 0;
         private void AddFrameTimeToQueue()
@@ -225,7 +222,6 @@ namespace WPFFrontend
         }
         private void LoadROMPopUp(object sender, RoutedEventArgs e)
         {
-
             var ofd = new Microsoft.Win32.OpenFileDialog() { DefaultExt = ".gb", Filter = "ROM Files (*.gb;*.gbc)|*.gb;*.gbc" };
             var result = ofd.ShowDialog();
             if (result == false)
@@ -238,12 +234,13 @@ namespace WPFFrontend
 
         CancellationTokenSource CancellationTokenSource = new();
 
+        const int BitmapWidth = 160;
+        const int BitmapHeight = 144;
+
         private void SpinUpNewGameboy(string fn)
         {
             ShutdownGameboy();
             CancellationTokenSource = new();
-
-            bmp = new WriteableBitmap(160, 144, 96, 96, PixelFormats.Gray8, null);
 
             var br = BootRomEnable.IsChecked;
             var fps = FPSLimitEnable.IsChecked;
