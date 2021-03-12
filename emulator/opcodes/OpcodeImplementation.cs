@@ -6,25 +6,18 @@ namespace emulator
     {
         public readonly Registers Registers;
         public readonly MMU Memory;
-        public readonly Action enableInterruptsDelayed;
-        public readonly Action enableInterrupts;
-        public readonly Action disableInterrupts;
-        public readonly Action halt;
-        public long TicksWeAreWaitingFor = 0;
+        public void EnableInterruptsDelayed() => InterruptEnableScheduled = true;
+        public void EnableInterrupts() => IME = true;
+        public void DisableInterrupts() => IME = false;
+        public void Halt() => Halted = IME
+                   ? HaltState.normal
+                   : (InterruptFireRegister & InterruptControlRegister & 0x1f) == 0 ? HaltState.normalIME0 : HaltState.haltbug;
+
+        public int TicksWeAreWaitingFor = 0;
         public void AddTicks(int n) => TicksWeAreWaitingFor += n;
 
         //Wrapper to allow easier handling of (HL) usage
-        public byte GetRegister(Register r)
-        {
-            if (r == Register.HL)
-            {
-                return Memory.Read(Registers.HL);
-            }
-            else
-            {
-                return Registers.Get(r);
-            }
-        }
+        public byte GetRegister(Register r) => r == Register.HL ? Memory.Read(Registers.HL) : Registers.Get(r);
 
         public void SetRegister(Register r, byte b)
         {
@@ -52,33 +45,43 @@ namespace emulator
             Registers.SP -= 2;
             Memory.Write(Registers.SP, s);
         }
-        public Action NOP(int duration) => () => { AddTicks(duration); };
+        public Action NOP(int duration) => () => AddTicks(duration);
         public Action LD_D16(WideRegister p0, int duration) => () =>
                                                                          {
                                                                              var arg = Memory.FetchD16();
                                                                              Registers.Set(p0, arg);
                                                                              AddTicks(duration);
                                                                          };
-        public Action LD((WideRegister, Traits) p0, (Register, Traits) p1, int duration) => () =>
-                                                                                                      {
-                                                                                                          var address = Registers.Get(p0.Item1);
-                                                                                                          var value = Registers.Get(p1.Item1);
+        public Action LD((WideRegister, Postfix) p0, Register p1, int duration) => p0.Item2 switch
+        {
+            Postfix.increment => () =>
+            {
+                var address = Registers.Get(p0.Item1);
+                var value = Registers.Get(p1);
+                Memory.Write(address, value);
+                Registers.Set(p0.Item1, (ushort)(address + 1));
+                AddTicks(duration);
+            }
+            ,
+            Postfix.decrement => () =>
+            {
+                var address = Registers.Get(p0.Item1);
+                var value = Registers.Get(p1);
+                Memory.Write(address, value);
+                Registers.Set(p0.Item1, (ushort)(address - 1));
+                AddTicks(duration);
+            }
+            ,
+            _ => () =>
+            {
+                var address = Registers.Get(p0.Item1);
+                var value = Registers.Get(p1);
+                Memory.Write(address, value);
+                AddTicks(duration);
+            }
+            ,
+        };
 
-                                                                                                          Memory.Write(address, value);
-
-                                                                                                          switch (p0.Item2.Postfix)
-                                                                                                          {
-                                                                                                              case Postfix.increment:
-                                                                                                              Registers.Set(p0.Item1, (ushort)(address + 1));
-                                                                                                              break;
-                                                                                                              case Postfix.decrement:
-                                                                                                              Registers.Set(p0.Item1, (ushort)(address - 1));
-                                                                                                              break;
-                                                                                                              default:
-                                                                                                              break;
-                                                                                                          }
-                                                                                                          AddTicks(duration);
-                                                                                                      };
         public Action INC(WideRegister p0, int duration) => () =>
                                                                               {
                                                                                   var hl = Registers.Get(p0);
@@ -111,22 +114,21 @@ namespace emulator
                                                                               AddTicks(duration);
                                                                           };
 
-        public Action LD(Register p0, DMGInteger p1, int duration) => () =>
-                                                                                            {
-                                                                                                if (p1 == DMGInteger.a16)
-                                                                                                {
-                                                                                                    var addr = Memory.FetchA16();
-                                                                                                    var arg = Memory.Read(addr);
-                                                                                                    SetRegister(p0, arg);
-                                                                                                    AddTicks(duration);
-                                                                                                }
-                                                                                                else
-                                                                                                {
-                                                                                                    var arg = Memory.FetchD8();
-                                                                                                    SetRegister(p0, arg);
-                                                                                                    AddTicks(duration);
-                                                                                                }
-                                                                                            };
+        public Action LD_D8(Register p0, int duration) => () =>
+        {
+            var arg = Memory.FetchD8();
+            SetRegister(p0, arg);
+            AddTicks(duration);
+        };
+
+        public Action LD_A16(int duration) => () =>
+        {
+            var addr = Memory.FetchA16();
+            var arg = Memory.Read(addr);
+            Registers.A = arg;
+            AddTicks(duration);
+        };
+
 
         public Action RLCA(int duration) => () =>
                                                                   {
@@ -173,13 +175,13 @@ namespace emulator
                                                                                        AddTicks(duration);
                                                                                    };
 
-        public Action LD(Register p0, (WideRegister, Traits) p1, int duration) => () =>
+        public Action LD(Register p0, (WideRegister, Postfix) p1, int duration) => () =>
                                                                                             {
                                                                                                 var addr = Registers.Get(p1.Item1);
                                                                                                 var value = Memory.Read(addr);
 
                                                                                                 Registers.Set(p0, value);
-                                                                                                switch (p1.Item2.Postfix)
+                                                                                                switch (p1.Item2)
                                                                                                 {
                                                                                                     case Postfix.decrement:
                                                                                                     Registers.Set(p1.Item1, (ushort)(addr - 1));
@@ -287,19 +289,23 @@ namespace emulator
             return A;
         }
 
-        public Action JR(Flag p0, int duration, int alternativeDuration) => () =>
-                                                                                      {
-                                                                                          var offset = Memory.FetchR8();
-                                                                                          if (Registers.Get(p0))
-                                                                                          {
-                                                                                              PC = (ushort)(PC + offset);
-                                                                                              AddTicks(duration);
-                                                                                          }
-                                                                                          else
-                                                                                          {
-                                                                                              AddTicks(alternativeDuration);
-                                                                                          }
-                                                                                      };
+        public Action JR(Flag p0, int duration, int alternativeDuration)
+        {
+            return () =>
+                         {
+                             var offset = Memory.FetchR8();
+                             if (Registers.Get(p0))
+                             {
+                                 PC = (ushort)(PC + offset);
+                                 AddTicks(duration);
+                             }
+                             else
+                             {
+                                 AddTicks(alternativeDuration);
+                             }
+                         };
+        }
+
         public Action DAA(int duration) => () =>
                                                      {
                                                          var wasSub = Registers.Get(Flag.N);
@@ -355,56 +361,6 @@ namespace emulator
                                                          AddTicks(duration);
                                                      };
 
-        private byte _IE = 0xe0;
-        public byte InterruptFireRegister
-        {
-            get => _IE;
-            set => _IE = (byte)((value & 0x1f) | 0xe0);
-        }
-        public byte InterruptControlRegister { get; set; }
-        public void DoInterrupt()
-        {
-            byte coincidence = (byte)((InterruptControlRegister & InterruptFireRegister) & 0x1f); //Coincidence has all the bits which have both fired AND are enabled
-
-            if (Halted != HaltState.off)
-            {
-                if (coincidence != 0 && Halted == HaltState.normal)
-                {
-                    Halted = HaltState.off;
-                    //I am not really happy with how we are messing with the clock
-                    //For the halt state of the system. The CPU clock shouldn't be so dominanant
-                    //to be able to hold up the entire system. This 4 extra clock cycles is from
-                    //TCAGBD.
-                    AddTicks(4);
-                }
-                else if (coincidence != 0 && Halted == HaltState.normalIME0)
-                {
-                    Halted = HaltState.off;
-                    AddTicks(4);
-                    return;
-                }
-            }
-
-            if (!IME || coincidence == 0)
-            {
-                return; //Interrupts have to be globally enabled to use them
-            }
-
-            for (int bit = 0; bit < 5; bit++) //Bit 0 has highest priority, we only handle one interrupt at a time
-            {
-                if (coincidence.GetBit(bit))
-                {
-                    IME = false;
-                    InterruptFireRegister = InterruptFireRegister.SetBit(bit, false);
-
-                    var addr = (ushort)(0x40 + (0x8 * bit));
-                    Call(20, addr); //We need a cleaner way to call functions without fetching
-
-                    return;
-                }
-            }
-        }
-
         public Action CCF(int duration) => () =>
                                                      {
                                                          Registers.Mark(Flag.NN);
@@ -412,41 +368,28 @@ namespace emulator
                                                          Registers.Set(Flag.C, !Registers.Get(Flag.C));
                                                          AddTicks(duration);
                                                      };
-        public Action LD((Register, Traits) p0, (Register, Traits) p1, int duration)
-        {
-            if (p0.Item2.Immediate && p1.Item2.Immediate)
-            {
-                return () =>
+        public Action LD((Register, bool) p0, (Register, bool) p1, int duration) => p0.Item2 && p1.Item2
+                ? (() =>
                 {
                     var arg = Registers.Get(p1.Item1);
                     Registers.Set(p0.Item1, arg);
                     AddTicks(duration);
-                };
-            }
-            else
-            {
-                if (p0.Item2.Immediate)
-                {
-                    return () =>
+                })
+                : p0.Item2
+                    ? (() =>
                     {
                         Registers.Set(p0.Item1, Memory.Read((ushort)(0xFF00 + Registers.Get(p1.Item1))));
                         AddTicks(duration);
-                    };
-                }
-                else
-                {
-                    return () =>
+                    })
+                    : (() =>
                     {
                         Memory.Write((ushort)(0xFF00 + Registers.Get(p0.Item1)), Registers.Get(p1.Item1));
                         AddTicks(duration);
-                    };
-                }
-            }
-        }
+                    });
         public Action HALT(int duration) => () =>
                                                       {
                                                           AddTicks(duration);
-                                                          halt();
+                                                          Halt();
                                                       };
         public Action ADD(Register p0, Register p1, int duration) => () =>
                                                                                {
@@ -687,7 +630,7 @@ namespace emulator
                                                                                                   AddTicks(alternativeDuration);
                                                                                               }
                                                                                           };
-        public Action JP(DMGInteger p0, int duration) => () =>
+        public Action JP_A16(int duration) => () =>
                                                                    {
                                                                        var addr = Memory.FetchA16();
                                                                        PC = addr;
@@ -720,9 +663,9 @@ namespace emulator
                                                               Registers.Set(Register.A, ADD(lhs, rhs));
                                                               AddTicks(duration);
                                                           };
-        public Action RST(byte p0, int duration) => () =>
+        public Action RST(byte adress, int duration) => () =>
                                                               {
-                                                                  Call(duration, p0);
+                                                                  Call(duration, adress);
                                                               };
         public Action RET(int duration) => () =>
                                                      {
@@ -778,7 +721,7 @@ namespace emulator
         public Action RETI(int duration) => () =>
                                                       {
                                                           PC = Pop();
-                                                          enableInterrupts();
+                                                          EnableInterrupts();
                                                           AddTicks(duration);
                                                       };
         public Action ILLEGAL_DB(int duration) => () =>
@@ -836,11 +779,6 @@ namespace emulator
                                                                }
                                                                else
                                                                {
-                                                                   if (offset == -128)
-                                                                   {
-                                                                       throw new Exception("Can't abs this");
-                                                                   }
-
                                                                    Registers.Set(Flag.C, (sum & 0xff) <= (Registers.SP & 0xff));
                                                                    Registers.Set(Flag.H, (sum & 0xf) <= (Registers.SP & 0xf));
                                                                }
@@ -848,6 +786,7 @@ namespace emulator
                                                                Registers.SP = (ushort)sum;
                                                                AddTicks(duration);
                                                            };
+
         public Action JP(int duration) => () =>
                                                     {
                                                         PC = Registers.HL;
@@ -885,7 +824,7 @@ namespace emulator
                                                              };
         public Action DI(int duration) => () =>
                                                     {
-                                                        disableInterrupts();
+                                                        DisableInterrupts();
                                                         AddTicks(duration);
                                                     };
         public Action ILLEGAL_F4(int duration) => () =>
@@ -913,12 +852,6 @@ namespace emulator
                                                                  }
                                                                  else
                                                                  {
-                                                                     //TODO: why is this here?
-                                                                     if (offset == -128)
-                                                                     {
-                                                                         throw new Exception("Can't abs this");
-                                                                     }
-
                                                                      Registers.Set(Flag.C, (sum & 0xff) <= (Registers.SP & 0xff));
                                                                      Registers.Set(Flag.H, (sum & 0xf) <= (Registers.SP & 0xf));
                                                                  }
@@ -935,7 +868,7 @@ namespace emulator
                                                           };
         public Action EI(int duration) => () =>
                                                     {
-                                                        enableInterruptsDelayed();
+                                                        EnableInterruptsDelayed();
                                                         AddTicks(duration);
                                                     };
         public Action ILLEGAL_FC(int duration) => () =>
@@ -1007,23 +940,19 @@ namespace emulator
         public Action SLA(Register p0, int duration) => () =>
                                                                   {
                                                                       var reg = GetRegister(p0);
-                                                                      var res = SLA(reg);
 
-                                                                      SetRegister(p0, res);
+                                                                      var TopBit = reg.GetBit(7);
+
+                                                                      Registers.Mark(Flag.NN);
+                                                                      Registers.Mark(Flag.NH);
+                                                                      Registers.Set(Flag.C, TopBit);
+
+                                                                      reg <<= 1;
+                                                                      Registers.Set(Flag.Z, reg == 0);
+
+                                                                      SetRegister(p0, reg);
                                                                       AddTicks(duration);
                                                                   };
-        private byte SLA(byte reg)
-        {
-            var TopBit = reg.GetBit(7);
-
-            Registers.Mark(Flag.NN);
-            Registers.Mark(Flag.NH);
-            Registers.Set(Flag.C, TopBit);
-
-            reg <<= 1;
-            Registers.Set(Flag.Z, reg == 0);
-            return reg;
-        }
         public Action SRA(Register p0, int duration) => () =>
                                                                   {
                                                                       var lhs = GetRegister(p0);
@@ -1043,23 +972,20 @@ namespace emulator
         public Action SWAP(Register p0, int duration) => () =>
                                                                    {
                                                                        var reg = GetRegister(p0);
-                                                                       var res = SWAP(reg);
-                                                                       SetRegister(p0, res);
+
+                                                                       var low = (reg & 0xf) << 4;
+                                                                       var high = (reg & 0xf0) >> 4;
+                                                                       var swapped = low | high;
+
+                                                                       Registers.Set(Flag.Z, swapped == 0);
+                                                                       Registers.Mark(Flag.NN);
+                                                                       Registers.Mark(Flag.NH);
+                                                                       Registers.Mark(Flag.NC);
+
+
+                                                                       SetRegister(p0, (byte)swapped);
                                                                        AddTicks(duration);
                                                                    };
-
-        private byte SWAP(byte b)
-        {
-            var low = (b & 0xf) << 4;
-            var high = (b & 0xf0) >> 4;
-            var swapped = low | high;
-
-            Registers.Set(Flag.Z, swapped == 0);
-            Registers.Mark(Flag.NN);
-            Registers.Mark(Flag.NH);
-            Registers.Mark(Flag.NC);
-            return (byte)swapped;
-        }
 
         public Action SRL(Register p0, int duration) => () =>
                                                                   {
@@ -1076,31 +1002,23 @@ namespace emulator
         public Action BIT(byte p0, Register p1, int duration) => () =>
                                                                            {
                                                                                var reg = GetRegister(p1);
-                                                                               BIT(p0, reg);
+                                                                               Registers.Set(Flag.Z, !reg.GetBit(p0));
+                                                                               Registers.Mark(Flag.NN);
+                                                                               Registers.Mark(Flag.H);
                                                                                AddTicks(duration);
                                                                            };
-
-        private void BIT(int at, byte b)
-        {
-            Registers.Set(Flag.Z, !b.GetBit(at));
-            Registers.Mark(Flag.NN);
-            Registers.Mark(Flag.H);
-        }
-        private static byte RES(int at, byte b) => b.ClearBit(at);
-
-        private static byte SET(int at, byte b) => b.SetBit(at);
 
         public Action RES(byte p0, Register p1, int duration) => () =>
                                                                            {
                                                                                var reg = GetRegister(p1);
-                                                                               var res = RES(p0, reg);
+                                                                               var res = reg.ClearBit(p0);
                                                                                SetRegister(p1, res);
                                                                                AddTicks(duration);
                                                                            };
         public Action SET(byte p0, Register p1, int duration) => () =>
                                                                            {
                                                                                var reg = GetRegister(p1);
-                                                                               var res = SET(p0, reg);
+                                                                               var res = reg.SetBit(p0);
                                                                                SetRegister(p1, res);
                                                                                AddTicks(duration);
                                                                            };
