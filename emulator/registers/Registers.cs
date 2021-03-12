@@ -1,74 +1,70 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 
 namespace emulator
 {
+    [StructLayout(LayoutKind.Explicit)]
+    public struct UnionRegister
+    {
+        [FieldOffset(0)] public ushort Wide;
+        [FieldOffset(0)] public byte Low;
+        [FieldOffset(1)] public byte High;
+    }
     public class Registers
     {
-        private static byte Low(ushort s) => (byte)(s & 0x00ff);
-
-        private static byte High(ushort s) => (byte)((s & 0xff00) >> 8);
-
-        private static ushort SetLow(ushort s, byte b) => (ushort)((s & 0xff00) | b);
-
-        private static ushort SetHigh(ushort s, byte b) => (ushort)((s & 0x00ff) | (b << 8));
-
-        private ushort _AF;
-        public ushort AF { get => _AF; set => _AF = (ushort)(value & 0xFFF0); }
+        private UnionRegister _AF;
+        public ushort AF { get => _AF.Wide; set => _AF.Wide = (ushort)(value & 0xFFF0); }
         public byte A
         {
-            get => High(AF);
-            set => AF = SetHigh(AF, value);
+            get => _AF.High;
+            set => _AF.High = value;
         }
         public byte F
         {
-            get => Low(AF);
-            set => AF = SetLow(AF, value);
+            get => _AF.Low;
+            set => _AF.Low = value;
         }
-        public ushort BC;
+
+        private UnionRegister _BC;
+        public ushort BC { get => _BC.Wide; set => _BC.Wide = value; }
         public byte B
         {
-            get => High(BC);
-            set => BC = SetHigh(BC, value);
+            get => _BC.High;
+            set => _BC.High = value;
         }
         public byte C
         {
-            get => Low(BC);
-            set => BC = SetLow(BC, value);
+            get => _BC.Low;
+            set => _BC.Low = value;
         }
-        public ushort DE;
+
+        private UnionRegister _DE;
+        public ushort DE { get => _DE.Wide; set => _DE.Wide = value; }
         public byte D
         {
-            get => High(DE);
-            set => DE = SetHigh(DE, value);
+            get => _DE.High;
+            set => _DE.High = value;
         }
         public byte E
         {
-            get => Low(DE);
-            set => DE = SetLow(DE, value);
+            get => _DE.Low;
+            set => _DE.Low = value;
         }
-        public ushort HL;
+
+        private UnionRegister _HL;
+        public ushort HL { get => _HL.Wide; set => _HL.Wide = value; }
         public byte H
         {
-            get => High(HL);
-            set => HL = SetHigh(HL, value);
+            get => _HL.High;
+            set => _HL.High = value;
         }
         public byte L
         {
-            get => Low(HL);
-            set => HL = SetLow(HL, value);
+            get => _HL.Low;
+            set => _HL.Low = value;
         }
+
         public ushort SP;
-
-        public Registers() { }
-
-        public Registers(ushort aF, ushort bC, ushort dE, ushort hL, ushort sP)
-        {
-            AF = aF;
-            BC = bC;
-            DE = dE;
-            HL = hL;
-            SP = sP;
-        }
 
         public bool Get(Flag f)
         {
