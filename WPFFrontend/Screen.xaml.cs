@@ -334,7 +334,7 @@ namespace WPFFrontend
         }
 
         private void CommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e) => e.CanExecute = true;
-
+        
         private void RadioButton_Checked(object sender, RoutedEventArgs e)
         {
             if (sender is null) return;

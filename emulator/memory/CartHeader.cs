@@ -122,8 +122,14 @@ namespace emulator
                 _ = System.IO.Directory.CreateDirectory(root);
             }
 
+            var saveFolder = root + "\\saves";
+            if (!System.IO.Directory.Exists(saveFolder))
+            {
+                _ = System.IO.Directory.CreateDirectory(saveFolder);
+            }
+
             //Filenames might be somewhat illegal depending on what characters are in the title?
-            var path = string.Format(@"{0}\{1}.sav", root, Title);
+            var path = string.Format(@"{0}\{1}.sav", saveFolder, Title);
             if (!System.IO.File.Exists(path))
             {
                 int size = 0;
