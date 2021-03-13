@@ -24,6 +24,18 @@
                 <MenuItem Name="BootRomEnable" Header="_Use Bootrom" IsCheckable="True" IsChecked="False"/>
                 <MenuItem Name="FPSDisplayEnable" Header="_Show Performance Metrics" IsCheckable="True" IsChecked="False"/>
             </MenuItem>
+            <MenuItem Header="_Controller">
+                <MenuItem>
+                    <MenuItem.Header>
+                        <StackPanel>
+                            <RadioButton GroupName="SelectedController" Checked="RadioButton_Checked" Content="1" />
+                            <RadioButton GroupName="SelectedController" Checked="RadioButton_Checked" Content="2" />
+                            <RadioButton GroupName="SelectedController" Checked="RadioButton_Checked" Content="3" />
+                            <RadioButton GroupName="SelectedController" Checked="RadioButton_Checked" Content="4" />
+                        </StackPanel>
+                    </MenuItem.Header>
+                </MenuItem>
+            </MenuItem>
         </Menu>
         <Label Name="FPS" Content="" Visibility="Collapsed"  Padding="0,0,0,4"/>
         <Image Name="Display" Height="576" Width="640"/>

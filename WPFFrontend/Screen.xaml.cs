@@ -12,6 +12,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Controls;
 
 namespace WPFFrontend
 {
@@ -50,7 +51,6 @@ namespace WPFFrontend
             Controller = XboxController.RetrieveController(0);
 
             Controller.StateChanged += SelectedController_StateChanged;
-
             PropertyChanged += MainWindow_PropertyChanged;
         }
 
@@ -82,7 +82,7 @@ namespace WPFFrontend
             Pressed[JoypadKey.Start] = Controller.IsStartPressed;
         }
 
-        private readonly XboxController Controller;
+        private XboxController Controller;
         void SelectedController_StateChanged(object? sender, XboxControllerStateChangedEventArgs e) => OnPropertyChanged("Buttons");
         public void OnPropertyChanged(string name)
         {
@@ -244,6 +244,7 @@ namespace WPFFrontend
 
             var br = BootRomEnable.IsChecked;
             var fps = FPSLimitEnable.IsChecked;
+
             GameThread = new Task(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
@@ -333,5 +334,20 @@ namespace WPFFrontend
         }
 
         private void CommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e) => e.CanExecute = true;
+
+        private void RadioButton_Checked(object sender, RoutedEventArgs e)
+        {
+            if (sender is null) return;
+            RadioButton li = (RadioButton)sender;
+            Controller = li.Content switch
+            {
+                "1" => XboxController.RetrieveController(0),
+                "2" => XboxController.RetrieveController(1),
+                "3" => XboxController.RetrieveController(2),
+                "4" => XboxController.RetrieveController(3),
+                _ => throw new Exception("Illegal controller selected"),
+            };
+            Controller.StateChanged += SelectedController_StateChanged;
+        }
     }
 }
