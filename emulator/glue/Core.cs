@@ -10,7 +10,10 @@ namespace emulator
         public readonly CPU CPU;
         private readonly APU APU;
         private readonly PPU PPU;
+        private readonly MMU Memory;
         private readonly Timers Timers;
+        private readonly InterruptRegisters InterruptRegisters;
+        private readonly ProgramCounter PC;
 
         //TODO: move DMA somewhere else, probably the PPU
         private byte _dma = 0xff;
@@ -23,28 +26,29 @@ namespace emulator
             {
                 throw new Exception("Cartridge file has to be at least 8kb in size");
             }
-
+            PC = new();
+            InterruptRegisters = new InterruptRegisters(getKeyboardInterrupt);
             APU = new APU(32768);
-            PPU = new PPU(() =>
+            PPU = new PPU(
+            () =>
             {
-                var IFR = CPU!.InterruptFireRegister;
+                var IFR = InterruptRegisters.InterruptFireRegister;
                 IFR.SetBit(0);
-                CPU.InterruptFireRegister = IFR;
+                InterruptRegisters.InterruptFireRegister = IFR;
             },
-                                       () =>
-                                       {
-                                           var IFR = CPU!.InterruptFireRegister;
-                                           IFR.SetBit(1);
-                                           CPU.InterruptFireRegister = IFR;
-                                       },
-
-                                       frameSink);
+            () =>
+            {
+                var IFR = InterruptRegisters.InterruptFireRegister;
+                IFR.SetBit(1);
+                InterruptRegisters.InterruptFireRegister = IFR;
+            },
+            frameSink);
 
             Timers = new Timers(() =>
             {
-                var IFR = CPU!.InterruptFireRegister;
+                var IFR = InterruptRegisters.InterruptFireRegister;
                 IFR.SetBit(2);
-                CPU.InterruptFireRegister = IFR;
+                InterruptRegisters.InterruptFireRegister = IFR;
             });
 
             var ioRegisters = SetupControlRegisters(Keypad);
@@ -68,29 +72,27 @@ namespace emulator
                 rumble.RumbleStateChange += Keypad.ToggleRumble;
             }
 
-            var memory = new MMU(
+             Memory = new MMU(
     bootROM,
     Card,
     PPU.VRAM,
     PPU.OAM,
     ioRegisters,
-    (x => CPU!.InterruptControlRegister = x,
-    () => CPU!.InterruptControlRegister)
-
+    (x => InterruptRegisters.InterruptControlRegister = x,
+    () => InterruptRegisters.InterruptControlRegister),
+    PC
     );
 
-            CPU = new CPU(getKeyboardInterrupt, memory);
-            ioRegisters[0x0f] = CPU.HookUpCPU();
+            CPU = new CPU(Memory, InterruptRegisters, PC);
+            ioRegisters[0x0f] = InterruptRegisters.HookUp();
 
-
-            memory.ReadInput = CPU.ReadOp;
-            ioRegisters[0x50] = memory.HookUpMemory();
+            ioRegisters[0x50] = Memory.HookUpMemory();
 
             //We have to replicate the state of the system post boot without running the bootrom
             if (bootROM == null)
             {
                 //registers
-                CPU.PC = 0x100;
+                PC.Value = 0x100;
                 CPU.Registers.AF = 0x0100;
                 CPU.Registers.BC = 0xff13;
                 CPU.Registers.DE = 0x00c1;
@@ -103,7 +105,7 @@ namespace emulator
                 Timers.TMA = 0;
                 Timers.InternalCounter = 0x1800;
 
-                CPU.InterruptFireRegister = 0xe1;
+                InterruptRegisters.InterruptFireRegister = 0xe1;
 
                 //sound
                 APU.NR10 = 0x80;
@@ -138,7 +140,7 @@ namespace emulator
                 PPU.OBP0 = 0xff;
                 PPU.OBP1 = 0xff;
 
-                CPU.IME = true;
+                InterruptRegisters.IME = true;
             }
         }
 
@@ -190,7 +192,7 @@ namespace emulator
                 ushort baseAddr = (ushort)(x << 8);
                 for (int i = 0; i < OAM.Size; i++)
                 {
-                    var r = CPU.Memory.Read((ushort)(baseAddr + i));
+                    var r = Memory.Read((ushort)(baseAddr + i));
                     PPU.OAM[OAM.Start + i] = r;
                 }
             },

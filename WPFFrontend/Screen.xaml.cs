@@ -9,10 +9,10 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Controls;
 
 namespace WPFFrontend
 {
@@ -334,7 +334,7 @@ namespace WPFFrontend
         }
 
         private void CommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e) => e.CanExecute = true;
-        
+
         private void RadioButton_Checked(object sender, RoutedEventArgs e)
         {
             if (sender is null) return;

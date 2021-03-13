@@ -2,20 +2,9 @@
 {
     public partial class CPU
     {
-        public bool IME;
-        private HaltState Halted = HaltState.off;
-
-        private bool InterruptEnableScheduled;
-        private byte _IE = 0xe0;
-        public byte InterruptFireRegister
-        {
-            get => _IE;
-            set => _IE = (byte)((value & 0x1f) | 0xe0);
-        }
-        public byte InterruptControlRegister { get; set; }
         public void DoInterrupt()
         {
-            byte coincidence = (byte)(InterruptControlRegister & InterruptFireRegister & 0x1f); //Coincidence has all the bits which have both fired AND are enabled
+            byte coincidence = (byte)(ISR.InterruptControlRegister & ISR.InterruptFireRegister & 0x1f); //Coincidence has all the bits which have both fired AND are enabled
 
             if (Halted != HaltState.off)
             {
@@ -33,7 +22,7 @@
                 }
             }
 
-            if (!IME || coincidence == 0)
+            if (!ISR.IME || coincidence == 0)
             {
                 return; //Interrupts have to be globally enabled to use them
             }
@@ -42,10 +31,10 @@
             {
                 if (coincidence.GetBit(bit))
                 {
-                    IME = false;
-                    var IFR = InterruptFireRegister;
+                    ISR.IME = false;
+                    var IFR = ISR.InterruptFireRegister;
                     IFR.SetBit(bit, false);
-                    InterruptFireRegister = IFR;
+                    ISR.InterruptFireRegister = IFR;
 
                     var addr = (ushort)(0x40 + (0x8 * bit));
                     Call(20, addr); //We need a cleaner way to call functions without fetching

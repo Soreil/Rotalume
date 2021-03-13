@@ -6,15 +6,22 @@ namespace emulator
     {
         private readonly Action[] StdOps;
         private readonly Action[] CbOps;
+        private readonly InterruptRegisters ISR;
+        public readonly Registers Registers;
+        private readonly MMU Memory;
+        private readonly ProgramCounter PC;
+
+        private HaltState Halted = HaltState.off;
+
         public Action Op(Unprefixed op) => StdOps[(int)op];
 
         public Action Op(Cbprefixed op) => CbOps[(int)op];
 
-        public CPU(Func<bool> getKeyboardInterrupt, MMU memory)
+        public CPU(MMU mMU, InterruptRegisters interruptRegisters, ProgramCounter PC)
         {
-            GetKeyboardInterrupt = getKeyboardInterrupt;
-            Memory = memory;
-
+            Memory = mMU;
+            ISR = interruptRegisters;
+            this.PC = PC;
             StdOps = new Action[0x100];
             StdOps[(int)Unprefixed.NOP] = NOP(4);
             StdOps[(int)Unprefixed.LD_AT_DE_A] = LD((WideRegister.DE, Postfix.unchanged), Register.A, 8);
@@ -534,15 +541,10 @@ namespace emulator
             Registers = new Registers();
         }
 
-        internal (Action<byte> Write, Func<byte> Read) HookUpCPU() => (x => InterruptFireRegister = x,
-            () => InterruptFireRegister);
-        internal byte ReadOp() => Memory[PC++];
-
-        public ushort PC = 0;
         private byte ReadHaltBug()
         {
             Halted = HaltState.off;
-            return Memory[PC];
+            return Memory[PC.Value];
         }
         internal void DoNextOP()
         {
@@ -554,37 +556,35 @@ namespace emulator
                 }
             }
 
-            var op = Halted == HaltState.haltbug ? ReadHaltBug() : Memory[PC++];
+            var op = Halted == HaltState.haltbug ? ReadHaltBug() : Memory[PC.Value++];
             if (op != 0xcb)
             {
                 Op((Unprefixed)op)();
             }
             else
             {
-                var CBop = Memory[PC++]; //Because of the CB prefix we encountered in the previous case we already skipped the extra byte of a cb instruction here
+                var CBop = Memory[PC.Value++]; //Because of the CB prefix we encountered in the previous case we already skipped the extra byte of a cb instruction here
                 Op((Cbprefixed)CBop)();
             }
         }
-
-        private readonly Func<bool> GetKeyboardInterrupt;
         internal void Tick()
         {
             if (TicksWeAreWaitingFor == 0)
             {
                 DoNextOP();
                 //We really should have the GUI thread somehow do this logic but polling like this should work
-                if (!InterruptFireRegister.GetBit(4) && GetKeyboardInterrupt())
+                if (!ISR.InterruptFireRegister.GetBit(4) && ISR.GetKeyboardInterrupt())
                 {
-                    var IFR = InterruptFireRegister;
+                    var IFR = ISR.InterruptFireRegister;
                     IFR.SetBit(4);
-                    InterruptFireRegister = IFR;
+                    ISR.InterruptFireRegister = IFR;
                 }
 
                 DoInterrupt();
-                if (InterruptEnableScheduled)
+                if (ISR.InterruptEnableScheduled)
                 {
-                    IME = true;
-                    InterruptEnableScheduled = false;
+                    ISR.IME = true;
+                    ISR.InterruptEnableScheduled = false;
                 }
             }
             else
