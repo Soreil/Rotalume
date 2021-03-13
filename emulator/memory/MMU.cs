@@ -55,7 +55,6 @@ namespace emulator
                     {
                         VRAM[at] = value;
                     }
-
                     break;
                     case >= 0xa000 and < 0xc000:
                     Card[at] = value;//ext_ram
@@ -71,7 +70,6 @@ namespace emulator
                     {
                         OAM[at] = value;
                     }
-
                     break;
                     case >= 0xfea0 and < 0xff00:
                     UnusableMEM[at] = value; //This should be illegal?
@@ -108,13 +106,12 @@ namespace emulator
         private readonly byte[]? bootROM;
 
         public Func<byte>? ReadInput;
-
-        private readonly byte[] BitConverterBuffer = new byte[2];
         private ushort ReadInputWide()
         {
-            BitConverterBuffer[0] = ReadInput!();
-            BitConverterBuffer[1] = ReadInput!();
-            return BitConverter.ToUInt16(BitConverterBuffer);
+            Span<byte> buf = stackalloc byte[2];
+            buf[0] = ReadInput!();
+            buf[1] = ReadInput!();
+            return BitConverter.ToUInt16(buf);
         }
         public MMU(
             byte[]? boot,
@@ -147,37 +144,19 @@ namespace emulator
 
         internal ushort FetchA16() => ReadInputWide();
 
-        internal byte FetchA8() => this[0xFF00 + ReadInput!()];
-
         internal sbyte FetchR8() => (sbyte)ReadInput!();
 
         public byte Read(ushort at) => this[at];
 
-        //Same problem as readinputwide
-        private readonly byte[] BitConverterBuffer2 = new byte[2];
         public ushort ReadWide(ushort at)
         {
-            BitConverterBuffer2[0] = this[at];
-            BitConverterBuffer2[1] = this[at + 1];
-            return BitConverter.ToUInt16(BitConverterBuffer2);
+            Span<byte> buf = stackalloc byte[2];
+            buf[0] = this[at];
+            buf[1] = this[at + 1];
+            return BitConverter.ToUInt16(buf);
         }
 
         public void Write(ushort at, byte arg) => this[at] = arg;
-
-        public void Write(DMGInteger at, byte arg)
-        {
-            switch (at)
-            {
-                case DMGInteger.a8:
-                Write((ushort)(0xff00 + FetchD8()), arg);
-                break;
-                case DMGInteger.a16:
-                Write(FetchD16(), arg);
-                break;
-                default:
-                throw new Exception("Not an adress");
-            }
-        }
 
         public void Write(ushort at, ushort arg)
         {
