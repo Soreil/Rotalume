@@ -11,20 +11,20 @@ namespace Tests
         {
             var dec = SetupA020Buffered();
 
-            var before = dec.Registers.BC;
+            var before = dec.CPU.Registers.BC;
 
-            dec.Op(Unprefixed.LD_BC_d16)();
+            dec.CPU.Op(Unprefixed.LD_BC_d16)();
 
-            var after = dec.Registers.BC;
+            var after = dec.CPU.Registers.BC;
 
             Assert.AreNotEqual(before, after);
             Assert.AreEqual(after, 0xa020);
         }
 
-        private static CPU SetupA020Buffered()
+        private static Core SetupA020Buffered()
         {
             var c = TestHelpers.NewCore(new byte[] { 0x20, 0xa0 });
-            return c.CPU;
+            return c;
         }
 
         [Test]
@@ -32,11 +32,11 @@ namespace Tests
         {
             var dec = SetupA020Buffered();
 
-            var before = dec.Registers.DE;
+            var before = dec.CPU.Registers.DE;
 
-            dec.Op(Unprefixed.LD_DE_d16)();
+            dec.CPU.Op(Unprefixed.LD_DE_d16)();
 
-            var after = dec.Registers.DE;
+            var after = dec.CPU.Registers.DE;
 
             Assert.AreNotEqual(before, after);
             Assert.AreEqual(after, 0xa020);
@@ -46,11 +46,11 @@ namespace Tests
         {
             var dec = SetupA020Buffered();
 
-            var before = dec.Registers.HL;
+            var before = dec.CPU.Registers.HL;
 
-            dec.Op(Unprefixed.LD_HL_d16)();
+            dec.CPU.Op(Unprefixed.LD_HL_d16)();
 
-            var after = dec.Registers.HL;
+            var after = dec.CPU.Registers.HL;
 
             Assert.AreNotEqual(before, after);
             Assert.AreEqual(after, 0xa020);
@@ -60,11 +60,11 @@ namespace Tests
         {
             var dec = SetupA020Buffered();
 
-            var before = dec.Registers.SP;
+            var before = dec.CPU.Registers.SP;
 
-            dec.Op(Unprefixed.LD_SP_d16)();
+            dec.CPU.Op(Unprefixed.LD_SP_d16)();
 
-            var after = dec.Registers.SP;
+            var after = dec.CPU.Registers.SP;
 
             Assert.AreNotEqual(before, after);
             Assert.AreEqual(after, 0xa020);
@@ -87,13 +87,13 @@ namespace Tests
         {
             var dec = Setup0x77BufferedDecoder();
 
-            dec.Registers.HL = 0xa000;
-            var before = dec.Registers.HL;
+            dec.CPU.Registers.HL = 0xa000;
+            var before = dec.CPU.Registers.HL;
             var memoryBefore = dec.Memory.Read(before);
 
-            dec.Op(Unprefixed.LD_AT_HL_d8)();
+            dec.CPU.Op(Unprefixed.LD_AT_HL_d8)();
 
-            var after = dec.Registers.HL;
+            var after = dec.CPU.Registers.HL;
             var memoryAfter = dec.Memory.Read(after);
 
             Assert.AreEqual(before, after);
@@ -102,10 +102,10 @@ namespace Tests
             Assert.AreEqual(0x77, memoryAfter);
         }
 
-        private CPU Setup0x77BufferedDecoder()
+        private Core Setup0x77BufferedDecoder()
         {
             var c = TestHelpers.NewCore(new byte[] { 0x77 });
-            return c.CPU;
+            return c;
         }
 
         [Test]
@@ -117,14 +117,14 @@ namespace Tests
             dec.Registers.Set(Register.A, 0x77);
 
             var before = dec.Registers.HL;
-            var memoryBefore = dec.Memory.Read(before);
+            var memoryBefore = core.Memory.Read(before);
 
             dec.Op(Unprefixed.LDD_AT_HL_A)();
 
             var after = dec.Registers.HL;
-            var memoryAfter = dec.Memory.Read(after);
+            var memoryAfter = core.Memory.Read(after);
 
-            var memoryAfterButAtOldHL = dec.Memory.Read(before);
+            var memoryAfterButAtOldHL = core.Memory.Read(before);
 
             Assert.AreEqual(before - 1, after);
             Assert.AreEqual(memoryBefore, memoryAfter);
@@ -142,14 +142,14 @@ namespace Tests
             dec.Registers.Set(Register.A, 0x77);
 
             var before = dec.Registers.HL;
-            var memoryBefore = dec.Memory.Read(before);
+            var memoryBefore = core.Memory.Read(before);
 
             dec.Op(Unprefixed.LDI_AT_HL_A)();
 
             var after = dec.Registers.HL;
-            var memoryAfter = dec.Memory.Read(after);
+            var memoryAfter = core.Memory.Read(after);
 
-            var memoryAfterButAtOldHL = dec.Memory.Read(before);
+            var memoryAfterButAtOldHL = core.Memory.Read(before);
 
             Assert.AreEqual(before + 1, after);
             Assert.AreEqual(memoryBefore, memoryAfter);
@@ -162,8 +162,8 @@ namespace Tests
         public void LD_AT_a16_SP()
         {
             var dec = SetupA020Buffered();
-            dec.Registers.SP = (0xfffe);
-            dec.Op(Unprefixed.LD_AT_a16_SP)();
+            dec.CPU.Registers.SP = (0xfffe);
+            dec.CPU.Op(Unprefixed.LD_AT_a16_SP)();
 
             var result = dec.Memory.ReadWide(0xa020);
             Assert.AreEqual(0xfffe, result);
@@ -225,7 +225,7 @@ namespace Tests
 
             dec.Op(Unprefixed.LD_AT_C_A)();
 
-            Assert.AreEqual(0x10, dec.Memory.Read(0xfffe));
+            Assert.AreEqual(0x10, core.Memory.Read(0xfffe));
 
         }
         [Test]
@@ -234,7 +234,7 @@ namespace Tests
             var core = TestHelpers.NewCore(new byte[] { });
             var dec = core.CPU;
 
-            dec.Memory.Write(0xfffe, 0x10);
+            core.Memory.Write(0xfffe, 0x10);
             dec.Registers.C = (0xfe);
 
 

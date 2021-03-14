@@ -10,7 +10,7 @@ namespace emulator
         public readonly CPU CPU;
         private readonly APU APU;
         private readonly PPU PPU;
-        private readonly MMU Memory;
+        public readonly MMU Memory;
         private readonly Timers Timers;
         private readonly InterruptRegisters InterruptRegisters;
         private readonly ProgramCounter PC;

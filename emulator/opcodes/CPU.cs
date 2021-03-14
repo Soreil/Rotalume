@@ -9,7 +9,8 @@ namespace emulator
         private readonly InterruptRegisters ISR;
         public readonly Registers Registers;
         private readonly MMU Memory;
-        private readonly ProgramCounter PC;
+        private readonly ProgramCounter Pc;
+        public ushort PC { get => Pc.Value; set => Pc.Value = value; }
 
         private HaltState Halted = HaltState.off;
 
@@ -21,7 +22,7 @@ namespace emulator
         {
             Memory = mMU;
             ISR = interruptRegisters;
-            this.PC = PC;
+            this.Pc = PC;
             StdOps = new Action[0x100];
             StdOps[(int)Unprefixed.NOP] = NOP(4);
             StdOps[(int)Unprefixed.LD_AT_DE_A] = LD((WideRegister.DE, Postfix.unchanged), Register.A, 8);
@@ -544,7 +545,7 @@ namespace emulator
         private byte ReadHaltBug()
         {
             Halted = HaltState.off;
-            return Memory[PC.Value];
+            return Memory[Pc.Value];
         }
         internal void DoNextOP()
         {
@@ -556,14 +557,14 @@ namespace emulator
                 }
             }
 
-            var op = Halted == HaltState.haltbug ? ReadHaltBug() : Memory[PC.Value++];
+            var op = Halted == HaltState.haltbug ? ReadHaltBug() : Memory[Pc.Value++];
             if (op != 0xcb)
             {
                 Op((Unprefixed)op)();
             }
             else
             {
-                var CBop = Memory[PC.Value++]; //Because of the CB prefix we encountered in the previous case we already skipped the extra byte of a cb instruction here
+                var CBop = Memory[Pc.Value++]; //Because of the CB prefix we encountered in the previous case we already skipped the extra byte of a cb instruction here
                 Op((Cbprefixed)CBop)();
             }
         }

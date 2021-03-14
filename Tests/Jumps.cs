@@ -24,7 +24,7 @@ namespace Tests
             (byte)Unprefixed.POP_AF
             });
 
-            p.CPU.Memory.Write(0x0fffd, 0x8020);
+            p.Memory.Write(0x0fffd, 0x8020);
             p.CPU.Registers.SP = 0xfffd;
             p.Step();
             Assert.AreEqual(0x101, p.CPU.PC);
@@ -77,7 +77,7 @@ namespace Tests
             p.CPU.Registers.AF = 0x12f0;
 
             p.Step();
-            var read = p.CPU.Memory.ReadWide(0x0fffc);
+            var read = p.Memory.ReadWide(0x0fffc);
 
             Assert.AreEqual(0x101, p.CPU.PC);
             Assert.AreEqual(16, p.CPU.TicksWeAreWaitingFor);
@@ -92,7 +92,7 @@ namespace Tests
             var p = TestHelpers.NewCore(new byte[] { (byte)Unprefixed.RET });
 
             p.CPU.Registers.SP = 0xfffd;
-            p.CPU.Memory.Write(0xfffd, 0xfedc);
+            p.Memory.Write(0xfffd, 0xfedc);
 
             p.Step();
 
@@ -114,7 +114,7 @@ namespace Tests
             Assert.AreEqual(0xcdab, p.CPU.PC);
             Assert.AreEqual(24, p.CPU.TicksWeAreWaitingFor);
             Assert.AreEqual(0xfffd, p.CPU.Registers.SP);
-            Assert.AreEqual(0x103, p.CPU.Memory.ReadWide(0xfffd));
+            Assert.AreEqual(0x103, p.Memory.ReadWide(0xfffd));
         }
 
         [Test]

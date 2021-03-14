@@ -33,48 +33,48 @@ namespace Tests
             (byte)Unprefixed.INC_AT_HL}
             );
             {
-                dec.CPU.Memory.Write(0xfffe, (ushort)0xFF);
+                dec.Memory.Write(0xfffe, (ushort)0xFF);
                 dec.CPU.Registers.Set(WideRegister.HL, 0xfffe);
 
                 TestHelpers.StepOneCPUInstruction(dec);
 
-                Assert.AreEqual(0, dec.CPU.Memory.Read(dec.CPU.Registers.Get(WideRegister.HL)));
+                Assert.AreEqual(0, dec.Memory.Read(dec.CPU.Registers.Get(WideRegister.HL)));
 
                 Assert.IsTrue(dec.CPU.Registers.Get(Flag.NN));
                 Assert.IsTrue(dec.CPU.Registers.Get(Flag.Z));
                 Assert.IsTrue(dec.CPU.Registers.Get(Flag.H));
             }
             {
-                dec.CPU.Memory.Write(0xfffe, (ushort)0xFE);
+                dec.Memory.Write(0xfffe, (ushort)0xFE);
                 dec.CPU.Registers.Set(WideRegister.HL, 0xfffe);
 
                 TestHelpers.StepOneCPUInstruction(dec);
 
-                Assert.AreEqual(0xff, dec.CPU.Memory.Read(dec.CPU.Registers.Get(WideRegister.HL)));
+                Assert.AreEqual(0xff, dec.Memory.Read(dec.CPU.Registers.Get(WideRegister.HL)));
 
                 Assert.IsTrue(dec.CPU.Registers.Get(Flag.NN));
                 Assert.IsTrue(dec.CPU.Registers.Get(Flag.NZ));
                 Assert.IsTrue(dec.CPU.Registers.Get(Flag.NH));
             }
             {
-                dec.CPU.Memory.Write(0xfffe, (ushort)0x0F);
+                dec.Memory.Write(0xfffe, (ushort)0x0F);
                 dec.CPU.Registers.Set(WideRegister.HL, 0xfffe);
 
                 TestHelpers.StepOneCPUInstruction(dec);
 
-                Assert.AreEqual(0x10, dec.CPU.Memory.Read(dec.CPU.Registers.Get(WideRegister.HL)));
+                Assert.AreEqual(0x10, dec.Memory.Read(dec.CPU.Registers.Get(WideRegister.HL)));
 
                 Assert.IsTrue(dec.CPU.Registers.Get(Flag.NN));
                 Assert.IsTrue(dec.CPU.Registers.Get(Flag.NZ));
                 Assert.IsTrue(dec.CPU.Registers.Get(Flag.H));
             }
             {
-                dec.CPU.Memory.Write(0xfffe, (ushort)0x0E);
+                dec.Memory.Write(0xfffe, (ushort)0x0E);
                 dec.CPU.Registers.Set(WideRegister.HL, 0xfffe);
 
                 TestHelpers.StepOneCPUInstruction(dec);
 
-                Assert.AreEqual(0x0F, dec.CPU.Memory.Read(dec.CPU.Registers.Get(WideRegister.HL)));
+                Assert.AreEqual(0x0F, dec.Memory.Read(dec.CPU.Registers.Get(WideRegister.HL)));
 
                 Assert.IsTrue(dec.CPU.Registers.Get(Flag.NN));
                 Assert.IsTrue(dec.CPU.Registers.Get(Flag.NZ));

@@ -6,7 +6,7 @@ namespace emulator
     {
         public bool IME;
         public bool InterruptEnableScheduled;
-        public byte _IE = 0xe0;
+        private byte _IE = 0xe0;
 
         public readonly Func<bool> GetKeyboardInterrupt;
         public byte InterruptFireRegister

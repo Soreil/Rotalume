@@ -256,7 +256,7 @@ namespace emulator
         public Action JR(int duration) => () =>
         {
             var offset = Memory.FetchR8();
-            PC.Value = (ushort)(PC.Value + offset);
+            Pc.Value = (ushort)(Pc.Value + offset);
             AddTicks(duration);
         };
         public Action RRA(int duration) => () =>
@@ -289,7 +289,7 @@ namespace emulator
             var offset = Memory.FetchR8();
             if (Registers.Get(p0))
             {
-                PC.Value = (ushort)(PC.Value + offset);
+                Pc.Value = (ushort)(Pc.Value + offset);
                 AddTicks(duration);
             }
             else
@@ -526,7 +526,7 @@ namespace emulator
                                                                                        {
                                                                                            if (Registers.Get(p0))
                                                                                            {
-                                                                                               PC.Value = Pop();
+                                                                                               Pc.Value = Pop();
                                                                                                AddTicks(duration);
                                                                                            }
                                                                                            else
@@ -547,7 +547,7 @@ namespace emulator
                                                                                               var addr = Memory.FetchA16();
                                                                                               if (Registers.Get(p0))
                                                                                               {
-                                                                                                  PC.Value = addr;
+                                                                                                  Pc.Value = addr;
                                                                                                   AddTicks(duration);
                                                                                               }
                                                                                               else
@@ -558,7 +558,7 @@ namespace emulator
         public Action JP_A16(int duration) => () =>
                                                                    {
                                                                        var addr = Memory.FetchA16();
-                                                                       PC.Value = addr;
+                                                                       Pc.Value = addr;
                                                                        AddTicks(duration);
                                                                    };
         public Action CALL_A16(Flag p0, int duration, int alternativeDuration) => () =>
@@ -595,7 +595,7 @@ namespace emulator
         public Action RET(int duration) => () =>
                                                      {
                                                          var addr = Pop();
-                                                         PC.Value = addr;
+                                                         Pc.Value = addr;
                                                          AddTicks(duration);
                                                      };
         //Not an actual instruction
@@ -614,8 +614,8 @@ namespace emulator
 
         public void Call(int duration, ushort addr)
         {
-            Push(PC.Value);
-            PC.Value = addr;
+            Push(Pc.Value);
+            Pc.Value = addr;
             AddTicks(duration);
         }
 
@@ -645,7 +645,7 @@ namespace emulator
                                                      };
         public Action RETI(int duration) => () =>
                                                       {
-                                                          PC.Value = Pop();
+                                                          Pc.Value = Pop();
                                                           EnableInterrupts();
                                                           AddTicks(duration);
                                                       };
@@ -714,7 +714,7 @@ namespace emulator
 
         public Action JP(int duration) => () =>
                                                     {
-                                                        PC.Value = Registers.HL;
+                                                        Pc.Value = Registers.HL;
                                                         AddTicks(duration);
                                                     };
         public Action LD_AT_a16_A(int duration) => () =>
