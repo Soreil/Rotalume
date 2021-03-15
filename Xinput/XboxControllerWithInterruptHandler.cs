@@ -1,8 +1,6 @@
-﻿using J2i.Net.XInputWrapper;
+﻿using System;
 
-using System;
-
-namespace WPFFrontend
+namespace J2i.Net.XInputWrapper
 {
     public class XboxControllerWithInterruptHandler
     {

@@ -4,9 +4,9 @@ namespace emulator
 {
     public interface IGameController
     {
-        bool IsAPressed { get; }
-        bool IsBackPressed { get; }
         bool IsBPressed { get; }
+        bool IsSelectPressed { get; }
+        bool IsAPressed { get; }
         bool IsDPadDownPressed { get; }
         bool IsDPadLeftPressed { get; }
         bool IsDPadRightPressed { get; }

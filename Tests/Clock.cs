@@ -8,9 +8,9 @@ namespace Tests
 {
     internal class Clock
     {
-        private readonly List<Unprefixed> illegalOps = new List<Unprefixed> {Unprefixed.PREFIX,Unprefixed.ILLEGAL_D3,Unprefixed.ILLEGAL_DB,Unprefixed.ILLEGAL_DD,Unprefixed.ILLEGAL_E3,
-            Unprefixed.ILLEGAL_E4,Unprefixed.ILLEGAL_EB, Unprefixed.ILLEGAL_EC,Unprefixed.ILLEGAL_ED,Unprefixed.ILLEGAL_F4,Unprefixed.ILLEGAL_FC,Unprefixed.ILLEGAL_FD,
-        Unprefixed.STOP,Unprefixed.HALT};
+        private readonly List<Opcode> illegalOps = new List<Opcode> {Opcode.PREFIX,Opcode.ILLEGAL_D3,Opcode.ILLEGAL_DB,Opcode.ILLEGAL_DD,Opcode.ILLEGAL_E3,
+            Opcode.ILLEGAL_E4,Opcode.ILLEGAL_EB, Opcode.ILLEGAL_EC,Opcode.ILLEGAL_ED,Opcode.ILLEGAL_F4,Opcode.ILLEGAL_FC,Opcode.ILLEGAL_FD,
+        Opcode.STOP,Opcode.HALT};
 
         [Test]
         public void C2DoesNotThrow()
@@ -24,7 +24,7 @@ namespace Tests
         {
             for (var i = 0; i < 0x100; i++)
             {
-                if (illegalOps.Contains((Unprefixed)i)) continue; //FIXME: when we implement halt and stop there should be some time taken here most likely.
+                if (illegalOps.Contains((Opcode)i)) continue; //FIXME: when we implement halt and stop there should be some time taken here most likely.
 
                 var p = TestHelpers.NewCore(new byte[] { (byte)i, 0, 0 });
 

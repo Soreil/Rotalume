@@ -16,7 +16,7 @@ namespace Tests
             {
                 dec.Registers.Set(Register.A, 0x80);
 
-                dec.Op(Unprefixed.RLCA)();
+                dec.Op(Opcode.RLCA)();
 
                 Assert.AreEqual(1, dec.Registers.Get(Register.A));
 
@@ -25,7 +25,7 @@ namespace Tests
             {
                 dec.Registers.Set(Register.A, 0);
 
-                dec.Op(Unprefixed.RLCA)();
+                dec.Op(Opcode.RLCA)();
 
                 Assert.AreEqual(0, dec.Registers.Get(Register.A));
 
@@ -34,7 +34,7 @@ namespace Tests
             {
                 dec.Registers.Set(Register.A, 0xff);
 
-                dec.Op(Unprefixed.RLCA)();
+                dec.Op(Opcode.RLCA)();
 
                 Assert.AreEqual(0xff, dec.Registers.Get(Register.A));
 
@@ -50,7 +50,7 @@ namespace Tests
             {
                 dec.Registers.Set(Register.A, 0x01);
 
-                dec.Op(Unprefixed.RRCA)();
+                dec.Op(Opcode.RRCA)();
 
                 Assert.AreEqual(0x80, dec.Registers.Get(Register.A));
 
@@ -59,7 +59,7 @@ namespace Tests
             {
                 dec.Registers.Set(Register.A, 0xFF);
 
-                dec.Op(Unprefixed.RRCA)();
+                dec.Op(Opcode.RRCA)();
 
                 Assert.AreEqual(0xFF, dec.Registers.Get(Register.A));
 
@@ -68,7 +68,7 @@ namespace Tests
             {
                 dec.Registers.Set(Register.A, 0);
 
-                dec.Op(Unprefixed.RRCA)();
+                dec.Op(Opcode.RRCA)();
 
                 Assert.AreEqual(0, dec.Registers.Get(Register.A));
 
@@ -82,7 +82,7 @@ namespace Tests
             var dec = core.CPU;
 
             dec.Registers.A = (0xff);
-            dec.Op(Unprefixed.CPL)();
+            dec.Op(Opcode.CPL)();
 
             Assert.AreEqual(0, dec.Registers.A);
         }
@@ -92,7 +92,7 @@ namespace Tests
             var core = TestHelpers.NewCore(new byte[] { });
             var dec = core.CPU;
 
-            dec.Op(Unprefixed.SCF)();
+            dec.Op(Opcode.SCF)();
 
             Assert.IsTrue(dec.Registers.Carry);
         }
@@ -103,10 +103,10 @@ namespace Tests
             var dec = core.CPU;
             dec.Registers.Carry=false;
 
-            dec.Op(Unprefixed.CCF)();
+            dec.Op(Opcode.CCF)();
             Assert.IsTrue(dec.Registers.Carry);
 
-            dec.Op(Unprefixed.CCF)();
+            dec.Op(Opcode.CCF)();
             Assert.IsTrue(!dec.Registers.Carry);
         }
     }

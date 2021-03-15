@@ -10,6 +10,6 @@
         F,
         H,
         L,
-        HL
+        HL //HL is a psuedoregister, it reads a byte from memory at location HL
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace emulator
 {
-    public enum Unprefixed : byte
+    public enum Opcode : byte
     {
         NOP = 0x00,
         LD_BC_d16 = 0x01,

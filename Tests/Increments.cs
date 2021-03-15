@@ -10,7 +10,7 @@ namespace Tests
         [Test]
         public void INC_SP()
         {
-            var dec = TestHelpers.NewCore(new byte[] { (byte)Unprefixed.INC_SP });
+            var dec = TestHelpers.NewCore(new byte[] { (byte)Opcode.INC_SP });
 
             {
                 dec.CPU.Registers.Set(WideRegister.SP, 20);
@@ -27,10 +27,10 @@ namespace Tests
         {
             var dec = TestHelpers.NewCore(new byte[]
             {
-            (byte)Unprefixed.INC_AT_HL ,
-            (byte)Unprefixed.INC_AT_HL ,
-            (byte)Unprefixed.INC_AT_HL ,
-            (byte)Unprefixed.INC_AT_HL}
+            (byte)Opcode.INC_AT_HL ,
+            (byte)Opcode.INC_AT_HL ,
+            (byte)Opcode.INC_AT_HL ,
+            (byte)Opcode.INC_AT_HL}
             );
             {
                 dec.Memory.Write(0xfffe, (ushort)0xFF);
@@ -85,7 +85,7 @@ namespace Tests
         [Test]
         public void INC_A()
         {
-            var dec = TestHelpers.NewCore(new byte[] { (byte)Unprefixed.INC_A });
+            var dec = TestHelpers.NewCore(new byte[] { (byte)Opcode.INC_A });
             {
                 dec.CPU.Registers.Set(Register.A, 20);
 
@@ -104,9 +104,9 @@ namespace Tests
         {
             var dec = TestHelpers.NewCore(new byte[]
             {
-                (byte)Unprefixed.DEC_A,
-                (byte)Unprefixed.DEC_A,
-                (byte)Unprefixed.DEC_A,
+                (byte)Opcode.DEC_A,
+                (byte)Opcode.DEC_A,
+                (byte)Opcode.DEC_A,
             });
 
             {
@@ -148,9 +148,9 @@ namespace Tests
         {
             var core = TestHelpers.NewCore(new byte[]
             {
-                (byte)Unprefixed.ADD_A_B,
-                (byte)Unprefixed.ADD_A_B,
-                (byte)Unprefixed.ADD_A_B,
+                (byte)Opcode.ADD_A_B,
+                (byte)Opcode.ADD_A_B,
+                (byte)Opcode.ADD_A_B,
             });
 
             var dec = core.CPU;
@@ -187,8 +187,8 @@ namespace Tests
         {
             var core = TestHelpers.NewCore(new byte[]
             {
-                (byte)Unprefixed.ADD_A_B,
-                (byte)Unprefixed.DAA,
+                (byte)Opcode.ADD_A_B,
+                (byte)Opcode.DAA,
             });
 
             var dec = core.CPU;
@@ -212,8 +212,8 @@ namespace Tests
         {
             var core = TestHelpers.NewCore(new byte[]
             {
-                (byte)Unprefixed.ADD_A_B,
-                (byte)Unprefixed.DAA,
+                (byte)Opcode.ADD_A_B,
+                (byte)Opcode.DAA,
             });
 
             var dec = core.CPU;
@@ -239,8 +239,8 @@ namespace Tests
         {
             var core = TestHelpers.NewCore(new byte[]
             {
-                (byte)Unprefixed.ADD_A_B,
-                (byte)Unprefixed.DAA,
+                (byte)Opcode.ADD_A_B,
+                (byte)Opcode.DAA,
             });
 
             var dec = core.CPU;
@@ -261,8 +261,8 @@ namespace Tests
         {
             var core = TestHelpers.NewCore(new byte[]
             {
-                (byte)Unprefixed.ADD_A_B,
-                (byte)Unprefixed.DAA,
+                (byte)Opcode.ADD_A_B,
+                (byte)Opcode.DAA,
             });
 
             var dec = core.CPU;
@@ -290,8 +290,8 @@ namespace Tests
         {
             var core = TestHelpers.NewCore(new byte[]
             {
-                (byte)Unprefixed.SUB_B,
-                (byte)Unprefixed.DAA,
+                (byte)Opcode.SUB_B,
+                (byte)Opcode.DAA,
             });
 
             var dec = core.CPU;
@@ -313,18 +313,18 @@ namespace Tests
         [Test]
         public void DAA_83()
         {
-            var core = TestHelpers.NewCore(new byte[] { (byte)Unprefixed.ADD_A_B, (byte)Unprefixed.DAA });
+            var core = TestHelpers.NewCore(new byte[] { (byte)Opcode.ADD_A_B, (byte)Opcode.DAA });
 
             var dec = core.CPU;
             {
                 dec.Registers.Set(Register.A, 0x45);
                 dec.Registers.Set(Register.B, 0x38);
 
-                dec.Op(Unprefixed.ADD_A_B)();
+                dec.Op(Opcode.ADD_A_B)();
 
                 Assert.AreEqual(0x7D, dec.Registers.Get(Register.A));
 
-                dec.Op(Unprefixed.DAA)();
+                dec.Op(Opcode.DAA)();
 
                 Assert.AreEqual(0x83, dec.Registers.Get(Register.A));
                 Assert.IsTrue(!dec.Registers.Carry);

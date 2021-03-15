@@ -1,6 +1,6 @@
 ﻿namespace emulator
 {
-    public enum Cbprefixed : byte
+    public enum CBOpcode : byte
     {
         RLC_B = 0x00,
         RLC_C = 0x01,
