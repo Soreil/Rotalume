@@ -15,12 +15,12 @@ namespace Tests
             bootrom ??= LoadBootROM();
             gamerom ??= LoadGameROM();
 
-            return new Core(gamerom,
+            return new Core(
+                gamerom,
                 bootrom,
-                new(new System.Collections.Concurrent.ConcurrentDictionary<JoypadKey, bool>(), null),
-                () => false, new(() => { }, () => { },
-                    IntPtr.Zero,
-                    false));
+                new(new InputDevices(new(), new())),
+                new FrameSink(() => { }, () => { }, IntPtr.Zero, false)
+                );
         }
         public static Core NewCore(byte[] gamerom)
         {
@@ -34,10 +34,9 @@ namespace Tests
 
             return new Core(gameromPaddedToSize,
                 null,
-                new(new System.Collections.Concurrent.ConcurrentDictionary<JoypadKey, bool>(), null),
-                () => false, new(() => { }, () => { },
-                    IntPtr.Zero,
-                    false));
+                new(new InputDevices(new(), new())),
+                new FrameSink(() => { }, () => { }, IntPtr.Zero, false)
+                );
         }
         public static void StepOneCPUInstruction(Core c)
         {
