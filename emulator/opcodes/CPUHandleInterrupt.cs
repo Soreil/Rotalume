@@ -2,7 +2,7 @@
 {
     public partial class CPU
     {
-        public void DoInterrupt()
+        public bool DoInterrupt()
         {
             byte coincidence = (byte)(ISR.InterruptControlRegister & ISR.InterruptFireRegister & 0x1f); //Coincidence has all the bits which have both fired AND are enabled
 
@@ -18,13 +18,13 @@
                 {
                     Halted = HaltState.off;
                     AddTicks(4);
-                    return;
+                    return true;
                 }
             }
 
             if (!ISR.IME || coincidence == 0)
             {
-                return; //Interrupts have to be globally enabled to use them
+                return false; //Interrupts have to be globally enabled to use them
             }
 
             for (int bit = 0; bit < 5; bit++) //Bit 0 has highest priority, we only handle one interrupt at a time
@@ -39,9 +39,10 @@
                     var addr = (ushort)(0x40 + (0x8 * bit));
                     Call(20, addr); //We need a cleaner way to call functions without fetching
 
-                    return;
+                    return true;
                 }
             }
+            return false;
         }
     }
 }

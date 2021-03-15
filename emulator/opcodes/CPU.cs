@@ -572,7 +572,10 @@ namespace emulator
         {
             if (TicksWeAreWaitingFor == 0)
             {
-                DoNextOP();
+                if (!DoInterrupt())
+                {
+                    DoNextOP();
+                }
                 //We really should have the GUI thread somehow do this logic but polling like this should work
                 if (!ISR.InterruptFireRegister.GetBit(4) && ISR.GetKeyboardInterrupt())
                 {
@@ -581,7 +584,6 @@ namespace emulator
                     ISR.InterruptFireRegister = IFR;
                 }
 
-                DoInterrupt();
                 if (ISR.InterruptEnableScheduled)
                 {
                     ISR.IME = true;
