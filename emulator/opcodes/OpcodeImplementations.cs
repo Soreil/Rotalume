@@ -310,35 +310,21 @@ namespace emulator
         }
         public Action DAA(int duration) => () =>
         {
-            var wasSub = Registers.Negative;
-
-            if (!wasSub)
+            if (!Registers.Negative)
             {
-                if (Registers.A >= 0x9a) Registers.Carry = true;
-                if ((Registers.A & 0x0f) >= 0x0a) Registers.Half = true;
-            }
-
-            byte adjustment = (byte)(
-            (Registers.Half ? 0x06 : 0x00) |
-            (Registers.Carry ? 0x60 : 0x00)
-            );
-
-            if (wasSub)
-            {
-                Registers.A -= adjustment;
+                if (Registers.Carry || Registers.A > 0x99)
+                {
+                    Registers.A += 0x60;
+                    Registers.Carry = true;
+                }
+                if (Registers.Half || (Registers.A & 0x0f) > 0x09) Registers.A += 0x06;
             }
             else
             {
-                if (adjustment + Registers.A > 0xff)
-                {
-                    Registers.Carry = true;
-                }
-
-                Registers.A += adjustment;
+                if (Registers.Carry) Registers.A -= 0x60;
+                if (Registers.Half) Registers.A -= 0x06;
             }
-
             Registers.Zero = Registers.A == 0;
-
             Registers.Half = false;
             AddTicks(duration);
         };
