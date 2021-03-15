@@ -122,7 +122,7 @@ namespace emulator
             }
         }
 
-        private static bool ShouldReplace(FIFOSpritePixel existingSpritePixel, FIFOSpritePixel candidate) => candidate.color != 0 && existingSpritePixel.color == 0 || candidate.priority && !existingSpritePixel.priority;
+        private static bool ShouldReplace(FIFOSpritePixel existingSpritePixel, FIFOSpritePixel candidate) => (candidate.color != 0 && existingSpritePixel.color == 0) || (candidate.priority && !existingSpritePixel.priority);
 
         public void RenderSpriteToTheLeftOfTheVisibleArea()
         {

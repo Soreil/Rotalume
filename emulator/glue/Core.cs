@@ -72,7 +72,7 @@ namespace emulator
                 rumble.RumbleStateChange += Keypad.ToggleRumble;
             }
 
-             Memory = new MMU(
+            Memory = new MMU(
     bootROM,
     Card,
     PPU.VRAM,
