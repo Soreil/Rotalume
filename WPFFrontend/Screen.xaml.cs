@@ -60,6 +60,7 @@ namespace WPFFrontend
 
             var Controllers = new List<IGameController> { new IGameControllerBridge(Controller1), new IGameControllerBridge(Controller2), new IGameControllerBridge(Controller3), new IGameControllerBridge(Controller4) };
             InputDevices = new(keyboard, Controllers);
+            Default.IsChecked = true;
         }
 
         private readonly Dictionary<JoypadKey, bool> Keyboard;

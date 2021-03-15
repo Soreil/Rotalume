@@ -28,7 +28,7 @@
                 <MenuItem>
                     <MenuItem.Header>
                         <StackPanel>
-                            <RadioButton GroupName="SelectedController" Checked="RadioButton_Checked" Content="1" />
+                            <RadioButton x:Name="Default" GroupName="SelectedController" Checked="RadioButton_Checked" Content="1" />
                             <RadioButton GroupName="SelectedController" Checked="RadioButton_Checked" Content="2" />
                             <RadioButton GroupName="SelectedController" Checked="RadioButton_Checked" Content="3" />
                             <RadioButton GroupName="SelectedController" Checked="RadioButton_Checked" Content="4" />
