@@ -15,12 +15,15 @@ namespace WPFFrontend
         }
 
         private State PreviousState;
+        private State NewState;
 
         public event EventHandler<EventArgs>? KeyWentDown;
 
         private void X_StateChanged(object? sender, XboxControllerStateChangedEventArgs e)
         {
-            State S = new(
+            PreviousState = NewState;
+
+            NewState = new(
             X.IsDPadUpPressed,
             X.IsDPadDownPressed,
             X.IsDPadLeftPressed,
@@ -31,16 +34,14 @@ namespace WPFFrontend
             X.IsStartPressed);
 
             var AnyKeyWentDown =
-            (!PreviousState.IsAPressed && S.IsAPressed) ||
-            (!PreviousState.IsBPressed && S.IsBPressed) ||
-            (!PreviousState.IsBackPressed && S.IsBackPressed) ||
-            (!PreviousState.IsStartPressed && S.IsStartPressed) ||
-            (!PreviousState.IsDPadUpPressed && S.IsDPadUpPressed) ||
-            (!PreviousState.IsDPadDownPressed && S.IsDPadDownPressed) ||
-            (!PreviousState.IsDPadLeftPressed && S.IsDPadLeftPressed) ||
-            (!PreviousState.IsDPadRightPressed && S.IsDPadRightPressed);
-
-            PreviousState = S;
+            (!PreviousState.IsAPressed && NewState.IsAPressed) ||
+            (!PreviousState.IsBPressed && NewState.IsBPressed) ||
+            (!PreviousState.IsBackPressed && NewState.IsBackPressed) ||
+            (!PreviousState.IsStartPressed && NewState.IsStartPressed) ||
+            (!PreviousState.IsDPadUpPressed && NewState.IsDPadUpPressed) ||
+            (!PreviousState.IsDPadDownPressed && NewState.IsDPadDownPressed) ||
+            (!PreviousState.IsDPadLeftPressed && NewState.IsDPadLeftPressed) ||
+            (!PreviousState.IsDPadRightPressed && NewState.IsDPadRightPressed);
 
             if (AnyKeyWentDown) OnAnyKeyDown(EventArgs.Empty);
         }
