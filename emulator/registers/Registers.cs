@@ -12,18 +12,30 @@ namespace emulator
     }
     public class Registers
     {
-        private UnionRegister _AF;
-        public ushort AF { get => _AF.Wide; set => _AF.Wide = (ushort)(value & 0xFFF0); }
-        public byte A
+        public ushort AF
         {
-            get => _AF.High;
-            set => _AF.High = value;
+            get => (ushort)((A << 8) | MakeF());
+            set
+            {
+                A = (byte)((value & 0xff00) >> 8);
+                SetF((byte)(value & 0xf0));
+            }
         }
-        private byte F
+
+        private void SetF(byte value)
         {
-            get => _AF.Low;
-            set => _AF.Low = (byte)(value & 0xf0);
+            Zero = value.GetBit(7);
+            Negative = value.GetBit(6);
+            Half = value.GetBit(5);
+            Carry = value.GetBit(4);
         }
+        private byte MakeF() => (byte)(
+            (Convert.ToByte(Zero) << 7) |
+            (Convert.ToByte(Negative) << 6) |
+            (Convert.ToByte(Half) << 5) |
+            (Convert.ToByte(Carry) << 4));
+
+        public byte A;
 
         private UnionRegister _BC;
         public ushort BC { get => _BC.Wide; set => _BC.Wide = value; }
@@ -66,22 +78,22 @@ namespace emulator
 
         public ushort SP;
 
-        public bool Get(Flag f)
+        public bool Zero;
+        public bool Negative;
+        public bool Half;
+        public bool Carry;
+        public bool Get(Flag f) => f switch
         {
-            var FReg = F;
-            return f switch
-            {
-                Flag.Z => FReg.GetBit(7),
-                Flag.NZ => !FReg.GetBit(7),
-                Flag.N => FReg.GetBit(6),
-                Flag.NN => !FReg.GetBit(6),
-                Flag.H => FReg.GetBit(5),
-                Flag.NH => !FReg.GetBit(5),
-                Flag.C => FReg.GetBit(4),
-                Flag.NC => !FReg.GetBit(4),
-                _ => throw new NotImplementedException(),
-            };
-        }
+            Flag.Z => Zero,
+            Flag.NZ => !Zero,
+            Flag.N => Negative,
+            Flag.NN => !Negative,
+            Flag.H => Half,
+            Flag.NH => !Half,
+            Flag.C => Carry,
+            Flag.NC => !Carry,
+            _ => throw new NotImplementedException(),
+        };
 
         public byte Get(Register r) => r switch
         {
@@ -90,7 +102,6 @@ namespace emulator
             Register.C => C,
             Register.D => D,
             Register.E => E,
-            Register.F => F,
             Register.H => H,
             Register.L => L,
             _ => throw new NotImplementedException(),
@@ -108,39 +119,35 @@ namespace emulator
 
         public void Mark(Flag f)
         {
-            var FReg = F;
             switch (f)
             {
                 case Flag.Z:
-                FReg.SetBit(7); break;
+                Zero = true; break;
                 case Flag.NZ:
-                FReg.ClearBit(7); break;
+                Zero = false; break;
                 case Flag.N:
-                FReg.SetBit(6); break;
+                Negative = true; break;
                 case Flag.NN:
-                FReg.ClearBit(6); break;
+                Negative = false; break;
                 case Flag.H:
-                FReg.SetBit(5); break;
+                Half = true; break;
                 case Flag.NH:
-                FReg.ClearBit(5); break;
+                Half = false; break;
                 case Flag.C:
-                FReg.SetBit(4); break;
+                Carry = true; break;
                 case Flag.NC:
-                FReg.ClearBit(4); break;
+                Carry = false; break;
             };
-            F = FReg;
         }
         public void Set(Flag f, bool b)
         {
-            var FReg = F;
             switch (f)
             {
-                case Flag.Z: FReg.SetBit(7, b); break;
-                case Flag.N: FReg.SetBit(6, b); break;
-                case Flag.H: FReg.SetBit(5, b); break;
-                case Flag.C: FReg.SetBit(4, b); break;
+                case Flag.Z: Zero = b; break;
+                case Flag.N: Negative = b; break;
+                case Flag.H: Half = b; break;
+                case Flag.C: Carry = b; break;
             };
-            F = FReg;
         }
 
         public void Set(Register r, byte v)
@@ -152,7 +159,6 @@ namespace emulator
                 case Register.C: C = v; break;
                 case Register.D: D = v; break;
                 case Register.E: E = v; break;
-                case Register.F: throw new Exception("We didn't expect a write to F");
                 case Register.H: H = v; break;
                 case Register.L: L = v; break;
                 default: throw new NotImplementedException();
