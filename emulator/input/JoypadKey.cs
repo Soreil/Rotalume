@@ -53,10 +53,10 @@ namespace emulator
                 //We don't have to remove the previous eventhandler in case it's 0
                 if (previous != 0)
                 {
-                    mappedControllers[previous - 1].controller.KeyWentDown -= OnUnderLyingChanged;
+                    mappedControllers[previous - 1].controller.RemoveEventHandler(OnUnderLyingChanged);
                 }
                 if (_selectedController != 0)
-                    mappedControllers[_selectedController - 1].controller.KeyWentDown += OnUnderLyingChanged;
+                    mappedControllers[_selectedController - 1].controller.AddEventHandler(OnUnderLyingChanged);
             }
         }
 

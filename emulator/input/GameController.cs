@@ -14,6 +14,7 @@ namespace emulator
         bool IsStartPressed { get; }
         void Vibrate(double leftMotor, double rightMotor);
 
-        public event EventHandler<EventArgs>? KeyWentDown;
+        public void AddEventHandler(EventHandler<EventArgs> e);
+        public void RemoveEventHandler(EventHandler<EventArgs> e);
     }
 }

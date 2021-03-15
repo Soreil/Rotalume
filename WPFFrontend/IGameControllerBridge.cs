@@ -30,12 +30,9 @@ namespace WPFFrontend
 
         private readonly XboxControllerWithInterruptHandler XboxController;
 
-        public event EventHandler<EventArgs>? KeyWentDown;
+        public void AddEventHandler(EventHandler<EventArgs> e) => XboxController.KeyWentDown += e;
+        public void RemoveEventHandler(EventHandler<EventArgs> e) => XboxController.KeyWentDown -= e;
 
-        public IGameControllerBridge(XboxControllerWithInterruptHandler xboxcontroller)
-        {
-            XboxController = xboxcontroller;
-            XboxController.KeyWentDown += KeyWentDown;
-        }
+        public IGameControllerBridge(XboxControllerWithInterruptHandler xboxcontroller) => XboxController = xboxcontroller;
     }
 }
