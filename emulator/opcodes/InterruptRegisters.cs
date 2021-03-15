@@ -8,7 +8,7 @@ namespace emulator
         public bool InterruptEnableScheduled;
         private byte _IE = 0xe0;
 
-        public readonly Func<bool> GetKeyboardInterrupt;
+        public bool GamePadInterruptReady;
         public byte InterruptFireRegister
         {
             get => _IE;
@@ -16,7 +16,8 @@ namespace emulator
         }
         public byte InterruptControlRegister;
 
-        public InterruptRegisters(Func<bool> KeyboardInterrupt) => GetKeyboardInterrupt = KeyboardInterrupt;
+        public void TriggerEvent(object? sender, EventArgs e) => GamePadInterruptReady = true;
+
         internal (Action<byte> Write, Func<byte> Read) HookUp() => (x => InterruptFireRegister = x,
     () => InterruptFireRegister);
     }

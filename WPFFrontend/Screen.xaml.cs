@@ -4,6 +4,7 @@ using J2i.Net.XInputWrapper;
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Threading;
@@ -25,16 +26,6 @@ namespace WPFFrontend
         {
             InitializeComponent();
 
-            Pressed = new(2, 8);
-            _ = Pressed.TryAdd(JoypadKey.A, false);
-            _ = Pressed.TryAdd(JoypadKey.B, false);
-            _ = Pressed.TryAdd(JoypadKey.Select, false);
-            _ = Pressed.TryAdd(JoypadKey.Start, false);
-            _ = Pressed.TryAdd(JoypadKey.Right, false);
-            _ = Pressed.TryAdd(JoypadKey.Left, false);
-            _ = Pressed.TryAdd(JoypadKey.Up, false);
-            _ = Pressed.TryAdd(JoypadKey.Down, false);
-
             bmp = new WriteableBitmap(BitmapWidth, BitmapHeight, 96, 96, PixelFormats.Gray8, null);
             var whitescreen = new byte[BitmapWidth * BitmapHeight];
             for (int i = 0; i < whitescreen.Length; i++) whitescreen[i] = 0xff;
@@ -48,52 +39,33 @@ namespace WPFFrontend
             XboxController.UpdateFrequency = 5;
             XboxController.StartPolling();
 
-            Controller = XboxController.RetrieveController(0);
+            var Controller1 = new XboxControllerWithInterruptHandler(XboxController.RetrieveController(0));
+            var Controller2 = new XboxControllerWithInterruptHandler(XboxController.RetrieveController(1));
+            var Controller3 = new XboxControllerWithInterruptHandler(XboxController.RetrieveController(2));
+            var Controller4 = new XboxControllerWithInterruptHandler(XboxController.RetrieveController(3));
 
-            Controller.StateChanged += SelectedController_StateChanged;
-            PropertyChanged += MainWindow_PropertyChanged;
+            Dictionary<JoypadKey, bool> keyboard = new()
+            {
+                { JoypadKey.A, false },
+                { JoypadKey.B, false },
+                { JoypadKey.Select, false },
+                { JoypadKey.Start, false },
+                { JoypadKey.Right, false },
+                { JoypadKey.Left, false },
+                { JoypadKey.Up, false },
+                { JoypadKey.Down, false }
+            };
+
+            Keyboard = keyboard;
+
+            var Controllers = new List<IGameController> { new IGameControllerBridge(Controller1), new IGameControllerBridge(Controller2), new IGameControllerBridge(Controller3), new IGameControllerBridge(Controller4) };
+            InputDevices = new(keyboard, Controllers);
         }
+
+        private readonly Dictionary<JoypadKey, bool> Keyboard;
+        private readonly InputDevices InputDevices;
 
         private void FPSDisplayEnable_Checked(object sender, RoutedEventArgs e) => throw new NotImplementedException();
-
-        private void MainWindow_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-        {
-            if (e.PropertyName != "Buttons") return;
-
-            if ((!Pressed[JoypadKey.Right] && Controller.IsDPadRightPressed) ||
-                (!Pressed[JoypadKey.Left] && Controller.IsDPadLeftPressed) ||
-                (!Pressed[JoypadKey.Up] && Controller.IsDPadUpPressed) ||
-                (!Pressed[JoypadKey.Down] && Controller.IsDPadDownPressed) ||
-                (!Pressed[JoypadKey.B] && Controller.IsBPressed) ||
-                (!Pressed[JoypadKey.A] && Controller.IsAPressed) ||
-                (!Pressed[JoypadKey.Select] && Controller.IsBackPressed) ||
-                (!Pressed[JoypadKey.Start] && Controller.IsStartPressed))
-            {
-                keyboardInterruptReady = true;
-            }
-
-            Pressed[JoypadKey.Right] = Controller.IsDPadRightPressed;
-            Pressed[JoypadKey.Left] = Controller.IsDPadLeftPressed;
-            Pressed[JoypadKey.Up] = Controller.IsDPadUpPressed;
-            Pressed[JoypadKey.Down] = Controller.IsDPadDownPressed;
-            Pressed[JoypadKey.B] = Controller.IsBPressed;
-            Pressed[JoypadKey.A] = Controller.IsAPressed;
-            Pressed[JoypadKey.Select] = Controller.IsBackPressed;
-            Pressed[JoypadKey.Start] = Controller.IsStartPressed;
-        }
-
-        private XboxController Controller;
-        void SelectedController_StateChanged(object? sender, XboxControllerStateChangedEventArgs e) => OnPropertyChanged("Buttons");
-        public void OnPropertyChanged(string name)
-        {
-            if (PropertyChanged != null)
-            {
-                Action a = () => PropertyChanged(this, new PropertyChangedEventArgs(name));
-                _ = Dispatcher.BeginInvoke(a);
-            }
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
 
         private volatile bool paused;
         private volatile bool CancelRequested;
@@ -101,13 +73,6 @@ namespace WPFFrontend
         {
             var lockCb = new Action(Lock);
             var unlockCb = new Action(Unlock);
-
-            bool keyBoardInterruptFired()
-            {
-                var res = keyboardInterruptReady;
-                keyboardInterruptReady = false;
-                return res;
-            }
 
             byte[]? bootrom = bootromEnabled ? File.ReadAllBytes(@"..\..\..\..\emulator\bootrom\DMG_ROM_BOOT.bin") : null;
 
@@ -140,8 +105,7 @@ namespace WPFFrontend
             var gameboy = new Core(
                 File.ReadAllBytes(path),
           bootrom,
-          new Keypad(Pressed, ToGameController(Controller)),
-          keyBoardInterruptFired,
+          new Keypad(InputDevices),
           new FrameSink(LockCB, UnlockCB, Dispatcher.Invoke(() => bmp.BackBuffer), fpsLimit)
           );
 
@@ -158,7 +122,6 @@ namespace WPFFrontend
             }
         }
 
-        private static IGameController? ToGameController(XboxController controller) => new IGameControllerBridge(controller);
         private void Lock() => bmp.Lock();
         private void Unlock()
         {
@@ -268,18 +231,11 @@ namespace WPFFrontend
             }
         }
 
-        private volatile bool keyboardInterruptReady = false;
-        private readonly ConcurrentDictionary<JoypadKey, bool> Pressed;
-
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
             if (Map(e.Key) is JoypadKey p)
             {
-                Pressed[p] = true;
-                if (GameThread is not null)
-                {
-                    keyboardInterruptReady = true;
-                }
+                Keyboard[p] = true;
             }
             if (e.Key == Key.P)
             {
@@ -302,8 +258,8 @@ namespace WPFFrontend
 
         private static JoypadKey? Map(Key k) => k switch
         {
-            Key.A => JoypadKey.A,
-            Key.S => JoypadKey.B,
+            Key.A => JoypadKey.B,
+            Key.S => JoypadKey.A,
             Key.D => JoypadKey.Select,
             Key.F => JoypadKey.Start,
             Key.Right => JoypadKey.Right,
@@ -318,7 +274,7 @@ namespace WPFFrontend
         {
             if (Map(e.Key) is JoypadKey p)
             {
-                Pressed[p] = false;
+                Keyboard[p] = false;
             }
         }
 
@@ -339,15 +295,14 @@ namespace WPFFrontend
         {
             if (sender is null) return;
             RadioButton li = (RadioButton)sender;
-            Controller = li.Content switch
+            InputDevices.SelectedController = li.Content switch
             {
-                "1" => XboxController.RetrieveController(0),
-                "2" => XboxController.RetrieveController(1),
-                "3" => XboxController.RetrieveController(2),
-                "4" => XboxController.RetrieveController(3),
-                _ => throw new Exception("Illegal controller selected"),
+                "1" => 1,
+                "2" => 2,
+                "3" => 3,
+                "4" => 4,
+                _ => 0,
             };
-            Controller.StateChanged += SelectedController_StateChanged;
         }
     }
 }

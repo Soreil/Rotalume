@@ -20,14 +20,17 @@ namespace emulator
         //TODO: move serial in to it's own class when we implement it
         private byte serialControl = 0x7e;
 
-        public Core(byte[] gameROM, byte[]? bootROM, Keypad Keypad, Func<bool> getKeyboardInterrupt, FrameSink frameSink)
+        public Core(byte[] gameROM, byte[]? bootROM, Keypad Keypad, FrameSink frameSink)
         {
             if (gameROM.Length < 0x8000)
             {
                 throw new Exception("Cartridge file has to be at least 8kb in size");
             }
             PC = new();
-            InterruptRegisters = new InterruptRegisters(getKeyboardInterrupt);
+
+            InterruptRegisters = new InterruptRegisters();
+            Keypad.Input.KeyWentDown += InterruptRegisters.TriggerEvent;
+
             APU = new APU(32768);
             PPU = new PPU(
             () =>

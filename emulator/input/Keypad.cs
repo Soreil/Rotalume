@@ -7,13 +7,8 @@ namespace emulator
     {
         //0x3 sets the top selection bits for buttons and dpad
         private byte keypadFlags = 0x30;
-        private readonly ConcurrentDictionary<JoypadKey, bool> Pressed;
 
-        public Keypad(ConcurrentDictionary<JoypadKey, bool> pressed, IGameController? controller)
-        {
-            Pressed = pressed;
-            Controller = controller;
-        }
+        public Keypad(InputDevices input) => Input = input;
 
         private byte UpdateJoypadPresses()
         {
@@ -28,22 +23,22 @@ namespace emulator
 
             if (selectArrows)
             {
-                if (Pressed[JoypadKey.Right])
+                if (Input[JoypadKey.Right])
                 {
                     joypad.SetBit(0, false);
                 }
 
-                if (Pressed[JoypadKey.Left])
+                if (Input[JoypadKey.Left])
                 {
                     joypad.SetBit(1, false);
                 }
 
-                if (Pressed[JoypadKey.Up])
+                if (Input[JoypadKey.Up])
                 {
                     joypad.SetBit(2, false);
                 }
 
-                if (Pressed[JoypadKey.Down])
+                if (Input[JoypadKey.Down])
                 {
                     joypad.SetBit(3, false);
                 }
@@ -51,22 +46,22 @@ namespace emulator
             if (selectButtons)
             {
 
-                if (Pressed[JoypadKey.B])
+                if (Input[JoypadKey.A])
                 {
                     joypad.SetBit(0, false);
                 }
 
-                if (Pressed[JoypadKey.A])
+                if (Input[JoypadKey.B])
                 {
                     joypad.SetBit(1, false);
                 }
 
-                if (Pressed[JoypadKey.Select])
+                if (Input[JoypadKey.Select])
                 {
                     joypad.SetBit(2, false);
                 }
 
-                if (Pressed[JoypadKey.Start])
+                if (Input[JoypadKey.Start])
                 {
                     joypad.SetBit(3, false);
                 }
@@ -78,13 +73,14 @@ namespace emulator
         internal (Action<byte> Write, Func<byte> Read) HookUpKeypad() => (Write: x => keypadFlags = (byte)(x & 0xf0), Read: () => UpdateJoypadPresses());
 
         private bool Rumbling = false;
-        readonly IGameController? Controller;
 
-        internal void ToggleRumble(object? sender, System.EventArgs e)
+        public InputDevices Input { get; }
+
+        internal void ToggleRumble(object? sender, EventArgs e)
         {
             if (!Rumbling)
-                Controller?.Vibrate(1, 1);
-            else Controller?.Vibrate(0, 0);
+                Input.Vibrate(1, 1);
+            else Input.Vibrate(0, 0);
             Rumbling = !Rumbling;
         }
     }

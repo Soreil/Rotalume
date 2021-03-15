@@ -577,7 +577,7 @@ namespace emulator
                     DoNextOP();
                 }
                 //We really should have the GUI thread somehow do this logic but polling like this should work
-                if (!ISR.InterruptFireRegister.GetBit(4) && ISR.GetKeyboardInterrupt())
+                if (!ISR.InterruptFireRegister.GetBit(4) && ISR.GamePadInterruptReady)
                 {
                     var IFR = ISR.InterruptFireRegister;
                     IFR.SetBit(4);
