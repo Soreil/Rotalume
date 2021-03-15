@@ -40,9 +40,9 @@ namespace Tests
 
                 Assert.AreEqual(0, dec.Memory.Read(dec.CPU.Registers.Get(WideRegister.HL)));
 
-                Assert.IsTrue(dec.CPU.Registers.Get(Flag.NN));
-                Assert.IsTrue(dec.CPU.Registers.Get(Flag.Z));
-                Assert.IsTrue(dec.CPU.Registers.Get(Flag.H));
+                Assert.IsTrue(!dec.CPU.Registers.Negative);
+                Assert.IsTrue(dec.CPU.Registers.Zero);
+                Assert.IsTrue(dec.CPU.Registers.Half);
             }
             {
                 dec.Memory.Write(0xfffe, (ushort)0xFE);
@@ -52,9 +52,9 @@ namespace Tests
 
                 Assert.AreEqual(0xff, dec.Memory.Read(dec.CPU.Registers.Get(WideRegister.HL)));
 
-                Assert.IsTrue(dec.CPU.Registers.Get(Flag.NN));
-                Assert.IsTrue(dec.CPU.Registers.Get(Flag.NZ));
-                Assert.IsTrue(dec.CPU.Registers.Get(Flag.NH));
+                Assert.IsTrue(!dec.CPU.Registers.Negative);
+                Assert.IsTrue(!dec.CPU.Registers.Zero);
+                Assert.IsTrue(!dec.CPU.Registers.Half);
             }
             {
                 dec.Memory.Write(0xfffe, (ushort)0x0F);
@@ -64,9 +64,9 @@ namespace Tests
 
                 Assert.AreEqual(0x10, dec.Memory.Read(dec.CPU.Registers.Get(WideRegister.HL)));
 
-                Assert.IsTrue(dec.CPU.Registers.Get(Flag.NN));
-                Assert.IsTrue(dec.CPU.Registers.Get(Flag.NZ));
-                Assert.IsTrue(dec.CPU.Registers.Get(Flag.H));
+                Assert.IsTrue(!dec.CPU.Registers.Negative);
+                Assert.IsTrue(!dec.CPU.Registers.Zero);
+                Assert.IsTrue(dec.CPU.Registers.Half);
             }
             {
                 dec.Memory.Write(0xfffe, (ushort)0x0E);
@@ -76,9 +76,9 @@ namespace Tests
 
                 Assert.AreEqual(0x0F, dec.Memory.Read(dec.CPU.Registers.Get(WideRegister.HL)));
 
-                Assert.IsTrue(dec.CPU.Registers.Get(Flag.NN));
-                Assert.IsTrue(dec.CPU.Registers.Get(Flag.NZ));
-                Assert.IsFalse(dec.CPU.Registers.Get(Flag.H));
+                Assert.IsTrue(!dec.CPU.Registers.Negative);
+                Assert.IsTrue(!dec.CPU.Registers.Zero);
+                Assert.IsFalse(dec.CPU.Registers.Half);
             }
         }
 
@@ -93,9 +93,9 @@ namespace Tests
 
                 Assert.AreEqual(21, dec.CPU.Registers.Get(Register.A));
 
-                Assert.IsTrue(dec.CPU.Registers.Get(Flag.NN));
-                Assert.IsTrue(dec.CPU.Registers.Get(Flag.NZ));
-                Assert.IsTrue(dec.CPU.Registers.Get(Flag.NH));
+                Assert.IsTrue(!dec.CPU.Registers.Negative);
+                Assert.IsTrue(!dec.CPU.Registers.Zero);
+                Assert.IsTrue(!dec.CPU.Registers.Half);
             }
         }
 
@@ -116,9 +116,9 @@ namespace Tests
 
                 Assert.AreEqual(19, dec.CPU.Registers.Get(Register.A));
 
-                Assert.IsTrue(dec.CPU.Registers.Get(Flag.N));
-                Assert.IsTrue(dec.CPU.Registers.Get(Flag.NZ));
-                Assert.IsTrue(dec.CPU.Registers.Get(Flag.NH));
+                Assert.IsTrue(dec.CPU.Registers.Negative);
+                Assert.IsTrue(!dec.CPU.Registers.Zero);
+                Assert.IsTrue(!dec.CPU.Registers.Half);
             }
             {
                 dec.CPU.Registers.Set(Register.A, 0x10);
@@ -127,9 +127,9 @@ namespace Tests
 
                 Assert.AreEqual(0xf, dec.CPU.Registers.Get(Register.A));
 
-                Assert.IsTrue(dec.CPU.Registers.Get(Flag.N));
-                Assert.IsTrue(dec.CPU.Registers.Get(Flag.NZ));
-                Assert.IsTrue(dec.CPU.Registers.Get(Flag.H));
+                Assert.IsTrue(dec.CPU.Registers.Negative);
+                Assert.IsTrue(!dec.CPU.Registers.Zero);
+                Assert.IsTrue(dec.CPU.Registers.Half);
             }
             {
                 dec.CPU.Registers.Set(Register.A, 0x0F);
@@ -138,9 +138,9 @@ namespace Tests
 
                 Assert.AreEqual(0x0E, dec.CPU.Registers.Get(Register.A));
 
-                Assert.IsTrue(dec.CPU.Registers.Get(Flag.N));
-                Assert.IsTrue(dec.CPU.Registers.Get(Flag.NZ));
-                Assert.IsTrue(dec.CPU.Registers.Get(Flag.NH));
+                Assert.IsTrue(dec.CPU.Registers.Negative);
+                Assert.IsTrue(!dec.CPU.Registers.Zero);
+                Assert.IsTrue(!dec.CPU.Registers.Half);
             }
         }
         [Test]
@@ -170,7 +170,7 @@ namespace Tests
                 TestHelpers.StepOneCPUInstruction(core);
 
                 Assert.AreEqual(0xFF, dec.Registers.Get(Register.A));
-                Assert.IsTrue(dec.Registers.Get(Flag.NC));
+                Assert.IsTrue(!dec.Registers.Carry);
             }
             {
                 dec.Registers.Set(Register.A, 0xF0);
@@ -179,7 +179,7 @@ namespace Tests
                 TestHelpers.StepOneCPUInstruction(core);
 
                 Assert.AreEqual(0, dec.Registers.Get(Register.A));
-                Assert.IsTrue(dec.Registers.Get(Flag.C));
+                Assert.IsTrue(dec.Registers.Carry);
             }
         }
         [Test]
@@ -204,7 +204,7 @@ namespace Tests
                 TestHelpers.StepOneCPUInstruction(core);
 
                 Assert.AreEqual(0x00, dec.Registers.Get(Register.A));
-                Assert.IsTrue(dec.Registers.Get(Flag.C));
+                Assert.IsTrue(dec.Registers.Carry);
             }
         }
         [Test]
@@ -229,7 +229,7 @@ namespace Tests
                 TestHelpers.StepOneCPUInstruction(core);
 
                 Assert.AreEqual(0x99, dec.Registers.Get(Register.A));
-                Assert.IsTrue(dec.Registers.Get(Flag.NC));
+                Assert.IsTrue(!dec.Registers.Carry);
             }
 
         }
@@ -273,16 +273,16 @@ namespace Tests
             TestHelpers.StepOneCPUInstruction(core);
 
             Assert.AreEqual(0x9a, dec.Registers.Get(Register.A));
-            Assert.True(dec.Registers.Get(Flag.NH));
-            Assert.True(dec.Registers.Get(Flag.NN));
+            Assert.True(!dec.Registers.Half);
+            Assert.True(!dec.Registers.Negative);
 
             TestHelpers.StepOneCPUInstruction(core);
 
             Assert.AreEqual(0, dec.Registers.Get(Register.A));
 
-            Assert.True(dec.Registers.Get(Flag.C));
-            Assert.True(dec.Registers.Get(Flag.NH));
-            Assert.True(dec.Registers.Get(Flag.Z));
+            Assert.True(dec.Registers.Carry);
+            Assert.True(!dec.Registers.Half);
+            Assert.True(dec.Registers.Zero);
         }
 
         [Test]
@@ -327,7 +327,7 @@ namespace Tests
                 dec.Op(Unprefixed.DAA)();
 
                 Assert.AreEqual(0x83, dec.Registers.Get(Register.A));
-                Assert.IsTrue(dec.Registers.Get(Flag.NC));
+                Assert.IsTrue(!dec.Registers.Carry);
             }
 
         }

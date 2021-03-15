@@ -87,9 +87,9 @@ namespace emulator
             var before = GetRegister(p0);
             var arg = (byte)(before + 1);
 
-            Registers.Set(Flag.Z, arg == 0);
-            Registers.Mark(Flag.NN);
-            Registers.Set(Flag.H, before.IsHalfCarryAdd(1));
+            Registers.Zero = arg == 0;
+            Registers.Negative = false;
+            Registers.Half = before.IsHalfCarryAdd(1);
             SetRegister(p0, (byte)(before + 1));
             AddTicks(duration);
         };
@@ -100,9 +100,9 @@ namespace emulator
             var arg = before == 0 ? (byte)0xff : (byte)(before - 1);
             SetRegister(p0, arg);
 
-            Registers.Set(Flag.Z, arg == 0);
-            Registers.Mark(Flag.N);
-            Registers.Set(Flag.H, before.IsHalfCarrySub(1));
+            Registers.Zero = arg == 0;
+            Registers.Negative = true;
+            Registers.Half = before.IsHalfCarrySub(1);
             AddTicks(duration);
         };
 
@@ -124,7 +124,7 @@ namespace emulator
         public Action RLCA(int duration) => () =>
         {
             var A = Registers.A;
-            Registers.Mark(Flag.NZ);
+            Registers.Zero = false;
             var res = RLC(A);
             Registers.A = (res);
             AddTicks(duration);
@@ -134,9 +134,9 @@ namespace emulator
         {
             var TopBit = reg.GetBit(7);
 
-            Registers.Mark(Flag.NN);
-            Registers.Mark(Flag.NH);
-            Registers.Set(Flag.C, TopBit);
+            Registers.Negative = false;
+            Registers.Half = false;
+            Registers.Carry = TopBit;
 
             reg <<= 1;
             reg += (byte)(TopBit ? 1 : 0);
@@ -157,9 +157,9 @@ namespace emulator
             var target = Registers.HL;
             var arg = Registers.Get(rhs);
 
-            Registers.Set(Flag.N, false);
-            Registers.Set(Flag.H, (((target & 0x0fff) + (arg & 0x0fff)) & 0x1000) == 0x1000);
-            Registers.Set(Flag.C, target + arg > 0xFFFF);
+            Registers.Negative = false;
+            Registers.Half = (((target & 0x0fff) + (arg & 0x0fff)) & 0x1000) == 0x1000;
+            Registers.Carry = target + arg > 0xFFFF;
 
             Registers.HL += arg;
 
@@ -205,7 +205,7 @@ namespace emulator
 
         public Action RRCA(int duration) => () =>
         {
-            Registers.Mark(Flag.NZ);
+            Registers.Zero = false;
             Registers.A = RRC(Registers.A);
             AddTicks(duration);
         };
@@ -214,9 +214,9 @@ namespace emulator
         {
             var BottomBit = reg.GetBit(0);
 
-            Registers.Mark(Flag.NN);
-            Registers.Mark(Flag.NH);
-            Registers.Set(Flag.C, BottomBit);
+            Registers.Negative = false;
+            Registers.Half = false;
+            Registers.Carry = BottomBit;
 
             reg >>= 1;
             if (BottomBit)
@@ -234,7 +234,7 @@ namespace emulator
         };
         public Action RLA(int duration) => () =>
         {
-            Registers.Mark(Flag.NZ);
+            Registers.Zero = false;
             Registers.A = RL(Registers.A);
             AddTicks(duration);
         };
@@ -242,11 +242,11 @@ namespace emulator
         private byte RL(byte A)
         {
             var TopBit = A.GetBit(7);
-            var OldBit = Registers.Get(Flag.C);
+            var OldBit = Registers.Carry;
 
-            Registers.Mark(Flag.NN);
-            Registers.Mark(Flag.NH);
-            Registers.Set(Flag.C, TopBit);
+            Registers.Negative = false;
+            Registers.Half = false;
+            Registers.Carry = TopBit;
 
             A <<= 1;
             A += (byte)(OldBit ? 1 : 0);
@@ -261,7 +261,7 @@ namespace emulator
         };
         public Action RRA(int duration) => () =>
         {
-            Registers.Mark(Flag.NZ);
+            Registers.Zero = false;
             Registers.A = RR(Registers.A);
             AddTicks(duration);
         };
@@ -269,11 +269,11 @@ namespace emulator
         private byte RR(byte A)
         {
             var TopBit = A.GetBit(0);
-            var OldBit = Registers.Get(Flag.C);
+            var OldBit = Registers.Carry;
 
-            Registers.Mark(Flag.NN);
-            Registers.Mark(Flag.NH);
-            Registers.Set(Flag.C, TopBit);
+            Registers.Negative = false;
+            Registers.Half = false;
+            Registers.Carry = TopBit;
 
             A >>= 1;
             if (OldBit)
@@ -284,33 +284,43 @@ namespace emulator
             return A;
         }
 
-        public Action JR(Flag p0, int duration, int alternativeDuration) => () =>
+        public Action JR(Flag p0, int duration, int alternativeDuration)
         {
-            var offset = Memory.FetchR8();
-            if (Registers.Get(p0))
+            return () =>
             {
-                Pc.Value = (ushort)(Pc.Value + offset);
-                AddTicks(duration);
-            }
-            else
-            {
-                AddTicks(alternativeDuration);
-            }
-        };
-
+                var flag = p0 switch
+                {
+                    Flag.Z => Registers.Zero,
+                    Flag.NZ => !Registers.Zero,
+                    Flag.C => Registers.Carry,
+                    Flag.NC => !Registers.Carry,
+                    _ => throw new NotImplementedException()
+                };
+                var offset = Memory.FetchR8();
+                if (flag)
+                {
+                    Pc.Value = (ushort)(Pc.Value + offset);
+                    AddTicks(duration);
+                }
+                else
+                {
+                    AddTicks(alternativeDuration);
+                }
+            };
+        }
         public Action DAA(int duration) => () =>
         {
-            var wasSub = Registers.Get(Flag.N);
+            var wasSub = Registers.Negative;
 
             if (!wasSub)
             {
-                if (Registers.A >= 0x9a) Registers.Set(Flag.C, true);
-                if ((Registers.A & 0x0f) >= 0x0a) Registers.Set(Flag.H, true);
+                if (Registers.A >= 0x9a) Registers.Carry = true;
+                if ((Registers.A & 0x0f) >= 0x0a) Registers.Half = true;
             }
 
             byte adjustment = (byte)(
-            (Registers.Get(Flag.H) ? 0x06 : 0x00) |
-            (Registers.Get(Flag.C) ? 0x60 : 0x00)
+            (Registers.Half ? 0x06 : 0x00) |
+            (Registers.Carry ? 0x60 : 0x00)
             );
 
             if (wasSub)
@@ -321,38 +331,38 @@ namespace emulator
             {
                 if (adjustment + Registers.A > 0xff)
                 {
-                    Registers.Set(Flag.C, true);
+                    Registers.Carry = true;
                 }
 
                 Registers.A += adjustment;
             }
 
-            Registers.Set(Flag.Z, Registers.A == 0);
+            Registers.Zero = Registers.A == 0;
 
-            Registers.Set(Flag.H, false);
+            Registers.Half = false;
             AddTicks(duration);
         };
         public Action CPL(int duration) => () =>
                                                    {
                                                        Registers.A = (byte)~Registers.A;
-                                                       Registers.Mark(Flag.N);
-                                                       Registers.Mark(Flag.H);
+                                                       Registers.Negative = true;
+                                                       Registers.Half = true;
                                                        AddTicks(duration);
                                                    };
 
         public Action SCF(int duration) => () =>
                                                      {
-                                                         Registers.Mark(Flag.NN);
-                                                         Registers.Mark(Flag.NH);
-                                                         Registers.Mark(Flag.C);
+                                                         Registers.Negative = false;
+                                                         Registers.Half = false;
+                                                         Registers.Carry = true;
                                                          AddTicks(duration);
                                                      };
 
         public Action CCF(int duration) => () =>
                                                      {
-                                                         Registers.Mark(Flag.NN);
-                                                         Registers.Mark(Flag.NH);
-                                                         Registers.Set(Flag.C, !Registers.Get(Flag.C));
+                                                         Registers.Negative = false;
+                                                         Registers.Half = false;
+                                                         Registers.Carry = !Registers.Carry;
                                                          AddTicks(duration);
                                                      };
         public Action LD(Register p0, Register p1, int duration) => () =>
@@ -390,12 +400,12 @@ namespace emulator
 
         private byte ADD(byte lhs, byte rhs)
         {
-            Registers.Mark(Flag.NN);
+            Registers.Negative = false;
             var sum = lhs + rhs;
 
-            Registers.Set(Flag.Z, ((byte)sum) == 0);
-            Registers.Set(Flag.C, sum > 0xff);
-            Registers.Set(Flag.H, lhs.IsHalfCarryAdd(rhs));
+            Registers.Zero = ((byte)sum) == 0;
+            Registers.Carry = sum > 0xff;
+            Registers.Half = lhs.IsHalfCarryAdd(rhs);
             return (byte)sum;
         }
 
@@ -417,12 +427,12 @@ namespace emulator
 
         private byte SUB(byte lhs, byte rhs)
         {
-            Registers.Mark(Flag.N);
+            Registers.Negative = true;
             byte sum = (byte)(lhs - rhs);
 
-            Registers.Set(Flag.Z, lhs == rhs);
-            Registers.Set(Flag.C, rhs > lhs);
-            Registers.Set(Flag.H, lhs.IsHalfCarrySub(rhs));
+            Registers.Zero = lhs == rhs;
+            Registers.Carry = rhs > lhs;
+            Registers.Half = lhs.IsHalfCarrySub(rhs);
             return sum;
         }
 
@@ -437,25 +447,25 @@ namespace emulator
         private void ADC(byte rhs)
         {
             var lhs = Registers.A;
-            var carry = Registers.Get(Flag.C) ? 1 : 0;
+            var carry = Registers.Carry ? 1 : 0;
             Registers.A = (byte)(lhs + rhs + carry);
 
-            Registers.Mark(Flag.NN);
-            Registers.Set(Flag.Z, ((byte)(lhs + rhs + carry)) == 0);
-            Registers.Set(Flag.H, ((lhs & 0xf) + (rhs & 0xf) + carry) > 0x0F);
-            Registers.Set(Flag.C, (lhs + rhs + carry) > 0xff);
+            Registers.Negative = false;
+            Registers.Zero = ((byte)(lhs + rhs + carry)) == 0;
+            Registers.Half = ((lhs & 0xf) + (rhs & 0xf) + carry) > 0x0F;
+            Registers.Carry = (lhs + rhs + carry) > 0xff;
         }
 
         private void SBC(byte rhs)
         {
             var lhs = Registers.A;
-            var carry = Registers.Get(Flag.C) ? 1 : 0;
+            var carry = Registers.Carry ? 1 : 0;
             Registers.A = (byte)(lhs - rhs - carry);
 
-            Registers.Mark(Flag.N);
-            Registers.Set(Flag.Z, ((byte)(lhs - rhs - carry)) == 0);
-            Registers.Set(Flag.H, (lhs & 0xf) < ((rhs & 0xf) + carry));
-            Registers.Set(Flag.C, (lhs - rhs - carry) > 0xff || (lhs - rhs - carry) < 0);
+            Registers.Negative = true;
+            Registers.Zero = ((byte)(lhs - rhs - carry)) == 0;
+            Registers.Half = (lhs & 0xf) < ((rhs & 0xf) + carry);
+            Registers.Carry = (lhs - rhs - carry) > 0xff || (lhs - rhs - carry) < 0;
         }
 
         public Action AND(Register p0, int duration) => () =>
@@ -469,10 +479,10 @@ namespace emulator
         private void AND(byte lhs, byte rhs)
         {
             var result = lhs & rhs;
-            Registers.Mark(Flag.NC);
-            Registers.Mark(Flag.H);
-            Registers.Mark(Flag.NN);
-            Registers.Set(Flag.Z, result == 0);
+            Registers.Carry = false;
+            Registers.Half = true;
+            Registers.Negative = false;
+            Registers.Zero = result == 0;
 
             Registers.A = (byte)result;
         }
@@ -488,10 +498,10 @@ namespace emulator
         private void XOR(byte lhs, byte rhs)
         {
             var result = lhs ^ rhs;
-            Registers.Mark(Flag.NH);
-            Registers.Mark(Flag.NN);
-            Registers.Mark(Flag.NC);
-            Registers.Set(Flag.Z, result == 0);
+            Registers.Half = false;
+            Registers.Negative = false;
+            Registers.Carry = false;
+            Registers.Zero = result == 0;
 
             Registers.A = (byte)result;
         }
@@ -508,109 +518,139 @@ namespace emulator
         {
             var result = lhs | rhs;
 
-            Registers.Mark(Flag.NC);
-            Registers.Mark(Flag.NH);
-            Registers.Mark(Flag.NN);
-            Registers.Set(Flag.Z, result == 0);
+            Registers.Carry = false;
+            Registers.Half = false;
+            Registers.Negative = false;
+            Registers.Zero = result == 0;
 
             Registers.A = (byte)result;
         }
         public Action CP(Register p0, int duration) => () =>
-                                                                     {
-                                                                         var lhs = Registers.A;
-                                                                         var rhs = GetRegister(p0);
-                                                                         CP(lhs, rhs);
-                                                                         AddTicks(duration);
-                                                                     };
-        public Action RET(Flag p0, int duration, int alternativeDuration) => () =>
-                                                                                       {
-                                                                                           if (Registers.Get(p0))
-                                                                                           {
-                                                                                               Pc.Value = Pop();
-                                                                                               AddTicks(duration);
-                                                                                           }
-                                                                                           else
-                                                                                           {
-                                                                                               AddTicks(alternativeDuration);
-                                                                                           }
-                                                                                       };
+        {
+            var lhs = Registers.A;
+            var rhs = GetRegister(p0);
+            CP(lhs, rhs);
+            AddTicks(duration);
+        };
+        public Action RET(Flag p0, int duration, int alternativeDuration)
+        {
+            return () =>
+            {
+                var flag = p0 switch
+                {
+                    Flag.Z => Registers.Zero,
+                    Flag.NZ => !Registers.Zero,
+                    Flag.C => Registers.Carry,
+                    Flag.NC => !Registers.Carry,
+                    _ => throw new NotImplementedException()
+                };
+                if (flag)
+                {
+                    Pc.Value = Pop();
+                    AddTicks(duration);
+                }
+                else
+                {
+                    AddTicks(alternativeDuration);
+                }
+            };
+        }
         public Action POP(WideRegister p0, int duration) => () =>
-                                                                      {
-                                                                          var SP = Registers.SP;
-                                                                          Registers.Set(p0, Memory.ReadWide(SP));
-                                                                          Registers.SP = (ushort)(SP + 2);
+        {
+            var SP = Registers.SP;
+            Registers.Set(p0, Memory.ReadWide(SP));
+            Registers.SP = (ushort)(SP + 2);
 
-                                                                          AddTicks(duration);
-                                                                      };
-        public Action JP_A16(Flag p0, int duration, int alternativeDuration) => () =>
-                                                                                          {
-                                                                                              var addr = Memory.FetchA16();
-                                                                                              if (Registers.Get(p0))
-                                                                                              {
-                                                                                                  Pc.Value = addr;
-                                                                                                  AddTicks(duration);
-                                                                                              }
-                                                                                              else
-                                                                                              {
-                                                                                                  AddTicks(alternativeDuration);
-                                                                                              }
-                                                                                          };
+            AddTicks(duration);
+        };
+        public Action JP_A16(Flag p0, int duration, int alternativeDuration)
+        {
+            return () =>
+            {
+                var flag = p0 switch
+                {
+                    Flag.Z => Registers.Zero,
+                    Flag.NZ => !Registers.Zero,
+                    Flag.C => Registers.Carry,
+                    Flag.NC => !Registers.Carry,
+                    _ => throw new NotImplementedException()
+                };
+
+                var addr = Memory.FetchA16();
+                if (flag)
+                {
+                    Pc.Value = addr;
+                    AddTicks(duration);
+                }
+                else
+                {
+                    AddTicks(alternativeDuration);
+                }
+            };
+        }
         public Action JP_A16(int duration) => () =>
-                                                                   {
-                                                                       var addr = Memory.FetchA16();
-                                                                       Pc.Value = addr;
-                                                                       AddTicks(duration);
-                                                                   };
-        public Action CALL_A16(Flag p0, int duration, int alternativeDuration) => () =>
-                                                                                            {
-                                                                                                var addr = Memory.FetchA16();
-                                                                                                if (Registers.Get(p0))
-                                                                                                {
-                                                                                                    Call(duration, addr);
-                                                                                                }
-                                                                                                else
-                                                                                                {
-                                                                                                    AddTicks(alternativeDuration);
-                                                                                                }
-                                                                                            };
+        {
+            var addr = Memory.FetchA16();
+            Pc.Value = addr;
+            AddTicks(duration);
+        };
+        public Action CALL_A16(Flag p0, int duration, int alternativeDuration)
+        {
+            return () =>
+            {
+                var flag = p0 switch
+                {
+                    Flag.Z => Registers.Zero,
+                    Flag.NZ => !Registers.Zero,
+                    Flag.C => Registers.Carry,
+                    Flag.NC => !Registers.Carry,
+                    _ => throw new NotImplementedException()
+                };
+
+                var addr = Memory.FetchA16();
+                if (flag)
+                {
+                    Call(duration, addr);
+                }
+                else
+                {
+                    AddTicks(alternativeDuration);
+                }
+            };
+        }
+
+
         public Action PUSH(WideRegister p0, int duration) => () =>
-                                                                       {
-                                                                           Push(Registers.Get(p0));
-                                                                           AddTicks(duration);
-                                                                       };
+        {
+            Push(Registers.Get(p0));
+            AddTicks(duration);
+        };
         public Action ADD_A_d8(int duration) => () =>
-                                                          {
-                                                              Registers.Mark(Flag.NN);
+        {
+            Registers.Negative = false;
 
-                                                              var lhs = Registers.A;
-                                                              var rhs = Memory.FetchD8();
+            var lhs = Registers.A;
+            var rhs = Memory.FetchD8();
 
-                                                              Registers.A = ADD(lhs, rhs);
-                                                              AddTicks(duration);
-                                                          };
-        public Action RST(byte adress, int duration) => () =>
-                                                              {
-                                                                  Call(duration, adress);
-                                                              };
+            Registers.A = ADD(lhs, rhs);
+            AddTicks(duration);
+        };
+        public Action RST(byte adress, int duration) => () => Call(duration, adress);
         public Action RET(int duration) => () =>
-                                                     {
-                                                         var addr = Pop();
-                                                         Pc.Value = addr;
-                                                         AddTicks(duration);
-                                                     };
+        {
+            var addr = Pop();
+            Pc.Value = addr;
+            AddTicks(duration);
+        };
         //Not an actual instruction
         public Action PREFIX(int duration) => () =>
-                                                        {
-                                                            AddTicks(duration);
-                                                            throw new Exception("unimplementable");
-                                                        };
+        {
+            AddTicks(duration);
+            throw new Exception("unimplementable");
+        };
 
         //TODO: Check where this naming error originated
-        public Action CALL_a16(int duration) => () =>
-                                                          {
-                                                              var addr = Memory.FetchD16();
-                                                              Call(duration, addr);
-                                                          };
+        public Action CALL_a16(int duration) => () => Call(duration, Memory.FetchD16());
 
         public void Call(int duration, ushort addr)
         {
@@ -620,45 +660,45 @@ namespace emulator
         }
 
         public Action ADC(int duration) => () =>
-                                                     {
-                                                         var rhs = Memory.FetchD8();
+        {
+            var rhs = Memory.FetchD8();
 
-                                                         ADC(rhs);
-                                                         AddTicks(duration);
-                                                     };
+            ADC(rhs);
+            AddTicks(duration);
+        };
 
         public Action ILLEGAL_D3(int duration) => () =>
-                                                            {
-                                                                AddTicks(duration);
-                                                                throw new Exception("illegal");
-                                                            };
+        {
+            AddTicks(duration);
+            throw new Exception("illegal");
+        };
 
         public Action SUB(int duration) => () =>
-                                                     {
-                                                         Registers.Mark(Flag.N);
+        {
+            Registers.Negative = true;
 
-                                                         var lhs = Registers.A;
-                                                         var rhs = Memory.FetchD8();
+            var lhs = Registers.A;
+            var rhs = Memory.FetchD8();
 
-                                                         Registers.A = SUB(lhs, rhs);
-                                                         AddTicks(duration);
-                                                     };
+            Registers.A = SUB(lhs, rhs);
+            AddTicks(duration);
+        };
         public Action RETI(int duration) => () =>
-                                                      {
-                                                          Pc.Value = Pop();
-                                                          EnableInterrupts();
-                                                          AddTicks(duration);
-                                                      };
+        {
+            Pc.Value = Pop();
+            EnableInterrupts();
+            AddTicks(duration);
+        };
         public Action ILLEGAL_DB(int duration) => () =>
-                                                            {
-                                                                AddTicks(duration);
-                                                                throw new Exception("illegal");
-                                                            };
+        {
+            AddTicks(duration);
+            throw new Exception("illegal");
+        };
         public Action ILLEGAL_DD(int duration) => () =>
-                                                            {
-                                                                AddTicks(duration);
-                                                                throw new Exception("illegal");
-                                                            };
+        {
+            AddTicks(duration);
+            throw new Exception("illegal");
+        };
         public Action SBC(int duration) => () =>
                                                      {
                                                          var rhs = Memory.FetchD8();
@@ -690,27 +730,27 @@ namespace emulator
                                                      };
 
         public Action ADD_SP_R8(int duration) => () =>
-                                                           {
-                                                               var offset = Memory.FetchR8();
-                                                               var sum = Registers.SP + offset;
+        {
+            var offset = Memory.FetchR8();
+            var sum = Registers.SP + offset;
 
-                                                               Registers.Mark(Flag.NZ);
-                                                               Registers.Mark(Flag.NN);
+            Registers.Zero = false;
+            Registers.Negative = false;
 
-                                                               if (offset >= 0)
-                                                               {
-                                                                   Registers.Set(Flag.C, ((Registers.SP & 0xff) + offset) > 0xff);
-                                                                   Registers.Set(Flag.H, ((Registers.SP & 0x0f) + (offset & 0xf)) > 0xf);
-                                                               }
-                                                               else
-                                                               {
-                                                                   Registers.Set(Flag.C, (sum & 0xff) <= (Registers.SP & 0xff));
-                                                                   Registers.Set(Flag.H, (sum & 0xf) <= (Registers.SP & 0xf));
-                                                               }
+            if (offset >= 0)
+            {
+                Registers.Carry = ((Registers.SP & 0xff) + offset) > 0xff;
+                Registers.Half = ((Registers.SP & 0x0f) + (offset & 0xf)) > 0xf;
+            }
+            else
+            {
+                Registers.Carry = (sum & 0xff) <= (Registers.SP & 0xff);
+                Registers.Half = (sum & 0xf) <= (Registers.SP & 0xf);
+            }
 
-                                                               Registers.SP = (ushort)sum;
-                                                               AddTicks(duration);
-                                                           };
+            Registers.SP = (ushort)sum;
+            AddTicks(duration);
+        };
 
         public Action JP(int duration) => () =>
                                                     {
@@ -767,18 +807,18 @@ namespace emulator
                                                              {
                                                                  var offset = Memory.FetchR8();
                                                                  var sum = Registers.SP + offset;
-                                                                 Registers.Set(Flag.Z, false);
-                                                                 Registers.Set(Flag.N, false);
+                                                                 Registers.Zero = false;
+                                                                 Registers.Negative = false;
 
                                                                  if (offset >= 0)
                                                                  {
-                                                                     Registers.Set(Flag.C, ((Registers.SP & 0xff) + offset) > 0xff);
-                                                                     Registers.Set(Flag.H, ((Registers.SP & 0x0f) + (offset & 0xf)) > 0xf);
+                                                                     Registers.Carry = ((Registers.SP & 0xff) + offset) > 0xff;
+                                                                     Registers.Half = ((Registers.SP & 0x0f) + (offset & 0xf)) > 0xf;
                                                                  }
                                                                  else
                                                                  {
-                                                                     Registers.Set(Flag.C, (sum & 0xff) <= (Registers.SP & 0xff));
-                                                                     Registers.Set(Flag.H, (sum & 0xf) <= (Registers.SP & 0xf));
+                                                                     Registers.Carry = (sum & 0xff) <= (Registers.SP & 0xff);
+                                                                     Registers.Half = (sum & 0xf) <= (Registers.SP & 0xf);
                                                                  }
 
                                                                  Registers.HL = (ushort)sum;
@@ -815,11 +855,11 @@ namespace emulator
                                                     };
         private void CP(byte lhs, byte rhs)
         {
-            Registers.Mark(Flag.N);
+            Registers.Negative = true;
 
-            Registers.Set(Flag.Z, lhs == rhs);
-            Registers.Set(Flag.C, rhs > lhs);
-            Registers.Set(Flag.H, lhs.IsHalfCarrySub(rhs));
+            Registers.Zero = lhs == rhs;
+            Registers.Carry = rhs > lhs;
+            Registers.Half = lhs.IsHalfCarrySub(rhs);
         }
 
         public Action RLC(Register p0, int duration) => () =>
@@ -827,7 +867,7 @@ namespace emulator
                                                                       var reg = GetRegister(p0);
 
                                                                       var res = RLC(reg);
-                                                                      Registers.Set(Flag.Z, res == 0);
+                                                                      Registers.Zero = res == 0;
 
                                                                       SetRegister(p0, res);
                                                                       AddTicks(duration);
@@ -837,7 +877,7 @@ namespace emulator
                                                                       var reg = GetRegister(p0);
 
                                                                       var res = RRC(reg);
-                                                                      Registers.Set(Flag.Z, res == 0);
+                                                                      Registers.Zero = res == 0;
 
                                                                       SetRegister(p0, res);
                                                                       AddTicks(duration);
@@ -847,7 +887,7 @@ namespace emulator
                                                                      var reg = GetRegister(p0);
 
                                                                      var res = RL(reg);
-                                                                     Registers.Set(Flag.Z, res == 0);
+                                                                     Registers.Zero = res == 0;
 
                                                                      SetRegister(p0, res);
                                                                      AddTicks(duration);
@@ -857,7 +897,7 @@ namespace emulator
                                                                      var reg = GetRegister(p0);
 
                                                                      var res = RR(reg);
-                                                                     Registers.Set(Flag.Z, res == 0);
+                                                                     Registers.Zero = res == 0;
 
                                                                      SetRegister(p0, res);
                                                                      AddTicks(duration);
@@ -868,12 +908,12 @@ namespace emulator
 
                                                                       var TopBit = reg.GetBit(7);
 
-                                                                      Registers.Mark(Flag.NN);
-                                                                      Registers.Mark(Flag.NH);
-                                                                      Registers.Set(Flag.C, TopBit);
+                                                                      Registers.Negative = false;
+                                                                      Registers.Half = false;
+                                                                      Registers.Carry = TopBit;
 
                                                                       reg <<= 1;
-                                                                      Registers.Set(Flag.Z, reg == 0);
+                                                                      Registers.Zero = reg == 0;
 
                                                                       SetRegister(p0, reg);
                                                                       AddTicks(duration);
@@ -883,14 +923,14 @@ namespace emulator
                                                                       var lhs = GetRegister(p0);
                                                                       byte bit7 = (byte)(lhs & 0x80);
 
-                                                                      Registers.Mark(Flag.NN);
-                                                                      Registers.Mark(Flag.NH);
-                                                                      Registers.Set(Flag.C, lhs.GetBit(0));
+                                                                      Registers.Negative = false;
+                                                                      Registers.Half = false;
+                                                                      Registers.Carry = lhs.GetBit(0);
 
                                                                       lhs = (byte)((lhs >> 1) | bit7);
                                                                       SetRegister(p0, lhs);
 
-                                                                      Registers.Set(Flag.Z, lhs == 0);
+                                                                      Registers.Zero = lhs == 0;
 
                                                                       AddTicks(duration);
                                                                   };
@@ -902,10 +942,10 @@ namespace emulator
                                                                        var high = (reg & 0xf0) >> 4;
                                                                        var swapped = low | high;
 
-                                                                       Registers.Set(Flag.Z, swapped == 0);
-                                                                       Registers.Mark(Flag.NN);
-                                                                       Registers.Mark(Flag.NH);
-                                                                       Registers.Mark(Flag.NC);
+                                                                       Registers.Zero = swapped == 0;
+                                                                       Registers.Negative = false;
+                                                                       Registers.Half = false;
+                                                                       Registers.Carry = false;
 
 
                                                                        SetRegister(p0, (byte)swapped);
@@ -916,10 +956,10 @@ namespace emulator
                                                                   {
                                                                       var lhs = GetRegister(p0);
 
-                                                                      Registers.Mark(Flag.NN);
-                                                                      Registers.Mark(Flag.NH);
-                                                                      Registers.Set(Flag.C, lhs.GetBit(0));
-                                                                      Registers.Set(Flag.Z, lhs >> 1 == 0);
+                                                                      Registers.Negative = false;
+                                                                      Registers.Half = false;
+                                                                      Registers.Carry = lhs.GetBit(0);
+                                                                      Registers.Zero = lhs >> 1 == 0;
 
                                                                       SetRegister(p0, (byte)(lhs >> 1));
                                                                       AddTicks(duration);
@@ -927,9 +967,9 @@ namespace emulator
         public Action BIT(byte p0, Register p1, int duration) => () =>
                                                                            {
                                                                                var reg = GetRegister(p1);
-                                                                               Registers.Set(Flag.Z, !reg.GetBit(p0));
-                                                                               Registers.Mark(Flag.NN);
-                                                                               Registers.Mark(Flag.H);
+                                                                               Registers.Zero = !reg.GetBit(p0);
+                                                                               Registers.Negative = false;
+                                                                               Registers.Half = true;
                                                                                AddTicks(duration);
                                                                            };
 

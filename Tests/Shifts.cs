@@ -20,7 +20,7 @@ namespace Tests
 
                 Assert.AreEqual(1, dec.Registers.Get(Register.A));
 
-                Assert.IsTrue(dec.Registers.Get(Flag.C));
+                Assert.IsTrue(dec.Registers.Carry);
             }
             {
                 dec.Registers.Set(Register.A, 0);
@@ -29,7 +29,7 @@ namespace Tests
 
                 Assert.AreEqual(0, dec.Registers.Get(Register.A));
 
-                Assert.IsTrue(dec.Registers.Get(Flag.NC));
+                Assert.IsTrue(!dec.Registers.Carry);
             }
             {
                 dec.Registers.Set(Register.A, 0xff);
@@ -38,7 +38,7 @@ namespace Tests
 
                 Assert.AreEqual(0xff, dec.Registers.Get(Register.A));
 
-                Assert.IsTrue(dec.Registers.Get(Flag.C));
+                Assert.IsTrue(dec.Registers.Carry);
             }
         }
         [Test]
@@ -54,7 +54,7 @@ namespace Tests
 
                 Assert.AreEqual(0x80, dec.Registers.Get(Register.A));
 
-                Assert.IsTrue(dec.Registers.Get(Flag.C));
+                Assert.IsTrue(dec.Registers.Carry);
             }
             {
                 dec.Registers.Set(Register.A, 0xFF);
@@ -63,7 +63,7 @@ namespace Tests
 
                 Assert.AreEqual(0xFF, dec.Registers.Get(Register.A));
 
-                Assert.IsTrue(dec.Registers.Get(Flag.C));
+                Assert.IsTrue(dec.Registers.Carry);
             }
             {
                 dec.Registers.Set(Register.A, 0);
@@ -72,7 +72,7 @@ namespace Tests
 
                 Assert.AreEqual(0, dec.Registers.Get(Register.A));
 
-                Assert.IsTrue(dec.Registers.Get(Flag.NC));
+                Assert.IsTrue(!dec.Registers.Carry);
             }
         }
         [Test]
@@ -94,20 +94,20 @@ namespace Tests
 
             dec.Op(Unprefixed.SCF)();
 
-            Assert.IsTrue(dec.Registers.Get(Flag.C));
+            Assert.IsTrue(dec.Registers.Carry);
         }
         [Test]
         public void CCF()
         {
             var core = TestHelpers.NewCore(new byte[] { });
             var dec = core.CPU;
-            dec.Registers.Mark(Flag.NC);
+            dec.Registers.Carry=false;
 
             dec.Op(Unprefixed.CCF)();
-            Assert.IsTrue(dec.Registers.Get(Flag.C));
+            Assert.IsTrue(dec.Registers.Carry);
 
             dec.Op(Unprefixed.CCF)();
-            Assert.IsTrue(dec.Registers.Get(Flag.NC));
+            Assert.IsTrue(!dec.Registers.Carry);
         }
     }
 }

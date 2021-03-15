@@ -65,7 +65,7 @@ namespace Tests
             while (p.CPU.PC != 0x100 + inst.Length)
                 p.Step();
             Assert.AreEqual(0x10b, p.CPU.PC);
-            Assert.IsTrue(p.CPU.Registers.Get(Flag.Z));
+            Assert.IsTrue(p.CPU.Registers.Zero);
         }
 
         [Test]
@@ -124,7 +124,7 @@ namespace Tests
             {
                 (byte)Unprefixed.JR_NZ_r8, 0x05}
             );
-            p.CPU.Registers.Set(Flag.Z, false);
+            p.CPU.Registers.Zero = false;
 
             p.Step();
             Assert.AreEqual(0x107, p.CPU.PC);
@@ -133,7 +133,7 @@ namespace Tests
             p = TestHelpers.NewCore(new byte[]
             { (byte)Unprefixed.JR_NZ_r8, unchecked((byte)-2)}
             );
-            p.CPU.Registers.Mark(Flag.NZ);
+            p.CPU.Registers.Zero = false;
 
             p.Step();
             Assert.AreEqual(0x100, p.CPU.PC);
@@ -142,7 +142,7 @@ namespace Tests
             p = TestHelpers.NewCore(new byte[]
             { (byte)Unprefixed.JR_NZ_r8, 0x05}
             );
-            p.CPU.Registers.Mark(Flag.Z);
+            p.CPU.Registers.Zero = true;
 
             p.Step();
             Assert.AreEqual(0x102, p.CPU.PC);

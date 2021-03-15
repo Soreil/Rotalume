@@ -181,9 +181,9 @@ namespace Tests
             dec.Op(Unprefixed.ADD_HL_BC)();
 
             Assert.AreEqual(0x9028, dec.Registers.HL);
-            Assert.IsTrue(dec.Registers.Get(Flag.H));
-            Assert.IsTrue(dec.Registers.Get(Flag.NN));
-            Assert.IsTrue(dec.Registers.Get(Flag.NC));
+            Assert.IsTrue(dec.Registers.Half);
+            Assert.IsTrue(!dec.Registers.Negative);
+            Assert.IsTrue(!dec.Registers.Carry);
         }
         [Test]
         public void ADD_HL_HL()
@@ -196,9 +196,9 @@ namespace Tests
             dec.Op(Unprefixed.ADD_HL_HL)();
 
             Assert.AreEqual(0x1446, dec.Registers.HL);
-            Assert.IsTrue(dec.Registers.Get(Flag.H));
-            Assert.IsTrue(dec.Registers.Get(Flag.NN));
-            Assert.IsTrue(dec.Registers.Get(Flag.C));
+            Assert.IsTrue(dec.Registers.Half);
+            Assert.IsTrue(!dec.Registers.Negative);
+            Assert.IsTrue(dec.Registers.Carry);
         }
 
         [Test]

@@ -82,18 +82,6 @@ namespace emulator
         public bool Negative;
         public bool Half;
         public bool Carry;
-        public bool Get(Flag f) => f switch
-        {
-            Flag.Z => Zero,
-            Flag.NZ => !Zero,
-            Flag.N => Negative,
-            Flag.NN => !Negative,
-            Flag.H => Half,
-            Flag.NH => !Half,
-            Flag.C => Carry,
-            Flag.NC => !Carry,
-            _ => throw new NotImplementedException(),
-        };
 
         public byte Get(Register r) => r switch
         {
@@ -116,39 +104,6 @@ namespace emulator
             WideRegister.SP => SP,
             _ => throw new NotImplementedException(),
         };
-
-        public void Mark(Flag f)
-        {
-            switch (f)
-            {
-                case Flag.Z:
-                Zero = true; break;
-                case Flag.NZ:
-                Zero = false; break;
-                case Flag.N:
-                Negative = true; break;
-                case Flag.NN:
-                Negative = false; break;
-                case Flag.H:
-                Half = true; break;
-                case Flag.NH:
-                Half = false; break;
-                case Flag.C:
-                Carry = true; break;
-                case Flag.NC:
-                Carry = false; break;
-            };
-        }
-        public void Set(Flag f, bool b)
-        {
-            switch (f)
-            {
-                case Flag.Z: Zero = b; break;
-                case Flag.N: Negative = b; break;
-                case Flag.H: Half = b; break;
-                case Flag.C: Carry = b; break;
-            };
-        }
 
         public void Set(Register r, byte v)
         {

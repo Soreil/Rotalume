@@ -23,6 +23,7 @@ namespace emulator
             Memory = mMU;
             ISR = interruptRegisters;
             this.Pc = PC;
+
             StdOps = new Action[0x100];
             StdOps[(int)Unprefixed.NOP] = NOP(4);
             StdOps[(int)Unprefixed.LD_AT_DE_A] = LD((WideRegister.DE, Postfix.unchanged), Register.A, 8);
