@@ -145,6 +145,14 @@ namespace emulator
             set => _nr34 = value;
         }
 
+        private byte _nr41 = 0xff;
+        public byte NR41
+        {
+            get => (byte)(_nr41 & 0x3f | 0xc0);
+            set => _nr41 = value;
+        }
+
+
         public byte NR42 = 0xff;
 
         public byte NR43 = 0xff;
@@ -224,7 +232,6 @@ namespace emulator
         public byte NR23 { get; internal set; }
         public byte NR31 { get; internal set; }
         public byte NR33 { get; internal set; }
-        public byte NR41 { get; internal set; }
         public byte[] Wave { get; internal set; } = new byte[0x10];
         public int SampleCount { get; internal set; }
         public APU(int sampleRate)
