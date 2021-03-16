@@ -43,17 +43,17 @@ namespace WPFFrontend
             var Controller3 = new XboxControllerWithInterruptHandler(XboxController.RetrieveController(2));
             var Controller4 = new XboxControllerWithInterruptHandler(XboxController.RetrieveController(3));
 
-            HashSet<Key> mappedKeys = new()
+            Dictionary<Key, JoypadKey> mappedKeys = new()
             {
-                Key.X,
-                Key.LeftShift,
-                Key.RightShift,
-                Key.Z,
-                Key.Down,
-                Key.Left,
-                Key.Right,
-                Key.Up,
-                Key.Enter
+                { Key.X, JoypadKey.A },
+                { Key.LeftShift, JoypadKey.Select },
+                { Key.RightShift, JoypadKey.Select },
+                { Key.Z, JoypadKey.B },
+                { Key.Down, JoypadKey.Down },
+                { Key.Left, JoypadKey.Left },
+                { Key.Right, JoypadKey.Right },
+                { Key.Up, JoypadKey.Up },
+                { Key.Enter, JoypadKey.Start }
             };
 
             var UnconnectedKeyboard = new KeyBoardWithInterruptHandler(mappedKeys);
