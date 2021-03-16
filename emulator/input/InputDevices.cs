@@ -36,11 +36,12 @@ namespace emulator
 
         public int ControllerCount => mappedControllers.Count;
 
-        private readonly Dictionary<JoypadKey, bool> Keyboard;
+        private readonly MappedController Keyboard;
 
-        public InputDevices(Dictionary<JoypadKey, bool> keyboard, List<IGameController> gameControllers)
+        public InputDevices(IGameController keyboard, List<IGameController> gameControllers)
         {
-            Keyboard = keyboard;
+            Keyboard = new(keyboard);
+            Keyboard.controller.AddEventHandler(OnUnderLyingChanged);
             mappedControllers = new();
             foreach (var k in gameControllers) mappedControllers.Add(new MappedController(k));
         }
@@ -51,6 +52,5 @@ namespace emulator
         }
 
         public bool this[JoypadKey index] => SelectedController != 0 ? mappedControllers[SelectedController - 1][index] || Keyboard[index] : Keyboard[index];
-
     }
 }

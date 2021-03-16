@@ -3,7 +3,6 @@
 using J2i.Net.XInputWrapper;
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -44,26 +43,31 @@ namespace WPFFrontend
             var Controller3 = new XboxControllerWithInterruptHandler(XboxController.RetrieveController(2));
             var Controller4 = new XboxControllerWithInterruptHandler(XboxController.RetrieveController(3));
 
-            Dictionary<JoypadKey, bool> keyboard = new()
+            HashSet<Key> mappedKeys = new()
             {
-                { JoypadKey.A, false },
-                { JoypadKey.B, false },
-                { JoypadKey.Select, false },
-                { JoypadKey.Start, false },
-                { JoypadKey.Right, false },
-                { JoypadKey.Left, false },
-                { JoypadKey.Up, false },
-                { JoypadKey.Down, false }
+                Key.X,
+                Key.LeftShift,
+                Key.RightShift,
+                Key.Z,
+                Key.Down,
+                Key.Left,
+                Key.Right,
+                Key.Up,
+                Key.Enter
             };
 
-            Keyboard = keyboard;
+            var UnconnectedKeyboard = new KeyBoardWithInterruptHandler(mappedKeys);
 
-            var Controllers = new List<IGameController> { new IGameControllerBridge(Controller1), new IGameControllerBridge(Controller2), new IGameControllerBridge(Controller3), new IGameControllerBridge(Controller4) };
-            InputDevices = new(keyboard, Controllers);
+            KeyDown += new KeyEventHandler(UnconnectedKeyboard.Down);
+            KeyUp += new KeyEventHandler(UnconnectedKeyboard.Up);
+
+            var kb = new IGameControllerKeyboardBridge(UnconnectedKeyboard);
+
+            var Controllers = new List<IGameController> { new IGameControllerXboxBridge(Controller1), new IGameControllerXboxBridge(Controller2), new IGameControllerXboxBridge(Controller3), new IGameControllerXboxBridge(Controller4) };
+            InputDevices = new(kb, Controllers);
             Default.IsChecked = true;
         }
 
-        private readonly Dictionary<JoypadKey, bool> Keyboard;
         private readonly InputDevices InputDevices;
 
         private void FPSDisplayEnable_Checked(object sender, RoutedEventArgs e) => throw new NotImplementedException();
@@ -234,10 +238,6 @@ namespace WPFFrontend
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
-            if (Map(e.Key) is JoypadKey p)
-            {
-                Keyboard[p] = true;
-            }
             if (e.Key == Key.P)
             {
                 paused = !paused;
@@ -254,28 +254,6 @@ namespace WPFFrontend
                     encoder.Frames.Add(BitmapFrame.Create(bmp));
                     encoder.Save(fs);
                 }
-            }
-        }
-
-        private static JoypadKey? Map(Key k) => k switch
-        {
-            Key.A => JoypadKey.B,
-            Key.S => JoypadKey.A,
-            Key.D => JoypadKey.Select,
-            Key.F => JoypadKey.Start,
-            Key.Right => JoypadKey.Right,
-            Key.Left => JoypadKey.Left,
-            Key.Up => JoypadKey.Up,
-            Key.Down => JoypadKey.Down,
-            _ => null
-        };
-
-        //There is a bouncing issue here which might be fixed by a delay
-        private void Window_KeyUp(object sender, KeyEventArgs e)
-        {
-            if (Map(e.Key) is JoypadKey p)
-            {
-                Keyboard[p] = false;
             }
         }
 

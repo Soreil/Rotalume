@@ -6,7 +6,7 @@ using System;
 
 namespace WPFFrontend
 {
-    internal class IGameControllerBridge : IGameController
+    internal class IGameControllerXboxBridge : IGameController
     {
         public bool IsAPressed => XboxController.X.IsBPressed;
         public bool IsSelectPressed => XboxController.X.IsBackPressed;
@@ -23,6 +23,6 @@ namespace WPFFrontend
         public void AddEventHandler(EventHandler<EventArgs> e) => XboxController.KeyWentDown += e;
         public void RemoveEventHandler(EventHandler<EventArgs> e) => XboxController.KeyWentDown -= e;
 
-        public IGameControllerBridge(XboxControllerWithInterruptHandler xboxcontroller) => XboxController = xboxcontroller;
+        public IGameControllerXboxBridge(XboxControllerWithInterruptHandler xboxcontroller) => XboxController = xboxcontroller;
     }
 }
