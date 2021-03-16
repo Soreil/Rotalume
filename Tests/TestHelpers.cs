@@ -18,7 +18,7 @@ namespace Tests
             return new Core(
                 gamerom,
                 bootrom,
-                new(new InputDevices(new(), new())),
+                new(new InputDevices(new MockGameController(), new())),
                 new FrameSink(() => { }, () => { }, IntPtr.Zero, false)
                 );
         }
@@ -34,7 +34,7 @@ namespace Tests
 
             return new Core(gameromPaddedToSize,
                 null,
-                new(new InputDevices(new(), new())),
+                new(new InputDevices(new MockGameController(), new())),
                 new FrameSink(() => { }, () => { }, IntPtr.Zero, false)
                 );
         }
