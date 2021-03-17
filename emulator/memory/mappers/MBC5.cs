@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO.MemoryMappedFiles;
 
 namespace emulator
 {
@@ -10,6 +11,9 @@ namespace emulator
         private const int ROMBankSize = 0x4000;
         private readonly int RAMBankSize = RAMSize;
         protected readonly int RAMBankCount;
+
+        public MemoryMappedViewAccessor RAMBanks { get; }
+
         private readonly int ROMBankCount;
         private int ROMBankNumber = 1;
         protected int RAMBankNumber = 0;

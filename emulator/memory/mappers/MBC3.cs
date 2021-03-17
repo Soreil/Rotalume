@@ -1,10 +1,13 @@
 ﻿using System;
+using System.IO.MemoryMappedFiles;
 
 namespace emulator
 {
     internal class MBC3 : MBC
     {
         private readonly byte[] gameROM;
+
+        public MemoryMappedViewAccessor RAMBanks { get; }
 
         private bool RAMEnabled = false;
         private const int ROMBankSize = 0x4000;

@@ -6,7 +6,6 @@
         protected const int ROMSize = 0x8000;
         protected const int RAMStart = 0xa000;
         protected const int RAMSize = 0x2000;
-        protected System.IO.MemoryMappedFiles.MemoryMappedViewAccessor? RAMBanks { get; init; }
         public abstract byte this[int n]
         {
             get;

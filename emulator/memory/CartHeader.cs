@@ -90,7 +90,7 @@ namespace emulator
             CartType.ROM_ONLY => new ROMONLY(gameROM),
             CartType.MBC1 => new MBC1(this, gameROM),
             CartType.MBC1_RAM => new MBC1(this, gameROM),
-            CartType.MBC1_RAM_BATTERY => new MBC1(this, gameROM, file),
+            CartType.MBC1_RAM_BATTERY => new MBC1WithBatteryBackedRAM(this, gameROM, file!),
             CartType.MBC2 => new MBC2(gameROM, file!),
             CartType.MBC2_BATTERY => new MBC2(gameROM, file!),
             CartType.MBC3 => new MBC3(this, gameROM, file!),

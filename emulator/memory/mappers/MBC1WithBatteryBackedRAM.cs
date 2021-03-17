@@ -1,16 +1,15 @@
 ﻿using System;
+using System.IO.MemoryMappedFiles;
 
 namespace emulator
 {
-    internal class MBC1 : MBC
+    internal class MBC1WithBatteryBackedRAM : MBC
     {
         private readonly byte[] gameROM;
 
         private bool RAMEnabled = false;
         private const int ROMBankSize = 0x4000;
         private readonly int RAMBankSize = RAMSize;
-
-        public byte[] RAMBanks { get; }
 
         private int LowBank => GetLowBankNumber();
 
@@ -21,12 +20,14 @@ namespace emulator
 
         private int RamBank => RAMBankCount == 1 ? 0 : (BankingMode == 1 ? UpperBitsOfROMBank : 0);
 
+        public MemoryMappedViewAccessor RAMBanks { get; }
+
         private readonly int RAMBankCount;
         private readonly int ROMBankCount;
         private int LowerBitsOfROMBank = 1;
         private int UpperBitsOfROMBank = 0;
         private int BankingMode = 0;
-        public MBC1(CartHeader header, byte[] gameROM)
+        public MBC1WithBatteryBackedRAM(CartHeader header, byte[] gameROM, MemoryMappedFile file)
         {
             this.gameROM = gameROM;
             ROMBankCount = this.gameROM.Length / 0x4000;
@@ -34,7 +35,7 @@ namespace emulator
             RAMBankCount = Math.Max(1, header.RAM_Size / RAMBankSize);
             RAMBankSize = Math.Min(header.RAM_Size, 0x2000);
 
-            RAMBanks = new byte[Math.Max(0x2000, header.RAM_Size)];
+            RAMBanks = file.CreateViewAccessor(0, header.RAM_Size);
         }
 
         public override byte this[int n]
@@ -71,13 +72,13 @@ namespace emulator
 
         private static bool IsUpperBank(int n) => n >= ROMBankSize;
 
-        public byte GetRAM(int n) => (byte)(RAMEnabled ? RAMBanks[(RamBank * RAMBankSize) + n - RAMStart] : 0xff);
+        public byte GetRAM(int n) => (byte)(RAMEnabled ? RAMBanks!.ReadByte((RamBank * RAMBankSize) + n - RAMStart) : 0xff);
 
         public void SetRAM(int n, byte v)
         {
             if (RAMEnabled)
             {
-                RAMBanks[(RamBank * RAMBankSize) + n - RAMStart] = v;
+                RAMBanks!.Write((RamBank * RAMBankSize) + n - RAMStart, v);
             }
         }
     }

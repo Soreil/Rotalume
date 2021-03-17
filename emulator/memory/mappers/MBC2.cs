@@ -1,4 +1,6 @@
-﻿namespace emulator
+﻿using System.IO.MemoryMappedFiles;
+
+namespace emulator
 {
     internal class HalfRAM
     {
@@ -22,6 +24,9 @@
         private int ROMBank { get => _rombank; set => _rombank = value == 0 ? 1 : value & (ROMBankCount - 1); }
 
         private readonly int ROMBankCount;
+
+        public MemoryMappedViewAccessor RAMBanks { get; }
+
         private readonly HalfRAM RAM;
 
 
