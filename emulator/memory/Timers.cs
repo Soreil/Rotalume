@@ -29,7 +29,7 @@ namespace emulator
             {
                 if (DelayTicks-- == 0)
                 {
-                    Tima = TMA;
+                    TIMA = TMA;
                 }
             }
 
@@ -48,7 +48,7 @@ namespace emulator
 
         public byte DIV
         {
-            get => (byte)((InternalCounter & 0xff00) >> 8);
+            get => (byte)(InternalCounter >> 8);
             set
             {
                 var overflow = (InternalCounter & (1 << TACBitSelected)) != 0;
@@ -113,28 +113,19 @@ namespace emulator
             set => _tma = value;
         }
 
-        private byte Tima
-        {
-            get;
-            set;
-        }
-        public byte TIMA
-        {
-            get => Tima;
-            set => Tima = value;
-        }
+        public byte TIMA;
 
         //When TIMA overflows it should delay writing the value for 4 cycles
         private const int DelayDuration = 4;
         private uint DelayTicks = 0;
         private void IncrementTIMA()
         {
-            if (Tima == 0xff)
+            if (TIMA == 0xff)
             {
                 DelayTicks = DelayDuration;
                 EnableTimerInterrupt();
             }
-            Tima++;
+            TIMA++;
         }
     }
 }
