@@ -554,6 +554,7 @@ namespace emulator
             {
                 if (Halted != HaltState.haltbug)
                 {
+                    TicksWeAreWaitingFor += 4;
                     return;
                 }
             }
@@ -569,14 +570,12 @@ namespace emulator
                 Op((CBOpcode)CBop)();
             }
         }
+
+        private bool didInterrupt;
         internal void Tick()
         {
             if (TicksWeAreWaitingFor == 0)
             {
-                if (!DoInterrupt())
-                {
-                    DoNextOP();
-                }
                 //We really should have the GUI thread somehow do this logic but polling like this should work
                 if (!ISR.InterruptFireRegister.GetBit(4) && ISR.GamePadInterruptReady())
                 {
@@ -584,17 +583,17 @@ namespace emulator
                     IFR.SetBit(4);
                     ISR.InterruptFireRegister = IFR;
                 }
-
+                didInterrupt = DoInterrupt();
                 if (ISR.InterruptEnableScheduled)
                 {
                     ISR.IME = true;
                     ISR.InterruptEnableScheduled = false;
                 }
+                if (!didInterrupt)
+                    DoNextOP();
+                didInterrupt = false;
             }
-            else
-            {
-                TicksWeAreWaitingFor--;
-            }
+            TicksWeAreWaitingFor--;
         }
     }
 }
