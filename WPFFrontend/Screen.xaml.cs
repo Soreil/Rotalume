@@ -76,21 +76,21 @@ namespace WPFFrontend
         private volatile bool CancelRequested;
         private void Gameboy(string path, bool bootromEnabled, bool fpsLimit)
         {
-            var lockCb = new Action(Lock);
+            var lockCb = new Func<IntPtr>(Lock);
             var unlockCb = new Action(Unlock);
 
             byte[]? bootrom = bootromEnabled ? File.ReadAllBytes(@"..\..\..\..\emulator\bootrom\DMG_ROM_BOOT.bin") : null;
 
-            void LockCB()
+            IntPtr LockCB()
             {
                 try
                 {
-                    Dispatcher.Invoke(lockCb,
+                    return Dispatcher.Invoke(lockCb,
             System.Windows.Threading.DispatcherPriority.Render, CancellationTokenSource.Token);
                 }
                 catch (TaskCanceledException)
                 {
-
+                    return IntPtr.Zero;
                 }
             }
 
@@ -111,7 +111,7 @@ namespace WPFFrontend
                 File.ReadAllBytes(path),
           bootrom,
           new Keypad(InputDevices),
-          new FrameSink(LockCB, UnlockCB, Dispatcher.Invoke(() => bmp.BackBuffer), fpsLimit)
+          new FrameSink(LockCB, UnlockCB, fpsLimit)
           );
 
             while (!CancelRequested)
@@ -127,7 +127,11 @@ namespace WPFFrontend
             }
         }
 
-        private void Lock() => bmp.Lock();
+        private IntPtr Lock()
+        {
+            bmp.Lock();
+            return bmp.BackBuffer;
+        }
         private void Unlock()
         {
             bmp.AddDirtyRect(new Int32Rect(0, 0, (int)bmp.Width, (int)bmp.Height));

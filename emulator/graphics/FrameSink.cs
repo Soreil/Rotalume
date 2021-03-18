@@ -8,23 +8,18 @@ namespace emulator
     {
         private readonly byte[] frameData;
 
-        private readonly Action? Lock;
-        private readonly Action? Unlock;
-        private readonly IntPtr Pointer = IntPtr.Zero;
+        private readonly Func<IntPtr> Lock;
+        private readonly Action Unlock;
 
-        private readonly long timePerFrame;
+        private const long timePerFrame = (long)(TimeSpan.TicksPerSecond / ((1 << 22) / 70224.0));
         private readonly Stopwatch stopWatch = new();
         private readonly bool LimitFPS;
-        public FrameSink(Action Lock, Action Unlock, IntPtr Pointer, bool LimitFPS)
+        public FrameSink(Func<IntPtr> Lock, Action Unlock, bool LimitFPS)
         {
             frameData = new byte[144 * 160];
-            Position = 0;
 
             this.Lock = Lock;
             this.Unlock = Unlock;
-            this.Pointer = Pointer;
-
-            timePerFrame = (TimeSpan.FromSeconds(1) / ((1 << 22) / 70224.0)).Ticks;
             this.LimitFPS = LimitFPS;
 
             stopWatch.Start();
@@ -51,10 +46,13 @@ namespace emulator
             }
             stopWatch.Restart();
 
-            Lock!();
-            unsafe
+            var ptr = Lock!();
+            if (ptr != IntPtr.Zero)
             {
-                Marshal.Copy(frameData, 0, Pointer, frameData.Length);
+                unsafe
+                {
+                    Marshal.Copy(frameData, 0, ptr, frameData.Length);
+                }
             }
             Unlock!();
 
