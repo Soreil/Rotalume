@@ -14,7 +14,7 @@ namespace Tests
             });
             p.Step();
             Assert.AreEqual(0x101, p.CPU.PC);
-            Assert.AreEqual(4, p.CPU.TicksWeAreWaitingFor);
+            Assert.AreEqual(4 - 1, p.CPU.TicksWeAreWaitingFor);
         }
 
         [Test]
@@ -28,7 +28,7 @@ namespace Tests
             p.CPU.Registers.SP = 0xfffd;
             p.Step();
             Assert.AreEqual(0x101, p.CPU.PC);
-            Assert.AreEqual(12, p.CPU.TicksWeAreWaitingFor);
+            Assert.AreEqual(12 - 1, p.CPU.TicksWeAreWaitingFor);
             Assert.AreEqual(0xffff, p.CPU.Registers.SP);
             Assert.AreEqual(0x8020, p.CPU.Registers.AF);
         }
@@ -80,7 +80,7 @@ namespace Tests
             var read = p.Memory.ReadWide(0x0fffc);
 
             Assert.AreEqual(0x101, p.CPU.PC);
-            Assert.AreEqual(16, p.CPU.TicksWeAreWaitingFor);
+            Assert.AreEqual(16 - 1, p.CPU.TicksWeAreWaitingFor);
             Assert.AreEqual(0xfffc, p.CPU.Registers.SP);
 
             Assert.AreEqual(0x12f0, read);
@@ -97,7 +97,7 @@ namespace Tests
             p.Step();
 
             Assert.AreEqual(0xfedc, p.CPU.PC);
-            Assert.AreEqual(16, p.CPU.TicksWeAreWaitingFor);
+            Assert.AreEqual(16 - 1, p.CPU.TicksWeAreWaitingFor);
             Assert.AreEqual(0xffff, p.CPU.Registers.SP);
         }
 
@@ -112,7 +112,7 @@ namespace Tests
             p.Step();
 
             Assert.AreEqual(0xcdab, p.CPU.PC);
-            Assert.AreEqual(24, p.CPU.TicksWeAreWaitingFor);
+            Assert.AreEqual(24-1, p.CPU.TicksWeAreWaitingFor);
             Assert.AreEqual(0xfffd, p.CPU.Registers.SP);
             Assert.AreEqual(0x103, p.Memory.ReadWide(0xfffd));
         }
@@ -128,7 +128,7 @@ namespace Tests
 
             p.Step();
             Assert.AreEqual(0x107, p.CPU.PC);
-            Assert.AreEqual(12, p.CPU.TicksWeAreWaitingFor);
+            Assert.AreEqual(12 - 1, p.CPU.TicksWeAreWaitingFor);
 
             p = TestHelpers.NewCore(new byte[]
             { (byte)Opcode.JR_NZ_r8, unchecked((byte)-2)}
@@ -137,7 +137,7 @@ namespace Tests
 
             p.Step();
             Assert.AreEqual(0x100, p.CPU.PC);
-            Assert.AreEqual(12, p.CPU.TicksWeAreWaitingFor);
+            Assert.AreEqual(12 - 1, p.CPU.TicksWeAreWaitingFor);
 
             p = TestHelpers.NewCore(new byte[]
             { (byte)Opcode.JR_NZ_r8, 0x05}
@@ -146,7 +146,7 @@ namespace Tests
 
             p.Step();
             Assert.AreEqual(0x102, p.CPU.PC);
-            Assert.AreEqual(8, p.CPU.TicksWeAreWaitingFor);
+            Assert.AreEqual(8 - 1, p.CPU.TicksWeAreWaitingFor);
         }
 
         [Test]
@@ -158,13 +158,13 @@ namespace Tests
 
             p.Step();
             Assert.AreEqual(0x107, p.CPU.PC);
-            Assert.AreEqual(12, p.CPU.TicksWeAreWaitingFor);
+            Assert.AreEqual(12 - 1, p.CPU.TicksWeAreWaitingFor);
 
             p = TestHelpers.NewCore(new byte[] { (byte)Opcode.JR_r8, unchecked((byte)-2) });
 
             p.Step();
             Assert.AreEqual(0x100, p.CPU.PC);
-            Assert.AreEqual(12, p.CPU.TicksWeAreWaitingFor);
+            Assert.AreEqual(12 - 1, p.CPU.TicksWeAreWaitingFor);
 
 
         }

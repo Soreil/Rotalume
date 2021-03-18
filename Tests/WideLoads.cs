@@ -79,7 +79,7 @@ namespace Tests
             p.Step();
             Assert.AreEqual(0x103, p.CPU.PC);
             Assert.AreEqual(0x4512, p.CPU.Registers.SP);
-            Assert.AreEqual(12, p.CPU.TicksWeAreWaitingFor);
+            Assert.AreEqual(12 - 1, p.CPU.TicksWeAreWaitingFor);
         }
 
         [Test]
