@@ -8,21 +8,23 @@ namespace Tests
 {
     public static class TestHelpers
     {
-        private static byte[] LoadGameROM() => File.ReadAllBytes(@"..\..\..\rom\Tetris (World) (Rev A).gb");
+        public const string ROMpath = @"..\..\..\rom\";
+        public const string ROMResultPath = @"..\..\..\expected_rom_result\";
+        private static byte[] LoadGameROM() => File.ReadAllBytes(ROMpath+@"Tetris (World) (Rev A).gb");
         private static byte[] LoadBootROM() => File.ReadAllBytes(@"..\..\..\..\emulator\bootrom\DMG_ROM_BOOT.bin");
-        public static Core NewCore(byte[] bootrom = null, byte[] gamerom = null)
+        public static Core NewBootCore(FrameSink? frameSink = null)
         {
-            bootrom ??= LoadBootROM();
-            gamerom ??= LoadGameROM();
+            var bootrom = LoadBootROM();
+            var gamerom = LoadGameROM();
+            frameSink ??= new FrameSink(() => IntPtr.Zero, () => { }, false);
 
             return new Core(
                 gamerom,
                 bootrom,
                 new(new InputDevices(new MockGameController(), new())),
-                new FrameSink(() => { }, () => { }, IntPtr.Zero, false)
-                );
+                frameSink);
         }
-        public static Core NewCore(byte[] gamerom)
+        public static Core NewCore(byte[] gamerom, FrameSink? frameSink = null)
         {
             byte[] gameromPaddedToSize;
             if (gamerom.Length < 0x8000)
@@ -32,12 +34,14 @@ namespace Tests
             }
             else gameromPaddedToSize = gamerom;
 
+            frameSink ??= new FrameSink(() => IntPtr.Zero, () => { }, false);
+
             return new Core(gameromPaddedToSize,
                 null,
                 new(new InputDevices(new MockGameController(), new())),
-                new FrameSink(() => { }, () => { }, IntPtr.Zero, false)
-                );
+                frameSink);
         }
+
         public static void StepOneCPUInstruction(Core c)
         {
             c.Step();

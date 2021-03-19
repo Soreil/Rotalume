@@ -9,7 +9,7 @@ namespace Tests
     {
         public void DoBootNoGPU()
         {
-            var Proc = TestHelpers.NewCore();
+            var Proc = TestHelpers.NewBootCore();
             //Temporary write which sets the VBlank to always be the current GPU stage. 
             //This will let us boot without a GPU.
             Proc.Memory.Write(0xff44, 0x90);
