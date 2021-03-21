@@ -27,7 +27,6 @@ namespace emulator
             FetcherStep = 0;
             PushedEarly = false;
             scanlineX = 0;
-            doneWithFirstSpriteFetch = false;
             BGFIFO.Clear();
             SpriteFIFO.Clear();
         }
@@ -39,20 +38,12 @@ namespace emulator
             WindowLY.Clear();
         }
 
-        private bool doneWithFirstSpriteFetch;
         //Fetch runs one of the steps of the background fetcher and returns the amount of cycles used
         public int Fetch()
         {
             switch (FetcherStep)
             {
                 case 0:
-                //We only want this to happen on the second background tile fetch
-                if (!doneWithFirstSpriteFetch && BGFIFO.Count != 0)
-                {
-                    RenderSpriteToTheLeftOfTheVisibleArea();
-                    doneWithFirstSpriteFetch = true;
-                }
-
                 tileIndex = FetchTileID();
                 FetcherStep = 1;
                 return 2;
@@ -101,63 +92,8 @@ namespace emulator
                 }
             }
         }
-        private void PushSpriteRowPartial(byte low, byte high, SpriteAttributes sprite, int count)
-        {
-            if (SpriteFIFO.Count + count < 16)
-            {
-                for (var i = count; i > 0; i--)
-                {
-                    var paletteIndex = low.GetBit(i - 1) ? 1 : 0;
-                    paletteIndex += high.GetBit(i - 1) ? 2 : 0;
-
-                    var pos = sprite.XFlipped ? (i - 1) : count - i;
-                    var existingSpritePixel = SpriteFIFO.At(pos);
-                    var candidate = new FIFOSpritePixel((byte)paletteIndex, sprite.SpriteToBackgroundPriority, sprite.Palette);
-
-                    if (ShouldReplace(existingSpritePixel, candidate))
-                    {
-                        SpriteFIFO.Replace(pos, candidate);
-                    }
-                }
-            }
-        }
 
         private static bool ShouldReplace(FIFOSpritePixel existingSpritePixel, FIFOSpritePixel candidate) => (candidate.color != 0 && existingSpritePixel.color == 0) || (candidate.priority && !existingSpritePixel.priority);
-
-        public void RenderSpriteToTheLeftOfTheVisibleArea()
-        {
-            //Sprites are enabled and there is a sprite starting on the current X position
-            if (p.OBJDisplayEnable && SpriteCount - SpritesFinished != 0 && ContainsSprite())
-            {
-                //We can't start the sprite fetching yet if the background fifo is empty
-                if (BGFIFO.Count == 0)
-                {
-                    throw new Exception("wrong stage");
-                }
-
-                var sprite = FirstMatchingSprite();
-
-                var pixelsVisible = sprite.X;
-
-                for (int i = SpriteFIFO.Count; i < pixelsVisible; i = SpriteFIFO.Count)
-                {
-                    SpriteFIFO.Push(new FIFOSpritePixel(0, false, 0));
-                }
-
-                var y = p.LY - (sprite.Y - 16);
-                if (sprite.YFlipped)
-                {
-                    y = p.SpriteHeight == 8 ? 7 - y : 15 - y;
-                }
-
-                var ID = p.SpriteHeight == 8 ? sprite.ID : sprite.ID & 0xfe;
-                var addr = 0x8000 + ID * 16 + (2 * y);
-                var low = p.VRAM[addr];
-                var high = p.VRAM[addr + 1];
-                PushSpriteRowPartial(low, high, sprite, pixelsVisible);
-                SpritesFinished++;
-            }
-        }
 
         public Shade RenderPixel()
         {
