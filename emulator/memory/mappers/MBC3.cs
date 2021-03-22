@@ -133,7 +133,7 @@ namespace emulator
         {
             if (!RTCSelected)
             {
-                return (byte)(RAMEnabled ? RAMBanks!.ReadByte((RAMBankNumber * RAMBankSize) + n - RAMStart) : 0xff);
+                return (byte)(RAMEnabled ? RAMBanks.ReadByte((RAMBankNumber * RAMBankSize) + n - RAMStart) : 0xff);
             }
 #pragma warning disable CS8509 // Exhaustive
             return RTCRegisterNumber switch
@@ -161,7 +161,7 @@ namespace emulator
         {
             if (RAMEnabled && !RTCSelected)
             {
-                RAMBanks!.Write((RAMBankNumber * RAMBankSize) + n - RAMStart, v);
+                RAMBanks.Write((RAMBankNumber * RAMBankSize) + n - RAMStart, v);
             }
 
             if (RTCSelected)

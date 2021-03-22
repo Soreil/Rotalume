@@ -77,13 +77,13 @@ namespace emulator
 
         private static bool IsUpperBank(int n) => n >= ROMBankSize;
 
-        public byte GetRAM(int n) => (byte)(RAMEnabled ? RAMBanks!.ReadByte((RAMBankNumber * RAMBankSize) + n - RAMStart) : 0xff);
+        public byte GetRAM(int n) => (byte)(RAMEnabled ? RAMBanks.ReadByte((RAMBankNumber * RAMBankSize) + n - RAMStart) : 0xff);
 
         public void SetRAM(int n, byte v)
         {
             if (RAMEnabled)
             {
-                RAMBanks!.Write((RAMBankNumber * RAMBankSize) + n - RAMStart, v);
+                RAMBanks.Write((RAMBankNumber * RAMBankSize) + n - RAMStart, v);
             }
         }
 

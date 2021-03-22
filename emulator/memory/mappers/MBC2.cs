@@ -73,6 +73,9 @@ namespace emulator
 
         public byte GetRAM(int n) => (byte)(RAMEnabled ? RAM[n - RAMStart] | 0xf0 : 0xff);
 
-        public byte SetRAM(int n, byte v) => RAMEnabled ? RAM[n - RAMStart] = v : _ = v;
+        public void SetRAM(int n, byte v)
+        {
+            if (RAMEnabled) RAM[n - RAMStart] = v;
+        }
     }
 }

@@ -118,7 +118,7 @@ namespace emulator
         public byte SCX; //FF43
                          //FF44
 
-        public byte LY { get; set; }
+        public byte LY;
         public byte LYC; //FF45
 
         public byte DMA; //FF46

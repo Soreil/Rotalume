@@ -141,15 +141,15 @@ namespace emulator
             }
         }
 
-        //Reusable buffer
-        private readonly byte[] output = new byte[DisplayWidth];
         private void ResetLineSpecificState()
         {
             ScheduledModeChange = Mode.HBlank;
 
+            Span<byte> output = stackalloc byte[DisplayWidth];
+
             for (int i = 0; i < output.Length; i++)
             {
-                output[i] = ShadeToGray(background[i]);
+                output[i] = ShadeToGray(LineShadeBuffer[i]);
             }
 
             fs.Write(output);
@@ -171,7 +171,7 @@ namespace emulator
             fetcher.scanlineX++;
             if (PixelsPopped > (PPU.SCX & 7))
             {
-                background[PixelsSentToLCD++] = pix;
+                LineShadeBuffer[PixelsSentToLCD++] = pix;
             }
 
             bool windowStart = PixelsSentToLCD == PPU.WX - 7 && PPU.LY >= PPU.WY && PPU.WindowDisplayEnable;
@@ -182,7 +182,7 @@ namespace emulator
             }
         }
 
-        private readonly Shade[] background = new Shade[DisplayWidth];
+        private readonly Shade[] LineShadeBuffer = new Shade[DisplayWidth];
         public static byte ShadeToGray(Shade s) => s switch
         {
             Shade.White => 0xff,

@@ -244,20 +244,20 @@ namespace emulator
             }
         }
 
-        private int APUClock { get; set; }
-        public int TicksPerSample { get; }
+        private int APUClock;
+        private readonly int TicksPerSample;
 
         const int FrameSequencerFrequency = baseClock / 512;
         internal void Tick()
         {
-            if (APUClock % TicksPerSample == 0)
+            if (((byte)APUClock) == TicksPerSample)
             {
                 SampleCount++;
-            }
-            if (APUClock == FrameSequencerFrequency)
-            {
-                TickFrameSequencer();
-                APUClock = 0;
+                if (APUClock == FrameSequencerFrequency)
+                {
+                    TickFrameSequencer();
+                    APUClock = 0;
+                }
             }
             APUClock++;
         }
