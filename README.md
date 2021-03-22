@@ -17,11 +17,15 @@ Missing major features:
 Test coverage:
 - bgbtest: Fully working
 - Blargg CPU instruction tests: Fully working
+- Blargg CPU instruction timing tests: Fully working
 - Mooneye GB MBC1 tests: Fully working except for multiROM support
 - Mooneye GB MBC2 tests: Fully working
-- Mooneye GB MBC5 tests: Fully working (doesn't test rumble)
+- Mooneye GB MBC5 tests: Fully working including rumble
 - Mooneye GB Timer tests: Fully working except for TMA_write
 - ax6 rtc3test: Basic tests and accuracy tests working. No support yet for reading back minutes and seconds above 60 and hours above 24
 - dmg-acid2
 - Runs Pokemon Red
 - Runs Pokemon Silver
+
+Bugs:
+- Sprite conflicts are not handled correctly, sometimes this will result in a sprite not being drawn if it collides with another sprite
