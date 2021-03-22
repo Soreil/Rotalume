@@ -162,8 +162,8 @@ namespace emulator
 
         public void Write(ushort at, ushort arg)
         {
-            this[at] = (byte)(arg & 0xff);
-            this[at + 1] = (byte)((arg & 0xff00) >> 8);
+            this[at] = (byte)arg;
+            this[at + 1] = (byte)(arg >> 8);
         }
     }
 }

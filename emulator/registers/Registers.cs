@@ -17,7 +17,7 @@ namespace emulator
             get => (ushort)((A << 8) | MakeF());
             set
             {
-                A = (byte)((value & 0xff00) >> 8);
+                A = (byte)(value >> 8);
                 SetF((byte)(value & 0xf0));
             }
         }

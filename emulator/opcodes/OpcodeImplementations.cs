@@ -924,8 +924,8 @@ namespace emulator
                                                                    {
                                                                        var reg = GetRegister(p0);
 
-                                                                       var low = (reg & 0xf) << 4;
-                                                                       var high = (reg & 0xf0) >> 4;
+                                                                       var low = reg << 4;
+                                                                       var high = reg >> 4;
                                                                        var swapped = low | high;
 
                                                                        Registers.Zero = swapped == 0;
