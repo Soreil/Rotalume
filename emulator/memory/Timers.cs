@@ -61,10 +61,9 @@ namespace emulator
             }
         }
 
-        private byte _tac = 0xf8;
         public byte TAC
         {
-            get => _tac;
+            get => (byte)(0xf8 | ((TimerEnabled ? 1 : 0) << 2) | PositionToBits(TACBitSelected));
             set
             {
                 bool glitch;
@@ -74,28 +73,23 @@ namespace emulator
                 }
                 else
                 {
-                    if (!value.GetBit(2))
-                    {
-                        glitch = (InternalCounter & (1 << (TACBitSelected))) != 0;
-                    }
-                    else
-                    {
-                        glitch = ((InternalCounter & (1 << (TACBitSelected))) != 0) &&
+                    glitch = !value.GetBit(2)
+                        ? (InternalCounter & (1 << (TACBitSelected))) != 0
+                        : ((InternalCounter & (1 << (TACBitSelected))) != 0) &&
                                  ((InternalCounter & (1 << (BitPosition(value)))) == 0);
-                    }
                 }
                 if (glitch)
                 {
                     IncrementTIMA();
                 }
 
-                _tac = (byte)((value & 0x7) | 0xf8);
+                TimerEnabled = value.GetBit(2);
+                TACBitSelected = BitPosition(value);
             }
         }
 
-        private bool TimerEnabled => TAC.GetBit(2);
-
-        private int TACBitSelected => BitPosition(TAC);
+        private bool TimerEnabled;
+        private int TACBitSelected;
 
         private static byte BitPosition(byte b) => (b & 0x03) switch
         {
@@ -105,13 +99,16 @@ namespace emulator
             3 => 7,
             _ => throw new NotImplementedException(),
         };
-
-        private byte _tma;
-        public byte TMA
+        private static byte PositionToBits(int p) => p switch
         {
-            get => _tma;
-            set => _tma = value;
-        }
+            9 => 0,
+            3 => 1,
+            5 => 2,
+            7 => 3,
+            _ => throw new NotImplementedException(),
+        };
+
+        public byte TMA;
 
         public byte TIMA;
 

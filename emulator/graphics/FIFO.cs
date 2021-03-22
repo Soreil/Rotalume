@@ -4,7 +4,7 @@
     {
         private const int Capacity = 16;
         private int Position;
-        public int Count { get; private set; }
+        public int Count;
         private readonly T[] buffer = new T[Capacity];
         public void Clear()
         {

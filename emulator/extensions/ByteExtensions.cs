@@ -8,7 +8,7 @@
 
         public static void ClearBit(this ref byte input, int at) => input = (byte)(input & ~(1 << at) | (0 << at));
 
-        public static bool GetBit(this byte input, int at) => ((input >> at) & 1) == 1;
+        public static bool GetBit(this byte input, int at) => (input & (1 << at)) != 0;
 
         public static bool IsHalfCarryAdd(this byte input, byte arg) => (((input & 0xf) + (arg & 0xf)) & 0x10) == 0x10;
 

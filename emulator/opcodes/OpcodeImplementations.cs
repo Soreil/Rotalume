@@ -25,10 +25,8 @@ namespace emulator
 
         private ushort Pop()
         {
-            var SP = Registers.SP;
-            var popped = Memory.ReadWide(SP);
-            SP += 2;
-            Registers.SP = SP;
+            var popped = Memory.ReadWide(Registers.SP);
+            Registers.SP += 2;
 
             return popped;
         }
@@ -115,9 +113,8 @@ namespace emulator
 
         public Action LD_A16(int duration) => () =>
         {
-            var addr = Memory.FetchA16();
-            var arg = Memory.Read(addr);
-            Registers.A = arg;
+            Registers.A = Memory.Read(Memory.FetchA16());
+
             AddTicks(duration);
         };
 
@@ -125,8 +122,7 @@ namespace emulator
         {
             var A = Registers.A;
             Registers.Zero = false;
-            var res = RLC(A);
-            Registers.A = (res);
+            Registers.A = RLC(A);
             AddTicks(duration);
         };
 
@@ -196,11 +192,18 @@ namespace emulator
             ,
         };
 
-        public Action DEC(WideRegister p0, int duration) => () =>
+        //This function seems to have taken a lot of CPU with the previous imlpementation so we now explicitly return the direct lambda.
+        public Action DEC(WideRegister p0, int duration) => p0 switch
         {
-            var v = Registers.Get(p0);
-            Registers.Set(p0, --v);
-            AddTicks(duration);
+            WideRegister.BC => () => { Registers.BC--; AddTicks(duration); }
+            ,
+            WideRegister.DE => () => { Registers.DE--; AddTicks(duration); }
+            ,
+            WideRegister.HL => () => { Registers.HL--; AddTicks(duration); }
+            ,
+            WideRegister.SP => () => { Registers.SP--; AddTicks(duration); }
+            ,
+            _ => throw new Exception()
         };
 
         public Action RRCA(int duration) => () =>
@@ -375,24 +378,22 @@ namespace emulator
                                                           AddTicks(duration);
                                                           Halt();
                                                       };
-        public Action ADD(Register p0, Register p1, int duration) => () =>
+        public Action ADD(Register p1, int duration) => () =>
         {
-            var lhs = GetRegister(p0);
             var rhs = GetRegister(p1);
 
-            Registers.Set(p0, ADD(lhs, rhs));
+            ADD(rhs);
             AddTicks(duration);
         };
 
-        private byte ADD(byte lhs, byte rhs)
+        private void ADD(byte rhs)
         {
             Registers.Negative = false;
-            var sum = lhs + rhs;
+            Registers.Carry = Registers.A + rhs > 0xff;
+            Registers.Half = Registers.A.IsHalfCarryAdd(rhs);
 
-            Registers.Zero = ((byte)sum) == 0;
-            Registers.Carry = sum > 0xff;
-            Registers.Half = lhs.IsHalfCarryAdd(rhs);
-            return (byte)sum;
+            Registers.A += rhs;
+            Registers.Zero = Registers.A == 0;
         }
 
         public Action ADC(Register p1, int duration) => () =>
@@ -456,66 +457,58 @@ namespace emulator
 
         public Action AND(Register p0, int duration) => () =>
                                                                   {
-                                                                      var lhs = Registers.A;
                                                                       var rhs = GetRegister(p0);
 
-                                                                      AND(lhs, rhs);
+                                                                      AND(rhs);
                                                                       AddTicks(duration);
                                                                   };
-        private void AND(byte lhs, byte rhs)
+        private void AND(byte rhs)
         {
-            var result = lhs & rhs;
+            Registers.A &= rhs;
             Registers.Carry = false;
             Registers.Half = true;
             Registers.Negative = false;
-            Registers.Zero = result == 0;
+            Registers.Zero = Registers.A == 0;
 
-            Registers.A = (byte)result;
         }
 
         public Action XOR(Register p0, int duration) => () =>
                                                                   {
-                                                                      var lhs = Registers.A;
                                                                       var rhs = GetRegister(p0);
 
-                                                                      XOR(lhs, rhs);
+                                                                      XOR(rhs);
                                                                       AddTicks(duration);
                                                                   };
-        private void XOR(byte lhs, byte rhs)
+        private void XOR(byte rhs)
         {
-            var result = lhs ^ rhs;
+            Registers.A ^= rhs;
             Registers.Half = false;
             Registers.Negative = false;
             Registers.Carry = false;
-            Registers.Zero = result == 0;
-
-            Registers.A = (byte)result;
+            Registers.Zero = Registers.A == 0;
         }
 
         public Action OR(Register p0, int duration) => () =>
                                                                  {
-                                                                     var lhs = Registers.A;
                                                                      var rhs = GetRegister(p0);
-                                                                     OR(lhs, rhs);
+                                                                     OR(rhs);
                                                                      AddTicks(duration);
                                                                  };
 
-        private void OR(byte lhs, byte rhs)
+        private void OR(byte rhs)
         {
-            var result = lhs | rhs;
+            Registers.A |= rhs;
 
             Registers.Carry = false;
             Registers.Half = false;
             Registers.Negative = false;
-            Registers.Zero = result == 0;
+            Registers.Zero = Registers.A == 0;
 
-            Registers.A = (byte)result;
         }
         public Action CP(Register p0, int duration) => () =>
         {
-            var lhs = Registers.A;
             var rhs = GetRegister(p0);
-            CP(lhs, rhs);
+            CP(rhs);
             AddTicks(duration);
         };
         public Action RET(Flag p0, int duration, int alternativeDuration)
@@ -543,9 +536,8 @@ namespace emulator
         }
         public Action POP(WideRegister p0, int duration) => () =>
         {
-            var SP = Registers.SP;
-            Registers.Set(p0, Memory.ReadWide(SP));
-            Registers.SP = (ushort)(SP + 2);
+            Registers.Set(p0, Memory.ReadWide(Registers.SP));
+            Registers.SP += 2;
 
             AddTicks(duration);
         };
@@ -615,10 +607,9 @@ namespace emulator
         {
             Registers.Negative = false;
 
-            var lhs = Registers.A;
             var rhs = Memory.FetchD8();
 
-            Registers.A = ADD(lhs, rhs);
+            ADD(rhs);
             AddTicks(duration);
         };
         public Action RST(byte adress, int duration) => () => Call(duration, adress);
@@ -711,7 +702,7 @@ namespace emulator
                                                      {
                                                          var andWith = Memory.FetchD8();
 
-                                                         AND(Registers.A, andWith);
+                                                         AND(andWith);
                                                          AddTicks(duration);
                                                      };
 
@@ -765,7 +756,7 @@ namespace emulator
                                                             };
         public Action XOR(int duration) => () =>
                                                      {
-                                                         XOR(Registers.A, Memory.FetchD8());
+                                                         XOR(Memory.FetchD8());
                                                          AddTicks(duration);
                                                      };
         public Action LDH_A_AT_a8(int duration) => () =>
@@ -785,7 +776,7 @@ namespace emulator
                                                             };
         public Action OR(int duration) => () =>
                                                     {
-                                                        OR(Registers.A, Memory.FetchD8());
+                                                        OR(Memory.FetchD8());
                                                         AddTicks(duration);
                                                     };
 
@@ -836,16 +827,16 @@ namespace emulator
                                                     {
                                                         var lhs = Registers.A;
                                                         var rhs = Memory.FetchD8();
-                                                        CP(lhs, rhs);
+                                                        CP(rhs);
                                                         AddTicks(duration);
                                                     };
-        private void CP(byte lhs, byte rhs)
+        private void CP(byte rhs)
         {
             Registers.Negative = true;
 
-            Registers.Zero = lhs == rhs;
-            Registers.Carry = rhs > lhs;
-            Registers.Half = lhs.IsHalfCarrySub(rhs);
+            Registers.Zero = Registers.A == rhs;
+            Registers.Carry = rhs > Registers.A;
+            Registers.Half = Registers.A.IsHalfCarrySub(rhs);
         }
 
         public Action RLC(Register p0, int duration) => () =>
