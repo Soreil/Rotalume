@@ -124,15 +124,15 @@ namespace emulator
                         return;
                     }
 
-                    var cycles = fetcher.Fetch();
+                    fetcher.Fetch();
 
                     //We should probably be doing this in a more clean way since it just needs
                     //to handle on every cycle
-                    for (var i = 0; i < cycles && PixelsSentToLCD < 160; i++)
+                    if (PixelsSentToLCD < 160)
                         AttemptToPushAPixel();
 
-                    Stage3TickCount += cycles;
-                    TimeUntilWhichToPause += cycles;
+                    Stage3TickCount++;
+                    TimeUntilWhichToPause++;
 
                     if (PixelsSentToLCD == 160)
                         ResetLineSpecificState();

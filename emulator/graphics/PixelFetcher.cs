@@ -26,6 +26,7 @@ namespace emulator
         {
             FetcherStep = 0;
             PushedEarly = false;
+            delaying = false;
             scanlineX = 0;
             BGFIFO.Clear();
             SpriteFIFO.Clear();
@@ -38,31 +39,43 @@ namespace emulator
             WindowLY.Clear();
         }
 
-        //Fetch runs one of the steps of the background fetcher and returns the amount of cycles used
-        public int Fetch()
+        //Some of the fetcher step take two cycles
+        bool delaying;
+
+        public void Fetch()
         {
+            if (delaying)
+            {
+                delaying = false;
+                return;
+            }
+
             switch (FetcherStep)
             {
                 case 0:
                 tileIndex = FetchTileID();
                 FetcherStep = 1;
-                return 2;
+                delaying = true;
+                break;
                 case 1:
                 tileDataLow = FetchLow();
                 FetcherStep = 2;
-                return 2;
+                delaying = true;
+                break;
                 case 2:
                 tileDataHigh = FetchHigh();
                 PushedEarly = Pushrow();
                 FetcherStep = 3;
-                return 2;
+                delaying = true;
+                break;
                 case 3:
-                //Sleep();
                 FetcherStep = PushedEarly ? 0 : 4;
-                return 2;
+                delaying = true;
+                break;
                 case 4:
                 FetcherStep = Pushrow() ? 0 : 4;
-                return 1;
+                delaying = false;
+                break;
                 default:
                 throw new Exception("Illegal fetcher state");
             }
@@ -106,6 +119,7 @@ namespace emulator
                     return Shade.Empty;
                 }
 
+                //Fill the fifo lower half with transparant pixels
                 for (int i = SpriteFIFO.Count; i < 8; i = SpriteFIFO.Count)
                 {
                     SpriteFIFO.Push(new FIFOSpritePixel(0, false, 0));
@@ -113,6 +127,7 @@ namespace emulator
 
                 var sprite = FirstMatchingSprite();
 
+                //16 pixel offset before lines can be offscreen taken out
                 var y = p.LY - (sprite.Y - 16);
                 if (sprite.YFlipped)
                 {
@@ -180,6 +195,7 @@ namespace emulator
             }
             return false;
         }
+
         private SpriteAttributes FirstMatchingSprite()
         {
             var wanted = scanlineX + 8 - (p.SCX & 7);
