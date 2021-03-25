@@ -112,13 +112,17 @@ namespace emulator
 
                 //sound
                 APU.NR10 = 0x80;
+                APU.NR11 = 0xB0;
                 APU.NR12 = 0xf3;
                 APU.NR14 = 0xbf;
                 APU.NR21 = 0x3f;
                 APU.NR22 = 0x00;
+                APU.NR23 = 0xff;
                 APU.NR24 = 0xbf;
                 APU.NR30 = 0x7f;
+                APU.NR31 = 0xff;
                 APU.NR32 = 0x9f;
+                APU.NR33 = 0xff;
                 APU.NR34 = 0xbf;
                 APU.NR42 = 0x00;
                 APU.NR43 = 0x00;
@@ -130,7 +134,6 @@ namespace emulator
                 //graphics TODO: we can't really set up the graphics environment correctly
                 //because we will have to also initialize the internal renderer state correctly
                 PPU.LCDC = 0x91;
-                PPU.STAT = 0x83;
 
                 PPU.SCY = 0;
                 PPU.SCX = 0;

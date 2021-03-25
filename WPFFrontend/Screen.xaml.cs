@@ -83,6 +83,7 @@ namespace WPFFrontend
 
             IntPtr LockCB()
             {
+                if (CancellationTokenSource.IsCancellationRequested) return IntPtr.Zero;
                 try
                 {
                     return Dispatcher.Invoke(lockCb,

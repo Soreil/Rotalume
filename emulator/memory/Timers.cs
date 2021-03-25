@@ -25,6 +25,17 @@ namespace emulator
 
         public void Tick()
         {
+            InternalCounter++;
+            if (TACEnable)
+            {
+
+                //Overflowing internalcounter shouldn't be an issue here.
+                var overflow = ((InternalCounter) & TACFrequency) == 0;
+                if (overflow && ((InternalCounter - 1) & TACFrequency) != 0)
+                {
+                    IncrementTIMA();
+                }
+            }
             if (DelayTicks > 0)
             {
                 if (DelayTicks-- == 0)
@@ -33,18 +44,21 @@ namespace emulator
                 }
             }
 
-            if (TACEnable)
+            //There are a number of different timers in the APU which derive from
+            //bits in the DIV register rising/falling.
+            //https://github.com/LIJI32/SameBoy/Core/timing.c handles these cases for reference
+            //in GB_set_internal_div_counter.
+            //A rising edge at bit 14,13 is handled here.
+            if ((InternalCounter & 0x7FFF) == 0x4000)
             {
-
-                //Overflowing internalcounter shouldn't be an issue here.
-                var overflow = ((InternalCounter + 1) & TACFrequency) == 0;
-                if (overflow && (InternalCounter & TACFrequency) != 0)
-                {
-                    IncrementTIMA();
-                }
+                OnAPUTick128Hz();
             }
-            InternalCounter++;
+
         }
+
+        private void OnAPUTick128Hz() => APUTick128Hz?.Invoke(this, EventArgs.Empty);
+
+        public event EventHandler? APUTick128Hz;
 
         public byte DIV
         {
