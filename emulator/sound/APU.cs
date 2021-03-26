@@ -107,7 +107,15 @@ namespace emulator
         public byte NR14
         {
             get => (byte)(_nr14 & 0x40 | 0xbf);
-            set => _nr14 = value;
+            set
+            {
+                _nr14 = value;
+                if (_nr14.GetBit(7))
+                {
+                    Sound1OnEnabled = true;
+                    if ((NR11 & 0x3f) == 0) NR11 = (byte)((NR11 & 0xC0) | 0x3f);
+                }
+            }
         }
 
         private byte _nr21 = 0xff;
@@ -199,11 +207,18 @@ namespace emulator
             3 => 6 / 8d,
             _ => throw new NotImplementedException(),
         };
-        private TimeSpan Channel1SoundLength => TimeSpan.FromSeconds((64 - (NR11 & 0x3f)) * (1 / 256d));
 
-        private double Channel1InitialEnveloppeVolume => ((NR12 & 0xf0) >> 4) * (1 / 15d);
+        private int Channel1InitialEnveloppeVolume
+        {
+            get => NR12 >> 4;
+            set => NR12 = (byte)((NR12 & 0x0f) | (value << 4));
+        }
         private bool Channel1EnveloppeIncreasing => NR12.GetBit(3);
-        private int Channel1EnveloppeSweepNumber => NR12 & 0x07;
+        private int Channel1EnveloppeSweepNumber
+        {
+            get => NR12 & 0x07;
+            set => NR12 = (byte)((NR12 & 0xf8) | (value & 0x7));
+        }
         private int Channel1Frequency => NR13 | ((NR14 & 0x3) << 8);
         private bool Channel1Initial => NR14.GetBit(7);
         private bool Channel1Counter => NR14.GetBit(6);
@@ -224,19 +239,27 @@ namespace emulator
         private bool Sound4OnRightChannel => NR51.GetBit(3);
 
         private bool MasterSoundDisable => NR52.GetBit(7);
-        private readonly bool Sound1OnEnabled = false;
-        private readonly bool Sound2OnEnabled = false;
-        private readonly bool Sound3OnEnabled = false;
-        private readonly bool Sound4OnEnabled = false;
+        private bool Sound1OnEnabled = false;
+        private bool Sound2OnEnabled = false;
+        private bool Sound3OnEnabled = false;
+        private bool Sound4OnEnabled = false;
 
         public byte NR23 { get; internal set; }
         public byte NR31 { get; internal set; }
         public byte NR33 { get; internal set; }
         public byte[] Wave { get; internal set; } = new byte[0x10];
-        public int SampleCount { get; internal set; }
+
+        private int _sampleCount;
+        public int SampleCount
+        {
+            get => _sampleCount;
+            set => _sampleCount = (_sampleCount + value) % Samples.Length;
+        }
+        public float[] Samples;
         public APU(int sampleRate)
         {
             TicksPerSample = baseClock / sampleRate;
+            Samples = new float[sampleRate];
 
             if (TicksPerSample * sampleRate != baseClock)
             {
@@ -252,7 +275,7 @@ namespace emulator
         {
             if (((byte)APUClock) == TicksPerSample)
             {
-                SampleCount++;
+                Samples[SampleCount++] = SampleSound();
                 if (APUClock == FrameSequencerFrequency)
                 {
                     TickFrameSequencer();
@@ -262,7 +285,9 @@ namespace emulator
             APUClock++;
         }
 
-        private byte FrameSequencerClock;
+        private float SampleSound() => 0.0f;
+
+        private int FrameSequencerClock;
         private void TickFrameSequencer()
         {
             //Length counter
@@ -275,11 +300,34 @@ namespace emulator
                 if ((NR21 & 0x3f) > 0) NR21 = (byte)((NR21 & 0xc0) | ((NR21 & 0x3f) - 1));
                 if (NR31 > 0) NR31--; //NR31 uses the full byte for the length counter
                 if ((NR41 & 0x3f) > 0) NR41 = (byte)((NR41 & 0xc0) | ((NR41 & 0x3f) - 1));
+
+                if ((NR11 & 0x3f) == 0) Sound1OnEnabled = false;
+                if ((NR21 & 0x3f) == 0) Sound2OnEnabled = false;
+                if (NR31 == 0) Sound3OnEnabled = false;
+                if ((NR41 & 0x3f) == 0) Sound4OnEnabled = false;
             }
+
             //Tick volume envelope internal counter
             if (FrameSequencerClock == 7)
             {
+                //Sweep until we have done the requested number of sweeps
+                if (Channel1EnveloppeSweepNumber != 0)
+                {
+                    Channel1EnveloppeSweepNumber--;
 
+                    if (Channel1EnveloppeIncreasing)
+                    {
+                        //If we are not maxed out yet, increase
+                        if (Channel1InitialEnveloppeVolume != 0xf)
+                            Channel1InitialEnveloppeVolume++;
+                    }
+                    else
+                    {
+                        //If we are not bottomed out yet, decrease
+                        if (Channel1InitialEnveloppeVolume != 0)
+                            Channel1InitialEnveloppeVolume--;
+                    }
+                }
             }
             //Tick frequency sweep internal counter
             if ((FrameSequencerClock & 2) == 2)
@@ -287,7 +335,7 @@ namespace emulator
 
             }
 
-            FrameSequencerClock = (byte)((FrameSequencerClock + 1) % 8);
+            FrameSequencerClock = (FrameSequencerClock + 1) % 8;
         }
     }
 }
