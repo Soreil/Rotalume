@@ -93,7 +93,7 @@ namespace emulator
             if (bootROM == null)
             {
                 //registers
-                PC.Value = 0x100;
+                CPU.PC = 0x100;
                 CPU.Registers.AF = 0x0100;
                 CPU.Registers.BC = 0xff13;
                 CPU.Registers.DE = 0x00c1;

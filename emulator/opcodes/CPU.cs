@@ -22,7 +22,7 @@ namespace emulator
         {
             Memory = mMU;
             ISR = interruptRegisters;
-            this.Pc = PC;
+            Pc = PC;
 
             StdOps = new Action[0x100];
             StdOps[(int)Opcode.NOP] = NOP(4);
@@ -576,8 +576,7 @@ namespace emulator
         {
             if (TicksWeAreWaitingFor == 0)
             {
-                //We really should have the GUI thread somehow do this logic but polling like this should work
-                if (!ISR.InterruptFireRegister.GetBit(4) && ISR.GamePadInterruptReady())
+                if (ISR.GamePadInterruptReady())
                 {
                     var IFR = ISR.InterruptFireRegister;
                     IFR.SetBit(4);

@@ -1,4 +1,6 @@
-﻿namespace emulator
+﻿using System;
+
+namespace emulator
 {
     public partial class CPU
     {
@@ -33,16 +35,16 @@
                 {
                     ISR.IME = false;
                     var IFR = ISR.InterruptFireRegister;
-                    IFR.SetBit(bit, false);
+                    IFR.SetBit(bit, false); //Clear the interrupt bit
                     ISR.InterruptFireRegister = IFR;
 
                     var addr = (ushort)(0x40 + (0x8 * bit));
-                    Call(20, addr); //We need a cleaner way to call functions without fetching
+                    Call(20, addr);
 
                     return true;
                 }
             }
-            return false;
+            throw new Exception("This should be unreachable");
         }
     }
 }
