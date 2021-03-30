@@ -15,8 +15,6 @@ namespace emulator
         private readonly InterruptRegisters InterruptRegisters;
         private readonly ProgramCounter PC;
 
-        //TODO: move DMA somewhere else, probably the PPU
-        private byte _dma = 0xff;
         //TODO: move serial in to it's own class when we implement it
         private byte serialControl = 0x7e;
 
@@ -192,21 +190,22 @@ namespace emulator
                 {
                     throw new Exception("Illegal DMA start adress"); //TODO: investigate how to handle these
                 }
-
-                _dma = x;
-
-                ushort baseAddr = (ushort)(x << 8);
-                for (int i = 0; i < OAM.Size; i++)
+                else if (DMATicksLeft != 0)
                 {
-                    var r = Memory.Read((ushort)(baseAddr + i));
-                    PPU.OAM[OAM.Start + i] = r;
+                    throw new Exception("Nested DMA call");
                 }
+
+                DMATicksLeft = 160;
+                baseAddr = (ushort)(x << 8);
             },
-            () => _dma);
+            () => (byte)(baseAddr >> 8));
 
 
             return controlRegisters;
         }
+
+        int DMATicksLeft = 0;
+        ushort baseAddr = 0;
 
         //We have to make Step take one tick per subsystem
         public void Step()
@@ -216,6 +215,13 @@ namespace emulator
             CPU.Tick();
             APU.Tick();
             PPU.Tick();
+
+            if (DMATicksLeft != 0)
+            {
+                var r = Memory.Read((ushort)(baseAddr + (160 - DMATicksLeft)));
+                PPU.OAM[OAM.Start + (160 - DMATicksLeft)] = r;
+                DMATicksLeft--;
+            }
         }
     }
 }

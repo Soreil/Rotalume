@@ -99,7 +99,19 @@ namespace emulator
             get => (byte)(_nr11 & 0xc0 | 0x3f);
             set => _nr11 = value;
         }
-        public byte NR12 = 0xff;
+
+        public byte NR12
+        {
+            get => (byte)(Channel1Enveloppe << 4 |
+                (Channel1EnveloppeIncreasing ? 1 : 0) << 3 |
+                Channel1EnveloppeSweepNumber);
+            set
+            {
+                Channel1Enveloppe = (byte)(value >> 4);
+                Channel1EnveloppeIncreasing = value.GetBit(3);
+                Channel1EnveloppeSweepNumber = value & 0x07;
+            }
+        }
 
         public byte NR13 = 0xff;
 
@@ -208,17 +220,8 @@ namespace emulator
             _ => throw new NotImplementedException(),
         };
 
-        private int Channel1InitialEnveloppeVolume
-        {
-            get => NR12 >> 4;
-            set => NR12 = (byte)((NR12 & 0x0f) | (value << 4));
-        }
-        private bool Channel1EnveloppeIncreasing => NR12.GetBit(3);
-        private int Channel1EnveloppeSweepNumber
-        {
-            get => NR12 & 0x07;
-            set => NR12 = (byte)((NR12 & 0xf8) | (value & 0x7));
-        }
+        private bool Channel1EnveloppeIncreasing;
+        private int Channel1EnveloppeSweepNumber;
         private int Channel1Frequency => NR13 | ((NR14 & 0x3) << 8);
         private bool Channel1Initial => NR14.GetBit(7);
         private bool Channel1Counter => NR14.GetBit(6);
@@ -288,6 +291,7 @@ namespace emulator
         private float SampleSound() => 0.0f;
 
         private int FrameSequencerClock;
+        private byte Channel1Enveloppe;
         private void TickFrameSequencer()
         {
             //Length counter
@@ -318,14 +322,14 @@ namespace emulator
                     if (Channel1EnveloppeIncreasing)
                     {
                         //If we are not maxed out yet, increase
-                        if (Channel1InitialEnveloppeVolume != 0xf)
-                            Channel1InitialEnveloppeVolume++;
+                        if (Channel1Enveloppe != 0xf)
+                            Channel1Enveloppe++;
                     }
                     else
                     {
                         //If we are not bottomed out yet, decrease
-                        if (Channel1InitialEnveloppeVolume != 0)
-                            Channel1InitialEnveloppeVolume--;
+                        if (Channel1Enveloppe != 0)
+                            Channel1Enveloppe--;
                     }
                 }
             }
