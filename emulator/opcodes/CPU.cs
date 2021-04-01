@@ -576,12 +576,6 @@ namespace emulator
         {
             if (TicksWeAreWaitingFor == 0)
             {
-                if (ISR.GamePadInterruptReady())
-                {
-                    var IFR = ISR.InterruptFireRegister;
-                    IFR.SetBit(4);
-                    ISR.InterruptFireRegister = IFR;
-                }
                 didInterrupt = DoInterrupt();
                 if (ISR.InterruptEnableScheduled)
                 {

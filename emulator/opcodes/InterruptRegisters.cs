@@ -8,13 +8,6 @@ namespace emulator
         public bool InterruptEnableScheduled;
         private byte _IE = 0xe0;
 
-        private bool _gamePadInterruptReady;
-        public bool GamePadInterruptReady()
-        {
-            var was = _gamePadInterruptReady;
-            _gamePadInterruptReady = false;
-            return was;
-        }
         public byte InterruptFireRegister
         {
             get => _IE;
@@ -22,7 +15,7 @@ namespace emulator
         }
         public byte InterruptControlRegister;
 
-        public void TriggerEvent(object? sender, EventArgs e) => _gamePadInterruptReady = true;
+        public void TriggerEvent(object? sender, EventArgs e) => _IE.SetBit(4);
 
         internal (Action<byte> Write, Func<byte> Read) HookUp() => (x => InterruptFireRegister = x,
     () => InterruptFireRegister);
