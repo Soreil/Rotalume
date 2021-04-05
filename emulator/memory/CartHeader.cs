@@ -98,7 +98,7 @@ namespace emulator
             CartType.MBC3_RAM_BATTERY => new MBC3(this, gameROM, file!),
             CartType.MBC3_TIMER_BATTERY => new MBC3(this, gameROM, file!, clock),
             CartType.MBC3_TIMER_RAM_BATTERY => new MBC3(this, gameROM, file!, clock),
-            CartType.MBC5 => new MBC5(this, gameROM, file!),
+            CartType.MBC5 => new MBC5(this, gameROM),
             CartType.MBC5_RAM => new MBC5(this, gameROM, file!),
             CartType.MBC5_RAM_BATTERY => new MBC5(this, gameROM, file!),
             CartType.MBC5_RUMBLE_RAM_BATTERY => new MBC5WithRumble(this, gameROM, file!),

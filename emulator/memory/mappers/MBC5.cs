@@ -12,7 +12,7 @@ namespace emulator
         private readonly int RAMBankSize = RAMSize;
         protected readonly int RAMBankCount;
 
-        public MemoryMappedViewAccessor RAMBanks { get; }
+        public MemoryMappedViewAccessor? RAMBanks { get; }
 
         private readonly int ROMBankCount;
         private int ROMBankNumber = 1;
@@ -24,6 +24,26 @@ namespace emulator
             ROMBankCount = this.gameROM.Length / 0x4000;
             RAMBankCount = Math.Max(1, header.RAM_Size / RAMBankSize);
             RAMBanks = file.CreateViewAccessor(0, header.RAM_Size);
+
+            //0x800 is the only alternative bank size
+            if (header.RAM_Size == 0)
+            {
+                RAMBankSize = 0;
+            }
+
+            //0x800 is the only alternative bank size
+            if (header.RAM_Size == 0x800)
+            {
+                RAMBankSize = 0x800;
+            }
+        }
+        public MBC5(CartHeader header, byte[] gameROM)
+        {
+            this.gameROM = gameROM;
+
+            ROMBankCount = this.gameROM.Length / 0x4000;
+            RAMBankCount = Math.Max(1, header.RAM_Size / RAMBankSize);
+            RAMBanks = null;
 
             //0x800 is the only alternative bank size
             if (header.RAM_Size == 0)
@@ -77,13 +97,13 @@ namespace emulator
 
         private static bool IsUpperBank(int n) => n >= ROMBankSize;
 
-        public byte GetRAM(int n) => (byte)(RAMEnabled ? RAMBanks.ReadByte((RAMBankNumber * RAMBankSize) + n - RAMStart) : 0xff);
+        public byte GetRAM(int n) => (byte)(RAMEnabled ? RAMBanks!.ReadByte((RAMBankNumber * RAMBankSize) + n - RAMStart) : 0xff);
 
         public void SetRAM(int n, byte v)
         {
             if (RAMEnabled)
             {
-                RAMBanks.Write((RAMBankNumber * RAMBankSize) + n - RAMStart, v);
+                RAMBanks!.Write((RAMBankNumber * RAMBankSize) + n - RAMStart, v);
             }
         }
 
