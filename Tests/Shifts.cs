@@ -101,7 +101,7 @@ namespace Tests
         {
             var core = TestHelpers.NewCore(new byte[] { });
             var dec = core.CPU;
-            dec.Registers.Carry=false;
+            dec.Registers.Carry = false;
 
             dec.Op(Opcode.CCF)();
             Assert.IsTrue(dec.Registers.Carry);

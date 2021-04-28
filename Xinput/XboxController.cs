@@ -119,17 +119,9 @@ namespace J2i.Net.XInputWrapper
 
         public int RightTrigger => gamepadStateCurrent.Gamepad.bRightTrigger;
 
-        public Point LeftThumbStick => new()
-        {
-            X = gamepadStateCurrent.Gamepad.sThumbLX,
-            Y = gamepadStateCurrent.Gamepad.sThumbLY
-        };
+        public Point LeftThumbStick => new(gamepadStateCurrent.Gamepad.sThumbLX, gamepadStateCurrent.Gamepad.sThumbLY);
 
-        public Point RightThumbStick => new()
-        {
-            X = gamepadStateCurrent.Gamepad.sThumbRX,
-            Y = gamepadStateCurrent.Gamepad.sThumbRY
-        };
+        public Point RightThumbStick => new(gamepadStateCurrent.Gamepad.sThumbRX, gamepadStateCurrent.Gamepad.sThumbRY);
 
         #endregion
 

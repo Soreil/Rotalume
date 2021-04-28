@@ -1,4 +1,6 @@
-﻿using System;
+﻿using emulator;
+
+using System;
 using System.Collections.Generic;
 using System.Windows.Input;
 
@@ -17,8 +19,8 @@ namespace WPFFrontend
         public bool DpadUp { get; internal set; }
         public bool Start { get; internal set; }
 
-        private readonly Dictionary<Key, emulator.JoypadKey> _mappedKeys;
-        public KeyBoardWithInterruptHandler(Dictionary<Key, emulator.JoypadKey> mappedKeys) => _mappedKeys = mappedKeys;
+        private readonly Dictionary<Key, JoypadKey> _mappedKeys;
+        public KeyBoardWithInterruptHandler(Dictionary<Key, JoypadKey> mappedKeys) => _mappedKeys = mappedKeys;
 
         public void Down(object? sender, KeyEventArgs e)
         {
@@ -26,21 +28,21 @@ namespace WPFFrontend
 
             switch (_mappedKeys[e.Key])
             {
-                case emulator.JoypadKey.A:
+                case JoypadKey.A:
                 A = true; break;
-                case emulator.JoypadKey.B:
+                case JoypadKey.B:
                 B = true; break;
-                case emulator.JoypadKey.Select:
+                case JoypadKey.Select:
                 Select = true; break;
-                case emulator.JoypadKey.Start:
+                case JoypadKey.Start:
                 Start = true; break;
-                case emulator.JoypadKey.Up:
+                case JoypadKey.Up:
                 DpadUp = true; break;
-                case emulator.JoypadKey.Down:
+                case JoypadKey.Down:
                 DpadDown = true; break;
-                case emulator.JoypadKey.Left:
+                case JoypadKey.Left:
                 DpadLeft = true; break;
-                case emulator.JoypadKey.Right:
+                case JoypadKey.Right:
                 DpadRight = true; break;
             }
 
@@ -53,21 +55,21 @@ namespace WPFFrontend
 
             switch (_mappedKeys[e.Key])
             {
-                case emulator.JoypadKey.A:
+                case JoypadKey.A:
                 A = false; break;
-                case emulator.JoypadKey.B:
+                case JoypadKey.B:
                 B = false; break;
-                case emulator.JoypadKey.Select:
+                case JoypadKey.Select:
                 Select = false; break;
-                case emulator.JoypadKey.Start:
+                case JoypadKey.Start:
                 Start = false; break;
-                case emulator.JoypadKey.Up:
+                case JoypadKey.Up:
                 DpadUp = false; break;
-                case emulator.JoypadKey.Down:
+                case JoypadKey.Down:
                 DpadDown = false; break;
-                case emulator.JoypadKey.Left:
+                case JoypadKey.Left:
                 DpadLeft = false; break;
-                case emulator.JoypadKey.Right:
+                case JoypadKey.Right:
                 DpadRight = false; break;
             }
         }

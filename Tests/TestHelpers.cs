@@ -10,7 +10,7 @@ namespace Tests
     {
         public const string ROMpath = @"..\..\..\rom\";
         public const string ROMResultPath = @"..\..\..\expected_rom_result\";
-        private static byte[] LoadGameROM() => File.ReadAllBytes(ROMpath+@"Tetris (World) (Rev A).gb");
+        private static byte[] LoadGameROM() => File.ReadAllBytes(ROMpath + @"Tetris (World) (Rev A).gb");
         private static byte[] LoadBootROM() => File.ReadAllBytes(@"..\..\..\..\emulator\bootrom\DMG_ROM_BOOT.bin");
         public static Core NewBootCore(FrameSink? frameSink = null)
         {

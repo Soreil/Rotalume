@@ -112,7 +112,7 @@ namespace Tests
             p.Step();
 
             Assert.AreEqual(0xcdab, p.CPU.PC);
-            Assert.AreEqual(24-1, p.CPU.TicksWeAreWaitingFor);
+            Assert.AreEqual(24 - 1, p.CPU.TicksWeAreWaitingFor);
             Assert.AreEqual(0xfffd, p.CPU.Registers.SP);
             Assert.AreEqual(0x103, p.Memory.ReadWide(0xfffd));
         }
