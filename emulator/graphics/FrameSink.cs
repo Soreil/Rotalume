@@ -46,7 +46,7 @@ namespace emulator
             }
             stopWatch.Restart();
 
-            var ptr = Lock!();
+            var ptr = Lock();
             if (ptr != IntPtr.Zero)
             {
                 unsafe
@@ -54,7 +54,7 @@ namespace emulator
                     Marshal.Copy(frameData, 0, ptr, frameData.Length);
                 }
             }
-            Unlock!();
+            Unlock();
 
             Position = 0;
             OnFramePushed(EventArgs.Empty);
