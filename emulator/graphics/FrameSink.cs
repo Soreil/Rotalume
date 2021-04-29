@@ -11,12 +11,12 @@ namespace emulator
         private readonly Func<IntPtr> Lock;
         private readonly Action Unlock;
 
-        private const long timePerFrame = (long)(TimeSpan.TicksPerSecond / ((1 << 22) / 70224.0));
+        private const long timePerFrame = (long)(TimeSpan.TicksPerSecond / (cpu.Constants.Frequency / (double)graphics.Constants.TicksPerFrame));
         private readonly Stopwatch stopWatch = new();
         private readonly bool LimitFPS;
         public FrameSink(Func<IntPtr> Lock, Action Unlock, bool LimitFPS)
         {
-            frameData = new byte[144 * 160];
+            frameData = new byte[graphics.Constants.ScreenHeight * graphics.Constants.ScreenWidth];
 
             this.Lock = Lock;
             this.Unlock = Unlock;

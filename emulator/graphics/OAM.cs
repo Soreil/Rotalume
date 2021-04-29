@@ -39,12 +39,12 @@ namespace emulator
 
         private const int maxSpritesOnLine = 10;
 
-        private static bool OnLine(SpriteAttributes s, int line, int spriteHeight) => (s.Y + spriteHeight) > 16 &&
-s.Y < 160 &&
+        private static bool OnLine(SpriteAttributes s, int line, int spriteHeight) => (s.Y + spriteHeight) > graphics.Constants.DoubleSpriteHeight &&
+s.Y < graphics.Constants.ScreenWidth &&
 s.X != 0 &&
-s.X < 168 &&
-line >= s.Y - 16 &&
-line < s.Y - 16 + spriteHeight;
+s.X < graphics.Constants.ScreenWidth + graphics.Constants.SpriteWidth &&
+line >= s.Y - graphics.Constants.DoubleSpriteHeight &&
+line < s.Y - graphics.Constants.DoubleSpriteHeight + spriteHeight;
 
         public int SpritesOnLine(Span<SpriteAttributes> buffer, int line, int spriteHeight)
         {

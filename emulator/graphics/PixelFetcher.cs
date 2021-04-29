@@ -6,7 +6,6 @@ namespace emulator
 
     public class PixelFetcher
     {
-        private const int tileWidth = 8;
         private readonly PPU p;
         public readonly FIFO<FIFOPixel> BGFIFO = new();
         private readonly FIFO<FIFOSpritePixel> SpriteFIFO = new();
@@ -89,12 +88,12 @@ namespace emulator
         {
             if (SpriteFIFO.Count <= 8)
             {
-                for (var i = tileWidth; i > 0; i--)
+                for (var i = graphics.Constants.SpriteWidth; i > 0; i--)
                 {
                     var paletteIndex = low.GetBit(i - 1) ? 1 : 0;
                     paletteIndex += high.GetBit(i - 1) ? 2 : 0;
 
-                    var pos = sprite.XFlipped ? (i - 1) : tileWidth - i;
+                    var pos = sprite.XFlipped ? (i - 1) : graphics.Constants.SpriteWidth - i;
                     var existingSpritePixel = SpriteFIFO.At(pos);
                     var candidate = new FIFOSpritePixel((byte)paletteIndex, sprite.SpriteToBackgroundPriority, sprite.Palette);
 
@@ -120,7 +119,7 @@ namespace emulator
                 }
 
                 //Fill the fifo lower half with transparant pixels
-                for (int i = SpriteFIFO.Count; i < 8; i = SpriteFIFO.Count)
+                for (int i = SpriteFIFO.Count; i < graphics.Constants.SpriteWidth; i = SpriteFIFO.Count)
                 {
                     SpriteFIFO.Push(new FIFOSpritePixel(0, false, 0));
                 }
@@ -128,7 +127,7 @@ namespace emulator
                 var sprite = FirstMatchingSprite();
 
                 //16 pixel offset before lines can be offscreen taken out
-                var y = p.LY - (sprite.Y - 16);
+                var y = p.LY - (sprite.Y - graphics.Constants.DoubleSpriteHeight);
                 if (sprite.YFlipped)
                 {
                     y = p.SpriteHeight == 8 ? 7 - y : 15 - y;
@@ -140,7 +139,7 @@ namespace emulator
                 }
 
                 var ID = p.SpriteHeight == 8 ? sprite.ID : sprite.ID & 0xfe;
-                var addr = 0x8000 + ID * 16 + (2 * y);
+                var addr = 0x8000 + ID * graphics.Constants.BitsPerSpriteTile + (2 * y);
                 var low = p.VRAM[addr];
                 var high = p.VRAM[addr + 1];
                 PushSpriteRow(low, high, sprite);
@@ -217,14 +216,15 @@ namespace emulator
         {
             var tiledatamap = p.BGAndWindowTileDataSelect;
 
-            if (inWindow)
-                return tiledatamap != 0x8800
-                    ? tiledatamap + (tileIndex * 16) + (((WindowLY.Count - 1) & 7) * 2)
-                    : 0x9000 + (((sbyte)tileIndex) * 16) + (((WindowLY.Count - 1) & 7) * 2);
-            else
-                return tiledatamap != 0x8800
-                    ? tiledatamap + (tileIndex * 16) + (((p.LY + p.SCY) & 0xff & 7) * 2)
-                    : 0x9000 + (((sbyte)tileIndex) * 16) + (((p.LY + p.SCY) & 0xff & 7) * 2);
+            var lineTerm = inWindow ?
+                (WindowLY.Count - 1) & 7 * 2 :
+                ((p.LY + p.SCY) & 0xff & 7) * 2;
+
+            var datamapIndexForTileWithSign = tiledatamap == 0x8000
+                                ? (tileIndex * 16)
+                                : (((sbyte)tileIndex) * 16);
+
+            return tiledatamap + datamapIndexForTileWithSign + lineTerm;
         }
 
         private bool inWindow;
@@ -264,7 +264,7 @@ namespace emulator
         {
             if (BGFIFO.Count <= 8)
             {
-                for (var i = tileWidth; i > 0; i--)
+                for (var i = graphics.Constants.SpriteWidth; i > 0; i--)
                 {
                     var paletteIndex = tileDataLow.GetBit(i - 1) ? 1 : 0;
                     paletteIndex += tileDataHigh.GetBit(i - 1) ? 2 : 0;

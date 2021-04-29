@@ -8,20 +8,17 @@ namespace emulator
         {
             byte coincidence = (byte)(ISR.InterruptControlRegister & ISR.InterruptFireRegister & 0x1f); //Coincidence has all the bits which have both fired AND are enabled
 
-            if (Halted != HaltState.off)
+            if (coincidence != 0 && Halted == HaltState.normal)
             {
-                if (coincidence != 0 && Halted == HaltState.normal)
-                {
-                    Halted = HaltState.off;
-                    //This 4 extra clock cycles is from TCAGBD.
-                    AddTicks(4);
-                }
-                else if (coincidence != 0 && Halted == HaltState.normalIME0)
-                {
-                    Halted = HaltState.off;
-                    AddTicks(4);
-                    return true;
-                }
+                Halted = HaltState.off;
+                //This 4 extra clock cycles is from TCAGBD.
+                AddTicks(4);
+            }
+            else if (coincidence != 0 && Halted == HaltState.normalIME0)
+            {
+                Halted = HaltState.off;
+                AddTicks(4);
+                return true;
             }
 
             if (!ISR.IME || coincidence == 0)

@@ -158,7 +158,7 @@ namespace emulator
         public bool LCDEnable => LCDC.GetBit(7);
         public ushort TileMapDisplaySelect => (ushort)(LCDC.GetBit(6) ? 0x9C00 : 0x9800);
         public bool WindowDisplayEnable => LCDC.GetBit(5);
-        public ushort BGAndWindowTileDataSelect => (ushort)(LCDC.GetBit(4) ? 0x8000 : 0x8800);
+        public ushort BGAndWindowTileDataSelect => (ushort)(LCDC.GetBit(4) ? 0x8000 : 0x9000);
         public ushort BGTileMapDisplaySelect => (ushort)(LCDC.GetBit(3) ? 0x9c00 : 0x9800);
         public int SpriteHeight => LCDC.GetBit(2) ? 16 : 8;
         public bool OBJDisplayEnable => LCDC.GetBit(1);

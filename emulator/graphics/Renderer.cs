@@ -12,7 +12,7 @@ namespace emulator
 
         private const int TicksPerScanline = 456;
 
-        public Renderer(PPU ppu, FrameSink destination, long offset = 0)
+        public Renderer(PPU ppu, FrameSink destination, long offset)
         {
             fs = destination;
             PPU = ppu;
