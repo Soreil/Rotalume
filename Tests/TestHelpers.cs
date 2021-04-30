@@ -16,7 +16,7 @@ namespace Tests
         {
             var bootrom = LoadBootROM();
             var gamerom = LoadGameROM();
-            frameSink ??= new FrameSink(() => IntPtr.Zero, () => { }, false);
+            frameSink ??= new FrameSink(() => IntPtr.Zero, () => { }, () => false);
 
             return new Core(
                 gamerom,
@@ -34,7 +34,7 @@ namespace Tests
             }
             else gameromPaddedToSize = gamerom;
 
-            frameSink ??= new FrameSink(() => IntPtr.Zero, () => { }, false);
+            frameSink ??= new FrameSink(() => IntPtr.Zero, () => { }, () => false);
 
             return new Core(gameromPaddedToSize,
                 null,

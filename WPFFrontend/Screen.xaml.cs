@@ -74,9 +74,10 @@ namespace WPFFrontend
 
         private volatile bool paused;
         private volatile bool CancelRequested;
-        private void Gameboy(string path, bool bootromEnabled, bool fpsLimit)
+        private void Gameboy(string path, bool bootromEnabled)
         {
             var lockCb = new Func<IntPtr>(Lock);
+            var fpsCheckCb = new Func<bool>(FpsLockEnabled);
             var unlockCb = new Action(Unlock);
 
             byte[]? bootrom = bootromEnabled ? File.ReadAllBytes(@"..\..\..\..\emulator\bootrom\DMG_ROM_BOOT.bin") : null;
@@ -108,11 +109,24 @@ namespace WPFFrontend
                 }
             }
 
+            bool FPSLimiterEnabled()
+            {
+                try
+                {
+                    return Dispatcher.Invoke(fpsCheckCb,
+                        System.Windows.Threading.DispatcherPriority.Render, CancellationTokenSource.Token);
+                }
+                catch (TaskCanceledException)
+                {
+                    return false;
+                }
+            }
+
             var gameboy = new Core(
                 File.ReadAllBytes(path),
           bootrom,
           new Keypad(InputDevices),
-          new FrameSink(LockCB, UnlockCB, fpsLimit)
+          new FrameSink(LockCB, UnlockCB, FPSLimiterEnabled)
           );
 
             while (!CancelRequested)
@@ -128,6 +142,7 @@ namespace WPFFrontend
             }
         }
 
+        private bool FpsLockEnabled() => FPSLimitEnable.IsChecked;
         private IntPtr Lock()
         {
             bmp.Lock();
@@ -216,13 +231,12 @@ namespace WPFFrontend
             CancellationTokenSource = new();
 
             var br = BootRomEnable.IsChecked;
-            var fps = FPSLimitEnable.IsChecked;
 
             GameThread = new Task(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
                 Thread.CurrentThread.Name = "Gaming";
-                Gameboy(fn, br, fps);
+                Gameboy(fn, br);
             });
 
             GameThread.Start();

@@ -12,7 +12,7 @@ namespace Tests
         {
             IntPtr pointer = Marshal.AllocHGlobal(144 * 160);
 
-            var fs = new emulator.FrameSink(() => pointer, () => { }, false);
+            var fs = new emulator.FrameSink(() => pointer, () => { }, () => false);
 
             fs.FramePushed += DrewAFrame;
 

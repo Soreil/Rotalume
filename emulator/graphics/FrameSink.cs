@@ -13,8 +13,8 @@ namespace emulator
 
         private const long timePerFrame = (long)(TimeSpan.TicksPerSecond / (cpu.Constants.Frequency / (double)graphics.Constants.TicksPerFrame));
         private readonly Stopwatch stopWatch = new();
-        private readonly bool LimitFPS;
-        public FrameSink(Func<IntPtr> Lock, Action Unlock, bool LimitFPS)
+        private readonly Func<bool> LimitFPS;
+        public FrameSink(Func<IntPtr> Lock, Action Unlock, Func<bool> LimitFPS)
         {
             frameData = new byte[graphics.Constants.ScreenHeight * graphics.Constants.ScreenWidth];
 
@@ -37,7 +37,7 @@ namespace emulator
 
         public void Draw()
         {
-            if (LimitFPS)
+            if (LimitFPS())
             {
                 while (stopWatch.ElapsedTicks < timePerFrame)
                 {
