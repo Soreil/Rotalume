@@ -216,15 +216,14 @@ namespace emulator
         {
             var tiledatamap = p.BGAndWindowTileDataSelect;
 
-            var lineTerm = inWindow ?
-                (WindowLY.Count - 1) & 7 * 2 :
-                ((p.LY + p.SCY) & 0xff & 7) * 2;
-
-            var datamapIndexForTileWithSign = tiledatamap == 0x8000
-                                ? (tileIndex * 16)
-                                : (((sbyte)tileIndex) * 16);
-
-            return tiledatamap + datamapIndexForTileWithSign + lineTerm;
+            if (inWindow)
+                return tiledatamap == 0x8000
+                    ? tiledatamap + (tileIndex * 16) + (((WindowLY.Count - 1) & 7) * 2)
+                    : 0x9000 + (((sbyte)tileIndex) * 16) + (((WindowLY.Count - 1) & 7) * 2);
+            else
+                return tiledatamap == 0x8000
+                    ? tiledatamap + (tileIndex * 16) + (((p.LY + p.SCY) & 0xff & 7) * 2)
+                    : 0x9000 + (((sbyte)tileIndex) * 16) + (((p.LY + p.SCY) & 0xff & 7) * 2);
         }
 
         private bool inWindow;
