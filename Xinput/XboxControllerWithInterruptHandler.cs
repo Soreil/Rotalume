@@ -10,6 +10,9 @@ namespace J2i.Net.XInputWrapper
             X = x;
 
             X.StateChanged += X_StateChanged;
+
+            PreviousState = new State(false, false, false, false, false, false, false, false);
+            NewState = new State(false, false, false, false, false, false, false, false);
         }
 
         private State PreviousState;
@@ -47,33 +50,13 @@ namespace J2i.Net.XInputWrapper
         protected virtual void OnAnyKeyDown(EventArgs e) => KeyWentDown?.Invoke(this, e);
     }
 
-    internal readonly struct State
-    {
-        public readonly bool IsDPadUpPressed;
-        public readonly bool IsDPadDownPressed;
-        public readonly bool IsDPadLeftPressed;
-        public readonly bool IsDPadRightPressed;
-        public readonly bool IsAPressed;
-        public readonly bool IsBPressed;
-        public readonly bool IsBackPressed;
-        public readonly bool IsStartPressed;
-        public State(bool IsDPadUpPressed,
-                     bool IsDPadDownPressed,
-                     bool IsDPadLeftPressed,
-                     bool IsDPadRightPressed,
-                     bool IsAPressed,
-                     bool IsBPressed,
-                     bool IsBackPressed,
-                     bool IsStartPressed)
-        {
-            this.IsDPadUpPressed = IsDPadUpPressed;
-            this.IsDPadDownPressed = IsDPadDownPressed;
-            this.IsDPadLeftPressed = IsDPadLeftPressed;
-            this.IsDPadRightPressed = IsDPadRightPressed;
-            this.IsAPressed = IsAPressed;
-            this.IsBPressed = IsBPressed;
-            this.IsBackPressed = IsBackPressed;
-            this.IsStartPressed = IsStartPressed;
-        }
-    }
+    internal record State(
+        bool IsDPadUpPressed,
+        bool IsDPadDownPressed,
+        bool IsDPadLeftPressed,
+        bool IsDPadRightPressed,
+        bool IsAPressed,
+        bool IsBPressed,
+        bool IsBackPressed,
+        bool IsStartPressed);
 }
