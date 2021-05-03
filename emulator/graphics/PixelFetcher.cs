@@ -7,17 +7,17 @@ namespace emulator
     public class PixelFetcher
     {
         private readonly PPU p;
-        public readonly FIFO<FIFOPixel> BGFIFO = new();
+        private readonly FIFO<FIFOPixel> BGFIFO = new();
         private readonly FIFO<FIFOSpritePixel> SpriteFIFO = new();
         public PixelFetcher(PPU P) => p = P;
 
-        public int scanlineX;
+        private int scanlineX;
         private byte tileIndex;
         private byte tileDataLow;
         private byte tileDataHigh;
 
-        public int FetcherStep;
-        public bool PushedEarly;
+        private int FetcherStep;
+        private bool PushedEarly;
         private readonly HashSet<int> WindowLY = new();
 
         //Line finished resets all state which is only relevant for a single line
@@ -29,6 +29,8 @@ namespace emulator
             scanlineX = 0;
             BGFIFO.Clear();
             SpriteFIFO.Clear();
+            PixelsPopped = 0;
+            PixelsSentToLCD = 0;
         }
 
         //Frame finished resets all state relevant for an entire frame
@@ -39,7 +41,7 @@ namespace emulator
         }
 
         //Some of the fetcher step take two cycles
-        bool delaying;
+        private bool delaying;
 
         public void Fetch()
         {
@@ -80,9 +82,9 @@ namespace emulator
             }
         }
 
-        public SpriteAttributes[] SpriteAttributes = new SpriteAttributes[10];
-        public int SpriteCount;
-        public int SpritesFinished;
+        private SpriteAttributes[] SpriteAttributes = new SpriteAttributes[10];
+        private int SpriteCount;
+        private int SpritesFinished;
 
         private void PushSpriteRow(byte low, byte high, SpriteAttributes sprite)
         {
@@ -180,6 +182,37 @@ namespace emulator
             {
                 return Shade.Empty;
             }
+        }
+
+        private int PixelsPopped;
+        public int PixelsSentToLCD;
+        public readonly Shade[] LineShadeBuffer = new Shade[graphics.Constants.ScreenWidth];
+        internal void AttemptToPushAPixel()
+        {
+            var pix = RenderPixel();
+            if (pix == Shade.Empty)
+            {
+                return;
+            }
+            PixelsPopped++;
+            scanlineX++;
+            if (PixelsPopped > (p.SCX & 7))
+            {
+                LineShadeBuffer[PixelsSentToLCD++] = pix;
+            }
+
+            bool windowStart = PixelsSentToLCD == p.WX - 7 && p.LY >= p.WY && p.WindowDisplayEnable;
+            if (windowStart)
+            {
+                FetcherStep = 0;
+                BGFIFO.Clear();
+            }
+        }
+
+        public void GetSprites()
+        {
+            SpriteCount = p.OAM.SpritesOnLine(SpriteAttributes, p.LY, p.SpriteHeight);
+            SpritesFinished = 0;
         }
 
         private bool ContainsSprite()

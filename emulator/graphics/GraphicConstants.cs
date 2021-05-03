@@ -15,7 +15,8 @@ namespace emulator.graphics
         public const int DoubleSpriteHeight = SpriteHeight * 2;
          
         public const int OAMSearchDuration = 80;
-        public const int ScanlineDuration = 376 + OAMSearchDuration;
+        public const int ScanLineRemainderAfterOAMSearch = 376;
+        public const int ScanlineDuration = ScanLineRemainderAfterOAMSearch + OAMSearchDuration;
         public const int VBlankLineCount = 10;
         public const int ScanLinesPerFrame = ScreenHeight + VBlankLineCount;
         public const int TicksPerFrame = ScanLinesPerFrame * ScanlineDuration;

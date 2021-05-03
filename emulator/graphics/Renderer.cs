@@ -8,10 +8,6 @@ namespace emulator
         public long TimeUntilWhichToPause;
         private readonly FrameSink fs;
 
-        private const int DisplayWidth = 160;
-
-        private const int TicksPerScanline = 456;
-
         public Renderer(PPU ppu, FrameSink destination, long offset)
         {
             fs = destination;
@@ -24,8 +20,6 @@ namespace emulator
         public PixelFetcher fetcher;
         public int Stage3TickCount;
 
-        public int PixelsPopped;
-        public int PixelsSentToLCD;
 
         public int TotalTimeSpentInStage3 { get; private set; }
 
@@ -99,7 +93,7 @@ namespace emulator
                 if (PPU.Enable_HBlankInterrupt)
                     PPU.EnableLCDCStatusInterrupt();
 
-                TimeUntilWhichToPause += 376 - TotalTimeSpentInStage3;
+                TimeUntilWhichToPause += graphics.Constants.ScanLineRemainderAfterOAMSearch - TotalTimeSpentInStage3;
 
                 ScheduledModeChange = PPU.LY == 143 ? Mode.VBlank : Mode.OAMSearch;
                 return;
@@ -107,13 +101,12 @@ namespace emulator
                 if (PPU.Enable_OAM_Interrupt)
                     PPU.EnableLCDCStatusInterrupt();
 
-                fetcher.SpriteCount = PPU.OAM.SpritesOnLine(fetcher.SpriteAttributes, PPU.LY, PPU.SpriteHeight);
-                fetcher.SpritesFinished = 0;
-                TimeUntilWhichToPause += 80;
+                fetcher.GetSprites();
+                TimeUntilWhichToPause += graphics.Constants.OAMSearchDuration;
                 ScheduledModeChange = Mode.Transfer;
                 return;
                 case Mode.VBlank:
-                TimeUntilWhichToPause += TicksPerScanline;
+                TimeUntilWhichToPause += graphics.Constants.ScanlineDuration;
                 return;
                 case Mode.Transfer:
                 {
@@ -125,16 +118,12 @@ namespace emulator
                     }
 
                     fetcher.Fetch();
-
-                    //We should probably be doing this in a more clean way since it just needs
-                    //to handle on every cycle
-                    if (PixelsSentToLCD < 160)
-                        AttemptToPushAPixel();
+                    fetcher.AttemptToPushAPixel();
 
                     Stage3TickCount++;
                     TimeUntilWhichToPause++;
 
-                    if (PixelsSentToLCD == 160)
+                    if (fetcher.PixelsSentToLCD == graphics.Constants.ScreenWidth)
                         ResetLineSpecificState();
                     return;
                 }
@@ -145,44 +134,19 @@ namespace emulator
         {
             ScheduledModeChange = Mode.HBlank;
 
-            Span<byte> output = stackalloc byte[DisplayWidth];
+            Span<byte> output = stackalloc byte[graphics.Constants.ScreenWidth];
 
             for (int i = 0; i < output.Length; i++)
             {
-                output[i] = ShadeToGray(LineShadeBuffer[i]);
+                output[i] = ShadeToGray(fetcher.LineShadeBuffer[i]);
             }
 
             fs.Write(output);
             fetcher.LineFinished();
-            PixelsPopped = 0;
-            PixelsSentToLCD = 0;
             TotalTimeSpentInStage3 = Stage3TickCount;
             Stage3TickCount = 0;
         }
 
-        private void AttemptToPushAPixel()
-        {
-            var pix = fetcher.RenderPixel();
-            if (pix == Shade.Empty)
-            {
-                return;
-            }
-            PixelsPopped++;
-            fetcher.scanlineX++;
-            if (PixelsPopped > (PPU.SCX & 7))
-            {
-                LineShadeBuffer[PixelsSentToLCD++] = pix;
-            }
-
-            bool windowStart = PixelsSentToLCD == PPU.WX - 7 && PPU.LY >= PPU.WY && PPU.WindowDisplayEnable;
-            if (windowStart)
-            {
-                fetcher.FetcherStep = 0;
-                fetcher.BGFIFO.Clear();
-            }
-        }
-
-        private readonly Shade[] LineShadeBuffer = new Shade[DisplayWidth];
         public static byte ShadeToGray(Shade s) => s switch
         {
             Shade.White => 0xff,
