@@ -8,6 +8,7 @@ namespace Tests
     class GraphicalOutputTest
     {
         [Test]
+        [Category("RequiresBootROM")]
         public void NintendoLogoShowsUpInTheCenterAtTheEndOfBooting()
         {
             IntPtr pointer = Marshal.AllocHGlobal(144 * 160);
