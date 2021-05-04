@@ -30,27 +30,9 @@ namespace emulator
             Keypad.Input.KeyWentDown += InterruptRegisters.TriggerEvent;
 
             APU = new APU(32768);
-            PPU = new PPU(
-            () =>
-            {
-                var IFR = InterruptRegisters.InterruptFireRegister;
-                IFR.SetBit(0);
-                InterruptRegisters.InterruptFireRegister = IFR;
-            },
-            () =>
-            {
-                var IFR = InterruptRegisters.InterruptFireRegister;
-                IFR.SetBit(1);
-                InterruptRegisters.InterruptFireRegister = IFR;
-            },
-            frameSink);
+            PPU = new PPU(InterruptRegisters.EnableVBlankInterrupt, InterruptRegisters.EnableLCDSTATInterrupt, frameSink);
 
-            Timers = new Timers(() =>
-            {
-                var IFR = InterruptRegisters.InterruptFireRegister;
-                IFR.SetBit(2);
-                InterruptRegisters.InterruptFireRegister = IFR;
-            });
+            Timers = new Timers(InterruptRegisters.EnableTimerInterrupt);
 
             var ioRegisters = SetupControlRegisters(Keypad);
 
