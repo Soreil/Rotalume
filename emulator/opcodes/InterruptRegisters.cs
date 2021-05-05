@@ -23,5 +23,10 @@ namespace emulator
         internal void EnableVBlankInterrupt() => _IE.SetBit(0);
         internal void EnableLCDSTATInterrupt() => _IE.SetBit(1);
         internal void EnableTimerInterrupt() => _IE.SetBit(2);
+        internal void SetStateWithoutBootrom()
+        {
+            InterruptFireRegister = 0xe1;
+            IME = true;
+        }
     }
 }

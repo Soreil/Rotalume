@@ -76,7 +76,7 @@ namespace emulator
         //FF40 - FF4B, PPU control registers
         //FF40 
         private byte _LCDC;
-        public byte LCDC
+        private byte LCDC
         {
             get => _LCDC;
             set
@@ -101,31 +101,46 @@ namespace emulator
             }
         }
 
+        internal void SetStateWithoutBootrom()
+        {
+            LCDC = 0x91;
+
+            SCY = 0;
+            SCX = 0;
+            WY = 0;
+            WX = 0;
+            LYC = 0;
+            LY = 1;
+
+            BGP = 0xfc;
+            OBP0 = 0xff;
+            OBP1 = 0xff;
+        }
+
         private byte _stat = 0x80;
         //FF41      
-        public byte STAT
+        private byte STAT
         {
             get => _stat;
             set => _stat = (byte)((value & 0x7f) | 0x80);
         }
 
-        public bool Enable_LYC_Compare => STAT.GetBit(6);
+        private bool Enable_LYC_Compare => STAT.GetBit(6);
         public bool Enable_OAM_Interrupt => STAT.GetBit(5);
         public bool Enable_VBlankInterrupt => STAT.GetBit(4);
         public bool Enable_HBlankInterrupt => STAT.GetBit(3);
 
         public byte SCY; //FF42
         public byte SCX; //FF43
-                         //FF44
-
-        public byte LY;
+                         
+        public byte LY; //FF44
         public byte LYC; //FF45
 
-        public byte DMA; //FF46
+        //DMA register is located outside of the PPU for our implementation
 
-        public byte BGP = 0xff; //FF47
-        public byte OBP0 = 0xff; //FF48
-        public byte OBP1 = 0xff; //FF49
+        private byte BGP = 0xff; //FF47
+        private byte OBP0 = 0xff; //FF48
+        private byte OBP1 = 0xff; //FF49
 
         public byte WY; //FF4A
         public byte WX; //FF4B
@@ -155,7 +170,7 @@ namespace emulator
             _ => throw new IndexOutOfRangeException()
         };
 
-        public bool LCDEnable => LCDC.GetBit(7);
+        private bool LCDEnable => LCDC.GetBit(7);
         public ushort TileMapDisplaySelect => (ushort)(LCDC.GetBit(6) ? 0x9C00 : 0x9800);
         public bool WindowDisplayEnable => LCDC.GetBit(5);
         public ushort BGAndWindowTileDataSelect => (ushort)(LCDC.GetBit(4) ? 0x8000 : 0x9000);

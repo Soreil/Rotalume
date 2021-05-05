@@ -60,7 +60,7 @@ namespace emulator
 
         public event EventHandler? APUTick128Hz;
 
-        public byte DIV
+        private byte DIV
         {
             get => (byte)(InternalCounter >> 8);
             set
@@ -75,7 +75,7 @@ namespace emulator
             }
         }
 
-        public byte TAC
+        private byte TAC
         {
             get => (byte)(0xf8 | ((TACEnable ? 1 : 0) << 2) | PositionToBits(TACFrequency));
             set
@@ -102,6 +102,14 @@ namespace emulator
             }
         }
 
+        internal void SetStateWithoutBootrom()
+        {
+            TIMA = 0;
+            TAC = 0;
+            TMA = 0;
+            InternalCounter = 0x1800;
+        }
+
         private bool TACEnable;
         private int TACFrequency;
 
@@ -122,9 +130,9 @@ namespace emulator
             _ => throw new NotImplementedException(),
         };
 
-        public byte TMA;
+        private byte TMA;
 
-        public byte TIMA;
+        private byte TIMA;
 
         //When TIMA overflows it should delay writing the value for 4 cycles
         private const int DelayDuration = 4;

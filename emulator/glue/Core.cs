@@ -75,58 +75,21 @@ namespace emulator
             if (bootROM == null)
             {
                 //registers
-                CPU.PC = 0x100;
-                CPU.Registers.AF = 0x0100;
-                CPU.Registers.BC = 0xff13;
-                CPU.Registers.DE = 0x00c1;
-                CPU.Registers.HL = 0x8403;
-                CPU.Registers.SP = 0xfffe;
+                CPU.SetStateWithoutBootrom();
 
                 //timers
-                Timers.TIMA = 0;
-                Timers.TAC = 0;
-                Timers.TMA = 0;
-                Timers.InternalCounter = 0x1800;
+                Timers.SetStateWithoutBootrom();
 
-                InterruptRegisters.InterruptFireRegister = 0xe1;
 
                 //sound
-                APU.NR10 = 0x80;
-                APU.NR11 = 0xB0;
-                APU.NR12 = 0xf3;
-                APU.NR14 = 0xbf;
-                APU.NR21 = 0x3f;
-                APU.NR22 = 0x00;
-                APU.NR23 = 0xff;
-                APU.NR24 = 0xbf;
-                APU.NR30 = 0x7f;
-                APU.NR31 = 0xff;
-                APU.NR32 = 0x9f;
-                APU.NR33 = 0xff;
-                APU.NR34 = 0xbf;
-                APU.NR42 = 0x00;
-                APU.NR43 = 0x00;
-                APU.NR44 = 0xbf;
-                APU.NR50 = 0x77;
-                APU.NR51 = 0xf3;
-                APU.NR52 = 0xf1;
+                APU.SetStateWithoutBootrom();
 
                 //graphics TODO: we can't really set up the graphics environment correctly
                 //because we will have to also initialize the internal renderer state correctly
-                PPU.LCDC = 0x91;
+                PPU.SetStateWithoutBootrom();
 
-                PPU.SCY = 0;
-                PPU.SCX = 0;
-                PPU.WY = 0;
-                PPU.WX = 0;
-                PPU.LYC = 0;
-                PPU.LY = 1;
 
-                PPU.BGP = 0xfc;
-                PPU.OBP0 = 0xff;
-                PPU.OBP1 = 0xff;
-
-                InterruptRegisters.IME = true;
+                InterruptRegisters.SetStateWithoutBootrom();
             }
         }
 

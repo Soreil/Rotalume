@@ -93,14 +93,37 @@ namespace emulator
             set => _nr10 = value;
         }
 
+        internal void SetStateWithoutBootrom()
+        {
+            NR10 = 0x80;
+            NR11 = 0xB0;
+            NR12 = 0xf3;
+            NR14 = 0xbf;
+            NR21 = 0x3f;
+            NR22 = 0x00;
+            NR23 = 0xff;
+            NR24 = 0xbf;
+            NR30 = 0x7f;
+            NR31 = 0xff;
+            NR32 = 0x9f;
+            NR33 = 0xff;
+            NR34 = 0xbf;
+            NR42 = 0x00;
+            NR43 = 0x00;
+            NR44 = 0xbf;
+            NR50 = 0x77;
+            NR51 = 0xf3;
+            NR52 = 0xf1;
+        }
+
         private byte _nr11 = 0xff;
-        public byte NR11
+        private byte NR11
         {
             get => (byte)(_nr11 & 0xc0 | 0x3f);
             set => _nr11 = value;
         }
 
-        public byte NR12
+        private byte NR12
         {
             get => (byte)(Channel1Enveloppe << 4 |
                 (Channel1EnveloppeIncreasing ? 1 : 0) << 3 |
@@ -113,10 +136,10 @@ namespace emulator
             }
         }
 
-        public byte NR13 = 0xff;
+        private byte NR13 = 0xff;
 
         private byte _nr14 = 0xff;
-        public byte NR14
+        private byte NR14
         {
             get => (byte)(_nr14 & 0x40 | 0xbf);
             set
@@ -131,65 +154,65 @@ namespace emulator
         }
 
         private byte _nr21 = 0xff;
-        public byte NR21
+        private byte NR21
         {
             get => (byte)(_nr21 & 0xb0 | 0x3f);
             set => _nr21 = value;
         }
 
-        public byte NR22 = 0xff;
+        private byte NR22 = 0xff;
 
         private byte _nr24 = 0xff;
-        public byte NR24
+        private byte NR24
         {
             get => (byte)(_nr24 & 0x40 | 0xbf);
             set => _nr24 = value;
         }
 
         private byte _nr30 = 0xff;
-        public byte NR30
+        private byte NR30
         {
             get => (byte)(_nr30 & 0x80 | 0x7f);
             set => _nr30 = value;
         }
         private byte _nr32 = 0xff;
-        public byte NR32
+        private byte NR32
         {
             get => (byte)(_nr32 & 0x60 | 0x9f);
             set => _nr32 = value;
         }
         private byte _nr34 = 0xff;
-        public byte NR34
+        private byte NR34
         {
             get => (byte)(_nr34 & 0x40 | 0xbf);
             set => _nr34 = value;
         }
 
         private byte _nr41 = 0xff;
-        public byte NR41
+        private byte NR41
         {
             get => (byte)(_nr41 & 0x3f | 0xc0);
             set => _nr41 = value;
         }
 
 
-        public byte NR42 = 0xff;
+        private byte NR42 = 0xff;
 
-        public byte NR43 = 0xff;
+        private byte NR43 = 0xff;
 
         private byte _nr44 = 0xff;
-        public byte NR44
+        private byte NR44
         {
             get => (byte)(_nr44 & 0x40 | 0xbf);
             set => _nr44 = value;
         }
 
-        public byte NR50 = 0xff;
+        private byte NR50 = 0xff;
 
-        public byte NR51 = 0xff;
+        private byte NR51 = 0xff;
 
         private byte _nr52 = 0xf1;
-        public byte NR52
+        private byte NR52
         {
             get
             {
@@ -247,10 +270,10 @@ namespace emulator
         private bool Sound3OnEnabled = false;
         private bool Sound4OnEnabled = false;
 
-        public byte NR23 { get; internal set; }
-        public byte NR31 { get; internal set; }
-        public byte NR33 { get; internal set; }
-        public byte[] Wave { get; internal set; } = new byte[0x10];
+        private byte NR23 { get;  set; }
+        private byte NR31 { get;  set; }
+        private byte NR33 { get;  set; }
+        private byte[] Wave { get;  set; } = new byte[0x10];
 
         private int _sampleCount;
         public int SampleCount
@@ -258,7 +281,7 @@ namespace emulator
             get => _sampleCount;
             set => _sampleCount = (_sampleCount + value) % Samples.Length;
         }
-        public float[] Samples;
+        private float[] Samples;
         public APU(int sampleRate)
         {
             TicksPerSample = baseClock / sampleRate;
@@ -273,7 +296,7 @@ namespace emulator
         private int APUClock;
         private readonly int TicksPerSample;
 
-        const int FrameSequencerFrequency = baseClock / 512;
+        private const int FrameSequencerFrequency = baseClock / 512;
         internal void Tick()
         {
             if (((byte)APUClock) == TicksPerSample)
