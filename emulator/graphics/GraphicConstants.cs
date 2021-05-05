@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace emulator.graphics
+﻿namespace emulator.graphics
 {
     public static class Constants
     {
@@ -13,7 +7,7 @@ namespace emulator.graphics
         public const int SpriteWidth = 8;
         public const int SpriteHeight = 8;
         public const int DoubleSpriteHeight = SpriteHeight * 2;
-         
+
         public const int OAMSearchDuration = 80;
         public const int ScanLineRemainderAfterOAMSearch = 376;
         public const int ScanlineDuration = ScanLineRemainderAfterOAMSearch + OAMSearchDuration;

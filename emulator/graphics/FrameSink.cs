@@ -25,7 +25,7 @@ namespace emulator
             stopWatch.Start();
         }
 
-        public int Position { get; private set; }
+        private int Position { get; set; }
 
         protected virtual void OnFramePushed(EventArgs e)
         {

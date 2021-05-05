@@ -7,7 +7,7 @@ namespace emulator
         private readonly PPU PPU;
         public long TimeUntilWhichToPause;
         private readonly FrameSink fs;
-
+        private bool SkippingLYIncrementBecauseStartingLineOne = true;
         public Renderer(PPU ppu, FrameSink destination, long offset)
         {
             fs = destination;
@@ -19,7 +19,6 @@ namespace emulator
 
         public PixelFetcher fetcher;
         public int Stage3TickCount;
-
 
         public int TotalTimeSpentInStage3 { get; private set; }
 
@@ -68,66 +67,81 @@ namespace emulator
             if (PPU.Mode is Mode.OAMSearch or Mode.VBlank)
             {
                 //We only want to increment the line register if we aren't on the very first line
-                if (fs.Position != 0 || PPU.Mode == Mode.VBlank)
-                {
-                    PPU.LY++;
-                }
+                if (!SkippingLYIncrementBecauseStartingLineOne) PPU.LY++;
+                else SkippingLYIncrementBecauseStartingLineOne = false;
 
-                if (PPU.LY == PPU.LYC)
-                {
-                    PPU.LYCInterrupt = true;
-                }
+                if (PPU.LY == PPU.LYC) PPU.LYCInterrupt = true;
 
                 if (PPU.LY == 154)
                 {
                     PPU.LY = 0;
                     fetcher.FrameFinished();
                     ScheduledModeChange = Mode.OAMSearch;
+                    SkippingLYIncrementBecauseStartingLineOne = true;
                     return;
                 }
             }
+            ExecuteModeTick();
+        }
 
+        private void ExecuteModeTick()
+        {
             switch (PPU.Mode)
             {
                 case Mode.HBlank:
-                if (PPU.Enable_HBlankInterrupt)
-                    PPU.EnableLCDCStatusInterrupt();
-
-                TimeUntilWhichToPause += graphics.Constants.ScanLineRemainderAfterOAMSearch - TotalTimeSpentInStage3;
-
-                ScheduledModeChange = PPU.LY == 143 ? Mode.VBlank : Mode.OAMSearch;
-                return;
+                HBlank();
+                break;
                 case Mode.OAMSearch:
-                if (PPU.Enable_OAM_Interrupt)
-                    PPU.EnableLCDCStatusInterrupt();
-
-                fetcher.GetSprites();
-                TimeUntilWhichToPause += graphics.Constants.OAMSearchDuration;
-                ScheduledModeChange = Mode.Transfer;
-                return;
+                OAMSearch();
+                break;
                 case Mode.VBlank:
-                TimeUntilWhichToPause += graphics.Constants.ScanlineDuration;
-                return;
+                VBlank();
+                break;
                 case Mode.Transfer:
-                {
-                    if (PPU.LY != 0 && Stage3TickCount == 0)
-                    {
-                        Stage3TickCount += 4;
-                        TimeUntilWhichToPause += 4;
-                        return;
-                    }
-
-                    fetcher.Fetch();
-                    fetcher.AttemptToPushAPixel();
-
-                    Stage3TickCount++;
-                    TimeUntilWhichToPause++;
-
-                    if (fetcher.PixelsSentToLCD == graphics.Constants.ScreenWidth)
-                        ResetLineSpecificState();
-                    return;
-                }
+                Transfer();
+                break;
             }
+        }
+
+        private void Transfer()
+        {
+            //TODO: Why is this here again? Shouldn't the 4 tick offset only be for LY 0 instead of what we have now?
+            if (PPU.LY != 0 && Stage3TickCount == 0)
+            {
+                Stage3TickCount += 4;
+                TimeUntilWhichToPause += 4;
+                return;
+            }
+
+            fetcher.Fetch();
+            fetcher.AttemptToPushAPixel();
+
+            Stage3TickCount++;
+            TimeUntilWhichToPause++;
+
+            if (fetcher.PixelsSentToLCD == graphics.Constants.ScreenWidth)
+                ResetLineSpecificState();
+        }
+        private void VBlank() => TimeUntilWhichToPause += graphics.Constants.ScanlineDuration;
+        private void OAMSearch()
+        {
+            if (PPU.Enable_OAM_Interrupt)
+                PPU.EnableLCDCStatusInterrupt();
+
+            fetcher.GetSprites();
+            TimeUntilWhichToPause += graphics.Constants.OAMSearchDuration;
+            ScheduledModeChange = Mode.Transfer;
+        }
+
+        private void HBlank()
+        {
+            if (PPU.Enable_HBlankInterrupt)
+                PPU.EnableLCDCStatusInterrupt();
+
+            TimeUntilWhichToPause += graphics.Constants.ScanLineRemainderAfterOAMSearch - TotalTimeSpentInStage3;
+
+            ScheduledModeChange = PPU.LY == 143 ? Mode.VBlank : Mode.OAMSearch;
+            return;
         }
 
         private void ResetLineSpecificState()
