@@ -10,7 +10,12 @@ namespace emulator
         public readonly Registers Registers;
         private readonly MMU Memory;
         private readonly ProgramCounter Pc;
-        private void PC(ushort value) => Pc.Value = value;
+        public ushort PC
+        {
+            get => Pc.Value;
+            set => Pc.Value = value;
+        }
+        
 
         private HaltState Halted = HaltState.off;
 
