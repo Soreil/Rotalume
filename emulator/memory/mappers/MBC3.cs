@@ -159,40 +159,17 @@ namespace emulator
 
         private void SetRAM(int n, byte v)
         {
-            if (RAMEnabled && !RTCSelected)
-            {
-                RAMBanks.Write((RAMBankNumber * RAMBankSize) + n - RAMStart, v);
-            }
-
-            if (RTCSelected)
-            {
-                SetRTCRegister(v);
-            }
+            if (RAMEnabled && !RTCSelected) RAMBanks.Write((RAMBankNumber * RAMBankSize) + n - RAMStart, v);
+            if (RTCSelected) SetRTCRegister(v);
         }
 
         private long CurrentClock
         {
-            get
-            {
-                if (ClockIsPaused)
-                {
-                    return PausedClock;
-                }
-                else
-                {
-                    return GetRTC!() - BaseToSubtractFromClock;
-                }
-            }
+            get => ClockIsPaused ? PausedClock : GetRTC!() - BaseToSubtractFromClock;
             set
             {
-                if (ClockIsPaused)
-                {
-                    PausedClock = value;
-                }
-                else
-                {
-                    BaseToSubtractFromClock = GetRTC!() - value;
-                }
+                if (ClockIsPaused) PausedClock = value;
+                else BaseToSubtractFromClock = GetRTC!() - value;
             }
         }
 
@@ -200,32 +177,14 @@ namespace emulator
         {
             if (RTCRegisterNumber == 0x0c)
             {
-                if (!ClockIsPaused && v.GetBit(6))
-                {
-                    StopClock();
-                }
-                else if (ClockIsPaused)
-                {
-                    ReactivateClock();
-                }
+                if (!ClockIsPaused && v.GetBit(6)) StopClock();
+                else if (ClockIsPaused) ReactivateClock();
 
-                if (v.GetBit(7))
-                {
-                    SetCarry();
-                }
-                else
-                {
-                    UnSetCarry();
-                }
+                if (v.GetBit(7)) SetCarry();
+                else UnSetCarry();
 
-                if (v.GetBit(0))
-                {
-                    SetDayCounterMSB();
-                }
-                else
-                {
-                    UnSetDayCounterMSB();
-                }
+                if (v.GetBit(0)) SetDayCounterMSB();
+                else UnSetDayCounterMSB();
 
                 return;
             }
@@ -268,7 +227,7 @@ namespace emulator
         {
             if (CurrentClock / TicksPerDay >= 0x100)
             {
-                CurrentClock -= (TicksPerDay * 0x100);
+                CurrentClock -= TicksPerDay * 0x100;
             }
         }
 
@@ -276,7 +235,7 @@ namespace emulator
         {
             if (CurrentClock / TicksPerDay < 0x100)
             {
-                CurrentClock += (TicksPerDay * 0x100);
+                CurrentClock += TicksPerDay * 0x100;
             }
         }
 
@@ -291,7 +250,7 @@ namespace emulator
         private static long MakeDate(long days, byte hours, byte minutes, byte seconds, long remainder) => (days * TicksPerDay) + (hours * TicksPerHour) + (minutes * TicksPerMinute) + (seconds * TicksPerSecond) + remainder;
         private static (long days, byte hours, byte minutes, byte seconds, long remainder) GetDateComponents(long timeSpan)
         {
-            var days = (timeSpan / TicksPerDay);
+            var days = timeSpan / TicksPerDay;
             var hours = (byte)(timeSpan % TicksPerDay / TicksPerHour);
             var minutes = (byte)(timeSpan % TicksPerHour / TicksPerMinute);
             var seconds = (byte)(timeSpan % TicksPerMinute / TicksPerSecond);

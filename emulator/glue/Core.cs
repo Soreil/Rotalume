@@ -39,9 +39,18 @@ namespace emulator
             CartHeader Header = new CartHeader(gameROM);
 
             MBC Card;
-            var mmf = Header.MakeMemoryMappedFile();
-            Card = Header.MakeMBC(gameROM, mmf, () => masterclock);
+            if (Header.HasBattery())
+            {
+                var mmf = Header.MakeMemoryMappedFile();
+                Card = Header.HasClock() ? Header.MakeMBC(gameROM, mmf, () => masterclock) : Header.MakeMBC(gameROM, mmf);
+            }
+            else
+            {
+                Card = Header.MakeMBC(gameROM);
+            }
 
+            //Writing out the RTC too often would be very heavy. This writes it out once per frame.
+            //
             if (Header.Type == CartType.MBC3_TIMER_RAM_BATTERY)
             {
                 var SaveRTC = ((MBC3)Card).SaveRTC();

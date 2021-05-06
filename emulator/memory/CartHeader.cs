@@ -85,34 +85,44 @@ namespace emulator
             _ => false,
         };
 
-        public MBC MakeMBC(byte[] gameROM, System.IO.MemoryMappedFiles.MemoryMappedFile? file, Func<long> clock) => Type switch
+        public MBC MakeMBC(byte[] gameROM, System.IO.MemoryMappedFiles.MemoryMappedFile file, Func<long> clock) => Type switch
+        {
+            CartType.MBC3_TIMER_BATTERY => new MBC3(this, gameROM, file, clock),
+            CartType.MBC3_TIMER_RAM_BATTERY => new MBC3(this, gameROM, file, clock),
+            _ => throw new NotImplementedException(),
+        };
+
+        public MBC MakeMBC(byte[] gameROM, System.IO.MemoryMappedFiles.MemoryMappedFile file) => Type switch
+        {
+            CartType.MBC1_RAM_BATTERY => new MBC1WithBatteryBackedRAM(this, gameROM, file),
+            CartType.MBC2 => new MBC2(gameROM, file),
+            CartType.MBC2_BATTERY => new MBC2(gameROM, file),
+            CartType.MBC3 => new MBC3(this, gameROM, file),
+            CartType.MBC3_RAM => new MBC3(this, gameROM, file),
+            CartType.MBC3_RAM_BATTERY => new MBC3(this, gameROM, file),
+            CartType.MBC5_RAM => new MBC5(this, gameROM, file),
+            CartType.MBC5_RAM_BATTERY => new MBC5(this, gameROM, file),
+            CartType.MBC5_RUMBLE_RAM_BATTERY => new MBC5WithRumble(this, gameROM, file),
+            CartType.MBC5_RUMBLE => new MBC5WithRumble(this, gameROM, file),
+            CartType.MBC5_RUMBLE_RAM => new MBC5WithRumble(this, gameROM, file),
+            _ => throw new NotImplementedException(),
+        };
+
+        public MBC MakeMBC(byte[] gameROM) => Type switch
         {
             CartType.ROM_ONLY => new ROMONLY(gameROM),
             CartType.MBC1 => new MBC1(this, gameROM),
             CartType.MBC1_RAM => new MBC1(this, gameROM),
-            CartType.MBC1_RAM_BATTERY => new MBC1WithBatteryBackedRAM(this, gameROM, file!),
-            CartType.MBC2 => new MBC2(gameROM, file!),
-            CartType.MBC2_BATTERY => new MBC2(gameROM, file!),
-            CartType.MBC3 => new MBC3(this, gameROM, file!),
-            CartType.MBC3_RAM => new MBC3(this, gameROM, file!),
-            CartType.MBC3_RAM_BATTERY => new MBC3(this, gameROM, file!),
-            CartType.MBC3_TIMER_BATTERY => new MBC3(this, gameROM, file!, clock),
-            CartType.MBC3_TIMER_RAM_BATTERY => new MBC3(this, gameROM, file!, clock),
             CartType.MBC5 => new MBC5(this, gameROM),
-            CartType.MBC5_RAM => new MBC5(this, gameROM, file!),
-            CartType.MBC5_RAM_BATTERY => new MBC5(this, gameROM, file!),
-            CartType.MBC5_RUMBLE_RAM_BATTERY => new MBC5WithRumble(this, gameROM, file!),
-            CartType.MBC5_RUMBLE => new MBC5WithRumble(this, gameROM, file!),
-            CartType.MBC5_RUMBLE_RAM => new MBC5WithRumble(this, gameROM, file!),
             _ => throw new NotImplementedException(),
         };
 
-        public System.IO.MemoryMappedFiles.MemoryMappedFile? MakeMemoryMappedFile()
+        //A cartridge requires a battery in order to be able to keep state while the system is off
+        public System.IO.MemoryMappedFiles.MemoryMappedFile MakeMemoryMappedFile()
         {
-            //A cartridge requires a battery in order to be able to keep state while the system is off
             if (!HasBattery())
             {
-                return null;
+                throw new Exception("We need a battery for it to be relevant to keep a save file on disk");
             }
 
             //This retrieves %appdata% path
