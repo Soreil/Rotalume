@@ -3,6 +3,15 @@ using System.IO.MemoryMappedFiles;
 
 namespace emulator
 {
+    internal enum RTCRegister
+    {
+        Invalid = 0x00,
+        Second = 0x08,
+        Minute = 0x09,
+        Hour = 0x0a,
+        Day = 0x0b,
+        Flags = 0x0c
+    }
     internal class MBC3 : MBC
     {
         private readonly byte[] gameROM;
@@ -15,11 +24,11 @@ namespace emulator
         private const int lowBank = 0;
         private int ROMBankNumber = 1;
         private int RAMBankNumber = 0;
-        private int RTCRegisterNumber = 0;
+        private RTCRegister RTCRegisterNumber = RTCRegister.Invalid;
         private readonly Func<long>? GetRTC;
         private readonly bool hasClock;
 
-        private const long TicksPerSecond = 1 << 22;
+        private const long TicksPerSecond = cpu.Constants.Frequency;
         private const long TicksPerMinute = TicksPerSecond * 60;
         private const long TicksPerHour = TicksPerMinute * 60;
         private const long TicksPerDay = TicksPerHour * 24;
@@ -32,9 +41,9 @@ namespace emulator
         private bool DateOverflow = false;
         private long PausedClock = 0;
 
-        private System.IO.MemoryMappedFiles.MemoryMappedViewAccessor? ClockStorage;
+        private readonly MemoryMappedViewAccessor? ClockStorage;
 
-        public MBC3(CartHeader header, byte[] gameROM, System.IO.MemoryMappedFiles.MemoryMappedFile file, Func<long>? getClock = null)
+        public MBC3(CartHeader header, byte[] gameROM, MemoryMappedFile file, Func<long>? getClock = null)
         {
             this.gameROM = gameROM;
             RAMBanks = file.CreateViewAccessor(0, header.RAM_Size);
@@ -90,9 +99,9 @@ namespace emulator
                     ROMBankNumber = value == 0 ? 1 : value & 0x7f;
                     break;
                     case var v when v < 0x6000:
-                    if (value >= 8 && value < 0x0d)
+                    if (value is >= (byte)RTCRegister.Second and <= (byte)RTCRegister.Flags)
                     {
-                        RTCRegisterNumber = value;
+                        RTCRegisterNumber = (RTCRegister)value;
                         RTCSelected = true;
                     }
                     if (value <= 3)
@@ -107,7 +116,7 @@ namespace emulator
                         if (CurrentClock >= TicksPerDay * 0x200)
                         {
                             DateOverflow = true;
-                            CurrentClock %= (TicksPerDay * 0x200);
+                            CurrentClock %= TicksPerDay * 0x200;
                         }
                         LatchedTime = CurrentClock;
                     }
@@ -135,15 +144,14 @@ namespace emulator
             {
                 return (byte)(RAMEnabled ? RAMBanks.ReadByte((RAMBankNumber * RAMBankSize) + n - RAMStart) : 0xff);
             }
-#pragma warning disable CS8509 // Exhaustive
             return RTCRegisterNumber switch
-#pragma warning restore CS8509 // Exhaustive
             {
-                0x08 => (byte)((LatchedTime % TicksPerMinute) / TicksPerSecond),
-                0x09 => (byte)((LatchedTime % TicksPerHour) / TicksPerMinute),
-                0x0a => (byte)((LatchedTime % TicksPerDay) / TicksPerHour),
-                0x0b => (byte)(LatchedTime / TicksPerDay),
-                0x0c => MakeFlags(LatchedTime / TicksPerDay),
+                RTCRegister.Second => (byte)(LatchedTime % TicksPerMinute / TicksPerSecond),
+                RTCRegister.Minute => (byte)(LatchedTime % TicksPerHour / TicksPerMinute),
+                RTCRegister.Hour => (byte)(LatchedTime % TicksPerDay / TicksPerHour),
+                RTCRegister.Day => (byte)(LatchedTime / TicksPerDay),
+                RTCRegister.Flags => MakeFlags(LatchedTime / TicksPerDay),
+                _ => throw new Exception("Illegal RTC Register relection")
             };
         }
 
@@ -175,7 +183,7 @@ namespace emulator
 
         private void SetRTCRegister(byte v)
         {
-            if (RTCRegisterNumber == 0x0c)
+            if (RTCRegisterNumber == RTCRegister.Flags)
             {
                 if (!ClockIsPaused && v.GetBit(6)) StopClock();
                 else if (ClockIsPaused) ReactivateClock();
@@ -194,17 +202,17 @@ namespace emulator
 
             switch (RTCRegisterNumber)
             {
-                case 0x08:
+                case RTCRegister.Second:
                 seconds = (byte)(v & 0x3f);
                 remainder = 0; //We have to reset the subseconds in case we want to set the second component of the RTC
                 break;
-                case 0x09:
+                case RTCRegister.Minute:
                 minutes = (byte)(v & 0x3f);
                 break;
-                case 0x0a:
+                case RTCRegister.Hour:
                 hours = (byte)(v & 0x1f);
                 break;
-                case 0x0b:
+                case RTCRegister.Day:
                 days = v + daysTopBit;
                 break;
             };

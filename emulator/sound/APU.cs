@@ -227,7 +227,7 @@ namespace emulator
         }
 
         //We should have this available as a namespace wide thing somehow
-        private const int baseClock = 1 << 22;
+        private const int baseClock = cpu.Constants.Frequency;
 
         //All of the Channel 1 fields
         private int Channel1SweepTime => ((NR10 & 0x70) >> 4) * baseClock / 128;
