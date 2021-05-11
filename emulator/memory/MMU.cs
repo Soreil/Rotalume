@@ -13,7 +13,7 @@ namespace emulator
         private readonly (Action<byte> Write, Func<byte> Read) InterruptEnable;
         private readonly UnusableMEM UnusableMEM;
         private readonly ProgramCounter PC;
-        public byte this[int at]
+        public byte this[ushort at]
         {
             get
             {
@@ -22,9 +22,7 @@ namespace emulator
                     return bootROM![at];
                 }
 
-#pragma warning disable CS8509 // Exhaustive
                 return at switch
-#pragma warning restore CS8509
                 {
                     >= 0 and < 0x4000 => Card[at],//bank0
                     >= 0x4000 and < 0x8000 => Card[at],//bank1
@@ -154,7 +152,7 @@ namespace emulator
         {
             Span<byte> buf = stackalloc byte[2];
             buf[0] = this[at];
-            buf[1] = this[at + 1];
+            buf[1] = this[(ushort)(at + 1)];
             return BitConverter.ToUInt16(buf);
         }
 
@@ -163,7 +161,7 @@ namespace emulator
         public void Write(ushort at, ushort arg)
         {
             this[at] = (byte)arg;
-            this[at + 1] = (byte)(arg >> 8);
+            this[(ushort)(at + 1)] = (byte)(arg >> 8);
         }
     }
 }

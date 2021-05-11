@@ -80,13 +80,13 @@ namespace emulator
             Registers.HL = 0x8403;
             Registers.SP = 0xfffe;
         }
-            public Action INC(WideRegister p0, int duration) => () =>
-        {
-            var hl = Registers.Get(p0);
-            var target = (ushort)(hl + 1);
-            Registers.Set(p0, target);
-            AddTicks(duration);
-        };
+        public Action INC(WideRegister p0, int duration) => () =>
+    {
+        var hl = Registers.Get(p0);
+        var target = (ushort)(hl + 1);
+        Registers.Set(p0, target);
+        AddTicks(duration);
+    };
 
         public Action INC(Register p0, int duration) => () =>
         {
@@ -769,7 +769,7 @@ namespace emulator
                                                      };
         public Action LDH_A_AT_a8(int duration) => () =>
                                                              {
-                                                                 Registers.A = Memory[0xFF00 + Memory.FetchD8()];
+                                                                 Registers.A = Memory[(ushort)(0xFF00 + Memory.FetchD8())];
                                                                  AddTicks(duration);
                                                              };
         public Action DI(int duration) => () =>
