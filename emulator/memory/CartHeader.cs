@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 
 namespace emulator
 {
@@ -7,6 +8,9 @@ namespace emulator
         public string Title { get; init; }
         public CartType Type { get; init; }
 
+        private static string SaveFormatExtension = ".sav";
+
+        //ROM size in bytes. Supposedly some of these values don't actually exist as a mapping used by any games.
         private static int ROM_Size_Mapping(byte b) => b switch
         {
             0x00 => 32 * 1024,
@@ -24,6 +28,7 @@ namespace emulator
             _ => throw new Exception("Non standard ROM size")
         };
 
+        //RAM Size in bytes
         private static int RAM_Size_Mapping(byte b) => b switch
         {
             0x00 => 0,
@@ -47,14 +52,16 @@ namespace emulator
 
         public CartHeader(ReadOnlySpan<byte> gameROM)
         {
+            // 0x134 is the offset in to the game rom where the title starts. For gameboy colour games this length should be treated as
+            //shorter than 16 bytes since they reused some of the bytes for other purposes.
             var titleArea = gameROM.Slice(0x134, 16);
 
-            var t = new char[16];
+            Span<char> t = stackalloc char[16];
 
             for (int i = 0; i < titleArea.Length; i++)
                 t[i] = titleArea[i] == '\0' ? ' ' : (char)titleArea[i];
 
-            Title = new string(t);
+            Title = new string(t).Trim();
 
             Type = (CartType)gameROM[0x147];
 
@@ -126,39 +133,33 @@ namespace emulator
             }
 
             //This retrieves %appdata% path
-            var root = Environment.GetEnvironmentVariable("AppData") + "\\rotalume";
-            if (!System.IO.Directory.Exists(root))
+            var root = Environment.GetEnvironmentVariable("AppData");
+            if (root is null) throw new Exception("Can't retrieve AppData folder");
+
+            var RotalumeFolder = root + "\\rotalume";
+            if (!System.IO.Directory.Exists(RotalumeFolder))
             {
-                _ = System.IO.Directory.CreateDirectory(root);
+                _ = System.IO.Directory.CreateDirectory(RotalumeFolder);
             }
 
-            var saveFolder = root + "\\saves";
+            var saveFolder = RotalumeFolder + "\\saves";
             if (!System.IO.Directory.Exists(saveFolder))
             {
                 _ = System.IO.Directory.CreateDirectory(saveFolder);
             }
 
-            //Filenames might be somewhat illegal depending on what characters are in the title?
-            var path = string.Format(@"{0}\{1}.sav", saveFolder, Title);
+            var SanitizedName = SanitizeFilename(Title);
+            if (SanitizedName.Length == 0)
+            {
+                throw new Exception("Can't clean up this name and thus can't make it unique.");
+            }
+            var path = string.Format(@"{0}\{1}{2}", saveFolder, SanitizedName, SaveFormatExtension);
             if (!System.IO.File.Exists(path))
             {
-                int size = 0;
-                if (RAM_Size != 0)
-                {
-                    size += RAM_Size;
-                }
-                //MBC2 does not report a size in the header but instead has a fixed 2k internal RAM
-                else if (Type == CartType.MBC2_BATTERY)
-                {
-                    size += 0x2000;
-                }
-                //16 bytes to store clock should be plenty
-                if (HasClock())
-                {
-                    size += 16;
-                }
+                var size = RequiredSaveFileSize();
 
                 var buffer = new byte[size];
+                //Since this is supposed to be RAM we should probably initialize it so random values but 0xff does fine too
                 for (int i = 0; i < size; i++)
                 {
                     buffer[i] = 0xff;
@@ -166,9 +167,40 @@ namespace emulator
 
                 System.IO.File.WriteAllBytes(path, buffer);
             }
+            //We don't have versioning yet for save files. If we ever wind up changing the format this will at least catch it if that causes a size change
+            //We probably shouldn't assume files are going to get created on disk at exactly the size we requested, they might be a bit bigger.
+            else if (new System.IO.FileInfo(path).Length < RequiredSaveFileSize())
+            {
+                throw new Exception("Existing save size too small");
+            }
             return System.IO.MemoryMappedFiles.MemoryMappedFile.CreateFromFile(path);
         }
 
+        private int RequiredSaveFileSize()
+        {
+            int size = 0;
+            if (RAM_Size != 0)
+            {
+                size += RAM_Size;
+            }
+            //MBC2 does not report a size in the header but instead has a fixed 2k internal RAM
+            else if (Type == CartType.MBC2_BATTERY)
+            {
+                size += 0x2000;
+            }
+            //16 bytes to store clock should be plenty
+            if (HasClock())
+            {
+                size += 16;
+            }
 
+            return size;
+        }
+
+        private static string SanitizeFilename(string title)
+        {
+            var invalids = System.IO.Path.GetInvalidFileNameChars();
+            return new string(title.Where(x => !invalids.Contains(x)).ToArray());
+        }
     }
 }
