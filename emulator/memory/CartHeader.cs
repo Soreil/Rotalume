@@ -137,16 +137,8 @@ namespace emulator
             if (root is null) throw new Exception("Can't retrieve AppData folder");
 
             var RotalumeFolder = root + "\\rotalume";
-            if (!System.IO.Directory.Exists(RotalumeFolder))
-            {
-                _ = System.IO.Directory.CreateDirectory(RotalumeFolder);
-            }
-
             var saveFolder = RotalumeFolder + "\\saves";
-            if (!System.IO.Directory.Exists(saveFolder))
-            {
-                _ = System.IO.Directory.CreateDirectory(saveFolder);
-            }
+            _ = System.IO.Directory.CreateDirectory(saveFolder);
 
             var SanitizedName = SanitizeFilename(Title);
             if (SanitizedName.Length == 0)
