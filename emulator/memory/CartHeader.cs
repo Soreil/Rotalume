@@ -8,7 +8,7 @@ namespace emulator
         public string Title { get; init; }
         public CartType Type { get; init; }
 
-        private static string SaveFormatExtension = ".sav";
+        private static readonly string SaveFormatExtension = ".sav";
 
         //ROM size in bytes. Supposedly some of these values don't actually exist as a mapping used by any games.
         private static int ROM_Size_Mapping(byte b) => b switch

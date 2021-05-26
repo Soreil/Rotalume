@@ -132,7 +132,7 @@ namespace emulator
 
         public byte SCY; //FF42
         public byte SCX; //FF43
-                         
+
         public byte LY; //FF44
         public byte LYC; //FF45
 

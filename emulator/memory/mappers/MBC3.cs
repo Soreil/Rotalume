@@ -138,22 +138,17 @@ namespace emulator
 
         private static bool IsUpperBank(int n) => n >= ROMBankSize;
 
-        public byte GetRAM(int n)
-        {
-            if (!RTCSelected)
-            {
-                return (byte)(RAMEnabled ? RAMBanks.ReadByte((RAMBankNumber * RAMBankSize) + n - RAMStart) : 0xff);
-            }
-            return RTCRegisterNumber switch
-            {
-                RTCRegister.Second => (byte)(LatchedTime % TicksPerMinute / TicksPerSecond),
-                RTCRegister.Minute => (byte)(LatchedTime % TicksPerHour / TicksPerMinute),
-                RTCRegister.Hour => (byte)(LatchedTime % TicksPerDay / TicksPerHour),
-                RTCRegister.Day => (byte)(LatchedTime / TicksPerDay),
-                RTCRegister.Flags => MakeFlags(LatchedTime / TicksPerDay),
-                _ => throw new Exception("Illegal RTC Register relection")
-            };
-        }
+        public byte GetRAM(int n) => !RTCSelected
+                ? (byte)(RAMEnabled ? RAMBanks.ReadByte((RAMBankNumber * RAMBankSize) + n - RAMStart) : 0xff)
+                : RTCRegisterNumber switch
+                {
+                    RTCRegister.Second => (byte)(LatchedTime % TicksPerMinute / TicksPerSecond),
+                    RTCRegister.Minute => (byte)(LatchedTime % TicksPerHour / TicksPerMinute),
+                    RTCRegister.Hour => (byte)(LatchedTime % TicksPerDay / TicksPerHour),
+                    RTCRegister.Day => (byte)(LatchedTime / TicksPerDay),
+                    RTCRegister.Flags => MakeFlags(LatchedTime / TicksPerDay),
+                    _ => throw new Exception("Illegal RTC Register relection")
+                };
 
         private byte MakeFlags(long days)
         {

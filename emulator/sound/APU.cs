@@ -270,10 +270,10 @@ namespace emulator
         private bool Sound3OnEnabled = false;
         private bool Sound4OnEnabled = false;
 
-        private byte NR23 { get;  set; }
-        private byte NR31 { get;  set; }
-        private byte NR33 { get;  set; }
-        private byte[] Wave { get;  set; } = new byte[0x10];
+        private byte NR23 { get; set; }
+        private byte NR31 { get; set; }
+        private byte NR33 { get; set; }
+        private byte[] Wave { get; set; } = new byte[0x10];
 
         private int _sampleCount;
         public int SampleCount
@@ -281,7 +281,7 @@ namespace emulator
             get => _sampleCount;
             set => _sampleCount = (_sampleCount + value) % Samples.Length;
         }
-        private float[] Samples;
+        private readonly float[] Samples;
         public APU(int sampleRate)
         {
             TicksPerSample = baseClock / sampleRate;

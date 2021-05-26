@@ -80,18 +80,11 @@ namespace emulator
             get => (byte)(0xf8 | ((TACEnable ? 1 : 0) << 2) | PositionToBits(TACFrequency));
             set
             {
-                bool glitch;
-                if (!TACEnable)
-                {
-                    glitch = false;
-                }
-                else
-                {
-                    glitch = !value.GetBit(2)
+                var glitch = TACEnable
+&& (!value.GetBit(2)
                         ? (InternalCounter & TACFrequency) != 0
                         : ((InternalCounter & TACFrequency) != 0) &&
-                                 ((InternalCounter & (BitPosition(value))) == 0);
-                }
+                                 ((InternalCounter & (BitPosition(value))) == 0));
                 if (glitch)
                 {
                     IncrementTIMA();

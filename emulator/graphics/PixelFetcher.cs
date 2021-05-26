@@ -82,7 +82,7 @@ namespace emulator
             }
         }
 
-        private SpriteAttributes[] SpriteAttributes = new SpriteAttributes[10];
+        private readonly SpriteAttributes[] SpriteAttributes = new SpriteAttributes[10];
         private int SpriteCount;
         private int SpritesFinished;
 
@@ -249,12 +249,11 @@ namespace emulator
         {
             var tiledatamap = p.BGAndWindowTileDataSelect;
 
-            if (inWindow)
-                return tiledatamap == 0x8000
+            return inWindow
+                ? tiledatamap == 0x8000
                     ? tiledatamap + (tileIndex * 16) + (((WindowLY.Count - 1) & 7) * 2)
-                    : 0x9000 + (((sbyte)tileIndex) * 16) + (((WindowLY.Count - 1) & 7) * 2);
-            else
-                return tiledatamap == 0x8000
+                    : 0x9000 + (((sbyte)tileIndex) * 16) + (((WindowLY.Count - 1) & 7) * 2)
+                : tiledatamap == 0x8000
                     ? tiledatamap + (tileIndex * 16) + (((p.LY + p.SCY) & 0xff & 7) * 2)
                     : 0x9000 + (((sbyte)tileIndex) * 16) + (((p.LY + p.SCY) & 0xff & 7) * 2);
         }

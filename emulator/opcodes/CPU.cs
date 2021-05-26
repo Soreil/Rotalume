@@ -15,7 +15,7 @@ namespace emulator
             get => Pc.Value;
             set => Pc.Value = value;
         }
-        
+
 
         private HaltState Halted = HaltState.off;
 

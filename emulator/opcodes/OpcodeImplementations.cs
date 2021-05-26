@@ -238,11 +238,7 @@ namespace emulator
             return reg;
         }
 
-        public Action STOP(int duration) => () =>
-        {
-            AddTicks(duration);
-            //throw new Exception("Yea we ain't stopping clean partner");
-        };
+        public Action STOP(int duration) => () => AddTicks(duration);
         public Action RLA(int duration) => () =>
         {
             Registers.Zero = false;
@@ -295,30 +291,28 @@ namespace emulator
             return A;
         }
 
-        public Action JR(Flag p0, int duration, int alternativeDuration)
+        public Action JR(Flag p0, int duration, int alternativeDuration) => () =>
         {
-            return () =>
+            var flag = p0 switch
             {
-                var flag = p0 switch
-                {
-                    Flag.Z => Registers.Zero,
-                    Flag.NZ => !Registers.Zero,
-                    Flag.C => Registers.Carry,
-                    Flag.NC => !Registers.Carry,
-                    _ => throw new NotImplementedException()
-                };
-                var offset = Memory.FetchR8();
-                if (flag)
-                {
-                    Pc.Value = (ushort)(Pc.Value + offset);
-                    AddTicks(duration);
-                }
-                else
-                {
-                    AddTicks(alternativeDuration);
-                }
+                Flag.Z => Registers.Zero,
+                Flag.NZ => !Registers.Zero,
+                Flag.C => Registers.Carry,
+                Flag.NC => !Registers.Carry,
+                _ => throw new NotImplementedException()
             };
-        }
+            var offset = Memory.FetchR8();
+            if (flag)
+            {
+                Pc.Value = (ushort)(Pc.Value + offset);
+                AddTicks(duration);
+            }
+            else
+            {
+                AddTicks(alternativeDuration);
+            }
+        };
+
         public Action DAA(int duration) => () =>
         {
             if (!Registers.Negative)
@@ -460,16 +454,16 @@ namespace emulator
             Registers.Negative = true;
             Registers.Zero = ((byte)(lhs - rhs - carry)) == 0;
             Registers.Half = (lhs & 0xf) < ((rhs & 0xf) + carry);
-            Registers.Carry = (lhs - rhs - carry) > 0xff || (lhs - rhs - carry) < 0;
+            Registers.Carry = lhs - rhs - carry is > 0xff or < 0;
         }
 
         public Action AND(Register p0, int duration) => () =>
-                                                                  {
-                                                                      var rhs = GetRegister(p0);
+        {
+            var rhs = GetRegister(p0);
 
-                                                                      AND(rhs);
-                                                                      AddTicks(duration);
-                                                                  };
+            AND(rhs);
+            AddTicks(duration);
+        };
         private void AND(byte rhs)
         {
             Registers.A &= rhs;
@@ -519,29 +513,26 @@ namespace emulator
             CP(rhs);
             AddTicks(duration);
         };
-        public Action RET(Flag p0, int duration, int alternativeDuration)
+        public Action RET(Flag p0, int duration, int alternativeDuration) => () =>
         {
-            return () =>
+            var flag = p0 switch
             {
-                var flag = p0 switch
-                {
-                    Flag.Z => Registers.Zero,
-                    Flag.NZ => !Registers.Zero,
-                    Flag.C => Registers.Carry,
-                    Flag.NC => !Registers.Carry,
-                    _ => throw new NotImplementedException()
-                };
-                if (flag)
-                {
-                    Pc.Value = Pop();
-                    AddTicks(duration);
-                }
-                else
-                {
-                    AddTicks(alternativeDuration);
-                }
+                Flag.Z => Registers.Zero,
+                Flag.NZ => !Registers.Zero,
+                Flag.C => Registers.Carry,
+                Flag.NC => !Registers.Carry,
+                _ => throw new NotImplementedException()
             };
-        }
+            if (flag)
+            {
+                Pc.Value = Pop();
+                AddTicks(duration);
+            }
+            else
+            {
+                AddTicks(alternativeDuration);
+            }
+        };
         public Action POP(WideRegister p0, int duration) => () =>
         {
             Registers.Set(p0, Memory.ReadWide(Registers.SP));
@@ -549,61 +540,55 @@ namespace emulator
 
             AddTicks(duration);
         };
-        public Action JP_A16(Flag p0, int duration, int alternativeDuration)
+        public Action JP_A16(Flag p0, int duration, int alternativeDuration) => () =>
         {
-            return () =>
+            var flag = p0 switch
             {
-                var flag = p0 switch
-                {
-                    Flag.Z => Registers.Zero,
-                    Flag.NZ => !Registers.Zero,
-                    Flag.C => Registers.Carry,
-                    Flag.NC => !Registers.Carry,
-                    _ => throw new NotImplementedException()
-                };
-
-                var addr = Memory.FetchA16();
-                if (flag)
-                {
-                    Pc.Value = addr;
-                    AddTicks(duration);
-                }
-                else
-                {
-                    AddTicks(alternativeDuration);
-                }
+                Flag.Z => Registers.Zero,
+                Flag.NZ => !Registers.Zero,
+                Flag.C => Registers.Carry,
+                Flag.NC => !Registers.Carry,
+                _ => throw new NotImplementedException()
             };
-        }
+
+            var addr = Memory.FetchA16();
+            if (flag)
+            {
+                Pc.Value = addr;
+                AddTicks(duration);
+            }
+            else
+            {
+                AddTicks(alternativeDuration);
+            }
+        };
         public Action JP_A16(int duration) => () =>
         {
             var addr = Memory.FetchA16();
             Pc.Value = addr;
             AddTicks(duration);
         };
-        public Action CALL_A16(Flag p0, int duration, int alternativeDuration)
-        {
-            return () =>
-            {
-                var flag = p0 switch
-                {
-                    Flag.Z => Registers.Zero,
-                    Flag.NZ => !Registers.Zero,
-                    Flag.C => Registers.Carry,
-                    Flag.NC => !Registers.Carry,
-                    _ => throw new NotImplementedException()
-                };
+        public Action CALL_A16(Flag p0, int duration, int alternativeDuration) => () =>
+         {
+             var flag = p0 switch
+             {
+                 Flag.Z => Registers.Zero,
+                 Flag.NZ => !Registers.Zero,
+                 Flag.C => Registers.Carry,
+                 Flag.NC => !Registers.Carry,
+                 _ => throw new NotImplementedException()
+             };
 
-                var addr = Memory.FetchA16();
-                if (flag)
-                {
-                    Call(duration, addr);
-                }
-                else
-                {
-                    AddTicks(alternativeDuration);
-                }
-            };
-        }
+             var addr = Memory.FetchA16();
+             if (flag)
+             {
+                 Call(duration, addr);
+             }
+             else
+             {
+                 AddTicks(alternativeDuration);
+             }
+         };
 
 
         public Action PUSH(WideRegister p0, int duration) => () =>
