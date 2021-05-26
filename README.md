@@ -9,6 +9,10 @@ Savegames:
 Savegames are written to ```%appdata%\rotalume```, the savefile name is based on the internal name in the game ROM.
 The savegame format is simply a dump of the cartridge RAM. This is optionally followed by 8 bytes for the RTC time and another 8 bytes for the system time at which the save was made. Only games which specify both an RTC and a battery backup get these last 16 bytes saved.
 
+Controller support:
+- Controller support is provided via XInput. Tested controllers include the Xbox 360, Xbox One, Dualshock 3, Dualshock 4 and others. 
+- Rumble is supported for games which have a rumble motor in the cartridge.
+
 Missing major features:
 - Sound
 - Serial (no multiplayer)
@@ -29,3 +33,6 @@ Test coverage:
 
 Bugs:
 - Sprite conflicts are not handled correctly, sometimes this will result in a sprite not being drawn if it collides with another sprite
+
+Planned:
+- BESS (Best Effort Save State) format support
