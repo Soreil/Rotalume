@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace emulator
+﻿namespace emulator
 {
     public class MMU
     {

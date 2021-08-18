@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading;
-
-namespace J2i.Net.XInputWrapper
+﻿namespace J2i.Net.XInputWrapper
 {
     public class XboxController
     {

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace emulator
+﻿namespace emulator
 {
     public class InputDevices
     {

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace emulator
+﻿namespace emulator
 {
     internal class MBC1 : MBC
     {

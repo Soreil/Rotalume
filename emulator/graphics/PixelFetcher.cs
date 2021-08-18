@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace emulator
+﻿namespace emulator
 {
-
     public class PixelFetcher
     {
         private readonly PPU p;

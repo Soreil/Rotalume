@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace emulator
+﻿namespace emulator
 {
     public class InterruptRegisters
     {
@@ -20,6 +18,8 @@ namespace emulator
 
         internal (Action<byte> Write, Func<byte> Read) HookUp() => (x => InterruptFireRegister = x,
     () => InterruptFireRegister);
+
+        //These functions are only ever called by one user and could just be lambdas inplace.
         internal void EnableVBlankInterrupt() => _IE.SetBit(0);
         internal void EnableLCDSTATInterrupt() => _IE.SetBit(1);
         internal void EnableTimerInterrupt() => _IE.SetBit(2);

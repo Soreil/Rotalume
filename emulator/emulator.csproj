@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>net5.0</TargetFramework>
-    <AssemblyName>emulator</AssemblyName>
+	  <TargetFrameworks>net6.0</TargetFrameworks>
+	  <AssemblyName>emulator</AssemblyName>
     <RootNamespace>emulator</RootNamespace>
     <Nullable>enable</Nullable>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>

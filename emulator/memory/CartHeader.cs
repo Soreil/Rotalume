@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-
-namespace emulator
+﻿namespace emulator
 {
     internal record CartHeader
     {

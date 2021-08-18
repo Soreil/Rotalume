@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace emulator
+﻿namespace emulator
 {
     //Timer system handles all Gekkio timer tests except for tima_write_reloading and tma_write_reloading
     public class Timers

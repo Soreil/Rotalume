@@ -1,8 +1,5 @@
 ﻿using emulator;
 
-using System;
-using System.IO;
-
 
 namespace Tests
 {
