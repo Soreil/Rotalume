@@ -1,14 +1,13 @@
-﻿namespace emulator
+﻿namespace emulator;
+
+public enum JoypadKey
 {
-    public enum JoypadKey
-    {
-        A,
-        B,
-        Select,
-        Start,
-        Right,
-        Left,
-        Up,
-        Down
-    }
+    A,
+    B,
+    Select,
+    Start,
+    Right,
+    Left,
+    Up,
+    Down
 }

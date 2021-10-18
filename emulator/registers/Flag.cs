@@ -1,14 +1,13 @@
-﻿namespace emulator
+﻿namespace emulator;
+
+public enum Flag
 {
-    public enum Flag
-    {
-        Z,
-        NZ,
-        N,
-        NN,
-        H,
-        NH,
-        C,
-        NC
-    }
+    Z,
+    NZ,
+    N,
+    NN,
+    H,
+    NH,
+    C,
+    NC
 }

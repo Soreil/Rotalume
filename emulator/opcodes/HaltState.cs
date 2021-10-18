@@ -1,10 +1,9 @@
-﻿namespace emulator
+﻿namespace emulator;
+
+public enum HaltState
 {
-    public enum HaltState
-    {
-        off,
-        normal,
-        normalIME0,
-        haltbug
-    }
+    off,
+    normal,
+    normalIME0,
+    haltbug
 }

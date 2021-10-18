@@ -1,12 +1,11 @@
-﻿namespace emulator
+﻿namespace emulator;
+
+public enum WideRegister
 {
-    public enum WideRegister
-    {
-        AF,
-        BC,
-        DE,
-        HL,
-        SP,
-        PC
-    }
+    AF,
+    BC,
+    DE,
+    HL,
+    SP,
+    PC
 }

@@ -1,4 +1,3 @@
-﻿namespace J2i.Net.XInputWrapper
-{
-    public record Point(int X, int Y);
-}
+﻿namespace J2i.Net.XInputWrapper;
+
+public record Point(int X, int Y);

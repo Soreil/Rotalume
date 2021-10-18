@@ -6,6 +6,7 @@
 	  <AssemblyName>emulator</AssemblyName>
     <RootNamespace>emulator</RootNamespace>
     <Nullable>enable</Nullable>
+	<ImplicitUsings>enable</ImplicitUsings>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
   </PropertyGroup>
 

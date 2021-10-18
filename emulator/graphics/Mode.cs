@@ -1,10 +1,9 @@
-﻿namespace emulator
+﻿namespace emulator;
+
+public enum Mode
 {
-    public enum Mode
-    {
-        HBlank = 0,
-        VBlank = 1,
-        OAMSearch = 2,
-        Transfer = 3
-    }
+    HBlank = 0,
+    VBlank = 1,
+    OAMSearch = 2,
+    Transfer = 3
 }

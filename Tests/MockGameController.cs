@@ -3,6 +3,8 @@
 
 namespace Tests
 {
+    //Mockgamecontroller is a controller which can only be queried but never actually fires and controller events.
+    //We will need a second mock controller at some point which can fire from a test input file.
     public class MockGameController : IGameController
     {
         public bool IsBPressed { get; }
