@@ -1,7 +1,5 @@
 ﻿using emulator;
 
-using System;
-
 namespace WPFFrontend;
 
 internal class IGameControllerKeyboardBridge : IGameController

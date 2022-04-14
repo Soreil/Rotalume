@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace emulator;
 
-public class FrameSink
+public class FrameSink : IFrameSink
 {
     private readonly byte[] frameData;
 

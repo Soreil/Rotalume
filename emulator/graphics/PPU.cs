@@ -5,8 +5,8 @@ public class PPU
     private long Clock;
     public readonly Action EnableVBlankInterrupt;
     public readonly Action EnableLCDCStatusInterrupt;
-    private readonly FrameSink Writer;
-    public PPU(Action enableVBlankInterrupt, Action enableLCDCStatusInterrupt, FrameSink frameSink)
+    private readonly IFrameSink Writer;
+    public PPU(Action enableVBlankInterrupt, Action enableLCDCStatusInterrupt, IFrameSink frameSink)
     {
         OAM = new OAM();
         VRAM = new VRAM();

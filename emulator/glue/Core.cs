@@ -16,7 +16,7 @@ public class Core
     //TODO: move serial in to it's own class when we implement it
     private byte serialControl = 0x7e;
 
-    public Core(byte[] gameROM, byte[]? bootROM, Keypad Keypad, FrameSink frameSink)
+    public Core(byte[] gameROM, byte[]? bootROM, Keypad Keypad, IFrameSink frameSink)
     {
         if (gameROM.Length < 0x8000)
         {

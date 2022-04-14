@@ -4,9 +4,9 @@ public class Renderer
 {
     private readonly PPU PPU;
     public long TimeUntilWhichToPause;
-    private readonly FrameSink fs;
+    private readonly IFrameSink fs;
     private bool SkippingLYIncrementBecauseStartingLineOne = true;
-    public Renderer(PPU ppu, FrameSink destination, long offset)
+    public Renderer(PPU ppu, IFrameSink destination, long offset)
     {
         fs = destination;
         PPU = ppu;
