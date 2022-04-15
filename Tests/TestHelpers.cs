@@ -1,5 +1,7 @@
 ﻿using emulator;
 
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace Tests;
 
@@ -46,5 +48,22 @@ public static class TestHelpers
         {
             c.Step();
         }
+    }
+
+    public static bool AreEqual(Image<L8> expectedImage, Image<L8> outputImage)
+    {
+        var pixelArray = new L8[expectedImage.Width * expectedImage.Height];
+        expectedImage.CopyPixelDataTo(pixelArray);
+
+        var pixelArray2 = new L8[outputImage.Width * outputImage.Height];
+        outputImage.CopyPixelDataTo(pixelArray2);
+
+        for (int i = 0; i < pixelArray2.Length; i++)
+        {
+            if (pixelArray[i] != pixelArray2[i])
+                return false;
+        }
+
+        return true;
     }
 }

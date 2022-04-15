@@ -66,8 +66,6 @@ public partial class Screen : Window
 
     private readonly InputDevices InputDevices;
 
-    private void FPSDisplayEnable_Checked(object sender, RoutedEventArgs e) => throw new NotImplementedException();
-
     private volatile bool paused;
     private volatile bool CancelRequested;
     private void Gameboy(string path, bool bootromEnabled)
