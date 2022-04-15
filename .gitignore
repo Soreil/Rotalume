@@ -344,5 +344,4 @@ healthchecksdb
 *.sav
 /rgbds
 *.gbc
-/Tests/rom
 *.diagsession

@@ -12,42 +12,33 @@ internal class GraphicalOutputTest
 {
     [Test]
     [Category("RequiresBootROM")]
-    public void NintendoLogoShowsUpInTheCenterAtTheEndOfBooting()
+    [TestCase(@"..\..\..\..\Tests\rom\boot\expected.png")]
+    public void NintendoLogoShowsUpInTheCenterAtTheEndOfBooting(string imagePath)
     {
-        IntPtr pointer = Marshal.AllocHGlobal(144 * 160);
+        var render = new TestRenderDevice();
 
-        var fs = new FrameSink(() => pointer, () => { }, () => false);
+        var expectedImage = Image.Load(imagePath);
 
-        fs.FramePushed += DrewAFrame;
+        var core = TestHelpers.NewBootCore(render);
 
-        var c = TestHelpers.NewBootCore(fs);
+        int FramesDrawn = 0;
+        render.FramePushed += (sender, e) => FramesDrawn++;
 
-        while (c.CPU.PC != 0x100) c.Step();
+        while (core.CPU.PC != 0x100)
+            core.Step();
 
-        ReadOnlySpan<byte> image;
-        unsafe
-        {
-            image = new ReadOnlySpan<byte>((void*)pointer, 144 * 160);
-        }
+        var outputImage = Image.LoadPixelData<L8>(render.Image, 160, 144);
 
-        var logoHeight = 2 * 8;
-        //var logoWidth = 13 * 8;
-        const int logoOffsetX = 64;
-        //const int logoOffsetY = 32;
-        const int rowWidth = 160;
+        outputImage.SaveAsBmp("outputBootROM.bmp");
 
-        for (var initialRow = logoOffsetX; initialRow < logoOffsetX + logoHeight; initialRow++)
-        {
-            var s = image.Slice(initialRow * rowWidth, rowWidth);
-            Assert.IsTrue(s.Contains((byte)0));
-        }
+        Assert.IsTrue(AreEqual((Image<L8>)expectedImage, outputImage));
     }
 
     private void DrewAFrame(object? sender, EventArgs e)
     {
     }
 
-    [TestCase(@"..\..\..\..\Tests\rom\blargg\cpu_instrs\cpu_instrs.gb", @"..\..\..\..\Tests\rom\blargg\cpu_instrs\dmg_cpu_instrs.png")]
+    [TestCase(@"..\..\..\..\Tests\rom\blargg\cpu_instrs\cpu_instrs.gb", @"..\..\..\..\Tests\rom\blargg\cpu_instrs\expected.png")]
     public void BlarggCPUTestsPasses(string romPath, string imagePath)
     {
         var render = new TestRenderDevice();
@@ -65,24 +56,24 @@ internal class GraphicalOutputTest
         while (FramesDrawn != 4000)
             core.Step();
 
-        var outputImage = Image.LoadPixelData<Rgb24>(render.Image, 160, 144);
+        var outputImage = Image.LoadPixelData<L8>(render.Image, 160, 144);
 
-        outputImage.SaveAsBmp("output.bmp");
+        outputImage.SaveAsBmp("outputBlargCPUTest.bmp");
 
-        Assert.IsTrue(AreEqual((Image<Rgb24>)expectedImage, outputImage));
+        Assert.IsTrue(AreEqual((Image<L8>)expectedImage, outputImage));
     }
 
-    private static bool AreEqual(Image<Rgb24> expectedImage, Image<Rgb24> outputImage)
+    private static bool AreEqual(Image<L8> expectedImage, Image<L8> outputImage)
     {
-        Rgb24[] pixelArray = new Rgb24[expectedImage.Width * expectedImage.Height];
+        L8[] pixelArray = new L8[expectedImage.Width * expectedImage.Height];
         expectedImage.CopyPixelDataTo(pixelArray);
 
-        Rgb24[] pixelArray2 = new Rgb24[outputImage.Width * outputImage.Height];
+        L8[] pixelArray2 = new L8[outputImage.Width * outputImage.Height];
         outputImage.CopyPixelDataTo(pixelArray2);
 
         for (int i = 0; i < pixelArray2.Length; i++)
         {
-            if (pixelArray[i] != pixelArray2[i]) 
+            if (pixelArray[i] != pixelArray2[i])
                 return false;
         }
 
@@ -98,20 +89,14 @@ internal class TestRenderDevice : IFrameSink
     public TestRenderDevice()
     {
         backingBuffer = new byte[144 * 160];
-        Image = new byte[144 * 160 * 3];
+        Image = new byte[144 * 160];
     }
 
     public event EventHandler? FramePushed;
 
     public void Draw()
     {
-        for (int i = 0; i < backingBuffer.Length; i++)
-        {
-            var val = backingBuffer[i];
-            Image[i * 3 + 0] = val;
-            Image[i * 3 + 1] = val;
-            Image[i * 3 + 2] = val;
-        }
+        backingBuffer.CopyTo(Image,0);
 
         index = 0;
         FramePushed?.Invoke(this, EventArgs.Empty);
