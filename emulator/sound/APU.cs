@@ -287,7 +287,7 @@ public class APU
 
         if (TicksPerSample * sampleRate != baseClock)
         {
-            throw new Exception("We want a sample rate which is evenly divisible in to the base clock");
+            throw new IllegalSampleRateException("We want a sample rate which is evenly divisible in to the base clock");
         }
     }
 

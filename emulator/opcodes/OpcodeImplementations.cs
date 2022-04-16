@@ -209,7 +209,7 @@ public partial class CPU
         ,
         WideRegister.SP => () => { Registers.SP--; AddTicks(duration); }
         ,
-        _ => throw new Exception()
+        _ => throw new IllegalOpCodeException()
     };
 
     public Action RRCA(int duration) => () =>
@@ -614,7 +614,7 @@ public partial class CPU
     public Action PREFIX(int duration) => () =>
     {
         AddTicks(duration);
-        throw new Exception("unimplementable");
+        throw new IllegalOpCodeException("unimplementable");
     };
 
     //TODO: Check where this naming error originated
@@ -660,12 +660,12 @@ public partial class CPU
     public Action ILLEGAL_DB(int duration) => () =>
     {
         AddTicks(duration);
-        throw new Exception("illegal");
+        throw new IllegalOpCodeException("illegal");
     };
     public Action ILLEGAL_DD(int duration) => () =>
     {
         AddTicks(duration);
-        throw new Exception("illegal");
+        throw new IllegalOpCodeException("illegal");
     };
     public Action SBC(int duration) => () =>
                                                  {
@@ -682,12 +682,12 @@ public partial class CPU
     public Action ILLEGAL_E3(int duration) => () =>
                                                         {
                                                             AddTicks(duration);
-                                                            throw new Exception("illegal");
+                                                            throw new IllegalOpCodeException("illegal");
                                                         };
     public Action ILLEGAL_E4(int duration) => () =>
                                                         {
                                                             AddTicks(duration);
-                                                            throw new Exception("illegal");
+                                                            throw new IllegalOpCodeException("illegal");
                                                         };
     public Action AND(int duration) => () =>
                                                  {
@@ -733,17 +733,17 @@ public partial class CPU
     public Action ILLEGAL_EB(int duration) => () =>
                                                         {
                                                             AddTicks(duration);
-                                                            throw new Exception("illegal");
+                                                            throw new IllegalOpCodeException("illegal");
                                                         };
     public Action ILLEGAL_EC(int duration) => () =>
                                                         {
                                                             AddTicks(duration);
-                                                            throw new Exception("illegal");
+                                                            throw new IllegalOpCodeException("illegal");
                                                         };
     public Action ILLEGAL_ED(int duration) => () =>
                                                         {
                                                             AddTicks(duration);
-                                                            throw new Exception("illegal");
+                                                            throw new IllegalOpCodeException("illegal");
                                                         };
     public Action XOR(int duration) => () =>
                                                  {
@@ -763,7 +763,7 @@ public partial class CPU
     public Action ILLEGAL_F4(int duration) => () =>
                                                         {
                                                             AddTicks(duration);
-                                                            throw new Exception("illegal");
+                                                            throw new IllegalOpCodeException("illegal");
                                                         };
     public Action OR(int duration) => () =>
                                                 {
@@ -807,12 +807,12 @@ public partial class CPU
     public Action ILLEGAL_FC(int duration) => () =>
                                                         {
                                                             AddTicks(duration);
-                                                            throw new Exception("illegal");
+                                                            throw new IllegalOpCodeException("illegal");
                                                         };
     public Action ILLEGAL_FD(int duration) => () =>
                                                         {
                                                             AddTicks(duration);
-                                                            throw new Exception("illegal");
+                                                            throw new IllegalOpCodeException("illegal");
                                                         };
     public Action CP(int duration) => () =>
                                                 {

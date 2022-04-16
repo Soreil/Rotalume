@@ -22,7 +22,7 @@ internal record CartHeader
         0x52 => 1152 * 1024,
         0x53 => 1280 * 1024,
         0x54 => 1536 * 1024,
-        _ => throw new Exception("Non standard ROM size")
+        _ => throw new UnexpectedSize("Non standard ROM size")
     };
 
     //RAM Size in bytes
@@ -34,7 +34,7 @@ internal record CartHeader
         0x03 => 32768,
         0x04 => 131072,
         0x05 => 65536,
-        _ => throw new Exception("Non standard RAM size")
+        _ => throw new UnexpectedSize("Non standard RAM size")
     };
 
     public int ROM_Size { get; init; }
@@ -126,12 +126,12 @@ internal record CartHeader
     {
         if (!HasBattery())
         {
-            throw new Exception("We need a battery for it to be relevant to keep a save file on disk");
+            throw new NoBatteryPresentException("We need a battery for it to be relevant to keep a save file on disk");
         }
 
         //This retrieves %appdata% path
         var root = Environment.GetEnvironmentVariable("AppData");
-        if (root is null) throw new Exception("Can't retrieve AppData folder");
+        if (root is null) throw new FileLoadException("Can't retrieve AppData folder");
 
         var RotalumeFolder = root + "\\rotalume";
         var saveFolder = RotalumeFolder + "\\saves";
@@ -140,7 +140,7 @@ internal record CartHeader
         var SanitizedName = SanitizeFilename(Title);
         if (SanitizedName.Length == 0)
         {
-            throw new Exception("Can't clean up this name and thus can't make it unique.");
+            throw new FileLoadException("Can't clean up this name and thus can't make it unique.");
         }
         var path = string.Format(@"{0}\{1}{2}", saveFolder, SanitizedName, SaveFormatExtension);
         if (!System.IO.File.Exists(path))
@@ -160,7 +160,7 @@ internal record CartHeader
         //We probably shouldn't assume files are going to get created on disk at exactly the size we requested, they might be a bit bigger.
         else if (new System.IO.FileInfo(path).Length < RequiredSaveFileSize())
         {
-            throw new Exception("Existing save size too small");
+            throw new FileLoadException("Existing save size too small");
         }
         return System.IO.MemoryMappedFiles.MemoryMappedFile.CreateFromFile(path);
     }

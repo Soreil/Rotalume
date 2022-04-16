@@ -14,7 +14,7 @@ public class MappedController
         JoypadKey.Left => controller.IsDPadLeftPressed,
         JoypadKey.Up => controller.IsDPadUpPressed,
         JoypadKey.Down => controller.IsDPadDownPressed,
-        _ => throw new Exception("Unmapped control")
+        _ => throw new UnsupportedJoypadButton("Unmapped control")
     };
 
     public MappedController(IGameController gameController) => controller = gameController;

@@ -34,18 +34,18 @@ public class Renderer
                 PPU.OAM.Locked = true;
                 PPU.VRAM.Locked = false;
             }
-            if (PPU.Mode == Mode.Transfer)
+            else if (PPU.Mode == Mode.Transfer)
             {
                 PPU.OAM.Locked = true;
                 PPU.VRAM.Locked = true;
             }
 
-            if (PPU.Mode == Mode.HBlank)
+            else if (PPU.Mode == Mode.HBlank)
             {
                 PPU.OAM.Locked = false;
                 PPU.VRAM.Locked = false;
             }
-            if (PPU.Mode == Mode.VBlank)
+            else
             {
                 PPU.OAM.Locked = false;
                 PPU.VRAM.Locked = false;
@@ -165,6 +165,6 @@ public class Renderer
         Shade.LightGray => 0xc0,
         Shade.DarkGray => 0x40,
         Shade.Black => 0,
-        _ => throw new Exception(),
+        _ => throw new ShadeDoesNotRepresentAColourException(),
     };
 }

@@ -199,6 +199,17 @@ public class PPU
     }
 
     public Renderer? Renderer;
+    //public void Tick()
+    //{
+    //    if (Renderer is not null)
+    //    {
+    //        Clock++;
+    //        if (Clock != Renderer.TimeUntilWhichToPause)
+    //            System.Diagnostics.Debugger.Break();
+
+    //        Renderer.Render();
+    //    }
+    //}
     public void Tick()
     {
         Clock++;
@@ -210,6 +221,7 @@ public class PPU
             }
         }
     }
+
 
     //We could have more calls to SetLCDC for other bits in the LCDC register.
     //The LCDCEnable flag is only interesting at the moment it flips and the renderer null check should mean a recent flip

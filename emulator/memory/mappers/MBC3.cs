@@ -75,7 +75,7 @@ internal class MBC3 : MBC
     }
 
     public Action SaveRTC() => !hasClock
-            ? throw new Exception("No clock present")
+            ? throw new NoRTCException("No clock present")
             : (() =>
         {
             var time = GetRTC!();
@@ -146,7 +146,7 @@ internal class MBC3 : MBC
                 RTCRegister.Hour => (byte)(LatchedTime % TicksPerDay / TicksPerHour),
                 RTCRegister.Day => (byte)(LatchedTime / TicksPerDay),
                 RTCRegister.Flags => MakeFlags(LatchedTime / TicksPerDay),
-                _ => throw new Exception("Illegal RTC Register relection")
+                _ => throw new NotAValidRTCRegister("Illegal RTC Register relection")
             };
 
     private byte MakeFlags(long days)

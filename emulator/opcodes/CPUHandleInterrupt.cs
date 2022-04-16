@@ -39,6 +39,6 @@ public partial class CPU
                 return true;
             }
         }
-        throw new Exception("This should be unreachable");
+        throw new IllegalInterruptState("This should be unreachable");
     }
 }

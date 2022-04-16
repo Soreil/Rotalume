@@ -20,7 +20,7 @@ public class Core
     {
         if (gameROM.Length < 0x8000)
         {
-            throw new Exception("Cartridge file has to be at least 8kb in size");
+            throw new CartridgeTooSmallException("Cartridge file has to be at least 8kb in size");
         }
         PC = new();
 
@@ -140,11 +140,11 @@ PC
         {
             if (x > 0xf1)
             {
-                throw new Exception("Illegal DMA start adress"); //TODO: investigate how to handle these
+                throw new IllegalDMAAdress("Illegal DMA start adress"); //TODO: investigate how to handle these
                 }
             else if (DMATicksLeft != 0)
             {
-                throw new Exception("Nested DMA call");
+                throw new NestedDMACall("Nested DMA call");
             }
 
             DMATicksLeft = 160;

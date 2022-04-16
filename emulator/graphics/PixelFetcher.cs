@@ -74,7 +74,7 @@ public class PixelFetcher
             delaying = false;
             break;
             default:
-            throw new Exception("Illegal fetcher state");
+            throw new IllegalFetcherState("Illegal fetcher state");
         }
     }
 
@@ -133,7 +133,7 @@ public class PixelFetcher
 
             if (y < 0)
             {
-                throw new Exception("Illegal Y position in sprite");
+                throw new SpriteDomainError("Illegal Y position in sprite");
             }
 
             var ID = p.SpriteHeight == 8 ? sprite.ID : sprite.ID & 0xfe;
@@ -158,7 +158,7 @@ public class PixelFetcher
                     {
                         0 => p.SpritePalette0(sp.color),
                         1 => p.SpritePalette1(sp.color),
-                        _ => throw new Exception()
+                        _ => throw new IllegalSpritePalette()
                     };
 
             }
@@ -234,7 +234,7 @@ public class PixelFetcher
                 return SpriteAttributes[i];
             }
         }
-        throw new Exception("Illegal call");
+        throw new NoMatchingSprites("Illegal call");
     }
 
     private byte FetchHigh() => p.VRAM[GetAdress() + 1];
