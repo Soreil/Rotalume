@@ -210,7 +210,7 @@ public class PPU
     //        Renderer.Render();
     //    }
     //}
-    public void Tick()
+    public void Tick(object? o, EventArgs e)
     {
         Clock++;
         if (Renderer is not null)

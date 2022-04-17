@@ -10,7 +10,6 @@ public class MMU
     private readonly HRAM HRAM;
     private readonly (Action<byte> Write, Func<byte> Read) InterruptEnable;
     private readonly UnusableMEM UnusableMEM;
-    private readonly ProgramCounter PC;
     public byte this[ushort at]
     {
         get => BootROMActive && at < 0x100
@@ -95,22 +94,13 @@ public class MMU
     }
     private readonly byte[]? bootROM;
 
-    public byte ReadInput() => this[PC.Value++];
-    private ushort ReadInputWide()
-    {
-        Span<byte> buf = stackalloc byte[2];
-        buf[0] = ReadInput();
-        buf[1] = ReadInput();
-        return BitConverter.ToUInt16(buf);
-    }
     public MMU(
         byte[]? boot,
         MBC card,
         VRAM vram,
         OAM oam,
         (Action<byte> Write, Func<byte> Read)[] ioRegisters,
-        (Action<byte> Write, Func<byte> Read) interruptEnable,
-        ProgramCounter ProgramCounter)
+        (Action<byte> Write, Func<byte> Read) interruptEnable)
     {
 
         bootROM = boot; //Bootrom should be 256 bytes
@@ -127,32 +117,10 @@ public class MMU
         HRAM = hram;
         InterruptEnable = interruptEnable;
         UnusableMEM = new UnusableMEM();
-        PC = ProgramCounter;
     }
 
-    internal ushort FetchD16() => ReadInputWide();
-
-    internal byte FetchD8() => ReadInput();
-
-    internal ushort FetchA16() => ReadInputWide();
-
-    internal sbyte FetchR8() => (sbyte)ReadInput();
-
-    public byte Read(ushort at) => this[at];
-
-    public ushort ReadWide(ushort at)
-    {
-        Span<byte> buf = stackalloc byte[2];
-        buf[0] = this[at];
-        buf[1] = this[(ushort)(at + 1)];
-        return BitConverter.ToUInt16(buf);
-    }
 
     public void Write(ushort at, byte arg) => this[at] = arg;
+    public byte Read(ushort at) => this[at];
 
-    public void Write(ushort at, ushort arg)
-    {
-        this[at] = (byte)arg;
-        this[(ushort)(at + 1)] = (byte)(arg >> 8);
-    }
 }

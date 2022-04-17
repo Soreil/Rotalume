@@ -10,12 +10,12 @@ public partial class CPU
         {
             Halted = HaltState.off;
             //This 4 extra clock cycles is from TCAGBD.
-            AddTicks(4);
+            CycleElapsed();
         }
         else if (coincidence != 0 && Halted == HaltState.normalIME0)
         {
             Halted = HaltState.off;
-            AddTicks(4);
+            CycleElapsed();
             return true;
         }
 
@@ -34,7 +34,9 @@ public partial class CPU
                 ISR.InterruptFireRegister = IFR;
 
                 var addr = (ushort)(0x40 + (0x8 * bit));
-                Call(20, addr);
+                CycleElapsed();
+                CycleElapsed();
+                Call( addr);
 
                 return true;
             }

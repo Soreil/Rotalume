@@ -295,7 +295,7 @@ public class APU
     private readonly int TicksPerSample;
 
     private const int FrameSequencerFrequency = baseClock / 512;
-    internal void Tick()
+    internal void Tick(object? o, EventArgs e)
     {
         if (((byte)APUClock) == TicksPerSample)
         {

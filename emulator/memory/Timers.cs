@@ -21,7 +21,7 @@ public class Timers
              () => TAC)
         };
 
-    public void Tick()
+    public void Tick(object? o, EventArgs e)
     {
         InternalCounter++;
         if (TACEnable)

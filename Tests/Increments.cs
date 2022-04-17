@@ -22,65 +22,65 @@ public class Increments
         }
     }
 
-    [Test]
-    public void INC_AT_HL()
-    {
-        var dec = TestHelpers.NewCore(new byte[]
-        {
-        (byte)Opcode.INC_AT_HL ,
-        (byte)Opcode.INC_AT_HL ,
-        (byte)Opcode.INC_AT_HL ,
-        (byte)Opcode.INC_AT_HL}
-        );
-        {
-            dec.Memory.Write(0xfffe, (ushort)0xFF);
-            dec.CPU.Registers.Set(WideRegister.HL, 0xfffe);
+    //[Test]
+    //public void INC_AT_HL()
+    //{
+    //    var dec = TestHelpers.NewCore(new byte[]
+    //    {
+    //    (byte)Opcode.INC_AT_HL ,
+    //    (byte)Opcode.INC_AT_HL ,
+    //    (byte)Opcode.INC_AT_HL ,
+    //    (byte)Opcode.INC_AT_HL}
+    //    );
+    //    {
+    //        dec.Memory.Write(0xfffe, (ushort)0xFF);
+    //        dec.CPU.Registers.Set(WideRegister.HL, 0xfffe);
 
-            TestHelpers.StepOneCPUInstruction(dec);
+    //        TestHelpers.StepOneCPUInstruction(dec);
 
-            Assert.AreEqual(0, dec.Memory.Read(dec.CPU.Registers.Get(WideRegister.HL)));
+    //        Assert.AreEqual(0, dec.Memory.Read(dec.CPU.Registers.Get(WideRegister.HL)));
 
-            Assert.IsTrue(!dec.CPU.Registers.Negative);
-            Assert.IsTrue(dec.CPU.Registers.Zero);
-            Assert.IsTrue(dec.CPU.Registers.Half);
-        }
-        {
-            dec.Memory.Write(0xfffe, (ushort)0xFE);
-            dec.CPU.Registers.Set(WideRegister.HL, 0xfffe);
+    //        Assert.IsTrue(!dec.CPU.Registers.Negative);
+    //        Assert.IsTrue(dec.CPU.Registers.Zero);
+    //        Assert.IsTrue(dec.CPU.Registers.Half);
+    //    }
+    //    {
+    //        dec.Memory.Write(0xfffe, (ushort)0xFE);
+    //        dec.CPU.Registers.Set(WideRegister.HL, 0xfffe);
 
-            TestHelpers.StepOneCPUInstruction(dec);
+    //        TestHelpers.StepOneCPUInstruction(dec);
 
-            Assert.AreEqual(0xff, dec.Memory.Read(dec.CPU.Registers.Get(WideRegister.HL)));
+    //        Assert.AreEqual(0xff, dec.Memory.Read(dec.CPU.Registers.Get(WideRegister.HL)));
 
-            Assert.IsTrue(!dec.CPU.Registers.Negative);
-            Assert.IsTrue(!dec.CPU.Registers.Zero);
-            Assert.IsTrue(!dec.CPU.Registers.Half);
-        }
-        {
-            dec.Memory.Write(0xfffe, (ushort)0x0F);
-            dec.CPU.Registers.Set(WideRegister.HL, 0xfffe);
+    //        Assert.IsTrue(!dec.CPU.Registers.Negative);
+    //        Assert.IsTrue(!dec.CPU.Registers.Zero);
+    //        Assert.IsTrue(!dec.CPU.Registers.Half);
+    //    }
+    //    {
+    //        dec.Memory.Write(0xfffe, (ushort)0x0F);
+    //        dec.CPU.Registers.Set(WideRegister.HL, 0xfffe);
 
-            TestHelpers.StepOneCPUInstruction(dec);
+    //        TestHelpers.StepOneCPUInstruction(dec);
 
-            Assert.AreEqual(0x10, dec.Memory.Read(dec.CPU.Registers.Get(WideRegister.HL)));
+    //        Assert.AreEqual(0x10, dec.Memory.Read(dec.CPU.Registers.Get(WideRegister.HL)));
 
-            Assert.IsTrue(!dec.CPU.Registers.Negative);
-            Assert.IsTrue(!dec.CPU.Registers.Zero);
-            Assert.IsTrue(dec.CPU.Registers.Half);
-        }
-        {
-            dec.Memory.Write(0xfffe, (ushort)0x0E);
-            dec.CPU.Registers.Set(WideRegister.HL, 0xfffe);
+    //        Assert.IsTrue(!dec.CPU.Registers.Negative);
+    //        Assert.IsTrue(!dec.CPU.Registers.Zero);
+    //        Assert.IsTrue(dec.CPU.Registers.Half);
+    //    }
+    //    {
+    //        dec.Memory.Write(0xfffe, (ushort)0x0E);
+    //        dec.CPU.Registers.Set(WideRegister.HL, 0xfffe);
 
-            TestHelpers.StepOneCPUInstruction(dec);
+    //        TestHelpers.StepOneCPUInstruction(dec);
 
-            Assert.AreEqual(0x0F, dec.Memory.Read(dec.CPU.Registers.Get(WideRegister.HL)));
+    //        Assert.AreEqual(0x0F, dec.Memory.Read(dec.CPU.Registers.Get(WideRegister.HL)));
 
-            Assert.IsTrue(!dec.CPU.Registers.Negative);
-            Assert.IsTrue(!dec.CPU.Registers.Zero);
-            Assert.IsFalse(dec.CPU.Registers.Half);
-        }
-    }
+    //        Assert.IsTrue(!dec.CPU.Registers.Negative);
+    //        Assert.IsTrue(!dec.CPU.Registers.Zero);
+    //        Assert.IsFalse(dec.CPU.Registers.Half);
+    //    }
+    //}
 
     [Test]
     public void INC_A()

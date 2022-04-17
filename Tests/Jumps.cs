@@ -6,32 +6,32 @@ namespace Tests;
 
 public class Jumps
 {
-    [Test]
-    public void NO_OP()
-    {
-        var p = TestHelpers.NewCore(new byte[] {
-        (byte)Opcode.NOP
-        });
-        p.Step();
-        Assert.AreEqual(0x101, p.CPU.PC);
-        Assert.AreEqual(4 - 1, p.CPU.TicksWeAreWaitingFor);
-    }
+    //[Test]
+    //public void NO_OP()
+    //{
+    //    var p = TestHelpers.NewCore(new byte[] {
+    //    (byte)Opcode.NOP
+    //    });
+    //    p.Step();
+    //    Assert.AreEqual(0x101, p.CPU.PC);
+    //    Assert.AreEqual(4 - 1, p.CPU.TicksWeAreWaitingFor);
+    //}
 
-    [Test]
-    public void POP()
-    {
-        var p = TestHelpers.NewCore(new byte[] {
-        (byte)Opcode.POP_AF
-        });
+    //[Test]
+    //public void POP()
+    //{
+    //    var p = TestHelpers.NewCore(new byte[] {
+    //    (byte)Opcode.POP_AF
+    //    });
 
-        p.Memory.Write(0x0fffd, 0x8020);
-        p.CPU.Registers.SP = 0xfffd;
-        p.Step();
-        Assert.AreEqual(0x101, p.CPU.PC);
-        Assert.AreEqual(12 - 1, p.CPU.TicksWeAreWaitingFor);
-        Assert.AreEqual(0xffff, p.CPU.Registers.SP);
-        Assert.AreEqual(0x8020, p.CPU.Registers.AF);
-    }
+    //    p.Memory.Write(0x0fffd, 0x8020);
+    //    p.CPU.Registers.SP = 0xfffd;
+    //    p.Step();
+    //    Assert.AreEqual(0x101, p.CPU.PC);
+    //    Assert.AreEqual(12 - 1, p.CPU.TicksWeAreWaitingFor);
+    //    Assert.AreEqual(0xffff, p.CPU.Registers.SP);
+    //    Assert.AreEqual(0x8020, p.CPU.Registers.AF);
+    //}
 
     /*set_test 5,"POP AF"
       ld   bc,$1200
@@ -68,104 +68,104 @@ public class Jumps
         Assert.IsTrue(p.CPU.Registers.Zero);
     }
 
-    [Test]
-    public void PUSH()
-    {
-        var p = TestHelpers.NewCore(new byte[] { (byte)Opcode.PUSH_AF });
+    //[Test]
+    //public void PUSH()
+    //{
+    //    var p = TestHelpers.NewCore(new byte[] { (byte)Opcode.PUSH_AF });
 
-        p.CPU.Registers.SP = 0xfffe;
-        p.CPU.Registers.AF = 0x12f0;
+    //    p.CPU.Registers.SP = 0xfffe;
+    //    p.CPU.Registers.AF = 0x12f0;
 
-        p.Step();
-        var read = p.Memory.ReadWide(0x0fffc);
+    //    p.Step();
+    //    var read = p.Memory.ReadWide(0x0fffc);
 
-        Assert.AreEqual(0x101, p.CPU.PC);
-        Assert.AreEqual(16 - 1, p.CPU.TicksWeAreWaitingFor);
-        Assert.AreEqual(0xfffc, p.CPU.Registers.SP);
+    //    Assert.AreEqual(0x101, p.CPU.PC);
+    //    Assert.AreEqual(16 - 1, p.CPU.TicksWeAreWaitingFor);
+    //    Assert.AreEqual(0xfffc, p.CPU.Registers.SP);
 
-        Assert.AreEqual(0x12f0, read);
-    }
+    //    Assert.AreEqual(0x12f0, read);
+    //}
 
-    [Test]
-    public void RET()
-    {
-        var p = TestHelpers.NewCore(new byte[] { (byte)Opcode.RET });
+    //[Test]
+    //public void RET()
+    //{
+    //    var p = TestHelpers.NewCore(new byte[] { (byte)Opcode.RET });
 
-        p.CPU.Registers.SP = 0xfffd;
-        p.Memory.Write(0xfffd, 0xfedc);
+    //    p.CPU.Registers.SP = 0xfffd;
+    //    p.Memory.Write(0xfffd, 0xfedc);
 
-        p.Step();
+    //    p.Step();
 
-        Assert.AreEqual(0xfedc, p.CPU.PC);
-        Assert.AreEqual(16 - 1, p.CPU.TicksWeAreWaitingFor);
-        Assert.AreEqual(0xffff, p.CPU.Registers.SP);
-    }
+    //    Assert.AreEqual(0xfedc, p.CPU.PC);
+    //    Assert.AreEqual(16 - 1, p.CPU.TicksWeAreWaitingFor);
+    //    Assert.AreEqual(0xffff, p.CPU.Registers.SP);
+    //}
 
-    [Test]
-    public void CALL()
-    {
-        var p = TestHelpers.NewCore(new byte[] {
-        (byte)Opcode.CALL_a16,0xab,0xcd
-        });
+    //[Test]
+    //public void CALL()
+    //{
+    //    var p = TestHelpers.NewCore(new byte[] {
+    //    (byte)Opcode.CALL_a16,0xab,0xcd
+    //    });
 
-        p.CPU.Registers.SP = 0xffff;
-        p.Step();
+    //    p.CPU.Registers.SP = 0xffff;
+    //    p.Step();
 
-        Assert.AreEqual(0xcdab, p.CPU.PC);
-        Assert.AreEqual(24 - 1, p.CPU.TicksWeAreWaitingFor);
-        Assert.AreEqual(0xfffd, p.CPU.Registers.SP);
-        Assert.AreEqual(0x103, p.Memory.ReadWide(0xfffd));
-    }
+    //    Assert.AreEqual(0xcdab, p.CPU.PC);
+    //    Assert.AreEqual(24 - 1, p.CPU.TicksWeAreWaitingFor);
+    //    Assert.AreEqual(0xfffd, p.CPU.Registers.SP);
+    //    Assert.AreEqual(0x103, p.Memory.ReadWide(0xfffd));
+    //}
 
-    [Test]
-    public void JR_NZ_r8()
-    {
-        var p = TestHelpers.NewCore(new byte[]
-        {
-            (byte)Opcode.JR_NZ_r8, 0x05}
-        );
-        p.CPU.Registers.Zero = false;
+    //[Test]
+    //public void JR_NZ_r8()
+    //{
+    //    var p = TestHelpers.NewCore(new byte[]
+    //    {
+    //        (byte)Opcode.JR_NZ_r8, 0x05}
+    //    );
+    //    p.CPU.Registers.Zero = false;
 
-        p.Step();
-        Assert.AreEqual(0x107, p.CPU.PC);
-        Assert.AreEqual(12 - 1, p.CPU.TicksWeAreWaitingFor);
+    //    p.Step();
+    //    Assert.AreEqual(0x107, p.CPU.PC);
+    //    Assert.AreEqual(12 - 1, p.CPU.TicksWeAreWaitingFor);
 
-        p = TestHelpers.NewCore(new byte[]
-        { (byte)Opcode.JR_NZ_r8, unchecked((byte)-2)}
-        );
-        p.CPU.Registers.Zero = false;
+    //    p = TestHelpers.NewCore(new byte[]
+    //    { (byte)Opcode.JR_NZ_r8, unchecked((byte)-2)}
+    //    );
+    //    p.CPU.Registers.Zero = false;
 
-        p.Step();
-        Assert.AreEqual(0x100, p.CPU.PC);
-        Assert.AreEqual(12 - 1, p.CPU.TicksWeAreWaitingFor);
+    //    p.Step();
+    //    Assert.AreEqual(0x100, p.CPU.PC);
+    //    Assert.AreEqual(12 - 1, p.CPU.TicksWeAreWaitingFor);
 
-        p = TestHelpers.NewCore(new byte[]
-        { (byte)Opcode.JR_NZ_r8, 0x05}
-        );
-        p.CPU.Registers.Zero = true;
+    //    p = TestHelpers.NewCore(new byte[]
+    //    { (byte)Opcode.JR_NZ_r8, 0x05}
+    //    );
+    //    p.CPU.Registers.Zero = true;
 
-        p.Step();
-        Assert.AreEqual(0x102, p.CPU.PC);
-        Assert.AreEqual(8 - 1, p.CPU.TicksWeAreWaitingFor);
-    }
+    //    p.Step();
+    //    Assert.AreEqual(0x102, p.CPU.PC);
+    //    Assert.AreEqual(8 - 1, p.CPU.TicksWeAreWaitingFor);
+    //}
 
-    [Test]
-    public void JR_r8()
-    {
-        var p = TestHelpers.NewCore(new byte[]
-        { (byte)Opcode.JR_r8, 0x05}
-        );
+    //[Test]
+    //public void JR_r8()
+    //{
+    //    var p = TestHelpers.NewCore(new byte[]
+    //    { (byte)Opcode.JR_r8, 0x05}
+    //    );
 
-        p.Step();
-        Assert.AreEqual(0x107, p.CPU.PC);
-        Assert.AreEqual(12 - 1, p.CPU.TicksWeAreWaitingFor);
+    //    p.Step();
+    //    Assert.AreEqual(0x107, p.CPU.PC);
+    //    Assert.AreEqual(12 - 1, p.CPU.TicksWeAreWaitingFor);
 
-        p = TestHelpers.NewCore(new byte[] { (byte)Opcode.JR_r8, unchecked((byte)-2) });
+    //    p = TestHelpers.NewCore(new byte[] { (byte)Opcode.JR_r8, unchecked((byte)-2) });
 
-        p.Step();
-        Assert.AreEqual(0x100, p.CPU.PC);
-        Assert.AreEqual(12 - 1, p.CPU.TicksWeAreWaitingFor);
+    //    p.Step();
+    //    Assert.AreEqual(0x100, p.CPU.PC);
+    //    Assert.AreEqual(12 - 1, p.CPU.TicksWeAreWaitingFor);
 
 
-    }
+    //}
 }

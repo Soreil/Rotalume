@@ -11,7 +11,6 @@ public class Core
     public readonly MMU Memory;
     private readonly Timers Timers;
     private readonly InterruptRegisters InterruptRegisters;
-    private readonly ProgramCounter PC;
 
     //TODO: move serial in to it's own class when we implement it
     private byte serialControl = 0x7e;
@@ -22,7 +21,6 @@ public class Core
         {
             throw new CartridgeTooSmallException("Cartridge file has to be at least 8kb in size");
         }
-        PC = new();
 
         InterruptRegisters = new InterruptRegisters();
         Keypad.Input.KeyWentDown += InterruptRegisters.TriggerEvent;
@@ -69,11 +67,10 @@ PPU.VRAM,
 PPU.OAM,
 ioRegisters,
 (x => InterruptRegisters.InterruptControlRegister = x,
-() => InterruptRegisters.InterruptControlRegister),
-PC
+() => InterruptRegisters.InterruptControlRegister)
 );
 
-        CPU = new CPU(Memory, InterruptRegisters, PC);
+        CPU = new CPU(Memory, InterruptRegisters);
         ioRegisters[0x0f] = InterruptRegisters.HookUp();
 
         ioRegisters[0x50] = Memory.HookUpMemory();
@@ -98,7 +95,43 @@ PC
 
             InterruptRegisters.SetStateWithoutBootrom();
         }
+
+        CPU.Cycle += Timers.Tick;
+        CPU.Cycle += PPU.Tick;
+        CPU.Cycle += APU.Tick;
+        CPU.Cycle += DMA;
+
+        CPU.Cycle += Timers.Tick;
+        CPU.Cycle += PPU.Tick;
+        CPU.Cycle += APU.Tick;
+        CPU.Cycle += DMA;
+
+        CPU.Cycle += Timers.Tick;
+        CPU.Cycle += PPU.Tick;
+        CPU.Cycle += APU.Tick;
+        CPU.Cycle += DMA;
+
+        CPU.Cycle += Timers.Tick;
+        CPU.Cycle += PPU.Tick;
+        CPU.Cycle += APU.Tick;
+        CPU.Cycle += DMA;
+
+
     }
+
+
+    void DMA(object? o, EventArgs e)
+    {
+        if (DMATicksLeft != 0)
+        {
+            var r = Memory.Read((ushort)(baseAddr + (160 - DMATicksLeft)));
+            PPU.OAM[OAM.Start + (160 - DMATicksLeft)] = r;
+            DMATicksLeft--;
+        }
+    }
+
+    public int DMATicksLeft;
+    public ushort baseAddr;
 
     private (Action<byte> Write, Func<byte> Read)[] SetupControlRegisters(Keypad Keypad)
     {
@@ -141,7 +174,7 @@ PC
             if (x > 0xf1)
             {
                 throw new IllegalDMAAdress("Illegal DMA start adress"); //TODO: investigate how to handle these
-                }
+            }
             else if (DMATicksLeft != 0)
             {
                 throw new NestedDMACall("Nested DMA call");
@@ -156,23 +189,9 @@ PC
         return controlRegisters;
     }
 
-    int DMATicksLeft;
-    ushort baseAddr;
-
     //We have to make Step take one tick per subsystem
     public void Step()
     {
-        masterclock++;
-        Timers.Tick();
         CPU.Tick();
-        APU.Tick();
-        PPU.Tick();
-
-        if (DMATicksLeft != 0)
-        {
-            var r = Memory.Read((ushort)(baseAddr + (160 - DMATicksLeft)));
-            PPU.OAM[OAM.Start + (160 - DMATicksLeft)] = r;
-            DMATicksLeft--;
-        }
     }
 }
