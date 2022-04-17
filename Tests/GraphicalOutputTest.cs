@@ -32,27 +32,26 @@ internal class GraphicalOutputTest
         Assert.IsTrue(TestHelpers.AreEqual((Image<L8>)expectedImage, outputImage));
     }
 
-    [TestCase(@"..\..\..\..\Tests\rom\blargg\cpu_instrs\cpu_instrs.gb", @"..\..\..\..\Tests\rom\blargg\cpu_instrs\expected.png")]
-    public void BlarggCPUTestsPasses(string romPath, string imagePath)
+    [TestCase(@"..\..\..\..\Tests\rom\blargg\cpu_instrs\cpu_instrs.gb", @"..\..\..\..\Tests\rom\blargg\cpu_instrs\expected.png", "outputBlargCPUTest.bmp", 3000)]
+    [TestCase(@"..\..\..\..\Tests\rom\dmg-acid2\dmg-acid2.gb", @"..\..\..\..\Tests\rom\dmg-acid2\expected.png", "outputDMG-ACID2.bmp", 10)]
+    public void TestFrameMatchesExpectedFrame(string romPath, string imagePath, string outputFile, int frameToCheck)
     {
         var render = new TestRenderDevice();
 
         var rom = File.ReadAllBytes(romPath);
         var expectedImage = Image.Load(imagePath);
 
-
         var core = TestHelpers.NewCore(rom, render);
-
 
         int FramesDrawn = 0;
         render.FramePushed += (sender, e) => FramesDrawn++;
 
-        while (FramesDrawn != 4000)
+        while (FramesDrawn != frameToCheck)
             core.Step();
 
         var outputImage = Image.LoadPixelData<L8>(render.Image, 160, 144);
 
-        outputImage.SaveAsBmp("outputBlargCPUTest.bmp");
+        outputImage.SaveAsBmp(outputFile);
 
         Assert.IsTrue(TestHelpers.AreEqual((Image<L8>)expectedImage, outputImage));
     }
