@@ -11,7 +11,13 @@ public partial class CPU
 
 
     //Wrapper to allow easier handling of (HL) usage
-    public byte GetRegister(Register r) => r == Register.HL ? Memory.Read(Registers.HL) : Registers.Get(r);
+    public byte GetRegister(Register r) => r == Register.HL ? ReadMemoryAtHL() : Registers.Get(r);
+    private byte ReadMemoryAtHL()
+    {
+        var read = Memory.Read(Registers.HL);
+        CycleElapsed();
+        return read;
+    }
 
     public void SetRegister(Register r, byte b)
     {
@@ -81,7 +87,7 @@ public partial class CPU
         CycleElapsed();
     }
 
-    public Action NOP() => () => { };
+    public void NOP() {}
     public Action LD_D16(WideRegister p0) => () =>
     {
         var arg = FetchD16();
@@ -125,12 +131,12 @@ public partial class CPU
         Registers.SP = 0xfffe;
     }
     public Action INC(WideRegister p0) => () =>
-{
-    var hl = Registers.Get(p0);
-    var target = (ushort)(hl + 1);
-    Registers.Set(p0, target);
+    {
+        var hl = Registers.Get(p0);
+        var target = (ushort)(hl + 1);
+        Registers.Set(p0, target);
 
-};
+    };
 
     public Action INC(Register p0) => () =>
     {
@@ -163,22 +169,22 @@ public partial class CPU
 
     };
 
-    public Action LD_A16() => () =>
+    public void LD_A16() 
     {
         Registers.A = Read(FetchA16());
-    };
+    }
     private byte Read(ushort v)
     {
         CycleElapsed();
         return Memory[v];
     }
 
-    public Action RLCA() => () =>
+    public void RLCA()
     {
         var A = Registers.A;
         Registers.Zero = false;
         Registers.A = RLC(A);
-    };
+    }
 
     private byte RLC(byte reg)
     {
@@ -193,13 +199,13 @@ public partial class CPU
         return reg;
     }
 
-    public Action WriteSPToMem() => () =>
+    public void WriteSPToMem() 
     {
         var addr = FetchD16();
         var arg = Registers.SP;
 
         Write(addr, arg);
-    };
+    }
 
     public Action ADD(WideRegister rhs) => () =>
     {
@@ -245,23 +251,19 @@ public partial class CPU
     //This function seems to have taken a lot of CPU with the previous imlpementation so we now explicitly return the direct lambda.
     public Action DEC(WideRegister p0) => p0 switch
     {
-        WideRegister.BC => () => { Registers.BC--; }
-        ,
-        WideRegister.DE => () => { Registers.DE--; }
-        ,
-        WideRegister.HL => () => { Registers.HL--; }
-        ,
-        WideRegister.SP => () => { Registers.SP--; }
-        ,
+        WideRegister.BC => () => Registers.BC--,
+        WideRegister.DE => () => Registers.DE--,
+        WideRegister.HL => () => Registers.HL--,
+        WideRegister.SP => () => Registers.SP--,
         _ => throw new IllegalOpCodeException()
     };
 
-    public Action RRCA() => () =>
+    public void RRCA()
     {
         Registers.Zero = false;
         Registers.A = RRC(Registers.A);
 
-    };
+    }
 
     private byte RRC(byte reg)
     {
@@ -280,13 +282,13 @@ public partial class CPU
         return reg;
     }
 
-    public Action STOP() => () => { };
-    public Action RLA() => () =>
+    public void STOP() { }
+    public void RLA()
     {
         Registers.Zero = false;
         Registers.A = RL(Registers.A);
 
-    };
+    }
 
     private byte RL(byte A)
     {
@@ -302,18 +304,19 @@ public partial class CPU
         return A;
     }
 
-    public Action JR() => () =>
+    public void JR()
     {
         var offset = FetchR8();
+        CycleElapsed();
         PC = (ushort)(PC + offset);
 
-    };
-    public Action RRA() => () =>
+    }
+    public void RRA()
     {
         Registers.Zero = false;
         Registers.A = RR(Registers.A);
 
-    };
+    }
 
     private byte RR(byte A)
     {
@@ -352,7 +355,7 @@ public partial class CPU
         }
     };
 
-    public Action DAA() => () =>
+    public void DAA()
     {
         if (!Registers.Negative)
         {
@@ -371,54 +374,54 @@ public partial class CPU
         Registers.Zero = Registers.A == 0;
         Registers.Half = false;
 
-    };
-    public Action CPL() => () =>
-                                               {
-                                                   Registers.A = (byte)~Registers.A;
-                                                   Registers.Negative = true;
-                                                   Registers.Half = true;
+    }
+    public void CPL()
+    {
+        Registers.A = (byte)~Registers.A;
+        Registers.Negative = true;
+        Registers.Half = true;
 
-                                               };
+    }
 
-    public Action SCF() => () =>
-                                                 {
-                                                     Registers.Negative = false;
-                                                     Registers.Half = false;
-                                                     Registers.Carry = true;
+    public void SCF()
+    {
+        Registers.Negative = false;
+        Registers.Half = false;
+        Registers.Carry = true;
 
-                                                 };
+    }
 
-    public Action CCF() => () =>
-                                                 {
-                                                     Registers.Negative = false;
-                                                     Registers.Half = false;
-                                                     Registers.Carry = !Registers.Carry;
+    public void CCF()
+    {
+        Registers.Negative = false;
+        Registers.Half = false;
+        Registers.Carry = !Registers.Carry;
 
-                                                 };
+    }
     public Action LD(Register p0, Register p1) => () =>
-         {
-             var arg = GetRegister(p1);
-             SetRegister(p0, arg);
+    {
+        var arg = GetRegister(p1);
+        SetRegister(p0, arg);
 
-         };
+    };
 
-    public Action LD_AT_C_A() => () =>
+    public void LD_AT_C_A() 
     {
         Write((ushort)(0xFF00 + Registers.C), Registers.A);
 
-    };
+    }
 
-    public Action LD_A_AT_C() => () =>
+    public void LD_A_AT_C() 
     {
         Registers.A = Read((ushort)(0xFF00 + Registers.C));
 
-    };
+    }
 
-    public Action HALT() => () =>
-                                                  {
+    public void HALT() 
+    {
 
-                                                      Halt();
-                                                  };
+        Halt();
+    }
     public Action ADD(Register p1) => () =>
     {
         var rhs = GetRegister(p1);
@@ -438,20 +441,20 @@ public partial class CPU
     }
 
     public Action ADC(Register p1) => () =>
-                                                              {
-                                                                  var rhs = GetRegister(p1);
+    {
+        var rhs = GetRegister(p1);
 
-                                                                  ADC(rhs);
+        ADC(rhs);
 
-                                                              };
+    };
     public Action SUB(Register p0) => () =>
-                                                              {
-                                                                  var lhs = Registers.A;
-                                                                  var rhs = GetRegister(p0);
+    {
+        var lhs = Registers.A;
+        var rhs = GetRegister(p0);
 
-                                                                  Registers.A = SUB(lhs, rhs);
+        Registers.A = SUB(lhs, rhs);
 
-                                                              };
+    };
 
     private byte SUB(byte lhs, byte rhs)
     {
@@ -465,12 +468,12 @@ public partial class CPU
     }
 
     public Action SBC(Register p1) => () =>
-                                                              {
-                                                                  var rhs = GetRegister(p1);
+    {
+        var rhs = GetRegister(p1);
 
-                                                                  SBC(rhs);
+        SBC(rhs);
 
-                                                              };
+    };
 
     private void ADC(byte rhs)
     {
@@ -514,12 +517,12 @@ public partial class CPU
     }
 
     public Action XOR(Register p0) => () =>
-                                                              {
-                                                                  var rhs = GetRegister(p0);
+    {
+        var rhs = GetRegister(p0);
 
-                                                                  XOR(rhs);
+        XOR(rhs);
 
-                                                              };
+    };
     private void XOR(byte rhs)
     {
         Registers.A ^= rhs;
@@ -530,11 +533,11 @@ public partial class CPU
     }
 
     public Action OR(Register p0) => () =>
-                                                             {
-                                                                 var rhs = GetRegister(p0);
-                                                                 OR(rhs);
+    {
+        var rhs = GetRegister(p0);
+        OR(rhs);
 
-                                                             };
+    };
 
     private void OR(byte rhs)
     {
@@ -554,6 +557,7 @@ public partial class CPU
     };
     public Action RET(Flag p0) => () =>
     {
+        CycleElapsed();
         var flag = p0 switch
         {
             Flag.Z => Registers.Zero,
@@ -565,8 +569,6 @@ public partial class CPU
         if (flag)
         {
             PC = Pop();
-            CycleElapsed();
-            CycleElapsed();
             CycleElapsed();
         }
     };
@@ -596,40 +598,38 @@ public partial class CPU
 
         }
     };
-    public Action JP_A16() => () =>
+    public void JP_A16()
     {
         var addr = FetchA16();
+        CycleElapsed();
         PC = addr;
 
-    };
+    }
     public Action CALL_A16(Flag p0) => () =>
-     {
-         var flag = p0 switch
-         {
-             Flag.Z => Registers.Zero,
-             Flag.NZ => !Registers.Zero,
-             Flag.C => Registers.Carry,
-             Flag.NC => !Registers.Carry,
-             _ => throw new NotImplementedException()
-         };
+    {
+        var flag = p0 switch
+        {
+            Flag.Z => Registers.Zero,
+            Flag.NZ => !Registers.Zero,
+            Flag.C => Registers.Carry,
+            Flag.NC => !Registers.Carry,
+            _ => throw new NotImplementedException()
+        };
 
-         var addr = FetchA16();
-         if (flag)
-         {
-             Call(addr);
-             CycleElapsed();
-             CycleElapsed();
-             CycleElapsed();
-         }
-     };
+        var addr = FetchA16();
+        if (flag)
+        {
+            Call(addr);
+        }
+    };
 
 
     public Action PUSH(WideRegister p0) => () =>
     {
+        CycleElapsed();
         Push(Registers.Get(p0));
-
     };
-    public Action ADD_A_d8() => () =>
+    public void ADD_A_d8() 
     {
         Registers.Negative = false;
 
@@ -637,23 +637,26 @@ public partial class CPU
 
         ADD(rhs);
 
-    };
+    }
     public Action RST(byte adress) => () => Call(adress);
-    public Action RET() => () =>
+    public void RET() 
     {
         var addr = Pop();
+        CycleElapsed();
         PC = addr;
 
-    };
+    }
     //Not an actual instruction
-    public Action PREFIX() => () =>
+    public void PREFIX()
     {
 
         throw new IllegalOpCodeException("unimplementable");
-    };
+    }
 
     //TODO: Check where this naming error originated
-    public Action CALL_a16() => () => Call(FetchD16());
+    public void CALL_a16() {
+        Call(FetchD16());
+    }
 
     public void Call(ushort addr)
     {
@@ -663,21 +666,21 @@ public partial class CPU
 
     }
 
-    public Action ADC() => () =>
+    public void ADC()
     {
         var rhs = FetchD8();
 
         ADC(rhs);
 
-    };
+    }
 
-    public Action ILLEGAL_D3() => () =>
+    public void ILLEGAL_D3()
     {
 
         throw new Exception("illegal");
-    };
+    }
 
-    public Action SUB() => () =>
+    public void SUB() 
     {
         Registers.Negative = true;
 
@@ -686,54 +689,55 @@ public partial class CPU
 
         Registers.A = SUB(lhs, rhs);
 
-    };
-    public Action RETI() => () =>
+    }
+    public void RETI() 
     {
         PC = Pop();
+        CycleElapsed();
         EnableInterrupts();
 
-    };
-    public Action ILLEGAL_DB() => () =>
+    }
+    public void ILLEGAL_DB()
     {
 
         throw new IllegalOpCodeException("illegal");
-    };
-    public Action ILLEGAL_DD() => () =>
+    }
+    public void ILLEGAL_DD()
     {
 
         throw new IllegalOpCodeException("illegal");
-    };
-    public Action SBC() => () =>
-                                                 {
-                                                     var rhs = FetchD8();
+    }
+    public void SBC() 
+    {
+        var rhs = FetchD8();
 
-                                                     SBC(rhs);
+        SBC(rhs);
 
-                                                 };
-    public Action LDH() => () =>
-                                                 {
-                                                     Write((ushort)(0xff00 + FetchD8()), Registers.A);
+    }
+    public void LDH() 
+    {
+        Write((ushort)(0xff00 + FetchD8()), Registers.A);
 
-                                                 };
-    public Action ILLEGAL_E3() => () =>
-                                                        {
+    }
+    public void ILLEGAL_E3()
+    {
 
-                                                            throw new IllegalOpCodeException("illegal");
-                                                        };
-    public Action ILLEGAL_E4() => () =>
-                                                        {
+        throw new IllegalOpCodeException("illegal");
+    }
+    public void ILLEGAL_E4() 
+    {
 
-                                                            throw new IllegalOpCodeException("illegal");
-                                                        };
-    public Action AND() => () =>
-                                                 {
-                                                     var andWith = FetchD8();
+        throw new IllegalOpCodeException("illegal");
+    }
+    public void AND() 
+    {
+        var andWith = FetchD8();
 
-                                                     AND(andWith);
+        AND(andWith);
 
-                                                 };
+    }
 
-    public Action ADD_SP_R8() => () =>
+    public void ADD_SP_R8() 
     {
         var offset = FetchR8();
         var sum = Registers.SP + offset;
@@ -754,109 +758,109 @@ public partial class CPU
 
         Registers.SP = (ushort)sum;
 
-    };
+    }
 
-    public Action JP() => () =>
-                                                {
-                                                    PC = Registers.HL;
+    public void JP()
+    {
+        PC = Registers.HL;
+        CycleElapsed();
+    }
+    public void LD_AT_a16_A() 
+    {
+        Write(FetchD16(), Registers.A);
 
-                                                };
-    public Action LD_AT_a16_A() => () =>
-                                                         {
-                                                             Write(FetchD16(), Registers.A);
+    }
+    public void ILLEGAL_EB()
+    {
 
-                                                         };
-    public Action ILLEGAL_EB() => () =>
-                                                        {
+        throw new IllegalOpCodeException("illegal");
+    }
+    public void ILLEGAL_EC() 
+    {
 
-                                                            throw new IllegalOpCodeException("illegal");
-                                                        };
-    public Action ILLEGAL_EC() => () =>
-                                                        {
+        throw new IllegalOpCodeException("illegal");
+    }
+    public void ILLEGAL_ED()
+    {
 
-                                                            throw new IllegalOpCodeException("illegal");
-                                                        };
-    public Action ILLEGAL_ED() => () =>
-                                                        {
+        throw new IllegalOpCodeException("illegal");
+    }
+    public void XOR() 
+    {
+        XOR(FetchD8());
 
-                                                            throw new IllegalOpCodeException("illegal");
-                                                        };
-    public Action XOR() => () =>
-                                                 {
-                                                     XOR(FetchD8());
+    }
+    public void LDH_A_AT_a8()
+    {
+        Registers.A = Read((ushort)(0xFF00 + FetchD8()));
 
-                                                 };
-    public Action LDH_A_AT_a8() => () =>
-                                                         {
-                                                             Registers.A = Read((ushort)(0xFF00 + FetchD8()));
+    }
+    public void DI() 
+    {
+        DisableInterrupts();
 
-                                                         };
-    public Action DI() => () =>
-                                                {
-                                                    DisableInterrupts();
+    }
+    public void ILLEGAL_F4()
+    {
 
-                                                };
-    public Action ILLEGAL_F4() => () =>
-                                                        {
+        throw new IllegalOpCodeException("illegal");
+    }
+    public void OR()
+    {
+        OR(FetchD8());
 
-                                                            throw new IllegalOpCodeException("illegal");
-                                                        };
-    public Action OR() => () =>
-                                                {
-                                                    OR(FetchD8());
+    }
 
-                                                };
+    public void LD_HL_SP_i8()
+    {
+        var offset = FetchR8();
+        var sum = Registers.SP + offset;
+        Registers.Zero = false;
+        Registers.Negative = false;
 
-    public Action LD_HL_SP_i8() => () =>
-                                                         {
-                                                             var offset = FetchR8();
-                                                             var sum = Registers.SP + offset;
-                                                             Registers.Zero = false;
-                                                             Registers.Negative = false;
+        if (offset >= 0)
+        {
+            Registers.Carry = ((Registers.SP & 0xff) + offset) > 0xff;
+            Registers.Half = ((Registers.SP & 0x0f) + (offset & 0xf)) > 0xf;
+        }
+        else
+        {
+            Registers.Carry = (sum & 0xff) <= (Registers.SP & 0xff);
+            Registers.Half = (sum & 0xf) <= (Registers.SP & 0xf);
+        }
 
-                                                             if (offset >= 0)
-                                                             {
-                                                                 Registers.Carry = ((Registers.SP & 0xff) + offset) > 0xff;
-                                                                 Registers.Half = ((Registers.SP & 0x0f) + (offset & 0xf)) > 0xf;
-                                                             }
-                                                             else
-                                                             {
-                                                                 Registers.Carry = (sum & 0xff) <= (Registers.SP & 0xff);
-                                                                 Registers.Half = (sum & 0xf) <= (Registers.SP & 0xf);
-                                                             }
-
-                                                             Registers.HL = (ushort)sum;
+        Registers.HL = (ushort)sum;
 
 
-                                                         };
+    }
 
-    public Action LD_SP_HL() => () =>
-                                                      {
-                                                          Registers.SP = Registers.HL;
+    public void LD_SP_HL() 
+    {
+        Registers.SP = Registers.HL;
+        CycleElapsed();
+    }
+    public void EI() 
+    {
+        EnableInterruptsDelayed();
 
-                                                      };
-    public Action EI() => () =>
-                                                {
-                                                    EnableInterruptsDelayed();
+    }
+    public void ILLEGAL_FC()
+    {
 
-                                                };
-    public Action ILLEGAL_FC() => () =>
-                                                        {
+        throw new IllegalOpCodeException("illegal");
+    }
+    public void ILLEGAL_FD() 
+    {
 
-                                                            throw new IllegalOpCodeException("illegal");
-                                                        };
-    public Action ILLEGAL_FD() => () =>
-                                                        {
+        throw new IllegalOpCodeException("illegal");
+    }
+    public void CP()
+    {
+        var lhs = Registers.A;
+        var rhs = FetchD8();
+        CP(rhs);
 
-                                                            throw new IllegalOpCodeException("illegal");
-                                                        };
-    public Action CP() => () =>
-                                                {
-                                                    var lhs = Registers.A;
-                                                    var rhs = FetchD8();
-                                                    CP(rhs);
-
-                                                };
+    }
     private void CP(byte rhs)
     {
         Registers.Negative = true;
@@ -867,128 +871,128 @@ public partial class CPU
     }
 
     public Action RLC(Register p0) => () =>
-                                                              {
-                                                                  var reg = GetRegister(p0);
+    {
+        var reg = GetRegister(p0);
 
-                                                                  var res = RLC(reg);
-                                                                  Registers.Zero = res == 0;
+        var res = RLC(reg);
+        Registers.Zero = res == 0;
 
-                                                                  SetRegister(p0, res);
+        SetRegister(p0, res);
 
-                                                              };
+    };
     public Action RRC(Register p0) => () =>
-                                                              {
-                                                                  var reg = GetRegister(p0);
+    {
+        var reg = GetRegister(p0);
 
-                                                                  var res = RRC(reg);
-                                                                  Registers.Zero = res == 0;
+        var res = RRC(reg);
+        Registers.Zero = res == 0;
 
-                                                                  SetRegister(p0, res);
+        SetRegister(p0, res);
 
-                                                              };
+    };
     public Action RL(Register p0) => () =>
-                                                             {
-                                                                 var reg = GetRegister(p0);
+    {
+        var reg = GetRegister(p0);
 
-                                                                 var res = RL(reg);
-                                                                 Registers.Zero = res == 0;
+        var res = RL(reg);
+        Registers.Zero = res == 0;
 
-                                                                 SetRegister(p0, res);
+        SetRegister(p0, res);
 
-                                                             };
+    };
     public Action RR(Register p0) => () =>
-                                                             {
-                                                                 var reg = GetRegister(p0);
+    {
+        var reg = GetRegister(p0);
 
-                                                                 var res = RR(reg);
-                                                                 Registers.Zero = res == 0;
+        var res = RR(reg);
+        Registers.Zero = res == 0;
 
-                                                                 SetRegister(p0, res);
+        SetRegister(p0, res);
 
-                                                             };
+    };
     public Action SLA(Register p0) => () =>
-                                                              {
-                                                                  var reg = GetRegister(p0);
+    {
+        var reg = GetRegister(p0);
 
-                                                                  var TopBit = reg.GetBit(7);
+        var TopBit = reg.GetBit(7);
 
-                                                                  Registers.Negative = false;
-                                                                  Registers.Half = false;
-                                                                  Registers.Carry = TopBit;
+        Registers.Negative = false;
+        Registers.Half = false;
+        Registers.Carry = TopBit;
 
-                                                                  reg <<= 1;
-                                                                  Registers.Zero = reg == 0;
+        reg <<= 1;
+        Registers.Zero = reg == 0;
 
-                                                                  SetRegister(p0, reg);
+        SetRegister(p0, reg);
 
-                                                              };
+    };
     public Action SRA(Register p0) => () =>
-                                                              {
-                                                                  var lhs = GetRegister(p0);
-                                                                  byte bit7 = (byte)(lhs & 0x80);
+    {
+        var lhs = GetRegister(p0);
+        byte bit7 = (byte)(lhs & 0x80);
 
-                                                                  Registers.Negative = false;
-                                                                  Registers.Half = false;
-                                                                  Registers.Carry = lhs.GetBit(0);
+        Registers.Negative = false;
+        Registers.Half = false;
+        Registers.Carry = lhs.GetBit(0);
 
-                                                                  lhs = (byte)((lhs >> 1) | bit7);
-                                                                  SetRegister(p0, lhs);
+        lhs = (byte)((lhs >> 1) | bit7);
+        SetRegister(p0, lhs);
 
-                                                                  Registers.Zero = lhs == 0;
+        Registers.Zero = lhs == 0;
 
 
-                                                              };
+    };
     public Action SWAP(Register p0) => () =>
-                                                               {
-                                                                   var reg = GetRegister(p0);
+    {
+        var reg = GetRegister(p0);
 
-                                                                   var low = reg << 4;
-                                                                   var high = reg >> 4;
-                                                                   var swapped = low | high;
+        var low = reg << 4;
+        var high = reg >> 4;
+        var swapped = low | high;
 
-                                                                   Registers.Zero = swapped == 0;
-                                                                   Registers.Negative = false;
-                                                                   Registers.Half = false;
-                                                                   Registers.Carry = false;
+        Registers.Zero = swapped == 0;
+        Registers.Negative = false;
+        Registers.Half = false;
+        Registers.Carry = false;
 
 
-                                                                   SetRegister(p0, (byte)swapped);
+        SetRegister(p0, (byte)swapped);
 
-                                                               };
+    };
 
     public Action SRL(Register p0) => () =>
-                                                              {
-                                                                  var lhs = GetRegister(p0);
+    {
+        var lhs = GetRegister(p0);
 
-                                                                  Registers.Negative = false;
-                                                                  Registers.Half = false;
-                                                                  Registers.Carry = lhs.GetBit(0);
-                                                                  Registers.Zero = lhs >> 1 == 0;
+        Registers.Negative = false;
+        Registers.Half = false;
+        Registers.Carry = lhs.GetBit(0);
+        Registers.Zero = lhs >> 1 == 0;
 
-                                                                  SetRegister(p0, (byte)(lhs >> 1));
+        SetRegister(p0, (byte)(lhs >> 1));
 
-                                                              };
+    };
     public Action BIT(byte p0, Register p1) => () =>
-                                                                       {
-                                                                           var reg = GetRegister(p1);
-                                                                           Registers.Zero = !reg.GetBit(p0);
-                                                                           Registers.Negative = false;
-                                                                           Registers.Half = true;
+    {
+        var reg = GetRegister(p1);
+        Registers.Zero = !reg.GetBit(p0);
+        Registers.Negative = false;
+        Registers.Half = true;
 
-                                                                       };
+    };
 
     public Action RES(byte p0, Register p1) => () =>
-                                                                       {
-                                                                           var reg = GetRegister(p1);
-                                                                           reg.ClearBit(p0);
-                                                                           SetRegister(p1, reg);
+    {
+        var reg = GetRegister(p1);
+        reg.ClearBit(p0);
+        SetRegister(p1, reg);
 
-                                                                       };
+    };
     public Action SET(byte p0, Register p1) => () =>
-                                                                       {
-                                                                           var reg = GetRegister(p1);
-                                                                           reg.SetBit(p0);
-                                                                           SetRegister(p1, reg);
+    {
+        var reg = GetRegister(p1);
+        reg.SetBit(p0);
+        SetRegister(p1, reg);
 
-                                                                       };
+    };
 }

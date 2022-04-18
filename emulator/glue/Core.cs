@@ -119,8 +119,7 @@ ioRegisters,
 
     }
 
-
-    void DMA(object? o, EventArgs e)
+    private void DMA(object? o, EventArgs e)
     {
         if (DMATicksLeft != 0)
         {
@@ -135,7 +134,7 @@ ioRegisters,
 
     private (Action<byte> Write, Func<byte> Read)[] SetupControlRegisters(Keypad Keypad)
     {
-        (Action<byte> Write, Func<byte> Read)[] controlRegisters = new (Action<byte> Write, Func<byte> Read)[0x80];
+        var controlRegisters = new (Action<byte> Write, Func<byte> Read)[0x80];
         for (int i = 0; i < controlRegisters.Length; i++)
             controlRegisters[i] = (x => { }, () => 0xff);
 
@@ -190,8 +189,5 @@ ioRegisters,
     }
 
     //We have to make Step take one tick per subsystem
-    public void Step()
-    {
-        CPU.Tick();
-    }
+    public void Step() => CPU.Tick();
 }

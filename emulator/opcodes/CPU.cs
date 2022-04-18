@@ -22,38 +22,38 @@ public partial class CPU
         ISR = interruptRegisters;
 
         StdOps = new Action[0x100];
-        StdOps[(int)Opcode.NOP] = NOP();
+        StdOps[(int)Opcode.NOP] = NOP;
         StdOps[(int)Opcode.LD_AT_DE_A] = LD((WideRegister.DE, Postfix.unchanged), Register.A);
         StdOps[(int)Opcode.LD_AT_BC_A] = LD((WideRegister.BC, Postfix.unchanged), Register.A);
         StdOps[(int)Opcode.INC_BC] = INC(WideRegister.BC);
         StdOps[(int)Opcode.INC_B] = INC(Register.B);
         StdOps[(int)Opcode.DEC_B] = DEC(Register.B);
         StdOps[(int)Opcode.LD_B_d8] = LD_D8(Register.B);
-        StdOps[(int)Opcode.RLCA] = RLCA();
-        StdOps[(int)Opcode.LD_AT_a16_SP] = WriteSPToMem();
+        StdOps[(int)Opcode.RLCA] = RLCA;
+        StdOps[(int)Opcode.LD_AT_a16_SP] = WriteSPToMem;
         StdOps[(int)Opcode.ADD_HL_BC] = ADD(WideRegister.BC);
         StdOps[(int)Opcode.LD_A_AT_BC] = LD(Register.A, (WideRegister.BC, Postfix.unchanged));
         StdOps[(int)Opcode.DEC_BC] = DEC(WideRegister.BC);
         StdOps[(int)Opcode.INC_C] = INC(Register.C);
         StdOps[(int)Opcode.DEC_C] = DEC(Register.C);
         StdOps[(int)Opcode.LD_C_d8] = LD_D8(Register.C);
-        StdOps[(int)Opcode.RRCA] = RRCA();
-        StdOps[(int)Opcode.STOP] = STOP();
+        StdOps[(int)Opcode.RRCA] = RRCA;
+        StdOps[(int)Opcode.STOP] = STOP;
         StdOps[(int)Opcode.LD_DE_d16] = LD_D16(WideRegister.DE);
         StdOps[(int)Opcode.LD_BC_d16] = LD_D16(WideRegister.BC);
         StdOps[(int)Opcode.INC_DE] = INC(WideRegister.DE);
         StdOps[(int)Opcode.INC_D] = INC(Register.D);
         StdOps[(int)Opcode.DEC_D] = DEC(Register.D);
         StdOps[(int)Opcode.LD_D_d8] = LD_D8(Register.D);
-        StdOps[(int)Opcode.RLA] = RLA();
-        StdOps[(int)Opcode.JR_r8] = JR();
+        StdOps[(int)Opcode.RLA] = RLA;
+        StdOps[(int)Opcode.JR_r8] = JR;
         StdOps[(int)Opcode.ADD_HL_DE] = ADD(WideRegister.DE);
         StdOps[(int)Opcode.LD_A_AT_DE] = LD(Register.A, (WideRegister.DE, Postfix.unchanged));
         StdOps[(int)Opcode.DEC_DE] = DEC(WideRegister.DE);
         StdOps[(int)Opcode.INC_E] = INC(Register.E);
         StdOps[(int)Opcode.DEC_E] = DEC(Register.E);
         StdOps[(int)Opcode.LD_E_d8] = LD_D8(Register.E);
-        StdOps[(int)Opcode.RRA] = RRA();
+        StdOps[(int)Opcode.RRA] = RRA;
         StdOps[(int)Opcode.JR_NZ_r8] = JR(Flag.NZ);
         StdOps[(int)Opcode.LD_HL_d16] = LD_D16(WideRegister.HL);
         StdOps[(int)Opcode.LDI_AT_HL_A] = LD((WideRegister.HL, Postfix.increment), Register.A);
@@ -61,7 +61,7 @@ public partial class CPU
         StdOps[(int)Opcode.INC_H] = INC(Register.H);
         StdOps[(int)Opcode.DEC_H] = DEC(Register.H);
         StdOps[(int)Opcode.LD_H_d8] = LD_D8(Register.H);
-        StdOps[(int)Opcode.DAA] = DAA();
+        StdOps[(int)Opcode.DAA] = DAA;
         StdOps[(int)Opcode.JR_Zero_r8] = JR(Flag.Z);
         StdOps[(int)Opcode.ADD_HL_HL] = ADD(WideRegister.HL);
         StdOps[(int)Opcode.LD_AI_AT_HL] = LD(Register.A, (WideRegister.HL, Postfix.increment));
@@ -69,7 +69,7 @@ public partial class CPU
         StdOps[(int)Opcode.INC_L] = INC(Register.L);
         StdOps[(int)Opcode.DEC_L] = DEC(Register.L);
         StdOps[(int)Opcode.LD_L_d8] = LD_D8(Register.L);
-        StdOps[(int)Opcode.CPL] = CPL();
+        StdOps[(int)Opcode.CPL] = CPL;
         StdOps[(int)Opcode.JR_NC_r8] = JR(Flag.NC);
         StdOps[(int)Opcode.LD_SP_d16] = LD_D16(WideRegister.SP);
         StdOps[(int)Opcode.LDD_AT_HL_A] = LD((WideRegister.HL, Postfix.decrement), Register.A);
@@ -77,7 +77,7 @@ public partial class CPU
         StdOps[(int)Opcode.INC_AT_HL] = INC(Register.HL);
         StdOps[(int)Opcode.DEC_AT_HL] = DEC(Register.HL);
         StdOps[(int)Opcode.LD_AT_HL_d8] = LD_D8(Register.HL);
-        StdOps[(int)Opcode.SCF] = SCF();
+        StdOps[(int)Opcode.SCF] = SCF;
         StdOps[(int)Opcode.JR_Carry_r8] = JR(Flag.C);
         StdOps[(int)Opcode.ADD_HL_SP] = ADD(WideRegister.SP);
         StdOps[(int)Opcode.LD_AD_AT_HL] = LD(Register.A, (WideRegister.HL, Postfix.decrement));
@@ -85,7 +85,7 @@ public partial class CPU
         StdOps[(int)Opcode.INC_A] = INC(Register.A);
         StdOps[(int)Opcode.DEC_A] = DEC(Register.A);
         StdOps[(int)Opcode.LD_A_d8] = LD_D8(Register.A);
-        StdOps[(int)Opcode.CCF] = CCF();
+        StdOps[(int)Opcode.CCF] = CCF;
         StdOps[(int)Opcode.LD_B_B] = LD(Register.B, Register.B);
         StdOps[(int)Opcode.LD_B_C] = LD(Register.B, Register.C);
         StdOps[(int)Opcode.LD_B_D] = LD(Register.B, Register.D);
@@ -140,7 +140,7 @@ public partial class CPU
         StdOps[(int)Opcode.LD_AT_HL_E] = LD(Register.HL, Register.E);
         StdOps[(int)Opcode.LD_AT_HL_H] = LD(Register.HL, Register.H);
         StdOps[(int)Opcode.LD_AT_HL_L] = LD(Register.HL, Register.L);
-        StdOps[(int)Opcode.HALT] = HALT();
+        StdOps[(int)Opcode.HALT] = HALT;
         StdOps[(int)Opcode.LD_AT_HL_A] = LD(Register.HL, Register.A);
         StdOps[(int)Opcode.LD_A_B] = LD(Register.A, Register.B);
         StdOps[(int)Opcode.LD_A_C] = LD(Register.A, Register.C);
@@ -217,66 +217,66 @@ public partial class CPU
         StdOps[(int)Opcode.RET_NZ] = RET(Flag.NZ);
         StdOps[(int)Opcode.POP_BC] = POP(WideRegister.BC);
         StdOps[(int)Opcode.JP_NZ_a16] = JP_A16(Flag.NZ);
-        StdOps[(int)Opcode.JP_a16] = JP_A16();
+        StdOps[(int)Opcode.JP_a16] = JP_A16;
         StdOps[(int)Opcode.CALL_NZ_a16] = CALL_A16(Flag.NZ);
         StdOps[(int)Opcode.PUSH_BC] = PUSH(WideRegister.BC);
-        StdOps[(int)Opcode.ADD_A_d8] = ADD_A_d8();
+        StdOps[(int)Opcode.ADD_A_d8] = ADD_A_d8;
         StdOps[(int)Opcode.RST_00H] = RST(0x00);
         StdOps[(int)Opcode.RET_Zero] = RET(Flag.Z);
-        StdOps[(int)Opcode.RET] = RET();
+        StdOps[(int)Opcode.RET] = RET;
         StdOps[(int)Opcode.JP_Zero_a16] = JP_A16(Flag.Z);
-        StdOps[(int)Opcode.PREFIX] = PREFIX();
+        StdOps[(int)Opcode.PREFIX] = PREFIX;
         StdOps[(int)Opcode.CALL_Zero_a16] = CALL_A16(Flag.Z);
-        StdOps[(int)Opcode.CALL_a16] = CALL_a16();
-        StdOps[(int)Opcode.ADC_A_d8] = ADC();
+        StdOps[(int)Opcode.CALL_a16] = CALL_a16;
+        StdOps[(int)Opcode.ADC_A_d8] = ADC;
         StdOps[(int)Opcode.RST_08H] = RST(0x08);
         StdOps[(int)Opcode.RET_NC] = RET(Flag.NC);
         StdOps[(int)Opcode.POP_DE] = POP(WideRegister.DE);
         StdOps[(int)Opcode.JP_NC_a16] = JP_A16(Flag.NC);
-        StdOps[(int)Opcode.ILLEGAL_D3] = ILLEGAL_D3();
+        StdOps[(int)Opcode.ILLEGAL_D3] = ILLEGAL_D3;
         StdOps[(int)Opcode.CALL_NC_a16] = CALL_A16(Flag.NC);
         StdOps[(int)Opcode.PUSH_DE] = PUSH(WideRegister.DE);
-        StdOps[(int)Opcode.SUB_d8] = SUB();
+        StdOps[(int)Opcode.SUB_d8] = SUB;
         StdOps[(int)Opcode.RST_10H] = RST(0x10);
         StdOps[(int)Opcode.RET_Carry] = RET(Flag.C);
-        StdOps[(int)Opcode.RETI] = RETI();
+        StdOps[(int)Opcode.RETI] = RETI;
         StdOps[(int)Opcode.JP_Carry_a16] = JP_A16(Flag.C);
-        StdOps[(int)Opcode.ILLEGAL_DB] = ILLEGAL_DB();
+        StdOps[(int)Opcode.ILLEGAL_DB] = ILLEGAL_DB;
         StdOps[(int)Opcode.CALL_Carry_a16] = CALL_A16(Flag.C);
-        StdOps[(int)Opcode.ILLEGAL_DD] = ILLEGAL_DD();
-        StdOps[(int)Opcode.SBC_A_d8] = SBC();
+        StdOps[(int)Opcode.ILLEGAL_DD] = ILLEGAL_DD;
+        StdOps[(int)Opcode.SBC_A_d8] = SBC;
         StdOps[(int)Opcode.RST_18H] = RST(0x18);
-        StdOps[(int)Opcode.LDH_AT_a8_A] = LDH();
+        StdOps[(int)Opcode.LDH_AT_a8_A] = LDH;
         StdOps[(int)Opcode.POP_HL] = POP(WideRegister.HL);
-        StdOps[(int)Opcode.LD_AT_C_A] = LD_AT_C_A();
-        StdOps[(int)Opcode.ILLEGAL_E3] = ILLEGAL_E3();
-        StdOps[(int)Opcode.ILLEGAL_E4] = ILLEGAL_E4();
+        StdOps[(int)Opcode.LD_AT_C_A] = LD_AT_C_A;
+        StdOps[(int)Opcode.ILLEGAL_E3] = ILLEGAL_E3;
+        StdOps[(int)Opcode.ILLEGAL_E4] = ILLEGAL_E4;
         StdOps[(int)Opcode.PUSH_HL] = PUSH(WideRegister.HL);
-        StdOps[(int)Opcode.AND_d8] = AND();
+        StdOps[(int)Opcode.AND_d8] = AND;
         StdOps[(int)Opcode.RST_20H] = RST(0x20);
-        StdOps[(int)Opcode.ADD_SP_r8] = ADD_SP_R8();
-        StdOps[(int)Opcode.JP_HL] = JP();
-        StdOps[(int)Opcode.LD_AT_a16_A] = LD_AT_a16_A();
-        StdOps[(int)Opcode.ILLEGAL_EB] = ILLEGAL_EB();
-        StdOps[(int)Opcode.ILLEGAL_EC] = ILLEGAL_EC();
-        StdOps[(int)Opcode.ILLEGAL_ED] = ILLEGAL_ED();
-        StdOps[(int)Opcode.XOR_d8] = XOR();
+        StdOps[(int)Opcode.ADD_SP_r8] = ADD_SP_R8;
+        StdOps[(int)Opcode.JP_HL] = JP;
+        StdOps[(int)Opcode.LD_AT_a16_A] = LD_AT_a16_A;
+        StdOps[(int)Opcode.ILLEGAL_EB] = ILLEGAL_EB;
+        StdOps[(int)Opcode.ILLEGAL_EC] = ILLEGAL_EC;
+        StdOps[(int)Opcode.ILLEGAL_ED] = ILLEGAL_ED;
+        StdOps[(int)Opcode.XOR_d8] = XOR;
         StdOps[(int)Opcode.RST_28H] = RST(0x28);
-        StdOps[(int)Opcode.LDH_A_AT_a8] = LDH_A_AT_a8();
+        StdOps[(int)Opcode.LDH_A_AT_a8] = LDH_A_AT_a8;
         StdOps[(int)Opcode.POP_AF] = POP(WideRegister.AF);
-        StdOps[(int)Opcode.LD_A_AT_C] = LD_A_AT_C();
-        StdOps[(int)Opcode.DI] = DI();
-        StdOps[(int)Opcode.ILLEGAL_F4] = ILLEGAL_F4();
+        StdOps[(int)Opcode.LD_A_AT_C] = LD_A_AT_C;
+        StdOps[(int)Opcode.DI] = DI;
+        StdOps[(int)Opcode.ILLEGAL_F4] = ILLEGAL_F4;
         StdOps[(int)Opcode.PUSH_AF] = PUSH(WideRegister.AF);
-        StdOps[(int)Opcode.OR_d8] = OR();
+        StdOps[(int)Opcode.OR_d8] = OR;
         StdOps[(int)Opcode.RST_30H] = RST(0x30);
-        StdOps[(int)Opcode.LD_HL_SP_i8] = LD_HL_SP_i8();
-        StdOps[(int)Opcode.LD_SP_HL] = LD_SP_HL();
-        StdOps[(int)Opcode.LD_A_AT_a16] = LD_A16();
-        StdOps[(int)Opcode.EI] = EI();
-        StdOps[(int)Opcode.ILLEGAL_FC] = ILLEGAL_FC();
-        StdOps[(int)Opcode.ILLEGAL_FD] = ILLEGAL_FD();
-        StdOps[(int)Opcode.CP_d8] = CP();
+        StdOps[(int)Opcode.LD_HL_SP_i8] = LD_HL_SP_i8;
+        StdOps[(int)Opcode.LD_SP_HL] = LD_SP_HL;
+        StdOps[(int)Opcode.LD_A_AT_a16] = LD_A16;
+        StdOps[(int)Opcode.EI] = EI;
+        StdOps[(int)Opcode.ILLEGAL_FC] = ILLEGAL_FC;
+        StdOps[(int)Opcode.ILLEGAL_FD] = ILLEGAL_FD;
+        StdOps[(int)Opcode.CP_d8] = CP;
         StdOps[(int)Opcode.RST_38H] = RST(0x38);
 
         CbOps = new Action[0x100];
@@ -584,17 +584,17 @@ public partial class CPU
 
     private void OnCycleElapsed(EventArgs e) => Cycle?.Invoke(this, e);
 
-    private bool didInterrupt;
     internal void Tick()
     {
-        didInterrupt = DoInterrupt();
+        var didInterrupt = DoInterrupt();
         if (ISR.InterruptEnableScheduled)
         {
             ISR.IME = true;
             ISR.InterruptEnableScheduled = false;
         }
+
+        //If we did not do an interrupt we can do a normal CPU instruction instead
         if (!didInterrupt)
             DoNextOP();
-        didInterrupt = false;
     }
 }
