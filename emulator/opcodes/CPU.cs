@@ -543,6 +543,7 @@ public partial class CPU
     private byte ReadHaltBug()
     {
         Halted = HaltState.off;
+        CycleElapsed();
         return Memory[PC];
     }
     internal void DoNextOP()
@@ -556,18 +557,14 @@ public partial class CPU
             }
         }
 
-        if (PC == 0x4d) System.Diagnostics.Debugger.Break();
-
-        var op = Halted == HaltState.haltbug ? ReadHaltBug() : Memory[PC++];
-        CycleElapsed();
+        var op = Halted == HaltState.haltbug ? ReadHaltBug() : ReadInput();
         if (op != 0xcb)
         {
             Op((Opcode)op)();
         }
         else
         {
-            var CBop = Memory[PC++]; //Because of the CB prefix we encountered in the previous case we already skipped the extra byte of a cb instruction here
-            CycleElapsed();
+            var CBop = ReadInput(); //Because of the CB prefix we encountered in the previous case we already skipped the extra byte of a cb instruction here
             Op((CBOpcode)CBop)();
         }
     }
@@ -577,14 +574,12 @@ public partial class CPU
     private void CycleElapsed()
     {
         OurCycles++;
-        OnCycleElapsed(EventArgs.Empty);
+        Cycle?.Invoke(this, EventArgs.Empty);
     }
 
     public event EventHandler? Cycle;
 
-    private void OnCycleElapsed(EventArgs e) => Cycle?.Invoke(this, e);
-
-    internal void Tick()
+    internal void Step()
     {
         var didInterrupt = DoInterrupt();
         if (ISR.InterruptEnableScheduled)

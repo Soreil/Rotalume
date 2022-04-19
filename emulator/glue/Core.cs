@@ -189,5 +189,5 @@ ioRegisters,
     }
 
     //We have to make Step take one tick per subsystem
-    public void Step() => CPU.Tick();
+    public void Step() => CPU.Step();
 }

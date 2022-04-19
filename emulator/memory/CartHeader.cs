@@ -135,7 +135,7 @@ internal record CartHeader
 
         var RotalumeFolder = root + "\\rotalume";
         var saveFolder = RotalumeFolder + "\\saves";
-        _ = System.IO.Directory.CreateDirectory(saveFolder);
+        _ = Directory.CreateDirectory(saveFolder);
 
         var SanitizedName = SanitizeFilename(Title);
         if (SanitizedName.Length == 0)
@@ -143,7 +143,7 @@ internal record CartHeader
             throw new FileLoadException("Can't clean up this name and thus can't make it unique.");
         }
         var path = string.Format(@"{0}\{1}{2}", saveFolder, SanitizedName, SaveFormatExtension);
-        if (!System.IO.File.Exists(path))
+        if (!File.Exists(path))
         {
             var size = RequiredSaveFileSize();
 
@@ -154,11 +154,11 @@ internal record CartHeader
                 buffer[i] = 0xff;
             }
 
-            System.IO.File.WriteAllBytes(path, buffer);
+            File.WriteAllBytes(path, buffer);
         }
         //We don't have versioning yet for save files. If we ever wind up changing the format this will at least catch it if that causes a size change
         //We probably shouldn't assume files are going to get created on disk at exactly the size we requested, they might be a bit bigger.
-        else if (new System.IO.FileInfo(path).Length < RequiredSaveFileSize())
+        else if (new FileInfo(path).Length < RequiredSaveFileSize())
         {
             throw new FileLoadException("Existing save size too small");
         }
@@ -188,7 +188,7 @@ internal record CartHeader
 
     private static string SanitizeFilename(string title)
     {
-        var invalids = System.IO.Path.GetInvalidFileNameChars();
+        var invalids = Path.GetInvalidFileNameChars();
         return new string(title.Where(x => !invalids.Contains(x)).ToArray());
     }
 }
