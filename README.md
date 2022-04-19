@@ -3,7 +3,7 @@
 This is supposed to become a somewhat accurate gameboy emulator targeting the original Dot Matrix Game hardware. The emulator can currently play a bunch of games.
 To run the emulator one can simply run ```dotnet run -p .\emulator.csproj``` in the emulator subfolder. If performance is wanting add the ```-c Release ``` flag.
 
-This project is using WPF and .NET 5 with C# 9.
+This project is using WPF and .NET 6 with C# 10.
 
 Savegames:
 Savegames are written to ```%appdata%\rotalume```, the savefile name is based on the internal name in the game ROM.
@@ -16,7 +16,6 @@ Controller support:
 Missing major features:
 - Sound
 - Serial (no multiplayer)
-- Accurate timing of internal steps of CPU instructions (For instance, for a 16 bit load load high and load low should happen on their own clock cycles but we just do all at once)
 
 Test coverage:
 - bgbtest: Fully working
