@@ -172,10 +172,10 @@ public partial class CPU
     public void LD_A16() 
     {
         Registers.A = Read(FetchA16());
+        CycleElapsed();
     }
     private byte Read(ushort v)
     {
-        CycleElapsed();
         return Memory[v];
     }
 
@@ -229,6 +229,7 @@ public partial class CPU
             var value = Read(addr);
             Registers.Set(p0, value);
             Registers.Set(p1.Item1, (ushort)(addr - 1));
+            CycleElapsed();
         }
         ,
         Postfix.increment => () =>
@@ -237,6 +238,7 @@ public partial class CPU
             var value = Read(addr);
             Registers.Set(p0, value);
             Registers.Set(p1.Item1, (ushort)(addr + 1));
+            CycleElapsed();
         }
         ,
         _ => () =>
@@ -244,6 +246,7 @@ public partial class CPU
             var addr = Registers.Get(p1.Item1);
             var value = Read(addr);
             Registers.Set(p0, value);
+            CycleElapsed();
         }
         ,
     };
@@ -414,7 +417,7 @@ public partial class CPU
     public void LD_A_AT_C() 
     {
         Registers.A = Read((ushort)(0xFF00 + Registers.C));
-
+        CycleElapsed();
     }
 
     public void HALT() 
@@ -793,7 +796,7 @@ public partial class CPU
     public void LDH_A_AT_a8()
     {
         Registers.A = Read((ushort)(0xFF00 + FetchD8()));
-
+        CycleElapsed();
     }
     public void DI() 
     {
