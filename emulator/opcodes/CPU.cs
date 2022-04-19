@@ -23,8 +23,8 @@ public partial class CPU
 
         StdOps = new Action[0x100];
         StdOps[(int)Opcode.NOP] = NOP;
-        StdOps[(int)Opcode.LD_AT_DE_A] = LD((WideRegister.DE, Postfix.unchanged), Register.A);
-        StdOps[(int)Opcode.LD_AT_BC_A] = LD((WideRegister.BC, Postfix.unchanged), Register.A);
+        StdOps[(int)Opcode.LD_AT_DE_A] = LD(WideRegister.DE);
+        StdOps[(int)Opcode.LD_AT_BC_A] = LD(WideRegister.BC);
         StdOps[(int)Opcode.INC_BC] = INC(WideRegister.BC);
         StdOps[(int)Opcode.INC_B] = INC(Register.B);
         StdOps[(int)Opcode.DEC_B] = DEC(Register.B);
@@ -32,7 +32,7 @@ public partial class CPU
         StdOps[(int)Opcode.RLCA] = RLCA;
         StdOps[(int)Opcode.LD_AT_a16_SP] = WriteSPToMem;
         StdOps[(int)Opcode.ADD_HL_BC] = ADD(WideRegister.BC);
-        StdOps[(int)Opcode.LD_A_AT_BC] = LD(Register.A, (WideRegister.BC, Postfix.unchanged));
+        StdOps[(int)Opcode.LD_A_AT_BC] = LD_AT(WideRegister.BC);
         StdOps[(int)Opcode.DEC_BC] = DEC(WideRegister.BC);
         StdOps[(int)Opcode.INC_C] = INC(Register.C);
         StdOps[(int)Opcode.DEC_C] = DEC(Register.C);
@@ -48,7 +48,7 @@ public partial class CPU
         StdOps[(int)Opcode.RLA] = RLA;
         StdOps[(int)Opcode.JR_r8] = JR;
         StdOps[(int)Opcode.ADD_HL_DE] = ADD(WideRegister.DE);
-        StdOps[(int)Opcode.LD_A_AT_DE] = LD(Register.A, (WideRegister.DE, Postfix.unchanged));
+        StdOps[(int)Opcode.LD_A_AT_DE] = LD_AT(WideRegister.DE);
         StdOps[(int)Opcode.DEC_DE] = DEC(WideRegister.DE);
         StdOps[(int)Opcode.INC_E] = INC(Register.E);
         StdOps[(int)Opcode.DEC_E] = DEC(Register.E);
@@ -56,7 +56,7 @@ public partial class CPU
         StdOps[(int)Opcode.RRA] = RRA;
         StdOps[(int)Opcode.JR_NZ_r8] = JR(Flag.NZ);
         StdOps[(int)Opcode.LD_HL_d16] = LD_D16(WideRegister.HL);
-        StdOps[(int)Opcode.LDI_AT_HL_A] = LD((WideRegister.HL, Postfix.increment), Register.A);
+        StdOps[(int)Opcode.LDI_AT_HL_A] = LDI;
         StdOps[(int)Opcode.INC_HL] = INC(WideRegister.HL);
         StdOps[(int)Opcode.INC_H] = INC(Register.H);
         StdOps[(int)Opcode.DEC_H] = DEC(Register.H);
@@ -64,7 +64,7 @@ public partial class CPU
         StdOps[(int)Opcode.DAA] = DAA;
         StdOps[(int)Opcode.JR_Zero_r8] = JR(Flag.Z);
         StdOps[(int)Opcode.ADD_HL_HL] = ADD(WideRegister.HL);
-        StdOps[(int)Opcode.LD_AI_AT_HL] = LD(Register.A, (WideRegister.HL, Postfix.increment));
+        StdOps[(int)Opcode.LD_AI_AT_HL] = LDA_HLI;
         StdOps[(int)Opcode.DEC_HL] = DEC(WideRegister.HL);
         StdOps[(int)Opcode.INC_L] = INC(Register.L);
         StdOps[(int)Opcode.DEC_L] = DEC(Register.L);
@@ -72,7 +72,7 @@ public partial class CPU
         StdOps[(int)Opcode.CPL] = CPL;
         StdOps[(int)Opcode.JR_NC_r8] = JR(Flag.NC);
         StdOps[(int)Opcode.LD_SP_d16] = LD_D16(WideRegister.SP);
-        StdOps[(int)Opcode.LDD_AT_HL_A] = LD((WideRegister.HL, Postfix.decrement), Register.A);
+        StdOps[(int)Opcode.LDD_AT_HL_A] = LDD;
         StdOps[(int)Opcode.INC_SP] = INC(WideRegister.SP);
         StdOps[(int)Opcode.INC_AT_HL] = INC(Register.HL);
         StdOps[(int)Opcode.DEC_AT_HL] = DEC(Register.HL);
@@ -80,7 +80,7 @@ public partial class CPU
         StdOps[(int)Opcode.SCF] = SCF;
         StdOps[(int)Opcode.JR_Carry_r8] = JR(Flag.C);
         StdOps[(int)Opcode.ADD_HL_SP] = ADD(WideRegister.SP);
-        StdOps[(int)Opcode.LD_AD_AT_HL] = LD(Register.A, (WideRegister.HL, Postfix.decrement));
+        StdOps[(int)Opcode.LD_AD_AT_HL] = LDA_HLD;
         StdOps[(int)Opcode.DEC_SP] = DEC(WideRegister.SP);
         StdOps[(int)Opcode.INC_A] = INC(Register.A);
         StdOps[(int)Opcode.DEC_A] = DEC(Register.A);
