@@ -41,8 +41,12 @@ public partial class CPU
     }
     private void Push(ushort s)
     {
-        Registers.SP -= 2;
-        Write(Registers.SP, s);
+        Registers.SP--;
+        Memory[Registers.SP] = (byte)(s>>8);
+        CycleElapsed();
+        Registers.SP--;
+        Memory[Registers.SP] = (byte)s;
+        CycleElapsed();
     }
 
     //ReadInput reads the next byte at the instruction pointer and advances. This incurs a read hit.
@@ -640,6 +644,8 @@ public partial class CPU
     public void ADD_SP_R8()
     {
         var offset = FetchR8();
+        CycleElapsed();
+        CycleElapsed();
         var sum = Registers.SP + offset;
 
         Registers.Zero = false;
@@ -656,10 +662,7 @@ public partial class CPU
             Registers.Half = (sum & 0xf) <= (Registers.SP & 0xf);
         }
 
-        CycleElapsed();
         Registers.SP = (ushort)sum;
-        CycleElapsed();
-
     }
 
     public void JP() => PC = Registers.HL;

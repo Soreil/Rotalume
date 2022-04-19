@@ -123,7 +123,11 @@ ioRegisters,
     {
         if (DMATicksLeft != 0)
         {
-            var r = Memory.Read((ushort)(baseAddr + (160 - DMATicksLeft)));
+            //DMA values greater than or equal to A000 always go to the external RAM
+            var r = baseAddr < 0xa000
+                ? Memory[(ushort)(baseAddr + (160 - DMATicksLeft))]
+                : Memory.ExternalBusRAM((ushort)(baseAddr + (160 - DMATicksLeft)));
+
             PPU.OAM[OAM.Start + (160 - DMATicksLeft)] = r;
             DMATicksLeft--;
         }
@@ -170,15 +174,6 @@ ioRegisters,
         controlRegisters[0x46] =
         ((x) =>
         {
-            if (x > 0xf1)
-            {
-                throw new IllegalDMAAdress("Illegal DMA start adress"); //TODO: investigate how to handle these
-            }
-            else if (DMATicksLeft != 0)
-            {
-                throw new NestedDMACall("Nested DMA call");
-            }
-
             DMATicksLeft = 160;
             baseAddr = (ushort)(x << 8);
         },

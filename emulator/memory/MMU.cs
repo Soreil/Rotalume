@@ -17,14 +17,14 @@ public class MMU
                 : at switch
                 {
                     >= 0 and < 0x4000 => Card[at],//bank0
-                        >= 0x4000 and < 0x8000 => Card[at],//bank1
-                        >= 0x8000 and < 0xa000 => VRAM.Locked ? (byte)0xff : VRAM[at],
+                    >= 0x4000 and < 0x8000 => Card[at],//bank1
+                    >= 0x8000 and < 0xa000 => VRAM.Locked ? (byte)0xff : VRAM[at],
                     >= 0xa000 and < 0xc000 => Card[at],//ext_ram
-                        >= 0xc000 and < 0xe000 => WRAM[at],//wram
-                        >= 0xe000 and < 0xFE00 => WRAM[at],//wram mirror
-                        >= 0xfe00 and < 0xfea0 => OAM.Locked ? (byte)0xff : OAM[at],
+                    >= 0xc000 and < 0xe000 => WRAM[at],//wram
+                    >= 0xe000 and < 0xFE00 => WRAM[at],//wram mirror
+                    >= 0xfe00 and < 0xfea0 => OAM.Locked ? (byte)0xff : OAM[at],
                     >= 0xfea0 and < 0xff00 => UnusableMEM[at],//This should be illegal?
-                        >= 0xff00 and < 0xff80 => IORegisters[at - 0xff00].Read(),
+                    >= 0xff00 and < 0xff80 => IORegisters[at - 0xff00].Read(),
                     >= 0xff80 and < 0xffff => HRAM[at],
                     0xffff => InterruptEnable.Read(),
                 };
@@ -123,4 +123,10 @@ public class MMU
     public void Write(ushort at, byte arg) => this[at] = arg;
     public byte Read(ushort at) => this[at];
 
+    public byte ExternalBusRAM(ushort at)
+    {
+        if (at is >= 0xa000 and < 0xc000)
+            return Card[at];
+        else return Card[(ushort)(at & 0x7fff)];
+    }
 }

@@ -38,7 +38,10 @@ internal class GraphicalOutputTest
     [TestCase(@"..\..\..\..\Tests\rom\blargg\mem_timing-2\mem_timing.gb", @"..\..\..\..\Tests\rom\blargg\mem_timing-2\expected.png", "outputMEMTiming2.bmp", 200)]
     [TestCase(@"..\..\..\..\Tests\rom\blargg\halt_bug\halt_bug.gb", @"..\..\..\..\Tests\rom\blargg\halt_bug\expected.png", "outputHaltBug.bmp", 300)]
     [TestCase(@"..\..\..\..\Tests\rom\dmg-acid2\dmg-acid2.gb", @"..\..\..\..\Tests\rom\dmg-acid2\expected.png", "outputDMG-ACID2.bmp", 10)]
-    
+    [TestCase(@"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\oam_dma\basic.gb", @"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\oam_dma\expected.png", "outputBasicOAM.bmp", 10)]
+    [TestCase(@"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\oam_dma\reg_read.gb", @"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\oam_dma\expected.png", "outputRegReadOAM.bmp", 10)]
+
+
     public void TestFrameMatchesExpectedFrame(string romPath, string imagePath, string outputFile, int frameToCheck)
     {
         var render = new TestRenderDevice();
