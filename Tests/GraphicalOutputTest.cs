@@ -37,10 +37,17 @@ internal class GraphicalOutputTest
     [TestCase(@"..\..\..\..\Tests\rom\blargg\mem_timing\mem_timing.gb", @"..\..\..\..\Tests\rom\blargg\mem_timing\expected.png", "outputMEMTiming.bmp", 100)]
     [TestCase(@"..\..\..\..\Tests\rom\blargg\mem_timing-2\mem_timing.gb", @"..\..\..\..\Tests\rom\blargg\mem_timing-2\expected.png", "outputMEMTiming2.bmp", 200)]
     [TestCase(@"..\..\..\..\Tests\rom\blargg\halt_bug\halt_bug.gb", @"..\..\..\..\Tests\rom\blargg\halt_bug\expected.png", "outputHaltBug.bmp", 300)]
+    
     [TestCase(@"..\..\..\..\Tests\rom\dmg-acid2\dmg-acid2.gb", @"..\..\..\..\Tests\rom\dmg-acid2\expected.png", "outputDMG-ACID2.bmp", 10)]
+
     [TestCase(@"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\oam_dma\basic.gb", @"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\oam_dma\expected.png", "outputBasicOAM.bmp", 10)]
     [TestCase(@"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\oam_dma\reg_read.gb", @"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\oam_dma\expected.png", "outputRegReadOAM.bmp", 10)]
 
+    [TestCase(@"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\bits\mem_oam.gb", @"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\bits\expected.png", "outputMEMOAM.bmp", 100)]
+    [TestCase(@"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\bits\unused_hwio-GS.gb", @"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\bits\expected.png", "outputUnusedHWIO.bmp", 100)]
+    [TestCase(@"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\bits\reg_f.gb", @"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\bits\expected_regf.png", "outputRegF.bmp", 100)]
+
+    [TestCase(@"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\instr\daa.gb", @"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\instr\expected.png", "outputDAA.bmp", 100)]
 
     public void TestFrameMatchesExpectedFrame(string romPath, string imagePath, string outputFile, int frameToCheck)
     {
