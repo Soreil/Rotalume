@@ -12,6 +12,8 @@ public partial class CPU
 
     //Wrapper to allow easier handling of (HL) usage
     public byte GetRegister(Register r) => r == Register.HL ? ReadMemoryAtHL() : Registers.Get(r);
+
+    //Reading memory takes a cycle overhead unlike reading registers
     private byte ReadMemoryAtHL()
     {
         var read = Memory.Read(Registers.HL);
@@ -21,6 +23,7 @@ public partial class CPU
 
     public void SetRegister(Register r, byte b)
     {
+        //Writing memory takes a cycle overhead unlike reading registers
         if (r == Register.HL)
         {
             Memory.Write(Registers.HL, b);
@@ -42,28 +45,24 @@ public partial class CPU
         Write(Registers.SP, s);
     }
 
-
+    //ReadInput reads the next byte at the instruction pointer and advances. This incurs a read hit.
     private byte ReadInput()
     {
         CycleElapsed();
         return Memory[PC++];
 
     }
-    private ushort ReadInputWide()
+    private ushort ReadWide()
     {
+        //TODO: is this actually more performant?
         Span<byte> buf = stackalloc byte[2];
         buf[0] = ReadInput();
         buf[1] = ReadInput();
         return BitConverter.ToUInt16(buf);
     }
-    private ushort FetchD16() => ReadInputWide();
-
     private byte FetchD8() => ReadInput();
 
-    private ushort FetchA16() => ReadInputWide();
-
     private sbyte FetchR8() => (sbyte)ReadInput();
-
 
     private ushort ReadWide(ushort at)
     {
@@ -87,10 +86,10 @@ public partial class CPU
         CycleElapsed();
     }
 
-    public void NOP() { }
+    public static void NOP() { }
     public Action LD_D16(WideRegister p0) => () =>
     {
-        var arg = FetchD16();
+        var arg = ReadWide();
         Registers.Set(p0, arg);
     };
 
@@ -108,7 +107,6 @@ public partial class CPU
         var value = Registers.A;
         Write(address, value);
         Registers.Set(WideRegister.HL, (ushort)(address - 1));
-
     }
 
     public Action LD(WideRegister p0) => () =>
@@ -144,7 +142,6 @@ public partial class CPU
         Registers.Negative = false;
         Registers.Half = before.IsHalfCarryAdd(1);
         SetRegister(p0, (byte)(before + 1));
-
     };
 
     public Action DEC(Register p0) => () =>
@@ -156,25 +153,20 @@ public partial class CPU
         Registers.Zero = arg == 0;
         Registers.Negative = true;
         Registers.Half = before.IsHalfCarrySub(1);
-
     };
 
     public Action LD_D8(Register p0) => () =>
     {
         var arg = FetchD8();
         SetRegister(p0, arg);
-
     };
 
     public void LD_A16()
     {
-        Registers.A = Read(FetchA16());
+        Registers.A = Read(ReadWide());
         CycleElapsed();
     }
-    private byte Read(ushort v)
-    {
-        return Memory[v];
-    }
+    private byte Read(ushort v) => Memory[v];
 
     public void RLCA()
     {
@@ -198,7 +190,7 @@ public partial class CPU
 
     public void WriteSPToMem()
     {
-        var addr = FetchD16();
+        var addr = ReadWide();
         var arg = Registers.SP;
 
         Write(addr, arg);
@@ -255,7 +247,6 @@ public partial class CPU
     {
         Registers.Zero = false;
         Registers.A = RRC(Registers.A);
-
     }
 
     private byte RRC(byte reg)
@@ -275,12 +266,11 @@ public partial class CPU
         return reg;
     }
 
-    public void STOP() { }
+    public static void STOP() { }
     public void RLA()
     {
         Registers.Zero = false;
         Registers.A = RL(Registers.A);
-
     }
 
     private byte RL(byte A)
@@ -302,13 +292,11 @@ public partial class CPU
         var offset = FetchR8();
         CycleElapsed();
         PC = (ushort)(PC + offset);
-
     }
     public void RRA()
     {
         Registers.Zero = false;
         Registers.A = RR(Registers.A);
-
     }
 
     private byte RR(byte A)
@@ -344,7 +332,6 @@ public partial class CPU
         {
             PC = (ushort)(PC + offset);
             CycleElapsed();
-
         }
     };
 
@@ -366,14 +353,12 @@ public partial class CPU
         }
         Registers.Zero = Registers.A == 0;
         Registers.Half = false;
-
     }
     public void CPL()
     {
         Registers.A = (byte)~Registers.A;
         Registers.Negative = true;
         Registers.Half = true;
-
     }
 
     public void SCF()
@@ -381,7 +366,6 @@ public partial class CPU
         Registers.Negative = false;
         Registers.Half = false;
         Registers.Carry = true;
-
     }
 
     public void CCF()
@@ -389,20 +373,14 @@ public partial class CPU
         Registers.Negative = false;
         Registers.Half = false;
         Registers.Carry = !Registers.Carry;
-
     }
     public Action LD(Register p0, Register p1) => () =>
     {
         var arg = GetRegister(p1);
         SetRegister(p0, arg);
-
     };
 
-    public void LD_AT_C_A()
-    {
-        Write((ushort)(0xFF00 + Registers.C), Registers.A);
-
-    }
+    public void LD_AT_C_A() => Write((ushort)(0xFF00 + Registers.C), Registers.A);
 
     public void LD_A_AT_C()
     {
@@ -410,17 +388,11 @@ public partial class CPU
         CycleElapsed();
     }
 
-    public void HALT()
-    {
-
-        Halt();
-    }
+    public void HALT() => Halt();
     public Action ADD(Register p1) => () =>
     {
         var rhs = GetRegister(p1);
-
         ADD(rhs);
-
     };
 
     private void ADD(byte rhs)
@@ -436,9 +408,7 @@ public partial class CPU
     public Action ADC(Register p1) => () =>
     {
         var rhs = GetRegister(p1);
-
         ADC(rhs);
-
     };
     public Action SUB(Register p0) => () =>
     {
@@ -446,7 +416,6 @@ public partial class CPU
         var rhs = GetRegister(p0);
 
         Registers.A = SUB(lhs, rhs);
-
     };
 
     private byte SUB(byte lhs, byte rhs)
@@ -463,9 +432,7 @@ public partial class CPU
     public Action SBC(Register p1) => () =>
     {
         var rhs = GetRegister(p1);
-
         SBC(rhs);
-
     };
 
     private void ADC(byte rhs)
@@ -495,9 +462,7 @@ public partial class CPU
     public Action AND(Register p0) => () =>
     {
         var rhs = GetRegister(p0);
-
         AND(rhs);
-
     };
     private void AND(byte rhs)
     {
@@ -506,15 +471,12 @@ public partial class CPU
         Registers.Half = true;
         Registers.Negative = false;
         Registers.Zero = Registers.A == 0;
-
     }
 
     public Action XOR(Register p0) => () =>
     {
         var rhs = GetRegister(p0);
-
         XOR(rhs);
-
     };
     private void XOR(byte rhs)
     {
@@ -529,7 +491,6 @@ public partial class CPU
     {
         var rhs = GetRegister(p0);
         OR(rhs);
-
     };
 
     private void OR(byte rhs)
@@ -540,13 +501,11 @@ public partial class CPU
         Registers.Half = false;
         Registers.Negative = false;
         Registers.Zero = Registers.A == 0;
-
     }
     public Action CP(Register p0) => () =>
     {
         var rhs = GetRegister(p0);
         CP(rhs);
-
     };
     public Action RET(Flag p0) => () =>
     {
@@ -569,8 +528,6 @@ public partial class CPU
     {
         Registers.Set(p0, ReadWide(Registers.SP));
         Registers.SP += 2;
-
-
     };
     public Action JP_A16(Flag p0) => () =>
     {
@@ -583,20 +540,18 @@ public partial class CPU
             _ => throw new NotImplementedException()
         };
 
-        var addr = FetchA16();
+        var addr = ReadWide();
         if (flag)
         {
             PC = addr;
             CycleElapsed();
-
         }
     };
     public void JP_A16()
     {
-        var addr = FetchA16();
+        var addr = ReadWide();
         CycleElapsed();
         PC = addr;
-
     }
     public Action CALL_A16(Flag p0) => () =>
     {
@@ -609,7 +564,7 @@ public partial class CPU
             _ => throw new NotImplementedException()
         };
 
-        var addr = FetchA16();
+        var addr = ReadWide();
         if (flag)
         {
             Call(addr);
@@ -625,11 +580,8 @@ public partial class CPU
     public void ADD_A_d8()
     {
         Registers.Negative = false;
-
         var rhs = FetchD8();
-
         ADD(rhs);
-
     }
     public Action RST(byte adress) => () => Call(adress);
     public void RET()
@@ -637,42 +589,24 @@ public partial class CPU
         var addr = Pop();
         CycleElapsed();
         PC = addr;
-
     }
-    //Not an actual instruction
-    public void PREFIX()
-    {
+    public static void PREFIX() => throw new IllegalOpCodeException("unimplementable");
 
-        throw new IllegalOpCodeException("unimplementable");
-    }
-
-    //TODO: Check where this naming error originated
-    public void CALL_a16()
-    {
-        Call(FetchD16());
-    }
+    public void CALL_a16() => Call(ReadWide());
 
     public void Call(ushort addr)
     {
         CycleElapsed();
         Push(PC);
         PC = addr;
-
     }
 
     public void ADC()
     {
         var rhs = FetchD8();
-
         ADC(rhs);
-
     }
 
-    public void ILLEGAL_D3()
-    {
-
-        throw new Exception("illegal");
-    }
 
     public void SUB()
     {
@@ -691,44 +625,16 @@ public partial class CPU
         EnableInterrupts();
 
     }
-    public void ILLEGAL_DB()
-    {
-
-        throw new IllegalOpCodeException("illegal");
-    }
-    public void ILLEGAL_DD()
-    {
-
-        throw new IllegalOpCodeException("illegal");
-    }
     public void SBC()
     {
         var rhs = FetchD8();
-
         SBC(rhs);
-
     }
-    public void LDH()
-    {
-        Write((ushort)(0xff00 + FetchD8()), Registers.A);
-
-    }
-    public void ILLEGAL_E3()
-    {
-
-        throw new IllegalOpCodeException("illegal");
-    }
-    public void ILLEGAL_E4()
-    {
-
-        throw new IllegalOpCodeException("illegal");
-    }
+    public void LDH() => Write((ushort)(0xff00 + FetchD8()), Registers.A);
     public void AND()
     {
         var andWith = FetchD8();
-
         AND(andWith);
-
     }
 
     public void ADD_SP_R8()
@@ -756,55 +662,28 @@ public partial class CPU
 
     }
 
-    public void JP()
-    {
-        PC = Registers.HL;
-    }
-    public void LD_AT_a16_A()
-    {
-        Write(FetchD16(), Registers.A);
+    public void JP() => PC = Registers.HL;
+    public void LD_AT_a16_A() => Write(ReadWide(), Registers.A);
+    public static void ILLEGAL_D3() => throw new IllegalOpCodeException("illegal");
+    public static void ILLEGAL_EB() => throw new IllegalOpCodeException("illegal");
+    public static void ILLEGAL_EC() => throw new IllegalOpCodeException("illegal");
+    public static void ILLEGAL_ED() => throw new IllegalOpCodeException("illegal");
+    public static void ILLEGAL_DB() => throw new IllegalOpCodeException("illegal");
+    public static void ILLEGAL_DD() => throw new IllegalOpCodeException("illegal");
+    public static void ILLEGAL_E3() => throw new IllegalOpCodeException("illegal");
+    public static void ILLEGAL_E4() => throw new IllegalOpCodeException("illegal");
+    public static void ILLEGAL_FC() => throw new IllegalOpCodeException("illegal");
+    public static void ILLEGAL_FD() => throw new IllegalOpCodeException("illegal");
+    public static void ILLEGAL_F4() => throw new IllegalOpCodeException("illegal");
 
-    }
-    public void ILLEGAL_EB()
-    {
-
-        throw new IllegalOpCodeException("illegal");
-    }
-    public void ILLEGAL_EC()
-    {
-
-        throw new IllegalOpCodeException("illegal");
-    }
-    public void ILLEGAL_ED()
-    {
-
-        throw new IllegalOpCodeException("illegal");
-    }
-    public void XOR()
-    {
-        XOR(FetchD8());
-
-    }
+    public void XOR() => XOR(FetchD8());
     public void LDH_A_AT_a8()
     {
         Registers.A = Read((ushort)(0xFF00 + FetchD8()));
         CycleElapsed();
     }
-    public void DI()
-    {
-        DisableInterrupts();
-
-    }
-    public void ILLEGAL_F4()
-    {
-
-        throw new IllegalOpCodeException("illegal");
-    }
-    public void OR()
-    {
-        OR(FetchD8());
-
-    }
+    public void DI() => DisableInterrupts();
+    public void OR() => OR(FetchD8());
 
     public void LD_HL_SP_i8()
     {
@@ -834,24 +713,9 @@ public partial class CPU
         Registers.SP = Registers.HL;
         CycleElapsed();
     }
-    public void EI()
-    {
-        EnableInterruptsDelayed();
-
-    }
-    public void ILLEGAL_FC()
-    {
-
-        throw new IllegalOpCodeException("illegal");
-    }
-    public void ILLEGAL_FD()
-    {
-
-        throw new IllegalOpCodeException("illegal");
-    }
+    public void EI() => EnableInterruptsDelayed();
     public void CP()
     {
-        var lhs = Registers.A;
         var rhs = FetchD8();
         CP(rhs);
 
