@@ -96,7 +96,7 @@ internal class MBC5 : MBC
 
     private static bool IsUpperBank(int n) => n >= ROMBankSize;
 
-    public byte GetRAM(int n) => (byte)(RAMEnabled ? RAMBanks!.ReadByte((RAMBankNumber * RAMBankSize) + n - RAMStart) : 0xff);
+    public byte GetRAM(int n) => (byte)(RAMEnabled ? RAMBanks!.ReadByte((RAMBankNumber * RAMBankSize) + (n&0x1fff)) : 0xff);
 
     public void SetRAM(int n, byte v)
     {

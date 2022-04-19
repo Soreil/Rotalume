@@ -57,7 +57,7 @@ public partial class CPU
         StdOps[(int)Opcode.JR_NZ_r8] = JR(Flag.NZ);
         StdOps[(int)Opcode.LD_HL_d16] = LD_D16(WideRegister.HL);
         StdOps[(int)Opcode.LDI_AT_HL_A] = LDI;
-        StdOps[(int)Opcode.INC_HL] = INC(WideRegister.HL);
+        StdOps[(int)Opcode.INC_HL] = INC_HL;
         StdOps[(int)Opcode.INC_H] = INC(Register.H);
         StdOps[(int)Opcode.DEC_H] = DEC(Register.H);
         StdOps[(int)Opcode.LD_H_d8] = LD_D8(Register.H);

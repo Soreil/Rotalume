@@ -71,6 +71,9 @@ ioRegisters,
 );
 
         CPU = new CPU(Memory, InterruptRegisters);
+
+        CPU.OAMCorruption += PPU.OAM.Corrupt;
+
         ioRegisters[0x0f] = InterruptRegisters.HookUp();
 
         ioRegisters[0x50] = Memory.HookUpMemory();
@@ -115,8 +118,6 @@ ioRegisters,
         CPU.Cycle += PPU.Tick;
         CPU.Cycle += APU.Tick;
         CPU.Cycle += DMA;
-
-
     }
 
     private void DMA(object? o, EventArgs e)
@@ -125,8 +126,8 @@ ioRegisters,
         {
             //DMA values greater than or equal to A000 always go to the external RAM
             var r = baseAddr < 0xa000
-                ? Memory[(ushort)(baseAddr + (160 - DMATicksLeft))]
-                : Memory.ExternalBusRAM((ushort)(baseAddr + (160 - DMATicksLeft)));
+            ? Memory[(ushort)(baseAddr + (160 - DMATicksLeft))]
+            : Memory.ExternalBusRAM((ushort)(baseAddr + (160 - DMATicksLeft)));
 
             PPU.OAM[OAM.Start + (160 - DMATicksLeft)] = r;
             DMATicksLeft--;

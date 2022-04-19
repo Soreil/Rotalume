@@ -42,7 +42,7 @@ public partial class CPU
     private void Push(ushort s)
     {
         Registers.SP--;
-        Memory[Registers.SP] = (byte)(s>>8);
+        Memory[Registers.SP] = (byte)(s >> 8);
         CycleElapsed();
         Registers.SP--;
         Memory[Registers.SP] = (byte)s;
@@ -136,6 +136,17 @@ public partial class CPU
         Registers.Set(p0, target);
         CycleElapsed();
     };
+
+    public void INC_HL()
+    {
+        if (Registers.H == 0xfe) CorruptOAM();
+        Registers.HL++;
+        CycleElapsed();
+    }
+
+    public event EventHandler? OAMCorruption;
+
+    private void CorruptOAM() => OAMCorruption?.Invoke(this, EventArgs.Empty);
 
     public Action INC(Register p0) => () =>
     {

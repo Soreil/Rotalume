@@ -75,7 +75,7 @@ public class Timers
 
     private byte TAC
     {
-        get => (byte)(0xf8 | ((TACEnable ? 1 : 0) << 2) | PositionToBits(TACFrequency));
+        get => (byte)(0xf8 | (Convert.ToInt32(TACEnable) << 2) | PositionToBits(TACFrequency));
         set
         {
             var glitch = TACEnable

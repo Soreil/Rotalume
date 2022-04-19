@@ -123,10 +123,5 @@ public class MMU
     public void Write(ushort at, byte arg) => this[at] = arg;
     public byte Read(ushort at) => this[at];
 
-    public byte ExternalBusRAM(ushort at)
-    {
-        if (at is >= 0xa000 and < 0xc000)
-            return Card[at];
-        else return Card[(ushort)(at & 0x7fff)];
-    }
+    public byte ExternalBusRAM(ushort at) => at < 0xfe00 ? this[at] : WRAM[at];
 }

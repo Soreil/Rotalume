@@ -62,4 +62,12 @@ line < s.Y - graphics.Constants.DoubleSpriteHeight + spriteHeight;
         selected.Sort();
         return spriteCount;
     }
+
+    internal void Corrupt(object? sender, EventArgs e)
+    {
+        for (int i = 0; i < Size; i++)
+        {
+            this[i+Start] = (byte)i;
+        }
+    }
 }
