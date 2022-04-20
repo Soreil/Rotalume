@@ -18,18 +18,8 @@ public class WRAM
     }
     public byte this[int n]
     {
-        get => n < MirrorStart ? mem[n - Start] : mem[n - MirrorStart];
-        set
-        {
-            if (n < MirrorStart)
-            {
-                mem[n - Start] = value;
-            }
-            else
-            {
-                mem[n - MirrorStart] = value;
-            }
-        }
+        get => mem[n & 0x1fff];
+        set => mem[n & 0x1fff] = value;
     }
 }
 
