@@ -10,7 +10,7 @@ public class Shifts
     [Test]
     public void RLCA()
     {
-        var core = TestHelpers.NewCore(new byte[] { });
+        var core = TestHelpers.NewCore(Array.Empty<byte>());
         var dec = core.CPU;
 
         {
@@ -44,7 +44,7 @@ public class Shifts
     [Test]
     public void RRCA()
     {
-        var core = TestHelpers.NewCore(new byte[] { });
+        var core = TestHelpers.NewCore(Array.Empty<byte>());
         var dec = core.CPU;
 
         {
@@ -78,7 +78,7 @@ public class Shifts
     [Test]
     public void CPL()
     {
-        var core = TestHelpers.NewCore(new byte[] { });
+        var core = TestHelpers.NewCore(Array.Empty<byte>());
         var dec = core.CPU;
 
         dec.Registers.A = (0xff);
@@ -89,7 +89,7 @@ public class Shifts
     [Test]
     public void SCF()
     {
-        var core = TestHelpers.NewCore(new byte[] { });
+        var core = TestHelpers.NewCore(Array.Empty<byte>());
         var dec = core.CPU;
 
         dec.Op(Opcode.SCF)();
@@ -99,7 +99,7 @@ public class Shifts
     [Test]
     public void CCF()
     {
-        var core = TestHelpers.NewCore(new byte[] { });
+        var core = TestHelpers.NewCore(Array.Empty<byte>());
         var dec = core.CPU;
         dec.Registers.Carry = false;
 

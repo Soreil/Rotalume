@@ -102,7 +102,7 @@ public class WideLoads
         Assert.AreEqual(0x77, memoryAfter);
     }
 
-    private Core Setup0x77BufferedDecoder()
+    private static Core Setup0x77BufferedDecoder()
     {
         var c = TestHelpers.NewCore(new byte[] { 0x77 });
         return c;
@@ -111,7 +111,7 @@ public class WideLoads
     [Test]
     public void LDD_AT_HL_A()
     {
-        var core = TestHelpers.NewCore(new byte[] { });
+        var core = TestHelpers.NewCore(Array.Empty<byte>());
         var dec = core.CPU;
         dec.Registers.Set(WideRegister.HL, 0xa001);
         dec.Registers.Set(Register.A, 0x77);
@@ -136,7 +136,7 @@ public class WideLoads
     [Test]
     public void LDI_AT_HL_A()
     {
-        var core = TestHelpers.NewCore(new byte[] { });
+        var core = TestHelpers.NewCore(Array.Empty<byte>());
         var dec = core.CPU;
         dec.Registers.Set(WideRegister.HL, 0xa000);
         dec.Registers.Set(Register.A, 0x77);
@@ -172,7 +172,7 @@ public class WideLoads
     [Test]
     public void ADD_HL_BC()
     {
-        var core = TestHelpers.NewCore(new byte[] { });
+        var core = TestHelpers.NewCore(Array.Empty<byte>());
         var dec = core.CPU;
 
         dec.Registers.HL = (0x8a23);
@@ -188,7 +188,7 @@ public class WideLoads
     [Test]
     public void ADD_HL_HL()
     {
-        var core = TestHelpers.NewCore(new byte[] { });
+        var core = TestHelpers.NewCore(Array.Empty<byte>());
         var dec = core.CPU;
 
         dec.Registers.HL = (0x8a23);
@@ -204,7 +204,7 @@ public class WideLoads
     [Test]
     public void LD_A_B()
     {
-        var core = TestHelpers.NewCore(new byte[] { });
+        var core = TestHelpers.NewCore(Array.Empty<byte>());
         var dec = core.CPU;
 
         dec.Registers.B = (0x10);
@@ -217,7 +217,7 @@ public class WideLoads
     [Test]
     public void LD_AT_C_A()
     {
-        var core = TestHelpers.NewCore(new byte[] { });
+        var core = TestHelpers.NewCore(Array.Empty<byte>());
         var dec = core.CPU;
 
         dec.Registers.A = (0x10);
@@ -231,7 +231,7 @@ public class WideLoads
     [Test]
     public void LD_A_AT_C()
     {
-        var core = TestHelpers.NewCore(new byte[] { });
+        var core = TestHelpers.NewCore(Array.Empty<byte>());
         var dec = core.CPU;
 
         core.Memory.Write(0xfffe, 0x10);

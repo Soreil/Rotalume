@@ -2,19 +2,17 @@
 
 public class XboxController
 {
-    readonly int _playerIndex;
-    static bool keepRunning;
-    static bool isRunning;
-    static readonly object SyncLock;
-    static Thread? pollingThread;
-
-    bool _stopMotorTimerActive;
-    DateTime _stopMotorTime;
-    XInputBatteryInformation _batteryInformationGamepad;
-    XInputBatteryInformation _batterInformationHeadset;
-
-    XInputState gamepadStatePrev;
-    XInputState gamepadStateCurrent;
+    private readonly int _playerIndex;
+    private static bool keepRunning;
+    private static bool isRunning;
+    private static readonly object SyncLock;
+    private static Thread? pollingThread;
+    private bool _stopMotorTimerActive;
+    private DateTime _stopMotorTime;
+    private XInputBatteryInformation _batteryInformationGamepad;
+    private XInputBatteryInformation _batterInformationHeadset;
+    private XInputState gamepadStatePrev;
+    private XInputState gamepadStateCurrent;
 
     public static int UpdateFrequency { get; set; }
 
@@ -31,8 +29,7 @@ public class XboxController
     }
 
     private const int ControllerLimit = 4;
-
-    static readonly XboxController[] Controllers;
+    private static readonly XboxController[] Controllers;
 
     static XboxController()
     {
@@ -71,7 +68,7 @@ public class XboxController
 
     public XInputCapabilities GetCapabilities()
     {
-        XInputCapabilities capabilities = new XInputCapabilities();
+        var capabilities = new XInputCapabilities();
         _ = XInput.XInputGetCapabilities(_playerIndex, XInputConstants.XINPUT_FLAG_GAMEPAD, ref capabilities);
         return capabilities;
     }
@@ -146,7 +143,7 @@ public class XboxController
             keepRunning = false;
     }
 
-    static void PollerLoop()
+    private static void PollerLoop()
     {
         lock (SyncLock)
         {

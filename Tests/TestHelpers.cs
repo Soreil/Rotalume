@@ -41,14 +41,8 @@ public static class TestHelpers
             frameSink);
     }
 
-    public static void StepOneCPUInstruction(Core c)
-    {
-        c.Step();
-        //while (c.CPU.TicksWeAreWaitingFor != 1)
-        //{
-        //    c.Step();
-        //}
-    }
+    public static void StepOneCPUInstruction(Core c) => 
+        c.Step();//while (c.CPU.TicksWeAreWaitingFor != 1)//{//    c.Step();//}
 
     public static bool AreEqual(Image<L8> expectedImage, Image<L8> outputImage)
     {

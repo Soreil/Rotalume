@@ -58,7 +58,7 @@ line < s.Y - graphics.Constants.DoubleSpriteHeight + spriteHeight;
                 }
             }
         }
-        var selected = buffer.Slice(0, spriteCount);
+        var selected = buffer[..spriteCount];
         selected.Sort();
         return spriteCount;
     }

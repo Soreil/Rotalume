@@ -32,7 +32,7 @@ public class Core
 
         var ioRegisters = SetupControlRegisters(Keypad);
 
-        CartHeader Header = new CartHeader(gameROM);
+        var Header = new CartHeader(gameROM);
 
         MBC Card;
         if (Header.HasBattery())

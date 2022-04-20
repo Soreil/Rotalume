@@ -309,7 +309,7 @@ public class APU
         APUClock++;
     }
 
-    private float SampleSound() => 0.0f;
+    private static float SampleSound() => 0.0f;
 
     private int FrameSequencerClock;
     private byte Channel1Enveloppe;

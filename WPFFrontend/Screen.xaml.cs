@@ -214,10 +214,9 @@ public partial class Screen : Window
         SpinUpNewGameboy(ofd.FileName);
     }
 
-    CancellationTokenSource CancellationTokenSource = new();
-
-    const int BitmapWidth = 160;
-    const int BitmapHeight = 144;
+    private CancellationTokenSource CancellationTokenSource = new();
+    private const int BitmapWidth = 160;
+    private const int BitmapHeight = 144;
 
     private void SpinUpNewGameboy(string fn)
     {
@@ -263,7 +262,7 @@ public partial class Screen : Window
       @"\Screenshot" + "_" +
       DateTime.Now.ToString("(dd_MMMM_hh_mm_ss_tt)") + ".png");
                 using FileStream fs = new(fileName, FileMode.Create);
-                PngBitmapEncoder encoder = new PngBitmapEncoder();
+                var encoder = new PngBitmapEncoder();
                 encoder.Frames.Add(BitmapFrame.Create(bmp));
                 encoder.Save(fs);
             }
@@ -286,7 +285,7 @@ public partial class Screen : Window
     private void RadioButton_Checked(object sender, RoutedEventArgs e)
     {
         if (sender is null) return;
-        RadioButton li = (RadioButton)sender;
+        var li = (RadioButton)sender;
         InputDevices.SelectedController = li.Content switch
         {
             "1" => 1,
