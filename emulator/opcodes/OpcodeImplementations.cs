@@ -199,7 +199,7 @@ public partial class CPU
         Registers.Carry = TopBit;
 
         reg <<= 1;
-        reg += (byte)(TopBit ? 1 : 0);
+        reg |= Convert.ToByte(TopBit);
         return reg;
     }
 
@@ -298,7 +298,7 @@ public partial class CPU
         Registers.Carry = TopBit;
 
         A <<= 1;
-        A += (byte)(OldBit ? 1 : 0);
+        A |= Convert.ToByte(OldBit);
         return A;
     }
 
@@ -453,7 +453,7 @@ public partial class CPU
     private void ADC(byte rhs)
     {
         var lhs = Registers.A;
-        var carry = Registers.Carry ? 1 : 0;
+        var carry = Convert.ToInt32(Registers.Carry);
         Registers.A = (byte)(lhs + rhs + carry);
 
         Registers.Negative = false;
@@ -465,7 +465,7 @@ public partial class CPU
     private void SBC(byte rhs)
     {
         var lhs = Registers.A;
-        var carry = Registers.Carry ? 1 : 0;
+        var carry = Convert.ToInt32(Registers.Carry);
         Registers.A = (byte)(lhs - rhs - carry);
 
         Registers.Negative = true;

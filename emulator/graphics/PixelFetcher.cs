@@ -88,12 +88,12 @@ public class PixelFetcher
         {
             for (var i = graphics.Constants.SpriteWidth; i > 0; i--)
             {
-                var paletteIndex = low.GetBit(i - 1) ? 1 : 0;
-                paletteIndex += high.GetBit(i - 1) ? 2 : 0;
+                var paletteIndex = Convert.ToByte(low.GetBit(i - 1));
+                paletteIndex |= (byte)(Convert.ToByte(high.GetBit(i - 1)) << 1);
 
                 var pos = sprite.XFlipped ? (i - 1) : graphics.Constants.SpriteWidth - i;
                 var existingSpritePixel = SpriteFIFO.At(pos);
-                var candidate = new FIFOSpritePixel((byte)paletteIndex, sprite.SpriteToBackgroundPriority, sprite.Palette);
+                var candidate = new FIFOSpritePixel(paletteIndex, sprite.SpriteToBackgroundPriority, sprite.Palette);
 
                 if (ShouldReplace(existingSpritePixel, candidate))
                 {
@@ -105,67 +105,18 @@ public class PixelFetcher
 
     private static bool ShouldReplace(FIFOSpritePixel existingSpritePixel, FIFOSpritePixel candidate) => (candidate.color != 0 && existingSpritePixel.color == 0) || (candidate.priority && !existingSpritePixel.priority);
 
-    public Shade RenderPixel()
+    public Shade? RenderPixel()
     {
         //Sprites are enabled and there is a sprite starting on the current X position
-        if (p.OBJDisplayEnable && SpriteCount - SpritesFinished != 0 && ContainsSprite())
+        //We can't start the sprite fetching yet if the background fifo is empty
+        if (CanRenderASprite())
         {
-            //We can't start the sprite fetching yet if the background fifo is empty
-            if (BGFIFO.Count == 0)
-            {
-                return Shade.Empty;
-            }
-
-            //Fill the fifo lower half with transparant pixels
-            for (int i = SpriteFIFO.Count; i < graphics.Constants.SpriteWidth; i = SpriteFIFO.Count)
-            {
-                SpriteFIFO.Push(new FIFOSpritePixel(0, false, 0));
-            }
-
-            var sprite = FirstMatchingSprite();
-
-            //16 pixel offset before lines can be offscreen taken out
-            var y = p.LY - (sprite.Y - graphics.Constants.DoubleSpriteHeight);
-            if (sprite.YFlipped)
-            {
-                y = p.SpriteHeight == 8 ? 7 - y : 15 - y;
-            }
-
-            if (y < 0)
-            {
-                throw new SpriteDomainError("Illegal Y position in sprite");
-            }
-
-            var ID = p.SpriteHeight == 8 ? sprite.ID : sprite.ID & 0xfe;
-            var addr = 0x8000 + ID * graphics.Constants.BitsPerSpriteTile + (2 * y);
-            var low = p.VRAM[addr];
-            var high = p.VRAM[addr + 1];
-            PushSpriteRow(low, high, sprite);
-            SpritesFinished++;
+            PushSpriteRowToPixelFetcher();
         }
 
-        if (BGFIFO.Count != 0 && SpriteFIFO.Count != 0)
+        if (FIFOsNotEmpty())
         {
-            var bp = BGFIFO.Pop();
-            var sp = SpriteFIFO.Pop();
-            if (sp.color != 0 && p.OBJDisplayEnable)
-            {
-                //obj to bg priority bit is set to true so the sprite pixel
-                //will be behind bg color 1,2,3
-                return sp.priority && bp.color != 0
-                    ? p.BackgroundColor(p.BGDisplayEnable ? bp.color : 0)
-                    : sp.Palette switch
-                    {
-                        0 => p.SpritePalette0(sp.color),
-                        1 => p.SpritePalette1(sp.color),
-                        _ => throw new IllegalSpritePalette()
-                    };
-
-            }
-            else
-            {
-                return p.BackgroundColor(p.BGDisplayEnable ? bp.color : 0);
-            }
+            return RenderPixelFromCombinedFIFOs();
         }
         else if (BGFIFO.Count > 8)
         {
@@ -176,9 +127,67 @@ public class PixelFetcher
         }
         else
         {
-            return Shade.Empty;
+            return null;
         }
     }
+
+    private Shade RenderPixelFromCombinedFIFOs()
+    {
+        var bp = BGFIFO.Pop();
+        var sp = SpriteFIFO.Pop();
+        if (sp.color != 0 && p.OBJDisplayEnable)
+        {
+            //obj to bg priority bit is set to true so the sprite pixel
+            //will be behind bg color 1,2,3
+            return sp.priority && bp.color != 0
+                ? p.BackgroundColor(p.BGDisplayEnable ? bp.color : 0)
+                : sp.Palette switch
+                {
+                    0 => p.SpritePalette0(sp.color),
+                    1 => p.SpritePalette1(sp.color),
+                    _ => throw new IllegalSpritePalette()
+                };
+
+        }
+        else
+        {
+            return p.BackgroundColor(p.BGDisplayEnable ? bp.color : 0);
+        }
+    }
+
+    private bool FIFOsNotEmpty() => BGFIFO.Count != 0 && SpriteFIFO.Count != 0;
+
+    private void PushSpriteRowToPixelFetcher()
+    {
+        //Fill the fifo lower half with transparant pixels
+        for (int i = SpriteFIFO.Count; i < graphics.Constants.SpriteWidth; i = SpriteFIFO.Count)
+        {
+            SpriteFIFO.Push(new FIFOSpritePixel(0, false, 0));
+        }
+
+        var sprite = FirstMatchingSprite();
+
+        //16 pixel offset before lines can be offscreen taken out
+        var y = p.LY - (sprite.Y - graphics.Constants.DoubleSpriteHeight);
+        if (sprite.YFlipped)
+        {
+            y = p.SpriteHeight == 8 ? 7 - y : 15 - y;
+        }
+
+        if (y < 0)
+        {
+            throw new SpriteDomainError("Illegal Y position in sprite");
+        }
+
+        var ID = p.SpriteHeight == 8 ? sprite.ID : sprite.ID & 0xfe;
+        var addr = 0x8000 + ID * graphics.Constants.BitsPerSpriteTile + (2 * y);
+        var low = p.VRAM[addr];
+        var high = p.VRAM[addr + 1];
+        PushSpriteRow(low, high, sprite);
+        SpritesFinished++;
+    }
+
+    private bool CanRenderASprite() => p.OBJDisplayEnable && SpriteCount - SpritesFinished != 0 && ContainsSprite() && BGFIFO.Count != 0;
 
     private int PixelsPopped;
     public int PixelsSentToLCD;
@@ -186,15 +195,14 @@ public class PixelFetcher
     internal void AttemptToPushAPixel()
     {
         var pix = RenderPixel();
-        if (pix == Shade.Empty)
-        {
-            return;
-        }
+        if (pix is null) return;
+
         PixelsPopped++;
         scanlineX++;
+
         if (PixelsPopped > (p.SCX & 7))
         {
-            LineShadeBuffer[PixelsSentToLCD++] = pix;
+            LineShadeBuffer[PixelsSentToLCD++] = (Shade)pix;
         }
 
         bool windowStart = PixelsSentToLCD == p.WX - 7 && p.LY >= p.WY && p.WindowDisplayEnable;
@@ -293,10 +301,10 @@ public class PixelFetcher
         {
             for (var i = graphics.Constants.SpriteWidth; i > 0; i--)
             {
-                var paletteIndex = tileDataLow.GetBit(i - 1) ? 1 : 0;
-                paletteIndex += tileDataHigh.GetBit(i - 1) ? 2 : 0;
+                var paletteIndex = Convert.ToByte(tileDataLow.GetBit(i - 1));
+                paletteIndex |= (byte)(Convert.ToByte(tileDataHigh.GetBit(i - 1)) << 1);
 
-                BGFIFO.Push(new((byte)paletteIndex));
+                BGFIFO.Push(new(paletteIndex));
             }
             return true;
         }

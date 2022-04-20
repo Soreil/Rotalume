@@ -124,7 +124,7 @@ public class APU
     private byte NR12
     {
         get => (byte)(Channel1Enveloppe << 4 |
-            (Channel1EnveloppeIncreasing ? 1 : 0) << 3 |
+            Convert.ToByte(Channel1EnveloppeIncreasing) << 3 |
             Channel1EnveloppeSweepNumber);
         set
         {
@@ -214,10 +214,10 @@ public class APU
     {
         get
         {
-            byte channels = (byte)(((Sound1OnEnabled ? 1 : 0) << 3) |
-                            ((Sound2OnEnabled ? 1 : 0) << 2) |
-                            ((Sound3OnEnabled ? 1 : 0) << 1) |
-                            ((Sound4OnEnabled ? 1 : 0) << 0));
+            byte channels = (byte)((Convert.ToByte(Sound1OnEnabled) << 3) |
+                            (Convert.ToByte(Sound2OnEnabled) << 2) |
+                            (Convert.ToByte(Sound3OnEnabled) << 1) |
+                            (Convert.ToByte(Sound4OnEnabled) << 0));
 
             return (byte)(_nr52 | channels);
         }

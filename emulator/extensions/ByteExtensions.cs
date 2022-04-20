@@ -3,7 +3,7 @@
 //Half Carry extensions are only used in the implementation of opcodes.
 public static class ByteExtensions
 {
-    public static void SetBit(this ref byte input, int at, bool value) => input = (byte)(input & ~(1 << at) | ((value ? 1 : 0) << at));
+    public static void SetBit(this ref byte input, int at, bool value) => input = (byte)(input & ~(1 << at) | (Convert.ToInt32(value) << at));
 
     public static void SetBit(this ref byte input, int at) => input = (byte)(input & ~(1 << at) | (1 << at));
 
