@@ -7,6 +7,8 @@ internal record CartHeader
 
     private static readonly string SaveFormatExtension = ".sav";
 
+    private readonly byte[] checksum;
+
     //ROM size in bytes. Supposedly some of these values don't actually exist as a mapping used by any games.
     private static int ROM_Size_Mapping(byte b) => b switch
     {
@@ -64,6 +66,9 @@ internal record CartHeader
 
         ROM_Size = ROM_Size_Mapping(gameROM[0x148]);
         RAM_Size = RAM_Size_Mapping(gameROM[0x149]);
+
+        using var hash = System.Security.Cryptography.SHA256.Create();
+        checksum = hash.ComputeHash(gameROM.ToArray());
     }
 
     internal bool HasBattery() => Type switch
@@ -130,19 +135,17 @@ internal record CartHeader
         }
 
         //This retrieves %appdata% path
-        var root = Environment.GetEnvironmentVariable("AppData");
-        if (root is null) throw new FileLoadException("Can't retrieve AppData folder");
+        var root = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
 
-        var RotalumeFolder = root + "\\rotalume";
-        var saveFolder = RotalumeFolder + "\\saves";
+        var RotalumeFolder = Path.Combine(root, "rotalume");
+        var saveFolder = Path.Combine(RotalumeFolder, "saves");
         _ = Directory.CreateDirectory(saveFolder);
 
         var SanitizedName = SanitizeFilename(Title);
-        if (SanitizedName.Length == 0)
-        {
-            throw new FileLoadException("Can't clean up this name and thus can't make it unique.");
-        }
-        var path = string.Format(@"{0}\{1}{2}", saveFolder, SanitizedName, SaveFormatExtension);
+        var SanitizedNameWithCheckSum = string.Format("{0}_{1}", SanitizedName, Convert.ToHexString(checksum));
+
+        var path = saveFolder + Path.DirectorySeparatorChar + SanitizedNameWithCheckSum + SaveFormatExtension;
+
         if (!File.Exists(path))
         {
             var size = RequiredSaveFileSize();

@@ -16,7 +16,7 @@ internal class MBC5 : MBC
     private readonly int ROMBankCount;
     private int ROMBankNumber = 1;
     protected int RAMBankNumber;
-    public MBC5(CartHeader header, byte[] gameROM, System.IO.MemoryMappedFiles.MemoryMappedFile file)
+    public MBC5(CartHeader header, byte[] gameROM, MemoryMappedFile file)
     {
         this.gameROM = gameROM;
 
@@ -87,8 +87,8 @@ internal class MBC5 : MBC
         }
     }
 
-    public virtual void SetRAMBank(byte value) => RAMBankNumber = value & 0xf & (RAMBankCount - 1);
-    public byte GetROM(int n) => IsUpperBank(n) ? ReadHighBank(n) : ReadLowBank(n);
+    protected virtual void SetRAMBank(byte value) => RAMBankNumber = value & 0xf & (RAMBankCount - 1);
+    private byte GetROM(int n) => IsUpperBank(n) ? ReadHighBank(n) : ReadLowBank(n);
 
     private byte ReadLowBank(int n) => gameROM[n];
 
@@ -96,9 +96,9 @@ internal class MBC5 : MBC
 
     private static bool IsUpperBank(int n) => n >= ROMBankSize;
 
-    public byte GetRAM(int n) => (byte)(RAMEnabled ? RAMBanks!.ReadByte((RAMBankNumber * RAMBankSize) + (n&0x1fff)) : 0xff);
+    private byte GetRAM(int n) => (byte)(RAMEnabled ? RAMBanks!.ReadByte((RAMBankNumber * RAMBankSize) + (n&0x1fff)) : 0xff);
 
-    public void SetRAM(int n, byte v)
+    private void SetRAM(int n, byte v)
     {
         if (RAMEnabled)
         {

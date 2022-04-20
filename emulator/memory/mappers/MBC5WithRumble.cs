@@ -9,10 +9,10 @@ internal class MBC5WithRumble : MBC5
     }
 
     private bool RumbleState;
-    public override void SetRAMBank(byte value)
+    protected override void SetRAMBank(byte value)
     {
-        RAMBankNumber = value & 0x7 & (RAMBankCount - 1);
-        var NewRumbleState = (value & 0x08) == 0x08;
+        base.SetRAMBank(value);
+        var NewRumbleState = value.GetBit(3);
         if (NewRumbleState != RumbleState)
         {
             RumbleState = NewRumbleState;
@@ -22,10 +22,5 @@ internal class MBC5WithRumble : MBC5
 
     public event EventHandler? RumbleStateChange;
 
-    protected virtual void OnRumbleStateChanged(EventArgs e)
-    {
-        if (RumbleStateChange is not null)
-            RumbleStateChange(this, e);
-    }
-
+    protected virtual void OnRumbleStateChanged(EventArgs e) => RumbleStateChange?.Invoke(this, e);
 }

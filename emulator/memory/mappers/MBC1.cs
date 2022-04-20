@@ -8,7 +8,7 @@ internal class MBC1 : MBC
     private const int ROMBankSize = 0x4000;
     private readonly int RAMBankSize = RAMSize;
 
-    public byte[] RAMBanks { get; }
+    private byte[] RAMBanks { get; }
 
     private int LowBank => GetLowBankNumber();
 
@@ -61,7 +61,7 @@ internal class MBC1 : MBC
         }
     }
 
-    public byte GetROM(int n) => IsUpperBank(n) ? ReadHighBank(n) : ReadLowBank(n);
+    private byte GetROM(int n) => IsUpperBank(n) ? ReadHighBank(n) : ReadLowBank(n);
 
     private byte ReadLowBank(int n) => gameROM[LowBank * ROMBankSize + n];
 
@@ -69,9 +69,9 @@ internal class MBC1 : MBC
 
     private static bool IsUpperBank(int n) => n >= ROMBankSize;
 
-    public byte GetRAM(int n) => (byte)(RAMEnabled ? RAMBanks[(RamBank * RAMBankSize) + n - RAMStart] : 0xff);
+    private byte GetRAM(int n) => (byte)(RAMEnabled ? RAMBanks[(RamBank * RAMBankSize) + n - RAMStart] : 0xff);
 
-    public void SetRAM(int n, byte v)
+    private void SetRAM(int n, byte v)
     {
         if (RAMEnabled)
         {
