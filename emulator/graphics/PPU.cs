@@ -3,15 +3,11 @@
 public class PPU
 {
     private long Clock;
-    public readonly Action EnableVBlankInterrupt;
-    public readonly Action EnableLCDCStatusInterrupt;
     private readonly IFrameSink Writer;
-    public PPU(Action enableVBlankInterrupt, Action enableLCDCStatusInterrupt, IFrameSink frameSink)
+    public PPU(IFrameSink frameSink)
     {
         OAM = new OAM();
         VRAM = new VRAM();
-        EnableVBlankInterrupt = enableVBlankInterrupt;
-        EnableLCDCStatusInterrupt = enableLCDCStatusInterrupt;
         Writer = frameSink;
     }
 
@@ -183,6 +179,12 @@ public class PPU
         set => STAT = (byte)(STAT & 0xFC | (int)value & 0x3);
     }
 
+    public event EventHandler? STATInterrupt;
+    public event EventHandler? VBlankInterrupt;
+
+    public void OnSTATInterrupt() => STATInterrupt?.Invoke(this, EventArgs.Empty);
+    public void OnVBlankInterrupt() => VBlankInterrupt?.Invoke(this, EventArgs.Empty);
+
     public bool LYCInterrupt
     {
         get => STAT.GetBit(2);
@@ -193,7 +195,7 @@ public class PPU
             STAT = stat;
             if (Enable_LYC_Compare && value)
             {
-                EnableLCDCStatusInterrupt();
+                OnSTATInterrupt();
             }
         }
     }

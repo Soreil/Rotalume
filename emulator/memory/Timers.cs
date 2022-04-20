@@ -4,8 +4,6 @@
 public class Timers
 {
     public ushort InternalCounter;
-    private readonly Action EnableTimerInterrupt;
-    public Timers(Action enableTimerInterrupt) => EnableTimerInterrupt = enableTimerInterrupt;
 
     public (Action<byte> Write, Func<byte> Read)[] HookUpTimers() => new (Action<byte> Write, Func<byte> Read)[] {
             ( x => DIV = x,
@@ -58,6 +56,7 @@ public class Timers
 
     public event EventHandler? APUTick128Hz;
 
+    public event EventHandler? Interrupt;
     private byte DIV
     {
         get => (byte)(InternalCounter >> 8);
@@ -133,7 +132,7 @@ public class Timers
         if (TIMA == 0xff)
         {
             DelayTicks = DelayDuration;
-            EnableTimerInterrupt();
+            Interrupt?.Invoke(this, EventArgs.Empty);
         }
         TIMA++;
     }

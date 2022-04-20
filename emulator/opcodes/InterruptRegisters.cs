@@ -20,9 +20,9 @@ public class InterruptRegisters
 () => InterruptFireRegister);
 
     //These functions are only ever called by one user and could just be lambdas inplace.
-    internal void EnableVBlankInterrupt() => _IE.SetBit(0);
-    internal void EnableLCDSTATInterrupt() => _IE.SetBit(1);
-    internal void EnableTimerInterrupt() => _IE.SetBit(2);
+    internal void EnableVBlankInterrupt(object? sender, EventArgs e) => _IE.SetBit(0);
+    internal void EnableLCDSTATInterrupt(object? sender, EventArgs e) => _IE.SetBit(1);
+    internal void EnableTimerInterrupt(object? sender, EventArgs e) => _IE.SetBit(2);
     internal void SetStateWithoutBootrom()
     {
         InterruptFireRegister = 0xe1;

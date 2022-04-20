@@ -53,10 +53,10 @@ public class Renderer
                 //According to TCAGBD the OAM flag is also triggering on this
                 if (PPU.Enable_VBlankInterrupt || PPU.Enable_OAM_Interrupt)
                 {
-                    PPU.EnableLCDCStatusInterrupt();
+                    PPU.OnSTATInterrupt();
                 }
 
-                PPU.EnableVBlankInterrupt();
+                PPU.OnVBlankInterrupt();
                 fs.Draw();
             }
         }
@@ -124,7 +124,7 @@ public class Renderer
     private void OAMSearch()
     {
         if (PPU.Enable_OAM_Interrupt)
-            PPU.EnableLCDCStatusInterrupt();
+            PPU.OnSTATInterrupt();
 
         fetcher.GetSprites();
         TimeUntilWhichToPause += graphics.Constants.OAMSearchDuration;
@@ -134,7 +134,7 @@ public class Renderer
     private void HBlank()
     {
         if (PPU.Enable_HBlankInterrupt)
-            PPU.EnableLCDCStatusInterrupt();
+            PPU.OnSTATInterrupt();
 
         TimeUntilWhichToPause += graphics.Constants.ScanLineRemainderAfterOAMSearch - TotalTimeSpentInStage3;
 

@@ -26,9 +26,13 @@ public class Core
         Keypad.Input.KeyWentDown += InterruptRegisters.TriggerEvent;
 
         APU = new APU(32768);
-        PPU = new PPU(InterruptRegisters.EnableVBlankInterrupt, InterruptRegisters.EnableLCDSTATInterrupt, frameSink);
+        PPU = new PPU(frameSink);
 
-        Timers = new Timers(InterruptRegisters.EnableTimerInterrupt);
+        PPU.VBlankInterrupt += InterruptRegisters.EnableVBlankInterrupt;
+        PPU.STATInterrupt += InterruptRegisters.EnableLCDSTATInterrupt;
+
+        Timers = new Timers();
+        Timers.Interrupt += InterruptRegisters.EnableTimerInterrupt;
 
         var ioRegisters = SetupControlRegisters(Keypad);
 
@@ -94,7 +98,6 @@ ioRegisters,
             //graphics TODO: we can't really set up the graphics environment correctly
             //because we will have to also initialize the internal renderer state correctly
             PPU.SetStateWithoutBootrom();
-
 
             InterruptRegisters.SetStateWithoutBootrom();
         }
