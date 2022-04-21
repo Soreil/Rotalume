@@ -80,4 +80,10 @@ internal class MBC1WithBatteryBackedRAM : MBC
             RAMBanks.Write((RamBank * RAMBankSize) + n - RAMStart, v);
         }
     }
+
+    public override void Dispose()
+    {
+        if (RAMBanks is not null)
+            RAMBanks.Dispose();
+    }
 }

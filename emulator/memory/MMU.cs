@@ -1,6 +1,6 @@
 ﻿namespace emulator;
 
-public class MMU
+public sealed class MMU : IDisposable
 {
     private readonly MBC Card;
     private readonly VRAM VRAM;
@@ -77,6 +77,8 @@ public class MMU
     }
 
     private bool BootROMActive;
+    private bool disposedValue;
+
     internal (Action<byte> Write, Func<byte> Read) HookUpMemory()
     {
         void BootROMFlagController(byte b)
@@ -124,4 +126,34 @@ public class MMU
     public byte Read(ushort at) => this[at];
 
     public byte ExternalBusRAM(ushort at) => at < 0xfe00 ? this[at] : WRAM[at];
+
+    private void Dispose(bool disposing)
+    {
+        if (!disposedValue)
+        {
+            if (disposing)
+            {
+                Card.Dispose();
+                // TODO: dispose managed state (managed objects)
+            }
+
+            // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+            // TODO: set large fields to null
+            disposedValue = true;
+        }
+    }
+
+    // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+    // ~MMU()
+    // {
+    //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+    //     Dispose(disposing: false);
+    // }
+
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
 }

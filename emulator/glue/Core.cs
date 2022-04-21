@@ -1,6 +1,6 @@
 ﻿namespace emulator;
 
-public class Core
+public class Core : IDisposable
 {
     //Global clock used by RTC carts
     public long masterclock;
@@ -15,7 +15,7 @@ public class Core
     //TODO: move serial in to it's own class when we implement it
     private byte serialControl = 0x7e;
 
-    public Core(byte[] gameROM, byte[]? bootROM, Keypad Keypad, IFrameSink frameSink)
+    public Core(byte[] gameROM, byte[]? bootROM, string fileName, Keypad Keypad, IFrameSink frameSink)
     {
         if (gameROM.Length < 0x8000)
         {
@@ -41,7 +41,7 @@ public class Core
         MBC Card;
         if (Header.HasBattery())
         {
-            var mmf = Header.MakeMemoryMappedFile();
+            var mmf = Header.MakeMemoryMappedFile(fileName);
             Card = Header.HasClock() ? Header.MakeMBC(gameROM, mmf, () => masterclock) : Header.MakeMBC(gameROM, mmf);
         }
         else
@@ -139,6 +139,7 @@ ioRegisters,
 
     public int DMATicksLeft;
     public ushort baseAddr;
+    private bool disposedValue;
 
     private (Action<byte> Write, Func<byte> Read)[] SetupControlRegisters(Keypad Keypad)
     {
@@ -187,6 +188,39 @@ ioRegisters,
         return controlRegisters;
     }
 
-    //We have to make Step take one tick per subsystem
-    public void Step() => CPU.Step();
+    public void Step()
+    {
+        masterclock += 4;
+        CPU.Step();
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposedValue)
+        {
+            if (disposing)
+            {
+                Memory.Dispose();
+                // TODO: dispose managed state (managed objects)
+            }
+
+            // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+            // TODO: set large fields to null
+            disposedValue = true;
+        }
+    }
+
+    // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+    // ~Core()
+    // {
+    //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+    //     Dispose(disposing: false);
+    // }
+
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
 }

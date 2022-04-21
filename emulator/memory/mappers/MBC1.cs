@@ -78,4 +78,6 @@ internal class MBC1 : MBC
             RAMBanks[(RamBank * RAMBankSize) + n - RAMStart] = v;
         }
     }
+
+    public override void Dispose() { }
 }

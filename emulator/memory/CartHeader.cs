@@ -7,8 +7,6 @@ internal record CartHeader
 
     private static readonly string SaveFormatExtension = ".sav";
 
-    private readonly byte[] checksum;
-
     //ROM size in bytes. Supposedly some of these values don't actually exist as a mapping used by any games.
     private static int ROM_Size_Mapping(byte b) => b switch
     {
@@ -68,7 +66,6 @@ internal record CartHeader
         RAM_Size = RAM_Size_Mapping(gameROM[0x149]);
 
         using var hash = System.Security.Cryptography.SHA256.Create();
-        checksum = hash.ComputeHash(gameROM.ToArray());
     }
 
     internal bool HasBattery() => Type switch
@@ -127,7 +124,7 @@ internal record CartHeader
     };
 
     //A cartridge requires a battery in order to be able to keep state while the system is off
-    public System.IO.MemoryMappedFiles.MemoryMappedFile MakeMemoryMappedFile()
+    public System.IO.MemoryMappedFiles.MemoryMappedFile MakeMemoryMappedFile(string fileName)
     {
         if (!HasBattery())
         {
@@ -141,10 +138,7 @@ internal record CartHeader
         var saveFolder = Path.Combine(RotalumeFolder, "saves");
         _ = Directory.CreateDirectory(saveFolder);
 
-        var SanitizedName = SanitizeFilename(Title);
-        var SanitizedNameWithCheckSum = string.Format("{0}_{1}", SanitizedName, Convert.ToHexString(checksum));
-
-        var path = saveFolder + Path.DirectorySeparatorChar + SanitizedNameWithCheckSum + SaveFormatExtension;
+        var path = saveFolder + Path.DirectorySeparatorChar + fileName + SaveFormatExtension;
 
         if (!File.Exists(path))
         {

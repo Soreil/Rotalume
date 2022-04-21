@@ -96,7 +96,7 @@ internal class MBC5 : MBC
 
     private static bool IsUpperBank(int n) => n >= ROMBankSize;
 
-    private byte GetRAM(int n) => (byte)(RAMEnabled ? RAMBanks!.ReadByte((RAMBankNumber * RAMBankSize) + (n&0x1fff)) : 0xff);
+    private byte GetRAM(int n) => (byte)(RAMEnabled ? RAMBanks!.ReadByte((RAMBankNumber * RAMBankSize) + (n & 0x1fff)) : 0xff);
 
     private void SetRAM(int n, byte v)
     {
@@ -106,4 +106,9 @@ internal class MBC5 : MBC
         }
     }
 
+    public override void Dispose()
+    {
+        if (RAMBanks is not null)
+            RAMBanks.Dispose();
+    }
 }

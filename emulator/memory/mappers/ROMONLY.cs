@@ -22,4 +22,6 @@ internal class ROMONLY : MBC
             }
         }
     }
+
+    public override void Dispose() { }
 }

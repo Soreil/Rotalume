@@ -259,4 +259,11 @@ internal class MBC3 : MBC
         var remainder = timeSpan % TicksPerSecond;
         return (days, hours, minutes, seconds, remainder);
     }
+
+    public override void Dispose()
+    {
+        RAMBanks.Dispose();
+        if (ClockStorage is not null)
+            ClockStorage.Dispose();
+    }
 }

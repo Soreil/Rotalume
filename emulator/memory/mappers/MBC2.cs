@@ -2,9 +2,11 @@
 
 namespace emulator;
 
-internal class HalfRAM
+internal class HalfRAM : IDisposable
 {
     private readonly MemoryMappedViewAccessor _ram;
+    private bool disposedValue;
+
     public byte this[int at]
     {
         get => _ram.ReadByte(at & 0x1FF);
@@ -12,6 +14,36 @@ internal class HalfRAM
     }
 
     public HalfRAM(MemoryMappedViewAccessor v) => _ram = v;
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposedValue)
+        {
+            if (disposing)
+            {
+                // TODO: dispose managed state (managed objects)
+                _ram.Dispose();
+            }
+
+            // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+            // TODO: set large fields to null
+            disposedValue = true;
+        }
+    }
+
+    // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+    // ~HalfRAM()
+    // {
+    //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+    //     Dispose(disposing: false);
+    // }
+
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
 }
 internal class MBC2 : MBC
 {
@@ -25,7 +57,6 @@ internal class MBC2 : MBC
 
     private readonly int ROMBankCount;
 
-    public MemoryMappedViewAccessor RAMBanks { get; }
 
     private readonly HalfRAM RAM;
 
@@ -34,7 +65,7 @@ internal class MBC2 : MBC
     {
         this.gameROM = gameROM;
         ROMBankCount = this.gameROM.Length / 0x4000;
-        RAMBanks = file.CreateViewAccessor(0, 0x2000);
+        var RAMBanks = file.CreateViewAccessor(0, 0x2000);
         RAM = new(RAMBanks);
     }
 
@@ -76,5 +107,11 @@ internal class MBC2 : MBC
     public void SetRAM(int n, byte v)
     {
         if (RAMEnabled) RAM[n - RAMStart] = v;
+    }
+
+    public override void Dispose()
+    {
+        if (RAM is not null)
+            RAM.Dispose();
     }
 }
