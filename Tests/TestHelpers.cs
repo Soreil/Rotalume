@@ -24,7 +24,13 @@ public static class TestHelpers
             new(new InputDevices(new MockGameController(), new())),
             frameSink);
     }
+
     public static Core NewCore(byte[] gamerom, IFrameSink? frameSink = null)
+    {
+        return NewCore(gamerom, "", frameSink);
+    }
+
+    public static Core NewCore(byte[] gamerom, string fileName, IFrameSink? frameSink = null)
     {
         byte[] gameromPaddedToSize;
         if (gamerom.Length < 0x8000)
@@ -38,7 +44,7 @@ public static class TestHelpers
 
         return new Core(gameromPaddedToSize,
             null,
-            "",
+            fileName,
             new(new InputDevices(new MockGameController(), new())),
             frameSink);
     }

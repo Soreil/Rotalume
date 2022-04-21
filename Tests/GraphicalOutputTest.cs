@@ -37,7 +37,7 @@ internal class GraphicalOutputTest
     [TestCase(@"..\..\..\..\Tests\rom\blargg\mem_timing\mem_timing.gb", @"..\..\..\..\Tests\rom\blargg\mem_timing\expected.png", "outputMEMTiming.bmp", 100)]
     [TestCase(@"..\..\..\..\Tests\rom\blargg\mem_timing-2\mem_timing.gb", @"..\..\..\..\Tests\rom\blargg\mem_timing-2\expected.png", "outputMEMTiming2.bmp", 200)]
     [TestCase(@"..\..\..\..\Tests\rom\blargg\halt_bug\halt_bug.gb", @"..\..\..\..\Tests\rom\blargg\halt_bug\expected.png", "outputHaltBug.bmp", 300)]
-    
+
     [TestCase(@"..\..\..\..\Tests\rom\dmg-acid2\dmg-acid2.gb", @"..\..\..\..\Tests\rom\dmg-acid2\expected.png", "outputDMG-ACID2.bmp", 10)]
 
     [TestCase(@"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\oam_dma\basic.gb", @"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\oam_dma\expected.png", "outputBasicOAM.bmp", 10)]
@@ -57,13 +57,14 @@ internal class GraphicalOutputTest
         var rom = File.ReadAllBytes(romPath);
         var expectedImage = Image.Load(imagePath);
 
-        var core = TestHelpers.NewCore(rom, render);
+        var core = TestHelpers.NewCore(rom, Path.GetFileNameWithoutExtension(romPath), render);
 
         int FramesDrawn = 0;
         render.FramePushed += (sender, e) => FramesDrawn++;
 
         while (FramesDrawn != frameToCheck)
             core.Step();
+        core.Dispose();
 
         var outputImage = Image.LoadPixelData<L8>(render.Image, 160, 144);
 
