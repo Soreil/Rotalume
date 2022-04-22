@@ -25,9 +25,59 @@ public class APU
         NR52 = 0xf1;
     }
 
-    private byte NR50 = 0xff;
+    private bool OutputToLeftTerminal;
+    private bool OutputToRightTerminal;
+    private int OutputVolumeLeft;
+    private int OutputVolumeRight;
 
-    private byte NR51 = 0xff;
+    private byte NR50
+    {
+        get => (byte)(Convert.ToByte(OutputToLeftTerminal) << 7 |
+                OutputVolumeLeft << 4 |
+                Convert.ToByte(OutputToRightTerminal) << 3 |
+                OutputVolumeRight);
+
+        set
+        {
+            OutputToLeftTerminal = value.GetBit(7);
+            OutputToRightTerminal = value.GetBit(3);
+            OutputVolumeLeft = (value >> 4) & 0x7;
+            OutputVolumeRight = value & 0x7;
+        }
+    }
+
+    private bool Sound4LeftOn;
+    private bool Sound4LeftOff;
+    private bool Sound3LeftOn;
+    private bool Sound3LeftOff;
+    private bool Sound2LeftOn;
+    private bool Sound2LeftOff;
+    private bool Sound1LeftOn;
+    private bool Sound1LeftOff;
+
+    public byte NR51
+    {
+        get => (byte)((Convert.ToByte(Sound4LeftOn) << 7) |
+             (Convert.ToByte(Sound4LeftOff) << 6) |
+             (Convert.ToByte(Sound3LeftOn) << 5) |
+             (Convert.ToByte(Sound3LeftOff) << 4) |
+             (Convert.ToByte(Sound2LeftOn) << 3) |
+             (Convert.ToByte(Sound2LeftOff) << 2) |
+             (Convert.ToByte(Sound1LeftOn) << 1) |
+             (Convert.ToByte(Sound1LeftOff) << 0));
+        set
+        {
+            Sound4LeftOn = value.GetBit(7);
+            Sound4LeftOff = value.GetBit(6);
+            Sound3LeftOn = value.GetBit(5);
+            Sound3LeftOff = value.GetBit(4);
+            Sound2LeftOn = value.GetBit(3);
+            Sound2LeftOff = value.GetBit(2);
+            Sound1LeftOn = value.GetBit(1);
+            Sound1LeftOff = value.GetBit(0);
+        }
+    }
+
 
     private byte NR52
     {
@@ -84,22 +134,6 @@ public class APU
 
     //We should have this available as a namespace wide thing somehow
     private const int baseClock = cpu.Constants.Frequency;
-
-    //Control register fields
-    private bool LeftChannelOn => NR50.GetBit(7);
-    private int LeftOutputVolume => (NR50 & 0x70) >> 4;
-    private bool RightChannelOn => NR50.GetBit(3);
-    private int RightOutputVolume => NR50 & 0x07;
-
-    private bool Sound1OnLeftChannel => NR51.GetBit(4);
-    private bool Sound2OnLeftChannel => NR51.GetBit(5);
-    private bool Sound3OnLeftChannel => NR51.GetBit(6);
-    private bool Sound4OnLeftChannel => NR51.GetBit(7);
-
-    private bool Sound1OnRightChannel => NR51.GetBit(0);
-    private bool Sound2OnRightChannel => NR51.GetBit(1);
-    private bool Sound3OnRightChannel => NR51.GetBit(2);
-    private bool Sound4OnRightChannel => NR51.GetBit(3);
 
     private bool MasterSoundDisable;
 
