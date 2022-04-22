@@ -1,4 +1,6 @@
-﻿namespace emulator;
+﻿using emulator.sound;
+
+namespace emulator;
 
 public class Core : IDisposable
 {
