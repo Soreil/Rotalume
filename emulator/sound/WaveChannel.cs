@@ -2,7 +2,7 @@
 
 internal class WaveChannel
 {
-    private readonly byte[] table = new byte[16];
+    private readonly byte[] table = new byte[32];
 
     private bool ChannelOff;
     public byte NR30
@@ -57,7 +57,11 @@ internal class WaveChannel
 
     public byte this[int n]
     {
-        get => table[n];
-        set => table[n] = value;
+        get => (byte)(table[n * 2] << 4 | table[n * 2 + 1]);
+        set
+        {
+            table[n * 2] = (byte)(value >> 4);
+            table[n * 2 + 1] = (byte)(value & 0x0f);
+        }
     }
 }
