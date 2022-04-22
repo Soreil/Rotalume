@@ -197,7 +197,7 @@ ioRegisters,
         controlRegisters[0xff46] = dmaController;
 
         //Set all unused IO registers to just read back 0xff
-        for (int i = 0; i < 80; i++)
+        for (int i = 0; i < 0x80; i++)
         {
             var addr = (ushort)(0xff00 + i);
             if (!controlRegisters.ContainsKey(addr))
