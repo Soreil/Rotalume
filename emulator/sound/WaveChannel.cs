@@ -1,6 +1,6 @@
 ﻿namespace emulator.sound;
 
-internal class WaveChannel
+internal class WaveChannel : Channel
 {
     private readonly byte[] table = new byte[32];
 
@@ -40,7 +40,7 @@ internal class WaveChannel
     private int length;
     private int PositionCounter;
 
-    public void Clock()
+    public override void Clock()
     {
         PositionCounter++;
         PositionCounter %= 32;
@@ -53,8 +53,10 @@ internal class WaveChannel
         Samples[0] = table[PositionCounter];
     }
 
+
     private readonly byte[] Samples = new byte[1];
 
+    public override bool IsOn() => throw new NotImplementedException();
     public byte this[int n]
     {
         get => (byte)(table[n * 2] << 4 | table[n * 2 + 1]);

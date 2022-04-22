@@ -1,6 +1,6 @@
 ﻿namespace emulator.sound;
 
-internal class ToneSweepChannel
+internal class ToneSweepChannel : Channel
 {
     private int SweepTime;
     private bool SweepIncreasing;
@@ -63,4 +63,7 @@ internal class ToneSweepChannel
             Frequency = (ushort)((Frequency & 0xF8FF) | ((value & 0x07) << 8));
         }
     }
+
+    public override bool IsOn() => throw new NotImplementedException();
+    public override void Clock() => throw new NotImplementedException();
 }

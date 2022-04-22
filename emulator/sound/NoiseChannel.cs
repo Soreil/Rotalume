@@ -2,7 +2,7 @@
 
 namespace emulator.sound;
 
-public class NoiseChannel
+public class NoiseChannel : Channel
 {
     private int Length;
     public byte NR41
@@ -58,7 +58,7 @@ public class NoiseChannel
     int clocks;
 
     //Clock should be called every 8th tick since this is the minimum divisor of LFSR updates
-    public void Clock()
+    public override void Clock()
     {
         clocks++;
 
@@ -70,7 +70,7 @@ public class NoiseChannel
         }
     }
 
-    public bool Output() => ShiftRegister.Output();
+    public override bool IsOn() => throw new NotImplementedException();
 
     private static int GetDiv(int frequencyDividerRatio) => frequencyDividerRatio switch
     {

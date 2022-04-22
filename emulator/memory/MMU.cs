@@ -6,7 +6,9 @@ public sealed class MMU : IDisposable
     private readonly VRAM VRAM;
     private readonly WRAM WRAM;
     private readonly OAM OAM;
-    private readonly (Action<byte> Write, Func<byte> Read)[] IORegisters;
+    private readonly sound.APU APU;
+
+    private readonly Dictionary<ushort, (Action<byte> Write, Func<byte> Read)> IORegisters;
     private readonly HRAM HRAM;
     private readonly (Action<byte> Write, Func<byte> Read) InterruptEnable;
     private readonly UnusableMEM UnusableMEM;
@@ -24,7 +26,9 @@ public sealed class MMU : IDisposable
                     >= 0xe000 and < 0xFE00 => WRAM[at],//wram mirror
                     >= 0xfe00 and < 0xfea0 => OAM.Locked ? (byte)0xff : OAM[at],
                     >= 0xfea0 and < 0xff00 => UnusableMEM[at],//This should be illegal?
-                    >= 0xff00 and < 0xff80 => IORegisters[at - 0xff00].Read(),
+                    >= 0xff00 and < 0xff10 => IORegisters[at].Read(),
+                    >= 0xff10 and < 0xff27 => APU[at],
+                    >= 0xff27 and < 0xff80 => IORegisters[at].Read(),
                     >= 0xff80 and < 0xffff => HRAM[at],
                     0xffff => InterruptEnable.Read(),
                 };
@@ -63,8 +67,14 @@ public sealed class MMU : IDisposable
                 case >= 0xfea0 and < 0xff00:
                 UnusableMEM[at] = value; //This should be illegal?
                 break;
-                case >= 0xff00 and < 0xff80:
-                IORegisters[at - 0xff00].Write(value);
+                case >= 0xff00 and < 0xff10:
+                IORegisters[at].Write(value);
+                break;
+                case >= 0xff10 and < 0xff27:
+                APU[at] = value;
+                break;
+                case >= 0xff27 and < 0xff80:
+                IORegisters[at].Write(value);
                 break;
                 case >= 0xff80 and < 0xffff:
                 HRAM[at] = value;
@@ -101,7 +111,8 @@ public sealed class MMU : IDisposable
         MBC card,
         VRAM vram,
         OAM oam,
-        (Action<byte> Write, Func<byte> Read)[] ioRegisters,
+        sound.APU apu,
+        Dictionary<ushort,(Action<byte> Write, Func<byte> Read)> ioRegisters,
         (Action<byte> Write, Func<byte> Read) interruptEnable)
     {
 
@@ -111,6 +122,7 @@ public sealed class MMU : IDisposable
         var wram = new WRAM();
         var hram = new HRAM();
 
+        APU = apu;
         Card = card;
         VRAM = vram;
         WRAM = wram;

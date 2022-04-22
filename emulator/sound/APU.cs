@@ -2,87 +2,6 @@
 
 public class APU
 {
-    public (Action<byte> Write, Func<byte> Read)[][] HookUpSound() => new (Action<byte> Write, Func<byte> Read)[][] {
-            new (Action<byte> Write, Func<byte> Read)[] {
-            ((x) => ToneSweep.NR10 = x,
-            () => ToneSweep.NR10),
-            ((x) => ToneSweep.NR11 = x,
-            () => ToneSweep.NR11),
-            ((x) => ToneSweep.NR12 = x,
-            () => ToneSweep.NR12),
-            ((x) => ToneSweep.NR13 = x,
-            () => ToneSweep.NR13),
-            ((x) => ToneSweep.NR14 = x,
-            () => ToneSweep.NR14),
-            }, new (Action<byte> Write, Func<byte> Read)[]{
-            ((x) => Tone.NR21 = x,
-            () => Tone.NR21),
-            ((x) => Tone.NR22 = x,
-            () => Tone.NR22),
-            ((x) => Tone.NR23 = x,
-            () => Tone.NR23),
-            ((x) => Tone.NR24 = x,
-            () => Tone.NR24),
-            ((x) => Wave.NR30 = x,
-            () => Wave.NR30),
-            ((x) => Wave.NR31 = x,
-            () => Wave.NR31),
-            ((x) => Wave.NR32 = x,
-            () => Wave.NR32),
-            ((x) => Wave.NR33 = x,
-            () => Wave.NR33),
-            ((x) => Wave.NR34 = x,
-            () => Wave.NR34),
-            }, new (Action<byte> Write, Func<byte> Read)[]{
-            ((x) => Noise.NR41 = x,
-            () => Noise.NR41),
-            ((x) => Noise.NR42 = x,
-            () => Noise.NR42),
-            ((x) => Noise.NR43 = x,
-            () => Noise.NR43),
-            ((x) => Noise.NR44 = x,
-            () => Noise.NR44),
-            ((x) => NR50 = x,
-            () => NR50),
-            ((x) => NR51 = x,
-            () => NR51),
-            ((x) => NR52 = x,
-            () => NR52),
-            },new (Action<byte> Write, Func<byte> Read)[] {
-            ((x) => Wave[0] = x,
-            () => Wave[0]),
-            ((x) => Wave[1] = x,
-            () => Wave[1]),
-            ((x) => Wave[2] = x,
-            () => Wave[2]),
-            ((x) => Wave[3] = x,
-            () => Wave[3]),
-            ((x) => Wave[4] = x,
-            () => Wave[4]),
-            ((x) => Wave[5] = x,
-            () => Wave[5]),
-            ((x) => Wave[6] = x,
-            () => Wave[6]),
-            ((x) => Wave[7] = x,
-            () => Wave[7]),
-            ((x) => Wave[8] = x,
-            () => Wave[8]),
-            ((x) => Wave[9] = x,
-            () => Wave[9]),
-            ((x) => Wave[10] = x,
-            () => Wave[10]),
-            ((x) => Wave[11] = x,
-            () => Wave[11]),
-            ((x) => Wave[12] = x,
-            () => Wave[12]),
-            ((x) => Wave[13] = x,
-            () => Wave[13]),
-            ((x) => Wave[14] = x,
-            () => Wave[14]),
-            ((x) => Wave[15] = x,
-            () => Wave[15])
-        } };
-
     internal void SetStateWithoutBootrom()
     {
         ToneSweep.NR10 = 0x80;
@@ -110,19 +29,57 @@ public class APU
 
     private byte NR51 = 0xff;
 
-    private byte _nr52 = 0xf1;
     private byte NR52
     {
         get
         {
-            byte channels = (byte)((Convert.ToByte(Sound1OnEnabled) << 3) |
-                            (Convert.ToByte(Sound2OnEnabled) << 2) |
-                            (Convert.ToByte(Sound3OnEnabled) << 1) |
-                            (Convert.ToByte(Sound4OnEnabled) << 0));
+            byte channels = (byte)((Convert.ToByte(ToneSweep.IsOn()) << 3) |
+                            (Convert.ToByte(Tone.IsOn()) << 2) |
+                            (Convert.ToByte(Wave.IsOn()) << 1) |
+                            (Convert.ToByte(Noise.IsOn()) << 0));
 
-            return (byte)(_nr52 | channels);
+            return (byte)(0x70 | channels | (Convert.ToByte(MasterSoundDisable) << 7));
         }
-        set => _nr52 = (byte)(value & 0x80 | (_nr52 & 0x7f));
+        set
+        {
+            if (value.GetBit(7)) TurnOn();
+            else TurnOff();
+        }
+    }
+
+    private void TurnOff()
+    {
+        ToneSweep.NR10 = 0;
+        ToneSweep.NR11 = 0;
+        ToneSweep.NR12 = 0;
+        ToneSweep.NR13 = 0;
+        ToneSweep.NR14 = 0;
+
+        Tone.NR21 = 0;
+        Tone.NR22 = 0;
+        Tone.NR23 = 0;
+        Tone.NR24 = 0;
+
+        Wave.NR30 = 0;
+        Wave.NR31 = 0;
+        Wave.NR32 = 0;
+        Wave.NR33 = 0;
+        Wave.NR34 = 0;
+
+        Noise.NR41 = 0;
+        Noise.NR42 = 0;
+        Noise.NR43 = 0;
+        Noise.NR44 = 0;
+
+        NR50 = 0;
+        NR51 = 0;
+
+        MasterSoundDisable = true;
+    }
+    private void TurnOn()
+    {
+        if (MasterSoundDisable == false) return;
+        MasterSoundDisable = false;
     }
 
     //We should have this available as a namespace wide thing somehow
@@ -138,29 +95,19 @@ public class APU
     private bool Sound2OnLeftChannel => NR51.GetBit(5);
     private bool Sound3OnLeftChannel => NR51.GetBit(6);
     private bool Sound4OnLeftChannel => NR51.GetBit(7);
+
     private bool Sound1OnRightChannel => NR51.GetBit(0);
     private bool Sound2OnRightChannel => NR51.GetBit(1);
     private bool Sound3OnRightChannel => NR51.GetBit(2);
     private bool Sound4OnRightChannel => NR51.GetBit(3);
 
-    private bool MasterSoundDisable => NR52.GetBit(7);
-    private bool Sound1OnEnabled;
-    private bool Sound2OnEnabled;
-    private bool Sound3OnEnabled;
-    private bool Sound4OnEnabled;
+    private bool MasterSoundDisable;
 
-    private WaveChannel Wave { get; set; }
-    private NoiseChannel Noise { get; set; }
     private ToneSweepChannel ToneSweep { get; set; }
     private ToneChannel Tone { get; set; }
+    private WaveChannel Wave { get; set; }
+    private NoiseChannel Noise { get; set; }
 
-    private int _sampleCount;
-    public int SampleCount
-    {
-        get => _sampleCount;
-        set => _sampleCount = (_sampleCount + value) % Samples.Length;
-    }
-    private readonly float[] Samples;
     public APU(int sampleRate)
     {
         Tone = new();
@@ -168,83 +115,123 @@ public class APU
         Wave = new();
         Noise = new();
 
-        TicksPerSample = baseClock / sampleRate;
-        Samples = new float[sampleRate];
-
-        if (TicksPerSample * sampleRate != baseClock)
-        {
-            throw new IllegalSampleRateException("We want a sample rate which is evenly divisible in to the base clock");
-        }
+        this.sampleRate = sampleRate;
     }
 
-    private int APUClock;
-    private readonly int TicksPerSample;
-
-    private const int FrameSequencerFrequency = baseClock / 512;
+    int sampleRate;
     internal void Tick(object? o, EventArgs e)
     {
-        if (((byte)APUClock) == TicksPerSample)
-        {
-            Samples[SampleCount++] = SampleSound();
-            if (APUClock == FrameSequencerFrequency)
-            {
-                TickFrameSequencer();
-                APUClock = 0;
-            }
-        }
-        APUClock++;
+        if (MasterSoundDisable) return;
     }
 
-    private static float SampleSound() => 0.0f;
-
-    private int FrameSequencerClock;
-    private void TickFrameSequencer()
+    public byte this[int index]
     {
-        //Length counter
-        //We have to disable the channel when NRx1 ticks to 0
-        //We should only be accessing the lower 6 bits of these channels, the top bits
-        //are used for a different function
-        if ((FrameSequencerClock & 1) == 0)
+        get
         {
-            if ((ToneSweep.NR11 & 0x3f) > 0) ToneSweep.NR11 = (byte)((ToneSweep.NR11 & 0xc0) | ((ToneSweep.NR11 & 0x3f) - 1));
-            if ((Tone.NR21 & 0x3f) > 0) Tone.NR21 = (byte)((Tone.NR21 & 0xc0) | ((Tone.NR21 & 0x3f) - 1));
-            if (Wave.NR31 > 0) Wave.NR31--; //NR31 uses the full byte for the length counter
-            if ((Noise.NR41 & 0x3f) > 0) Noise.NR41 = (byte)((Noise.NR41 & 0xc0) | ((Noise.NR41 & 0x3f) - 1));
+            if (MasterSoundDisable && index != 0xff52) return 0xff;
 
-            if ((ToneSweep.NR11 & 0x3f) == 0) Sound1OnEnabled = false;
-            if ((Tone.NR21 & 0x3f) == 0) Sound2OnEnabled = false;
-            if (Wave.NR31 == 0) Sound3OnEnabled = false;
-            if ((Noise.NR41 & 0x3f) == 0) Sound4OnEnabled = false;
+            return index switch
+            {
+                0xff10 => ToneSweep.NR10,
+                0xff11 => ToneSweep.NR11,
+                0xff12 => ToneSweep.NR12,
+                0xff13 => ToneSweep.NR13,
+                0xff14 => ToneSweep.NR14,
+
+                0xff16 => Tone.NR21,
+                0xff17 => Tone.NR22,
+                0xff18 => Tone.NR23,
+                0xff19 => Tone.NR24,
+
+                0xff1a => Wave.NR30,
+                0xff1b => Wave.NR31,
+                0xff1c => Wave.NR32,
+                0xff1d => Wave.NR33,
+                0xff1e => Wave.NR34,
+
+                0xff20 => Noise.NR41,
+                0xff21 => Noise.NR42,
+                0xff22 => Noise.NR43,
+                0xff23 => Noise.NR44,
+
+                0xff24 => NR50,
+                0xff25 => NR51,
+                0xff26 => NR52,
+
+                0xff30 => Wave[0],
+                0xff31 => Wave[1],
+                0xff32 => Wave[2],
+                0xff33 => Wave[3],
+                0xff34 => Wave[4],
+                0xff35 => Wave[5],
+                0xff36 => Wave[6],
+                0xff37 => Wave[7],
+                0xff38 => Wave[8],
+                0xff39 => Wave[9],
+                0xff3a => Wave[10],
+                0xff3b => Wave[11],
+                0xff3c => Wave[12],
+                0xff3d => Wave[13],
+                0xff3e => Wave[14],
+                0xff3f => Wave[15],
+
+                _ => 0xff
+            };
         }
 
-        //Tick volume envelope internal counter
-        if (FrameSequencerClock == 7)
+        set
         {
-            ////Sweep until we have done the requested number of sweeps
-            //if (Channel1EnveloppeSweepNumber != 0)
-            //{
-            //    Channel1EnveloppeSweepNumber--;
+            //Todo, allow setting of length values on DMG0 (system we are targeting)
+            if (MasterSoundDisable && index != 0xff52) return;
 
-            //    if (Channel1EnveloppeIncreasing)
-            //    {
-            //        //If we are not maxed out yet, increase
-            //        if (Channel1Enveloppe != 0xf)
-            //            Channel1Enveloppe++;
-            //    }
-            //    else
-            //    {
-            //        //If we are not bottomed out yet, decrease
-            //        if (Channel1Enveloppe != 0)
-            //            Channel1Enveloppe--;
-            //    }
-            //}
+            Action<byte> f = index switch
+            {
+                0xff10 => x => ToneSweep.NR10 = x,
+                0xff11 => x => ToneSweep.NR11 = x,
+                0xff12 => x => ToneSweep.NR12 = x,
+                0xff13 => x => ToneSweep.NR13 = x,
+                0xff14 => x => ToneSweep.NR14 = x,
+
+                0xff16 => x => Tone.NR21 = x,
+                0xff17 => x => Tone.NR22 = x,
+                0xff18 => x => Tone.NR23 = x,
+                0xff19 => x => Tone.NR24 = x,
+
+                0xff1a => x => Wave.NR30 = x,
+                0xff1b => x => Wave.NR31 = x,
+                0xff1c => x => Wave.NR32 = x,
+                0xff1d => x => Wave.NR33 = x,
+                0xff1e => x => Wave.NR34 = x,
+
+                0xff20 => x => Noise.NR41 = x,
+                0xff21 => x => Noise.NR42 = x,
+                0xff22 => x => Noise.NR43 = x,
+                0xff23 => x => Noise.NR44 = x,
+
+                0xff24 => x => NR50 = x,
+                0xff25 => x => NR51 = x,
+                0xff26 => x => NR52 = x,
+
+                0xff30 => x => Wave[0] = x,
+                0xff31 => x => Wave[1] = x,
+                0xff32 => x => Wave[2] = x,
+                0xff33 => x => Wave[3] = x,
+                0xff34 => x => Wave[4] = x,
+                0xff35 => x => Wave[5] = x,
+                0xff36 => x => Wave[6] = x,
+                0xff37 => x => Wave[7] = x,
+                0xff38 => x => Wave[8] = x,
+                0xff39 => x => Wave[9] = x,
+                0xff3a => x => Wave[10] = x,
+                0xff3b => x => Wave[11] = x,
+                0xff3c => x => Wave[12] = x,
+                0xff3d => x => Wave[13] = x,
+                0xff3e => x => Wave[14] = x,
+                0xff3f => x => Wave[15] = x,
+
+                _ => x => _ = x
+            };
+            f(value);
         }
-        //Tick frequency sweep internal counter
-        if ((FrameSequencerClock & 2) == 2)
-        {
-
-        }
-
-        FrameSequencerClock = (FrameSequencerClock + 1) % 8;
     }
 }

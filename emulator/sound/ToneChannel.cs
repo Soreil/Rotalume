@@ -1,6 +1,6 @@
 ﻿namespace emulator.sound;
 
-internal class ToneChannel
+internal class ToneChannel : Channel
 {
     private WavePatternDuty wavePatternDuty;
     private int SoundLength;
@@ -47,4 +47,7 @@ internal class ToneChannel
             Frequency = (ushort)((Frequency & 0xF8FF) | ((value & 0x07) << 8));
         }
     }
+
+    public override bool IsOn() => throw new NotImplementedException();
+    public override void Clock() => throw new NotImplementedException();
 }

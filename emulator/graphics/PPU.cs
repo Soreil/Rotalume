@@ -14,7 +14,7 @@ public class PPU
     public readonly OAM OAM;
     public readonly VRAM VRAM;
 
-    public (Action<byte> Write, Func<byte> Read)[][] HookUpGraphics()
+    public (Action<byte> Write, Func<byte> Read)[] HookUpGraphics()
     {
         void LCDControlController(byte b) => LCDC = b;
         byte ReadLCDControl() => LCDC;
@@ -39,8 +39,7 @@ public class PPU
         void LYCController(byte b) => LYC = b;
         byte ReadLYC() => LYC;
 
-        return new (Action<byte> Write, Func<byte> Read)[][] {
-            new (Action<byte> Write, Func<byte> Read)[] {
+        return new (Action<byte> Write, Func<byte> Read)[] {
             (LCDControlController,
             ReadLCDControl),
             (LCDStatController,
@@ -52,8 +51,7 @@ public class PPU
             (LCDLineController,
             ReadLine),
             (LYCController,
-            ReadLYC)},
-            new (Action<byte> Write, Func<byte> Read)[]{
+            ReadLYC),
             (PaletteController,
             ReadPalette),
             (OBP0Controller,
@@ -63,8 +61,7 @@ public class PPU
             (WYController,
             ReadWY),
             (WXController,
-            ReadWX)}
-            };
+            ReadWX)};
     }
 
     //FF40 - FF4B, PPU control registers

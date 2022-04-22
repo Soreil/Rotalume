@@ -71,6 +71,7 @@ bootROM,
 Card,
 PPU.VRAM,
 PPU.OAM,
+APU,
 ioRegisters,
 (x => InterruptRegisters.InterruptControlRegister = x,
 () => InterruptRegisters.InterruptControlRegister)
@@ -80,9 +81,9 @@ ioRegisters,
 
         CPU.OAMCorruption += PPU.OAM.Corrupt;
 
-        ioRegisters[0x0f] = InterruptRegisters.HookUp();
+        ioRegisters[0xff0f] = InterruptRegisters.HookUp();
 
-        ioRegisters[0x50] = Memory.HookUpMemory();
+        ioRegisters[0xff50] = Memory.HookUpMemory();
 
         //We have to replicate the state of the system post boot without running the bootrom
         if (bootROM == null)
@@ -143,14 +144,13 @@ ioRegisters,
     public ushort baseAddr;
     private bool disposedValue;
 
-    private (Action<byte> Write, Func<byte> Read)[] SetupControlRegisters(Keypad Keypad)
+    private Dictionary<ushort, (Action<byte> Write, Func<byte> Read)> SetupControlRegisters(Keypad Keypad)
     {
-        var controlRegisters = new (Action<byte> Write, Func<byte> Read)[0x80];
-        for (int i = 0; i < controlRegisters.Length; i++)
-            controlRegisters[i] = (x => { }, () => 0xff);
-
-        //Keypad
-        controlRegisters[0] = Keypad.HookUpKeypad();
+        var controlRegisters = new Dictionary<ushort, (Action<byte> Write, Func<byte> Read)>
+        {
+            //Keypad
+            { 0xff00, Keypad.HookUpKeypad() }
+        };
 
         //Serial
         var SerialRegisters = new (Action<byte> Write, Func<byte> Read)[] {
@@ -161,24 +161,32 @@ ioRegisters,
             () => serialControl),
             };
 
-        SerialRegisters.CopyTo(controlRegisters, 1);
+        controlRegisters.Add(0xff01, SerialRegisters[0]);
+        controlRegisters.Add(0xff02, SerialRegisters[1]);
 
         //Timers
         var TimerRegisters = Timers.HookUpTimers();
-        TimerRegisters.CopyTo(controlRegisters, 4);
+        controlRegisters.Add(0xff04, TimerRegisters[0]);
+        controlRegisters.Add(0xff05, TimerRegisters[1]);
+        controlRegisters.Add(0xff06, TimerRegisters[2]);
+        controlRegisters.Add(0xff07, TimerRegisters[3]);
 
-        var SoundRegisters = APU.HookUpSound();
-        SoundRegisters[0].CopyTo(controlRegisters, 0x10);
-        SoundRegisters[1].CopyTo(controlRegisters, 0x16);
-        SoundRegisters[2].CopyTo(controlRegisters, 0x20);
-        SoundRegisters[3].CopyTo(controlRegisters, 0x30);
 
         var GraphicsRegisters = PPU.HookUpGraphics();
-        GraphicsRegisters[0].CopyTo(controlRegisters, 0x40);
-        GraphicsRegisters[1].CopyTo(controlRegisters, 0x47);
+        controlRegisters.Add(0xff40, GraphicsRegisters[0]);
+        controlRegisters.Add(0xff41, GraphicsRegisters[1]);
+        controlRegisters.Add(0xff42, GraphicsRegisters[2]);
+        controlRegisters.Add(0xff43, GraphicsRegisters[3]);
+        controlRegisters.Add(0xff44, GraphicsRegisters[4]);
+        controlRegisters.Add(0xff45, GraphicsRegisters[5]);
+        controlRegisters.Add(0xff47, GraphicsRegisters[6]);
+        controlRegisters.Add(0xff48, GraphicsRegisters[7]);
+        controlRegisters.Add(0xff49, GraphicsRegisters[8]);
+        controlRegisters.Add(0xff4a, GraphicsRegisters[9]);
+        controlRegisters.Add(0xff4b, GraphicsRegisters[10]);
 
         //DMA
-        controlRegisters[0x46] =
+        (Action<byte> Write, Func<byte> Read) dmaController =
         ((x) =>
         {
             DMATicksLeft = 160;
@@ -186,6 +194,15 @@ ioRegisters,
         },
         () => (byte)(baseAddr >> 8));
 
+        controlRegisters[0xff46] = dmaController;
+
+        //Set all unused IO registers to just read back 0xff
+        for (int i = 0; i < 80; i++)
+        {
+            var addr = (ushort)(0xff00 + i);
+            if (!controlRegisters.ContainsKey(addr))
+                controlRegisters.Add(addr, (x => { }, () => 0xff));
+        }
 
         return controlRegisters;
     }
