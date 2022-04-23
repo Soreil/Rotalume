@@ -72,4 +72,42 @@ internal class GraphicalOutputTest
 
         Assert.IsTrue(TestHelpers.AreEqual((Image<L8>)expectedImage, outputImage));
     }
+
+    [Test]
+    [Category("RequiresBootROM")]
+    [TestCase(@"..\..\..\..\Tests\rom\boot\expected.png")]
+    public void NintendoLogoLog(string imagePath)
+    {
+        var render = new TestRenderDevice();
+
+        var expectedImage = Image.Load(imagePath);
+
+        var core = TestHelpers.NewBootCore(render);
+
+        int FramesDrawn = 0;
+        render.FramePushed += (sender, e) => FramesDrawn++;
+
+        List<ushort> samples = new();
+        var sampleRate = emulator.cpu.Constants.Frequency / 441.0;
+        var sampleCount = 0;
+        while (core.CPU.PC != 0x100)
+        {
+            core.Step();
+
+
+            if (core.masterclock > sampleRate * sampleCount)
+            {
+                samples.Add(core.Sample());
+                sampleCount++;
+            }
+        }
+
+        var outputImage = Image.LoadPixelData<L8>(render.Image, 160, 144);
+
+        outputImage.SaveAsBmp("outputBootROM.bmp");
+
+        Assert.IsTrue(TestHelpers.AreEqual((Image<L8>)expectedImage, outputImage));
+    }
+
+
 }

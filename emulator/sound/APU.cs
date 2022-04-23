@@ -45,36 +45,35 @@ public class APU
             OutputVolumeRight = value & 0x7;
         }
     }
-
     private bool Sound4LeftOn;
-    private bool Sound4LeftOff;
     private bool Sound3LeftOn;
-    private bool Sound3LeftOff;
     private bool Sound2LeftOn;
-    private bool Sound2LeftOff;
     private bool Sound1LeftOn;
-    private bool Sound1LeftOff;
+    private bool Sound4RightOn;
+    private bool Sound3RightOn;
+    private bool Sound2RightOn;
+    private bool Sound1RightOn;
 
     public byte NR51
     {
         get => (byte)((Convert.ToByte(Sound4LeftOn) << 7) |
-             (Convert.ToByte(Sound4LeftOff) << 6) |
-             (Convert.ToByte(Sound3LeftOn) << 5) |
-             (Convert.ToByte(Sound3LeftOff) << 4) |
-             (Convert.ToByte(Sound2LeftOn) << 3) |
-             (Convert.ToByte(Sound2LeftOff) << 2) |
-             (Convert.ToByte(Sound1LeftOn) << 1) |
-             (Convert.ToByte(Sound1LeftOff) << 0));
+             (Convert.ToByte(Sound3LeftOn) << 6) |
+             (Convert.ToByte(Sound2LeftOn) << 5) |
+             (Convert.ToByte(Sound1LeftOn) << 4) |
+             (Convert.ToByte(Sound4RightOn) << 3) |
+             (Convert.ToByte(Sound3RightOn) << 2) |
+             (Convert.ToByte(Sound2RightOn) << 1) |
+             (Convert.ToByte(Sound1RightOn) << 0));
         set
         {
             Sound4LeftOn = value.GetBit(7);
-            Sound4LeftOff = value.GetBit(6);
-            Sound3LeftOn = value.GetBit(5);
-            Sound3LeftOff = value.GetBit(4);
-            Sound2LeftOn = value.GetBit(3);
-            Sound2LeftOff = value.GetBit(2);
-            Sound1LeftOn = value.GetBit(1);
-            Sound1LeftOff = value.GetBit(0);
+            Sound3LeftOn = value.GetBit(6);
+            Sound2LeftOn = value.GetBit(5);
+            Sound1LeftOn = value.GetBit(4);
+            Sound4RightOn = value.GetBit(3);
+            Sound3RightOn = value.GetBit(2);
+            Sound2RightOn = value.GetBit(1);
+            Sound1RightOn = value.GetBit(0);
         }
     }
 
@@ -124,6 +123,7 @@ public class APU
         NR50 = 0;
         NR51 = 0;
 
+        SoundClock = 0;
         MasterSoundDisable = true;
     }
     private void TurnOn()
@@ -135,6 +135,7 @@ public class APU
     //We should have this available as a namespace wide thing somehow
     private const int baseClock = cpu.Constants.Frequency;
 
+    private int SoundClock;
     private bool MasterSoundDisable;
 
     private ToneSweepChannel ToneSweep { get; set; }
@@ -221,10 +222,82 @@ public class APU
         }
     }
 
-
+    private const int FrameSequencerPeriod = baseClock / 512;
     internal void Tick(object? o, EventArgs e)
     {
         if (MasterSoundDisable) return;
+        if (SoundClock % FrameSequencerPeriod == 0)
+            FrameSequencerClock();
+
+        if (ToneSweep.IsOn())
+        {
+            if (SoundClock % ((2048 - ToneSweep.Frequency) * 4) == 0)
+            {
+                ToneSweep.Clock();
+            }
+        }
+        if (Tone.IsOn())
+        {
+            if (SoundClock % ((2048 - Tone.Frequency) * 4) == 0)
+            {
+                Tone.Clock();
+            }
+        }
+        if (Wave.IsOn())
+        {
+            if (SoundClock % ((2048 - Wave.Frequency) * 2) == 0)
+            {
+                Wave.Clock();
+            }
+        }
+        if (Noise.IsOn())
+        {
+            if (SoundClock % 8 == 0)
+            {
+                Noise.Clock();
+            }
+        }
+
+        SoundClock++;
+    }
+
+    public (ushort left, ushort right) Sample()
+    {
+        ushort volumeLeft = 0;
+        ushort volumeRight = 0;
+        if (ToneSweep.IsOn())
+        {
+            if (Sound1LeftOn) volumeLeft += ToneSweep.Sample();
+            if (Sound1RightOn) volumeRight += ToneSweep.Sample();
+        }
+        if (Tone.IsOn())
+        {
+            if (Sound2LeftOn) volumeLeft += Tone.Sample();
+            if (Sound2RightOn) volumeRight += Tone.Sample();
+        }
+        if (Wave.IsOn())
+        {
+            if (Sound3LeftOn) volumeLeft += Wave.Sample();
+            if (Sound3RightOn) volumeRight += Wave.Sample();
+        }
+
+        if (Noise.IsOn())
+        {
+            if (Sound4LeftOn) volumeLeft += Noise.Sample();
+            if (Sound4RightOn) volumeRight += Noise.Sample();
+        }
+
+        if (OutputToLeftTerminal)
+        {
+            volumeLeft *= (ushort)(OutputVolumeLeft + 1);
+        }
+
+        if (OutputToRightTerminal)
+        {
+            volumeRight *= (ushort)(OutputVolumeRight + 1);
+        }
+
+        return (volumeLeft, volumeRight);
     }
 
     public byte this[int index]

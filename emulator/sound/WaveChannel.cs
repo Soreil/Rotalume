@@ -21,7 +21,7 @@ internal class WaveChannel : Channel
         set => OutputLevel = (WaveOutputLevel)((value >> 5) & 0x3);
     }
 
-    ushort Frequency;
+    public ushort Frequency { get; private set; }
 
     public byte NR33 { get => 0xff; set => Frequency = (ushort)((Frequency & 0xFFF0) | value); }
 

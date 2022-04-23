@@ -105,7 +105,7 @@ internal class ToneSweepChannel : Channel
         }
     }
 
-    ushort Frequency;
+    public ushort Frequency { get; private set; }
 
     public byte NR13 { get => 0xff; set => Frequency = (ushort)((Frequency & 0xFFF0) | value); }
 

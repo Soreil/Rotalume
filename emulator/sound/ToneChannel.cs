@@ -40,7 +40,7 @@ internal class ToneChannel : Channel
         }
     }
 
-    ushort Frequency;
+    public ushort Frequency { get; private set; }
 
     public byte NR23 { get => 0xff; set => Frequency = (ushort)((Frequency & 0xFFF0) | value); }
 

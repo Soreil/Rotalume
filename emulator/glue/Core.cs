@@ -213,6 +213,11 @@ ioRegisters,
         CPU.Step();
     }
 
+    public ushort Sample()
+    {
+        return APU.Sample().left;
+    }
+
     protected virtual void Dispose(bool disposing)
     {
         if (!disposedValue)
