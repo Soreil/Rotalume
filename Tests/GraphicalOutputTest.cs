@@ -75,12 +75,9 @@ internal class GraphicalOutputTest
 
     [Test]
     [Category("RequiresBootROM")]
-    [TestCase(@"..\..\..\..\Tests\rom\boot\expected.png")]
-    public void NintendoLogoLog(string imagePath)
+    public void SoundIsProducedDuringTheNintendoLogo()
     {
         var render = new TestRenderDevice();
-
-        var expectedImage = Image.Load(imagePath);
 
         var core = TestHelpers.NewBootCore(render);
 
@@ -88,7 +85,7 @@ internal class GraphicalOutputTest
         render.FramePushed += (sender, e) => FramesDrawn++;
 
         List<ushort> samples = new();
-        var sampleRate = emulator.cpu.Constants.Frequency / 441.0;
+        var sampleRate = emulator.cpu.Constants.Frequency / 44100.0;
         var sampleCount = 0;
         while (core.CPU.PC != 0x100)
         {
@@ -102,12 +99,9 @@ internal class GraphicalOutputTest
             }
         }
 
-        var outputImage = Image.LoadPixelData<L8>(render.Image, 160, 144);
+        var SampleCount = samples.Count();
+        var SamplesWithSound = samples.Count(x => x != 0);
 
-        outputImage.SaveAsBmp("outputBootROM.bmp");
-
-        Assert.IsTrue(TestHelpers.AreEqual((Image<L8>)expectedImage, outputImage));
+        Assert.NotZero(SamplesWithSound);
     }
-
-
 }
