@@ -19,6 +19,8 @@ public abstract class Channel
 
     protected bool ChannelEnabled;
 
+    public abstract byte Sample();
+
     protected virtual void Trigger()
     {
         ChannelEnabled = true;

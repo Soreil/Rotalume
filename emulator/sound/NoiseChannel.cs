@@ -11,17 +11,16 @@ public class NoiseChannel : Channel
         set => SoundLength = value & 0x3f;
     }
 
+    private int envelopeVolume;
     public void TickVolEnv()
     {
         if (envelopeVolume is 0 or 15) return;
         envelopeVolume += EnvelopeIncreasing ? +1 : -1;
     }
 
-    int envelopeVolume;
-
-    int InitialEnvelopeVolume;
-    bool EnvelopeIncreasing;
-    int EnvelopeSweepNumber;
+    private int InitialEnvelopeVolume;
+    private bool EnvelopeIncreasing;
+    private int EnvelopeSweepNumber;
     public byte NR42
     {
         get => (byte)((InitialEnvelopeVolume << 4) | (Convert.ToByte(EnvelopeIncreasing) << 3) | (EnvelopeSweepNumber & 0x07));
@@ -34,9 +33,9 @@ public class NoiseChannel : Channel
         }
     }
 
-    int shiftClockFrequency;
-    bool ShiftRegisterWidth;
-    int FrequencyDividerRatio;
+    private int shiftClockFrequency;
+    private bool ShiftRegisterWidth;
+    private int FrequencyDividerRatio;
     public byte NR43
     {
         get => (byte)((shiftClockFrequency << 4) | (Convert.ToByte(ShiftRegisterWidth) << 3) | (FrequencyDividerRatio & 0x07)); set
@@ -47,7 +46,7 @@ public class NoiseChannel : Channel
         }
     }
 
-    bool CounterSelection;
+    private bool CounterSelection;
     public byte NR44
     {
         get => (byte)((Convert.ToByte(CounterSelection) << 6) | 0xbf);
@@ -65,8 +64,7 @@ public class NoiseChannel : Channel
     protected override int SoundLength { get; set; }
 
     private readonly LFSR ShiftRegister;
-
-    int clocks;
+    private int clocks;
 
     //Clock should be called every 8th tick since this is the minimum divisor of LFSR updates
     public override void Clock()
@@ -100,10 +98,15 @@ public class NoiseChannel : Channel
         ShiftRegister.ResetBits();
     }
 
-    public NoiseChannel()
+    public override byte Sample() => MakeSample();
+
+    public byte MakeSample()
     {
-        ShiftRegister = new();
+        var start = Convert.ToByte(ShiftRegister.Output());
+        return (byte)(start * envelopeVolume);
     }
+
+    public NoiseChannel() => ShiftRegister = new();
 }
 
 public class LFSR

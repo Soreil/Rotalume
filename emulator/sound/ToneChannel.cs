@@ -1,4 +1,6 @@
-﻿namespace emulator.sound;
+﻿using System.Collections;
+
+namespace emulator.sound;
 
 internal class ToneChannel : Channel
 {
@@ -59,6 +61,27 @@ internal class ToneChannel : Channel
 
     protected override int SoundLength { get; set; }
 
-    public override void Clock() => throw new NotImplementedException();
+    private int WaveFormIndex;
 
+    private static BitArray GetWaveForm(WavePatternDuty pattern) => pattern switch
+    {
+        WavePatternDuty.Eigth => new(new bool[] { false, false, false, false, false, false, false, true }),
+        WavePatternDuty.Quarter => new(new bool[] { true, false, false, false, false, false, false, true }),
+        WavePatternDuty.Half => new(new bool[] { false, false, false, false, false, true, true, true }),
+        WavePatternDuty.ThreeFourths => new(new bool[] { false, true, true, true, true, true, true, false }),
+        _ => throw new NotSupportedException()
+    };
+
+    byte CurrentSample;
+
+    public override void Clock()
+    {
+        var sample = Convert.ToByte(GetWaveForm(wavePatternDuty).Get(WaveFormIndex));
+
+        CurrentSample = (byte)(sample * envelopeVolume);
+
+        WaveFormIndex++;
+        WaveFormIndex &= 0x7;
+    }
+    public override byte Sample() => CurrentSample;
 }

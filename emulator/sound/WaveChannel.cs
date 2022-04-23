@@ -11,6 +11,7 @@ internal class WaveChannel : Channel
         set => ChannelOff = value.GetBit(7);
     }
 
+    protected override int SoundLength { get; set; }
     public byte NR31 { get => 0xff; set => SoundLength = value; }
 
     private WaveOutputLevel OutputLevel;
@@ -40,7 +41,6 @@ internal class WaveChannel : Channel
 
     protected override int SoundLengthMAX => 256;
 
-    protected override int SoundLength { get; set; }
 
     private int PositionCounter;
 
@@ -70,6 +70,7 @@ internal class WaveChannel : Channel
     }
 
 
+
     private readonly byte[] Samples = new byte[1];
 
     protected override void Trigger()
@@ -77,6 +78,15 @@ internal class WaveChannel : Channel
         base.Trigger();
         PositionCounter = 0;
     }
+
+    public override byte Sample() => OutputLevel switch
+    {
+        WaveOutputLevel.Mute => 0,
+        WaveOutputLevel.half => (byte)(Samples[0] >> 1),
+        WaveOutputLevel.quarter => (byte)(Samples[0] >> 2),
+        WaveOutputLevel.full => Samples[0],
+        _ => throw new NotSupportedException()
+    };
 
     public byte this[int n]
     {

@@ -154,21 +154,21 @@ public class APU
 
     int sampleRate;
 
-    private int FrameClock;
+    private int FrameSequencerState;
     public void FrameSequencerClock()
     {
-        switch (FrameClock)
+        switch (FrameSequencerState)
         {
             case 0:
             ToneSweep.TickLength();
             Tone.TickLength();
             Wave.TickLength();
             Noise.TickLength();
-            FrameClock++;
+            FrameSequencerState++;
             break;
 
             case 1:
-            FrameClock++;
+            FrameSequencerState++;
             break;
 
             case 2:
@@ -178,11 +178,11 @@ public class APU
             Noise.TickLength();
 
             ToneSweep.TickSweep();
-            FrameClock++;
+            FrameSequencerState++;
             break;
 
             case 3:
-            FrameClock++;
+            FrameSequencerState++;
             break;
 
             case 4:
@@ -191,11 +191,11 @@ public class APU
             Wave.TickLength();
             Noise.TickLength();
 
-            FrameClock++;
+            FrameSequencerState++;
             break;
 
             case 5:
-            FrameClock++;
+            FrameSequencerState++;
             break;
 
             case 6:
@@ -205,7 +205,7 @@ public class APU
             Noise.TickLength();
 
             ToneSweep.TickSweep();
-            FrameClock++;
+            FrameSequencerState++;
             break;
 
             case 7:
@@ -213,7 +213,7 @@ public class APU
             Tone.TickVolEnv();
             Noise.TickVolEnv();
 
-            FrameClock = 0;
+            FrameSequencerState = 0;
             break;
 
             default:
