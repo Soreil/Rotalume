@@ -153,6 +153,75 @@ public class APU
     }
 
     int sampleRate;
+
+    private int FrameClock;
+    public void FrameSequencerClock()
+    {
+        switch (FrameClock)
+        {
+            case 0:
+            ToneSweep.TickLength();
+            Tone.TickLength();
+            Wave.TickLength();
+            Noise.TickLength();
+            FrameClock++;
+            break;
+
+            case 1:
+            FrameClock++;
+            break;
+
+            case 2:
+            ToneSweep.TickLength();
+            Tone.TickLength();
+            Wave.TickLength();
+            Noise.TickLength();
+
+            ToneSweep.TickSweep();
+            FrameClock++;
+            break;
+
+            case 3:
+            FrameClock++;
+            break;
+
+            case 4:
+            ToneSweep.TickLength();
+            Tone.TickLength();
+            Wave.TickLength();
+            Noise.TickLength();
+
+            FrameClock++;
+            break;
+
+            case 5:
+            FrameClock++;
+            break;
+
+            case 6:
+            ToneSweep.TickLength();
+            Tone.TickLength();
+            Wave.TickLength();
+            Noise.TickLength();
+
+            ToneSweep.TickSweep();
+            FrameClock++;
+            break;
+
+            case 7:
+            ToneSweep.TickVolEnv();
+            Tone.TickVolEnv();
+            Noise.TickVolEnv();
+
+            FrameClock = 0;
+            break;
+
+            default:
+            throw new Exception("Illegal Frameclock step");
+        }
+    }
+
+
     internal void Tick(object? o, EventArgs e)
     {
         if (MasterSoundDisable) return;

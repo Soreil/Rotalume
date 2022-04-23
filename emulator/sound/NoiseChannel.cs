@@ -1,16 +1,23 @@
-﻿using System.Collections;
+﻿
+using System.Collections;
 
 namespace emulator.sound;
 
 public class NoiseChannel : Channel
 {
-    private int Length;
     public byte NR41
     {
         get => 0xff;
-        set => Length = value & 0x3f;
+        set => SoundLength = value & 0x3f;
     }
 
+    public void TickVolEnv()
+    {
+        if (envelopeVolume is 0 or 15) return;
+        envelopeVolume += EnvelopeIncreasing ? +1 : -1;
+    }
+
+    int envelopeVolume;
 
     int InitialEnvelopeVolume;
     bool EnvelopeIncreasing;
@@ -40,7 +47,6 @@ public class NoiseChannel : Channel
         }
     }
 
-    bool RestartSound;
     bool CounterSelection;
     public byte NR44
     {
@@ -48,10 +54,15 @@ public class NoiseChannel : Channel
 
         set
         {
-            RestartSound = value.GetBit(7);
             CounterSelection = value.GetBit(6);
+
+            if (value.GetBit(7)) base.Trigger();
         }
     }
+
+    protected override int SoundLengthMAX => 64;
+
+    protected override int SoundLength { get; set; }
 
     private readonly LFSR ShiftRegister;
 
@@ -70,8 +81,6 @@ public class NoiseChannel : Channel
         }
     }
 
-    public override bool IsOn() => throw new NotImplementedException();
-
     private static int GetDiv(int frequencyDividerRatio) => frequencyDividerRatio switch
     {
         0 => 1,
@@ -84,6 +93,12 @@ public class NoiseChannel : Channel
         7 => 14,
         _ => throw new Exception("Impossible")
     };
+
+    protected override void Trigger()
+    {
+        base.Trigger();
+        ShiftRegister.ResetBits();
+    }
 
     public NoiseChannel()
     {
@@ -109,15 +124,11 @@ public class LFSR
         if (WidthMode) bits.Set(6, newBit);
     }
 
+    public void ResetBits() => bits.SetAll(true);
+
     public LFSR()
     {
         bits = new(LFSRbitCount);
-        var rand = new Random();
-        var randomValue = rand.Next();
-
-        for (int i = 0; i < LFSRbitCount; i++)
-        {
-            bits.Set(i, (randomValue & (1 << i)) != 0);
-        }
+        ResetBits();
     }
 }

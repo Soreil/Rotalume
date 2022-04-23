@@ -2,24 +2,72 @@
 
 internal class ToneSweepChannel : Channel
 {
-    private int SweepTime;
+    private bool sweepEnabled;
+    private ushort frequencyShadowRegister;
+    private int sweepTimer;
+
+    public void TickSweep()
+    {
+        if (sweepEnabled && sweepTimer != 0)
+        {
+            var newFreq = CalculateSweepFrequency();
+
+            //If the new frequency is 2047 or less and the sweep shift is not zero,
+            //this new frequency is written back to the shadow frequency and square 1's frequency in NR13 and NR14
+            if (newFreq <= 2047 && SweepShift != 0)
+            {
+                frequencyShadowRegister = newFreq;
+                Frequency = newFreq;
+                //frequency calculation and overflow check are run AGAIN immediately using this new value,
+                //but this second new frequency is not written back.
+                _ = CalculateSweepFrequency();
+            }
+        }
+    }
+
+    public void TriggerSweep()
+    {
+        frequencyShadowRegister = Frequency;
+        sweepTimer = SweepPeriod;
+        sweepEnabled = SweepPeriod != 0 || SweepShift != 0;
+
+        //If the sweep shift is non - zero, frequency calculation and the overflow check are performed immediately.
+        if (SweepShift != 0)
+        {
+            frequencyShadowRegister = CalculateSweepFrequency();
+        }
+    }
+
+    private ushort CalculateSweepFrequency()
+    {
+        var tmp = frequencyShadowRegister >> SweepShift;
+        if (!SweepIncreasing) tmp = -tmp;
+        var newFrequency = (ushort)(frequencyShadowRegister + tmp);
+
+        //Overflow check
+        if (newFrequency > 2047) ChannelEnabled = false;
+
+        return newFrequency;
+    }
+
+    private int SweepPeriod;
     private bool SweepIncreasing;
-    private int SweepShiftNumber;
+    private int SweepShift;
 
     public byte NR10
     {
-        get => (byte)((SweepTime << 4) | (Convert.ToByte(SweepIncreasing) << 3) | (SweepShiftNumber & 0x07));
+        get => (byte)((SweepPeriod << 4) | (Convert.ToByte(SweepIncreasing) << 3) | (SweepShift & 0x07));
 
         set
         {
-            SweepTime = value >> 4;
+            SweepPeriod = value >> 4;
             SweepIncreasing = value.GetBit(3);
-            SweepShiftNumber = value & 0x7;
+            SweepShift = value & 0x7;
         }
     }
 
     private WavePatternDuty wavePatternDuty;
-    private int SoundLength;
+
     public byte NR11
     {
         get => (byte)(((byte)wavePatternDuty << 6) | 0x3f);
@@ -30,6 +78,14 @@ internal class ToneSweepChannel : Channel
             SoundLength = value & 0x3f;
         }
     }
+
+    public void TickVolEnv()
+    {
+        if (envelopeVolume is 0 or 15) return;
+        envelopeVolume += EnvelopeIncreasing ? +1 : -1;
+    }
+
+    int envelopeVolume;
 
     private int InitialEnvelopeVolume;
     private bool EnvelopeIncreasing;
@@ -52,18 +108,29 @@ internal class ToneSweepChannel : Channel
     public byte NR13 { get => 0xff; set => Frequency = (ushort)((Frequency & 0xFFF0) | value); }
 
     private bool CounterSelection;
-    private bool Restarted;
+
     public byte NR14
     {
         get => (byte)(Convert.ToByte(CounterSelection) | 0xbf);
         set
         {
-            Restarted = value.GetBit(7);
             CounterSelection = value.GetBit(6);
             Frequency = (ushort)((Frequency & 0xF8FF) | ((value & 0x07) << 8));
+
+            if (value.GetBit(7)) base.Trigger();
         }
     }
 
-    public override bool IsOn() => throw new NotImplementedException();
+    protected override void Trigger()
+    {
+        base.Trigger();
+        //Square 1's sweep does several things (see frequency sweep).
+        TriggerSweep();
+    }
+
+    protected override int SoundLengthMAX => 64;
+
+    protected override int SoundLength { get; set; }
+
     public override void Clock() => throw new NotImplementedException();
 }
