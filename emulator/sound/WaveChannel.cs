@@ -25,17 +25,17 @@ internal class WaveChannel : Channel
 
     public byte NR33 { get => 0xff; set => Frequency = (ushort)((Frequency & 0xFFF0) | value); }
 
-    private bool CounterSelection;
-
+    protected override bool UseLength { get; set; }
     public byte NR34
     {
-        get => (byte)(Convert.ToByte(CounterSelection) | 0xbf);
+        get => (byte)(Convert.ToByte(UseLength) | 0xbf);
         set
         {
-            CounterSelection = value.GetBit(6);
+            UseLength = value.GetBit(6);
             Frequency = (ushort)((Frequency & 0xF8FF) | ((value & 0x07) << 8));
 
             if (value.GetBit(7)) base.Trigger();
+            else ChannelEnabled = false;
         }
     }
 

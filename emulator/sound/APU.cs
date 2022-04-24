@@ -261,10 +261,10 @@ public class APU
         SoundClock++;
     }
 
-    public (ushort left, ushort right) Sample()
+    public (byte left, byte right) Sample()
     {
-        ushort volumeLeft = 0;
-        ushort volumeRight = 0;
+        byte volumeLeft = 0;
+        byte volumeRight = 0;
         if (ToneSweep.IsOn())
         {
             if (Sound1LeftOn) volumeLeft += ToneSweep.Sample();
@@ -289,12 +289,12 @@ public class APU
 
         if (OutputToLeftTerminal)
         {
-            volumeLeft *= (ushort)(OutputVolumeLeft + 1);
+            volumeLeft *= (byte)(OutputVolumeLeft + 1);
         }
 
         if (OutputToRightTerminal)
         {
-            volumeRight *= (ushort)(OutputVolumeRight + 1);
+            volumeRight *= (byte)(OutputVolumeRight + 1);
         }
 
         return (volumeLeft, volumeRight);

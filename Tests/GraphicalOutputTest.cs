@@ -73,9 +73,50 @@ internal class GraphicalOutputTest
         Assert.IsTrue(TestHelpers.AreEqual((Image<L8>)expectedImage, outputImage));
     }
 
+
+    [TestCase(@"C:\Users\sjon\Documents\Pokemon - Gold Version (UE) [C][!].gbc")]
+    [TestCase(@"C:\Users\sjon\Documents\Pokemon Pinball (Europe) (En,Fr,De,Es,It) (SGB Enhanced).gbc")]
+    [Category("RequiresBootROM")]
+    public void SoundFromPokemonGoldIntro(string path)
+    {
+        var render = new TestRenderDevice();
+
+        var data = File.ReadAllBytes(path);
+
+        var fn = Path.GetFileName(path);
+
+        var core = TestHelpers.NewCore(data, fn, render);
+
+        int FramesDrawn = 0;
+        render.FramePushed += (sender, e) => FramesDrawn++;
+
+        List<byte> samples = new();
+        var sampleRate = emulator.cpu.Constants.Frequency / 44100.0;
+        var sampleCount = 0;
+
+        while (sampleCount < 44100.0 * 30 * 2)
+        {
+            core.Step();
+
+            if (core.masterclock > sampleRate * sampleCount / 2)
+            {
+                (byte left, byte right) = core.Sample();
+                samples.Add(left);
+                samples.Add(right);
+                sampleCount += 2;
+            }
+        }
+
+        var wav = new WAV.WAVFile(samples.ToArray(), 2, 44100, 8);
+
+        using var file = File.Open(fn + ".wav", FileMode.Create, FileAccess.Write);
+        using var writer = new BinaryWriter(file);
+        wav.Write(writer);
+    }
+
     [Test]
     [Category("RequiresBootROM")]
-    public void SoundIsProducedDuringTheNintendoLogo()
+    public void BootromSound()
     {
         var render = new TestRenderDevice();
 
@@ -84,7 +125,7 @@ internal class GraphicalOutputTest
         int FramesDrawn = 0;
         render.FramePushed += (sender, e) => FramesDrawn++;
 
-        List<ushort> samples = new();
+        List<byte> samples = new();
         var sampleRate = emulator.cpu.Constants.Frequency / 44100.0;
         var sampleCount = 0;
         while (core.CPU.PC != 0x100)
@@ -92,16 +133,24 @@ internal class GraphicalOutputTest
             core.Step();
 
 
-            if (core.masterclock > sampleRate * sampleCount)
+            if (core.masterclock > sampleRate * sampleCount/2)
             {
-                samples.Add(core.Sample());
-                sampleCount++;
+                (byte left, byte right) = core.Sample();
+                samples.Add(left);
+                samples.Add(right);
+                sampleCount += 2;
             }
         }
 
-        var SampleCount = samples.Count();
+        var SampleCount = samples.Count;
         var SamplesWithSound = samples.Count(x => x != 0);
 
         Assert.NotZero(SamplesWithSound);
+
+        var wav = new WAV.WAVFile(samples.ToArray(), 2, 44100, 8);
+
+        using var file = File.Open("bootromSound.wav", FileMode.Create, FileAccess.Write);
+        using var writer = new BinaryWriter(file);
+        wav.Write(writer);
     }
 }

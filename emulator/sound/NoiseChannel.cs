@@ -5,6 +5,7 @@ namespace emulator.sound;
 
 public class NoiseChannel : Channel
 {
+    protected override int SoundLength { get; set; }
     public byte NR41
     {
         get => 0xff;
@@ -46,22 +47,23 @@ public class NoiseChannel : Channel
         }
     }
 
-    private bool CounterSelection;
+    protected override bool UseLength { get; set; }
+
     public byte NR44
     {
-        get => (byte)((Convert.ToByte(CounterSelection) << 6) | 0xbf);
+        get => (byte)((Convert.ToByte(UseLength) << 6) | 0xbf);
 
         set
         {
-            CounterSelection = value.GetBit(6);
+            UseLength = value.GetBit(6);
 
             if (value.GetBit(7)) base.Trigger();
+            else ChannelEnabled = false;
         }
     }
 
     protected override int SoundLengthMAX => 64;
 
-    protected override int SoundLength { get; set; }
 
     private readonly LFSR ShiftRegister;
     private int clocks;

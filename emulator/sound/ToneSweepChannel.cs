@@ -69,6 +69,7 @@ internal class ToneSweepChannel : Channel
     }
 
     private WavePatternDuty wavePatternDuty;
+    protected override int SoundLength { get; set; }
 
     public byte NR11
     {
@@ -110,17 +111,18 @@ internal class ToneSweepChannel : Channel
 
     public byte NR13 { get => 0xff; set => Frequency = (ushort)((Frequency & 0xFFF0) | value); }
 
-    private bool CounterSelection;
 
+    protected override bool UseLength { get; set; }
     public byte NR14
     {
-        get => (byte)(Convert.ToByte(CounterSelection) | 0xbf);
+        get => (byte)(Convert.ToByte(UseLength) | 0xbf);
         set
         {
-            CounterSelection = value.GetBit(6);
+            UseLength = value.GetBit(6);
             Frequency = (ushort)((Frequency & 0xF8FF) | ((value & 0x07) << 8));
 
             if (value.GetBit(7)) base.Trigger();
+            else ChannelEnabled = false;
         }
     }
 
@@ -133,7 +135,6 @@ internal class ToneSweepChannel : Channel
 
     protected override int SoundLengthMAX => 64;
 
-    protected override int SoundLength { get; set; }
 
     private int WaveFormIndex;
 

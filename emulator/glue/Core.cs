@@ -213,10 +213,7 @@ ioRegisters,
         CPU.Step();
     }
 
-    public ushort Sample()
-    {
-        return APU.Sample().left;
-    }
+    public (byte left, byte right) Sample() => APU.Sample();
 
     protected virtual void Dispose(bool disposing)
     {

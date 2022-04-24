@@ -4,7 +4,8 @@ public abstract class Channel
 {
     public void TickLength()
     {
-        if (ChannelEnabled == false) return;
+        if (ChannelEnabled == false || !UseLength) return;
+
 
         if (SoundLength <= 0) throw new Exception("Unexpected");
         SoundLength--;
@@ -18,6 +19,7 @@ public abstract class Channel
     public abstract void Clock();
 
     protected bool ChannelEnabled;
+    protected abstract bool UseLength { get; set; }
 
     public abstract byte Sample();
 
