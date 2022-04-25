@@ -67,14 +67,20 @@ internal class WaveChannel : Channel
             0x3, 0x4, 0xB, 0x8,
             0x2, 0xE, 0xD, 0xA};
 
+
+    private byte sample;
     private void ReadSampleFromTable()
     {
-        Samples[0] = table[PositionCounter];
+        var tmp = table[PositionCounter];
+        sample = OutputLevel switch
+        {
+            WaveOutputLevel.Mute => 0,
+            WaveOutputLevel.half => (byte)(tmp >> 1),
+            WaveOutputLevel.quarter => (byte)(tmp >> 2),
+            WaveOutputLevel.full => tmp,
+            _ => throw new NotSupportedException()
+        };
     }
-
-
-
-    private readonly byte[] Samples = new byte[1];
 
     protected override void Trigger()
     {
@@ -82,14 +88,7 @@ internal class WaveChannel : Channel
         PositionCounter = 0;
     }
 
-    public override byte Sample() => OutputLevel switch
-    {
-        WaveOutputLevel.Mute => 0,
-        WaveOutputLevel.half => (byte)(Samples[0] >> 1),
-        WaveOutputLevel.quarter => (byte)(Samples[0] >> 2),
-        WaveOutputLevel.full => Samples[0],
-        _ => throw new NotSupportedException()
-    };
+    public override byte Sample() => sample;
 
     public byte this[int n]
     {

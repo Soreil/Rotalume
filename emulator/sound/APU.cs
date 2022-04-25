@@ -143,20 +143,16 @@ public class APU
     private WaveChannel Wave { get; set; }
     private NoiseChannel Noise { get; set; }
 
-    public APU(int sampleRate)
+    public APU()
     {
         Tone = new();
         ToneSweep = new();
         Wave = new();
         Noise = new();
-
-        this.sampleRate = sampleRate;
     }
 
-    int sampleRate;
-
     private int FrameSequencerState;
-    public void FrameSequencerClock()
+    public void FrameSequencerClock(object? o, EventArgs e)
     {
         switch (FrameSequencerState)
         {
@@ -222,12 +218,9 @@ public class APU
         }
     }
 
-    private const int FrameSequencerPeriod = baseClock / 512;
     internal void Tick(object? o, EventArgs e)
     {
         if (MasterSoundDisable) return;
-        if (SoundClock % FrameSequencerPeriod == 0)
-            FrameSequencerClock();
 
         if (ToneSweep.IsOn())
         {
@@ -252,10 +245,7 @@ public class APU
         }
         if (Noise.IsOn())
         {
-            if (SoundClock % 8 == 0)
-            {
-                Noise.Clock();
-            }
+            Noise.Clock();
         }
 
         SoundClock++;
@@ -308,42 +298,42 @@ public class APU
 
             return index switch
             {
-                Address.NR10   => ToneSweep.NR10,
-                Address.NR11   => ToneSweep.NR11,
-                Address.NR12   => ToneSweep.NR12,
-                Address.NR13   => ToneSweep.NR13,
-                Address.NR14   => ToneSweep.NR14,
-                               
-                Address.NR21   => Tone.NR21,
-                Address.NR22   => Tone.NR22,
-                Address.NR23   => Tone.NR23,
-                Address.NR24   => Tone.NR24,
-                               
-                Address.NR30   => Wave.NR30,
-                Address.NR31   => Wave.NR31,
-                Address.NR32   => Wave.NR32,
-                Address.NR33   => Wave.NR33,
-                Address.NR34   => Wave.NR34,
-                               
-                Address.NR41   => Noise.NR41,
-                Address.NR42   => Noise.NR42,
-                Address.NR43   => Noise.NR43,
-                Address.NR44   => Noise.NR44,
-                               
-                Address.NR50   => NR50,
-                Address.NR51   => NR51,
-                Address.NR52   => NR52,
-                               
-                Address.Wave0   => Wave[0],
-                Address.Wave1   => Wave[1],
-                Address.Wave2   => Wave[2],
-                Address.Wave3   => Wave[3],
-                Address.Wave4   => Wave[4],
-                Address.Wave5   => Wave[5],
-                Address.Wave6   => Wave[6],
-                Address.Wave7   => Wave[7],
-                Address.Wave8   => Wave[8],
-                Address.Wave9   => Wave[9],
+                Address.NR10 => ToneSweep.NR10,
+                Address.NR11 => ToneSweep.NR11,
+                Address.NR12 => ToneSweep.NR12,
+                Address.NR13 => ToneSweep.NR13,
+                Address.NR14 => ToneSweep.NR14,
+
+                Address.NR21 => Tone.NR21,
+                Address.NR22 => Tone.NR22,
+                Address.NR23 => Tone.NR23,
+                Address.NR24 => Tone.NR24,
+
+                Address.NR30 => Wave.NR30,
+                Address.NR31 => Wave.NR31,
+                Address.NR32 => Wave.NR32,
+                Address.NR33 => Wave.NR33,
+                Address.NR34 => Wave.NR34,
+
+                Address.NR41 => Noise.NR41,
+                Address.NR42 => Noise.NR42,
+                Address.NR43 => Noise.NR43,
+                Address.NR44 => Noise.NR44,
+
+                Address.NR50 => NR50,
+                Address.NR51 => NR51,
+                Address.NR52 => NR52,
+
+                Address.Wave0 => Wave[0],
+                Address.Wave1 => Wave[1],
+                Address.Wave2 => Wave[2],
+                Address.Wave3 => Wave[3],
+                Address.Wave4 => Wave[4],
+                Address.Wave5 => Wave[5],
+                Address.Wave6 => Wave[6],
+                Address.Wave7 => Wave[7],
+                Address.Wave8 => Wave[8],
+                Address.Wave9 => Wave[9],
                 Address.Wave10 => Wave[10],
                 Address.Wave11 => Wave[11],
                 Address.Wave12 => Wave[12],
@@ -362,47 +352,47 @@ public class APU
 
             Action<byte> f = index switch
             {
-               Address.NR10    => x => ToneSweep.NR10 = x,
-               Address.NR11    => x => ToneSweep.NR11 = x,
-               Address.NR12    => x => ToneSweep.NR12 = x,
-               Address.NR13    => x => ToneSweep.NR13 = x,
-               Address.NR14    => x => ToneSweep.NR14 = x,
-                             
-               Address.NR21    => x => Tone.NR21 = x,
-               Address.NR22    => x => Tone.NR22 = x,
-               Address.NR23    => x => Tone.NR23 = x,
-               Address.NR24    => x => Tone.NR24 = x,
-                             
-               Address.NR30    => x => Wave.NR30 = x,
-               Address.NR31    => x => Wave.NR31 = x,
-               Address.NR32    => x => Wave.NR32 = x,
-               Address.NR33    => x => Wave.NR33 = x,
-               Address.NR34    => x => Wave.NR34 = x,
-                             
-               Address.NR41    => x => Noise.NR41 = x,
-               Address.NR42    => x => Noise.NR42 = x,
-               Address.NR43    => x => Noise.NR43 = x,
-               Address.NR44    => x => Noise.NR44 = x,
-                             
-               Address.NR50    => x => NR50 = x,
-               Address.NR51    => x => NR51 = x,
-               Address.NR52    => x => NR52 = x,
-                             
-               Address.Wave0   => x => Wave[0] = x,
-               Address.Wave1   => x => Wave[1] = x,
-               Address.Wave2   => x => Wave[2] = x,
-               Address.Wave3   => x => Wave[3] = x,
-               Address.Wave4   => x => Wave[4] = x,
-               Address.Wave5   => x => Wave[5] = x,
-               Address.Wave6   => x => Wave[6] = x,
-               Address.Wave7   => x => Wave[7] = x,
-               Address.Wave8   => x => Wave[8] = x,
-               Address.Wave9   => x => Wave[9] = x,
-               Address.Wave10  => x => Wave[10] = x,
-               Address.Wave11  => x => Wave[11] = x,
-               Address.Wave12  => x => Wave[12] = x,
-               Address.Wave13  => x => Wave[13] = x,
-               Address.Wave14  => x => Wave[14] = x,
+                Address.NR10 => x => ToneSweep.NR10 = x,
+                Address.NR11 => x => ToneSweep.NR11 = x,
+                Address.NR12 => x => ToneSweep.NR12 = x,
+                Address.NR13 => x => ToneSweep.NR13 = x,
+                Address.NR14 => x => ToneSweep.NR14 = x,
+
+                Address.NR21 => x => Tone.NR21 = x,
+                Address.NR22 => x => Tone.NR22 = x,
+                Address.NR23 => x => Tone.NR23 = x,
+                Address.NR24 => x => Tone.NR24 = x,
+
+                Address.NR30 => x => Wave.NR30 = x,
+                Address.NR31 => x => Wave.NR31 = x,
+                Address.NR32 => x => Wave.NR32 = x,
+                Address.NR33 => x => Wave.NR33 = x,
+                Address.NR34 => x => Wave.NR34 = x,
+
+                Address.NR41 => x => Noise.NR41 = x,
+                Address.NR42 => x => Noise.NR42 = x,
+                Address.NR43 => x => Noise.NR43 = x,
+                Address.NR44 => x => Noise.NR44 = x,
+
+                Address.NR50 => x => NR50 = x,
+                Address.NR51 => x => NR51 = x,
+                Address.NR52 => x => NR52 = x,
+
+                Address.Wave0 => x => Wave[0] = x,
+                Address.Wave1 => x => Wave[1] = x,
+                Address.Wave2 => x => Wave[2] = x,
+                Address.Wave3 => x => Wave[3] = x,
+                Address.Wave4 => x => Wave[4] = x,
+                Address.Wave5 => x => Wave[5] = x,
+                Address.Wave6 => x => Wave[6] = x,
+                Address.Wave7 => x => Wave[7] = x,
+                Address.Wave8 => x => Wave[8] = x,
+                Address.Wave9 => x => Wave[9] = x,
+                Address.Wave10 => x => Wave[10] = x,
+                Address.Wave11 => x => Wave[11] = x,
+                Address.Wave12 => x => Wave[12] = x,
+                Address.Wave13 => x => Wave[13] = x,
+                Address.Wave14 => x => Wave[14] = x,
                 Address.Wave15 => x => Wave[15] = x,
 
                 _ => x => _ = x

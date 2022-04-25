@@ -16,10 +16,21 @@ internal class ToneChannel : Channel
         }
     }
 
+    //https://nightshade256.github.io/2021/03/27/gb-sound-emulation.html
     public void TickVolEnv()
     {
-        if (envelopeVolume is 0 or 15) return;
-        envelopeVolume += EnvelopeIncreasing ? +1 : -1;
+        if (EnvelopeSweepNumber == 0) return;
+        if (envelopeSweepTimer != 0) envelopeSweepTimer--;
+
+        if (envelopeSweepTimer == 0)
+        {
+            //Reload the envelope timer
+            envelopeSweepTimer = EnvelopeSweepNumber;
+
+            if (envelopeVolume < 0xf && EnvelopeIncreasing) envelopeVolume++;
+            if (envelopeVolume > 0x0 && !EnvelopeIncreasing) envelopeVolume--;
+
+        }
     }
 
     int envelopeVolume;
@@ -28,6 +39,15 @@ internal class ToneChannel : Channel
     private bool EnvelopeIncreasing;
     private int EnvelopeSweepNumber;
 
+    private int envelopeSweepTimer;
+    protected override void Trigger()
+    {
+        base.Trigger();
+        //This channel has an envelope
+        envelopeSweepTimer = EnvelopeSweepNumber;
+        envelopeVolume = InitialEnvelopeVolume;
+    }
+
     public byte NR22
     {
         get => (byte)((InitialEnvelopeVolume << 4) | (Convert.ToByte(EnvelopeIncreasing) << 3) | (EnvelopeSweepNumber & 0x07));
@@ -35,7 +55,6 @@ internal class ToneChannel : Channel
         set
         {
             InitialEnvelopeVolume = value >> 4;
-            envelopeVolume = InitialEnvelopeVolume;
             EnvelopeIncreasing = value.GetBit(3);
             EnvelopeSweepNumber = value & 0x7;
         }
@@ -53,7 +72,7 @@ internal class ToneChannel : Channel
         {
             UseLength = value.GetBit(6);
             Frequency = (ushort)((Frequency & 0xF8FF) | ((value & 0x07) << 8));
-            if (value.GetBit(7)) base.Trigger();
+            if (value.GetBit(7)) Trigger();
             else ChannelEnabled = false;
         }
     }
@@ -67,7 +86,7 @@ internal class ToneChannel : Channel
     {
         WavePatternDuty.Eigth => new(new bool[] { false, false, false, false, false, false, false, true }),
         WavePatternDuty.Quarter => new(new bool[] { true, false, false, false, false, false, false, true }),
-        WavePatternDuty.Half => new(new bool[] { false, false, false, false, false, true, true, true }),
+        WavePatternDuty.Half => new(new bool[] { false, false, false, false, true, true, true, true }),
         WavePatternDuty.ThreeFourths => new(new bool[] { false, true, true, true, true, true, true, false }),
         _ => throw new NotSupportedException()
     };

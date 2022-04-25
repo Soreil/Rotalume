@@ -21,13 +21,14 @@ public class Timers
 
     public void Tick(object? o, EventArgs e)
     {
+        var oldInternalCounter = InternalCounter;
         InternalCounter++;
         if (TACEnable)
         {
 
             //Overflowing internalcounter shouldn't be an issue here.
             var overflow = ((InternalCounter) & TACFrequency) == 0;
-            if (overflow && ((InternalCounter - 1) & TACFrequency) != 0)
+            if (overflow && (oldInternalCounter & TACFrequency) != 0)
             {
                 IncrementTIMA();
             }
@@ -40,21 +41,19 @@ public class Timers
             }
         }
 
-        //There are a number of different timers in the APU which derive from
-        //bits in the DIV register rising/falling.
-        //https://github.com/LIJI32/SameBoy/Core/timing.c handles these cases for reference
-        //in GB_set_internal_div_counter.
-        //A rising edge at bit 14,13 is handled here.
-        if ((InternalCounter & 0x7FFF) == 0x4000)
+        //We want to tick when bit 5 of the top part turns to 1
+        var topHalfNew = (byte)(InternalCounter >> 8);
+        var topHalfOld = (byte)(oldInternalCounter >> 8);
+        if (topHalfNew.GetBit(5) && !topHalfOld.GetBit(5))
         {
-            OnAPUTick128Hz();
+            OnAPUTick512z();
         }
 
     }
 
-    private void OnAPUTick128Hz() => APUTick128Hz?.Invoke(this, EventArgs.Empty);
+    private void OnAPUTick512z() => APUTick512Hz?.Invoke(this, EventArgs.Empty);
 
-    public event EventHandler? APUTick128Hz;
+    public event EventHandler? APUTick512Hz;
 
     public event EventHandler? Interrupt;
     private byte DIV

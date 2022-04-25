@@ -4,17 +4,14 @@ public abstract class Channel
 {
     public void TickLength()
     {
-        if (ChannelEnabled == false || !UseLength) return;
+        if (!UseLength || !ChannelEnabled) return;
 
-
-        if (SoundLength <= 0) throw new Exception("Unexpected");
-
-        SoundLength--;
-        if (SoundLength == 0) ChannelEnabled = false;
+        LengthTimer--;
+        if (LengthTimer == 0) ChannelEnabled = false;
     }
 
-    protected int SoundLength { get; set; }
-    protected byte NRx1 { get => 0xff; set => SoundLength = SoundLengthMAX - (value & (SoundLengthMAX - 1)); }
+    protected int LengthTimer { get; set; }
+    protected byte NRx1 { get => 0xff; set => LengthTimer = SoundLengthMAX - (value & (SoundLengthMAX - 1)); }
 
     protected abstract int SoundLengthMAX { get; }
 
@@ -29,7 +26,7 @@ public abstract class Channel
     protected virtual void Trigger()
     {
         ChannelEnabled = true;
-        if (SoundLength == 0) SoundLength = SoundLengthMAX;
+        if (LengthTimer == 0) LengthTimer = SoundLengthMAX;
         //Frequency timer is reloaded with period.
         //Volume envelope timer is reloaded with period.
         //Channel volume is reloaded from NRx2.

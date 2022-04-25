@@ -27,7 +27,7 @@ public class Core : IDisposable
         InterruptRegisters = new InterruptRegisters();
         Keypad.Input.KeyWentDown += InterruptRegisters.TriggerEvent;
 
-        APU = new APU(32768);
+        APU = new APU();
         PPU = new PPU(frameSink);
 
         PPU.VBlankInterrupt += InterruptRegisters.EnableVBlankInterrupt;
@@ -35,6 +35,7 @@ public class Core : IDisposable
 
         Timers = new Timers();
         Timers.Interrupt += InterruptRegisters.EnableTimerInterrupt;
+        Timers.APUTick512Hz += APU.FrameSequencerClock;
 
         var ioRegisters = SetupControlRegisters(Keypad);
 

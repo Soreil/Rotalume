@@ -74,10 +74,10 @@ internal class GraphicalOutputTest
     }
 
 
-    [TestCase(@"C:\Users\sjon\Documents\Pokemon - Gold Version (UE) [C][!].gbc")]
-    [TestCase(@"C:\Users\sjon\Documents\Pokemon Pinball (Europe) (En,Fr,De,Es,It) (SGB Enhanced).gbc")]
+    [TestCase(@"C:\Users\sjon\Documents\Pokemon - Gold Version (UE) [C][!].gbc", 134)]
+    [TestCase(@"C:\Users\sjon\Documents\Pokemon Pinball (Europe) (En,Fr,De,Es,It) (SGB Enhanced).gbc", 20)]
     [Category("RequiresBootROM")]
-    public void SoundFromPokemonGoldIntro(string path)
+    public void SoundFromPokemonGoldIntro(string path, int duration)
     {
         var render = new TestRenderDevice();
 
@@ -94,7 +94,7 @@ internal class GraphicalOutputTest
         var sampleRate = emulator.cpu.Constants.Frequency / 44100.0;
         var sampleCount = 0;
 
-        while (sampleCount < 44100.0 * 30 * 2)
+        while (sampleCount < 44100.0 * duration * 2)
         {
             core.Step();
 
@@ -132,8 +132,7 @@ internal class GraphicalOutputTest
         {
             core.Step();
 
-
-            if (core.masterclock > sampleRate * sampleCount/2)
+            if (core.masterclock > sampleRate * sampleCount / 2)
             {
                 (byte left, byte right) = core.Sample();
                 samples.Add(left);

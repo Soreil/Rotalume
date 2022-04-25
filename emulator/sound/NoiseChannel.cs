@@ -11,16 +11,31 @@ public class NoiseChannel : Channel
         set => NRx1 = value;
     }
 
-    private int envelopeVolume;
+    //https://nightshade256.github.io/2021/03/27/gb-sound-emulation.html
     public void TickVolEnv()
     {
-        if (envelopeVolume is 0 or 15) return;
-        envelopeVolume += EnvelopeIncreasing ? +1 : -1;
+        if (EnvelopeSweepNumber == 0) return;
+        if (envelopeSweepTimer != 0) envelopeSweepTimer--;
+
+        if (envelopeSweepTimer == 0)
+        {
+            //Reload the envelope timer
+            envelopeSweepTimer = EnvelopeSweepNumber;
+
+            if (envelopeVolume < 0xf && EnvelopeIncreasing) envelopeVolume++;
+            if (envelopeVolume > 0x0 && !EnvelopeIncreasing) envelopeVolume--;
+
+        }
     }
+
+    int envelopeVolume;
 
     private int InitialEnvelopeVolume;
     private bool EnvelopeIncreasing;
     private int EnvelopeSweepNumber;
+
+    private int envelopeSweepTimer;
+
     public byte NR42
     {
         get => (byte)((InitialEnvelopeVolume << 4) | (Convert.ToByte(EnvelopeIncreasing) << 3) | (EnvelopeSweepNumber & 0x07));
@@ -28,22 +43,27 @@ public class NoiseChannel : Channel
         set
         {
             InitialEnvelopeVolume = value >> 4;
-            envelopeVolume = InitialEnvelopeVolume;
             EnvelopeIncreasing = value.GetBit(3);
             EnvelopeSweepNumber = value & 0x7;
         }
     }
 
-    private int shiftClockFrequency;
+
+    private int DivisorShiftAmount;
     private bool ShiftRegisterWidth;
-    private int FrequencyDividerRatio;
+    private int BaseDivisorCode;
+
+    private int Divisor;
+    private int FrequencyTimer;
     public byte NR43
     {
-        get => (byte)((shiftClockFrequency << 4) | (Convert.ToByte(ShiftRegisterWidth) << 3) | (FrequencyDividerRatio & 0x07)); set
+        get => (byte)((DivisorShiftAmount << 4) | (Convert.ToByte(ShiftRegisterWidth) << 3) | (BaseDivisorCode & 0x07)); set
         {
-            shiftClockFrequency = value >> 4;
+            DivisorShiftAmount = value >> 4;
             ShiftRegisterWidth = value.GetBit(3);
-            FrequencyDividerRatio = value & 0x7;
+            BaseDivisorCode = value & 0x7;
+            Divisor = GetDiv(BaseDivisorCode);
+            FrequencyTimer = Divisor << DivisorShiftAmount;
         }
     }
 
@@ -66,31 +86,26 @@ public class NoiseChannel : Channel
 
 
     private readonly LFSR ShiftRegister;
-    private int clocks;
 
-    //Clock should be called every 8th tick since this is the minimum divisor of LFSR updates
     public override void Clock()
     {
-        clocks++;
-
-        var divisor = GetDiv(FrequencyDividerRatio);
-
-        if (clocks % (divisor << shiftClockFrequency) == 0)
+        if (FrequencyTimer == 0)
         {
+            FrequencyTimer = GetDiv(BaseDivisorCode) << DivisorShiftAmount;
             ShiftRegister.Step(ShiftRegisterWidth);
         }
     }
 
     private static int GetDiv(int frequencyDividerRatio) => frequencyDividerRatio switch
     {
-        0 => 1,
-        1 => 2,
-        2 => 4,
-        3 => 6,
-        4 => 8,
-        5 => 10,
-        6 => 12,
-        7 => 14,
+        0 => 8,
+        1 => 16,
+        2 => 32,
+        3 => 48,
+        4 => 64,
+        5 => 80,
+        6 => 96,
+        7 => 112,
         _ => throw new Exception("Impossible")
     };
 
@@ -98,6 +113,9 @@ public class NoiseChannel : Channel
     {
         base.Trigger();
         ShiftRegister.ResetBits();
+        //This channel has an envelope
+        envelopeSweepTimer = EnvelopeSweepNumber;
+        envelopeVolume = InitialEnvelopeVolume;
     }
 
     public override byte Sample() => MakeSample();

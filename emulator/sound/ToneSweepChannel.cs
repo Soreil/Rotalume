@@ -5,51 +5,60 @@ namespace emulator.sound;
 internal class ToneSweepChannel : Channel
 {
     private bool sweepEnabled;
-    private ushort frequencyShadowRegister;
+    private ushort shadowFrequency;
     private int sweepTimer;
 
+    //https://nightshade256.github.io/2021/03/27/gb-sound-emulation.html
     public void TickSweep()
     {
-        if (sweepEnabled && sweepTimer != 0)
-        {
-            var newFreq = CalculateSweepFrequency();
+        if (sweepTimer > 0) sweepTimer--;
 
-            //If the new frequency is 2047 or less and the sweep shift is not zero,
-            //this new frequency is written back to the shadow frequency and square 1's frequency in NR13 and NR14
-            if (newFreq <= 2047 && SweepShift != 0)
+
+        if (sweepTimer == 0)
+        {
+            sweepTimer = SweepPeriod == 0 ? 8 : SweepPeriod;
+
+            if (sweepEnabled && SweepPeriod != 0)
             {
-                frequencyShadowRegister = newFreq;
-                Frequency = newFreq;
-                //frequency calculation and overflow check are run AGAIN immediately using this new value,
-                //but this second new frequency is not written back.
-                _ = CalculateSweepFrequency();
+
+                var newFreq = CalculateSweepFrequency();
+
+                //If the new frequency is 2047 or less and the sweep shift is not zero,
+                //this new frequency is written back to the shadow frequency and square 1's frequency in NR13 and NR14
+                if (newFreq < 2048 && SweepShift != 0)
+                {
+                    Frequency = newFreq;
+                    shadowFrequency = newFreq;
+                    //frequency calculation and overflow check are run AGAIN immediately using this new value,
+                    //but this second new frequency is not written back.
+                    _ = CalculateSweepFrequency();
+                }
             }
         }
     }
 
     public void TriggerSweep()
     {
-        frequencyShadowRegister = Frequency;
-        sweepTimer = SweepPeriod;
+        shadowFrequency = Frequency;
+        sweepTimer = SweepPeriod == 0 ? 8 : SweepPeriod;
         sweepEnabled = SweepPeriod != 0 || SweepShift != 0;
 
         //If the sweep shift is non - zero, frequency calculation and the overflow check are performed immediately.
         if (SweepShift != 0)
         {
-            frequencyShadowRegister = CalculateSweepFrequency();
+            _ = CalculateSweepFrequency();
         }
     }
 
     private ushort CalculateSweepFrequency()
     {
-        var tmp = frequencyShadowRegister >> SweepShift;
-        if (!SweepIncreasing) tmp = -tmp;
-        var newFrequency = (ushort)(frequencyShadowRegister + tmp);
+        var newFreq = shadowFrequency >> SweepShift;
+        newFreq = !SweepIncreasing ? shadowFrequency - newFreq : shadowFrequency + newFreq;
 
         //Overflow check
-        if (newFrequency > 2047) ChannelEnabled = false;
+        if (newFreq > 2047) ChannelEnabled = false;
 
-        return newFrequency;
+        return (ushort)newFreq;
     }
 
     private int SweepPeriod;
@@ -58,11 +67,11 @@ internal class ToneSweepChannel : Channel
 
     public byte NR10
     {
-        get => (byte)((SweepPeriod << 4) | (Convert.ToByte(SweepIncreasing) << 3) | (SweepShift & 0x07));
+        get => (byte)(0x80 | (SweepPeriod << 4) | (Convert.ToByte(SweepIncreasing) << 3) | SweepShift);
 
         set
         {
-            SweepPeriod = value >> 4;
+            SweepPeriod = (value >> 4) & 0x7;
             SweepIncreasing = value.GetBit(3);
             SweepShift = value & 0x7;
         }
@@ -81,10 +90,21 @@ internal class ToneSweepChannel : Channel
         }
     }
 
+    //https://nightshade256.github.io/2021/03/27/gb-sound-emulation.html
     public void TickVolEnv()
     {
-        if (envelopeVolume is 0 or 15) return;
-        envelopeVolume += EnvelopeIncreasing ? +1 : -1;
+        if (EnvelopeSweepNumber == 0) return;
+        if (envelopeSweepTimer != 0) envelopeSweepTimer--;
+
+        if (envelopeSweepTimer == 0)
+        {
+            //Reload the envelope timer
+            envelopeSweepTimer = EnvelopeSweepNumber;
+
+            if (envelopeVolume < 0xf && EnvelopeIncreasing) envelopeVolume++;
+            if (envelopeVolume > 0x0 && !EnvelopeIncreasing) envelopeVolume--;
+
+        }
     }
 
     int envelopeVolume;
@@ -93,6 +113,8 @@ internal class ToneSweepChannel : Channel
     private bool EnvelopeIncreasing;
     private int EnvelopeSweepNumber;
 
+    private int envelopeSweepTimer;
+
     public byte NR12
     {
         get => (byte)((InitialEnvelopeVolume << 4) | (Convert.ToByte(EnvelopeIncreasing) << 3) | (EnvelopeSweepNumber & 0x07));
@@ -100,7 +122,6 @@ internal class ToneSweepChannel : Channel
         set
         {
             InitialEnvelopeVolume = value >> 4;
-            envelopeVolume = InitialEnvelopeVolume;
             EnvelopeIncreasing = value.GetBit(3);
             EnvelopeSweepNumber = value & 0x7;
         }
@@ -130,6 +151,9 @@ internal class ToneSweepChannel : Channel
         base.Trigger();
         //Square 1's sweep does several things (see frequency sweep).
         TriggerSweep();
+        //This channel has an envelope
+        envelopeSweepTimer = EnvelopeSweepNumber;
+        envelopeVolume = InitialEnvelopeVolume;
     }
 
     protected override int SoundLengthMAX => 64;
@@ -141,7 +165,7 @@ internal class ToneSweepChannel : Channel
     {
         WavePatternDuty.Eigth => new(new bool[] { false, false, false, false, false, false, false, true }),
         WavePatternDuty.Quarter => new(new bool[] { true, false, false, false, false, false, false, true }),
-        WavePatternDuty.Half => new(new bool[] { false, false, false, false, false, true, true, true }),
+        WavePatternDuty.Half => new(new bool[] { false, false, false, false, true, true, true, true }),
         WavePatternDuty.ThreeFourths => new(new bool[] { false, true, true, true, true, true, true, false }),
         _ => throw new NotSupportedException()
     };
