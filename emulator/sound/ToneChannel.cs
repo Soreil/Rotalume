@@ -35,6 +35,7 @@ internal class ToneChannel : Channel
         set
         {
             InitialEnvelopeVolume = value >> 4;
+            envelopeVolume = InitialEnvelopeVolume;
             EnvelopeIncreasing = value.GetBit(3);
             EnvelopeSweepNumber = value & 0x7;
         }

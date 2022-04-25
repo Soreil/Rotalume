@@ -93,7 +93,19 @@ internal class WaveChannel : Channel
 
     public byte this[int n]
     {
-        get => (byte)(table[n * 2] << 4 | table[n * 2 + 1]);
+        get
+        {
+            if (ChannelEnabled)
+            {
+                var isOdd = PositionCounter % 2 == 1;
+                var topHalf = isOdd ? table[(PositionCounter / 2) + 1] : table[PositionCounter / 2];
+                var bottomHalf = isOdd ? table[PositionCounter / 2] : table[(PositionCounter / 2) + 1];
+
+                return (byte)((topHalf << 4) | bottomHalf);
+            }
+            //if (ChannelEnabled) return 0xff;
+            else return (byte)(table[n * 2] << 4 | table[n * 2 + 1]);
+        }
         set
         {
             table[n * 2] = (byte)(value >> 4);
