@@ -304,7 +304,7 @@ public class APU
     {
         get
         {
-            if (MasterSoundDisable && index != 0xff52) return 0xff;
+            if (MasterSoundDisable && index != 0xff26) return 0xff;
 
             return index switch
             {
@@ -358,7 +358,7 @@ public class APU
         set
         {
             //Todo, allow setting of length values on DMG0 (system we are targeting)
-            if (MasterSoundDisable && index != 0xff52) return;
+            if (MasterSoundDisable && index != 0xff26) return;
 
             Action<byte> f = index switch
             {
