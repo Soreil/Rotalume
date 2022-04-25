@@ -300,56 +300,56 @@ public class APU
         return (volumeLeft, volumeRight);
     }
 
-    public byte this[int index]
+    public byte this[Address index]
     {
         get
         {
-            if (MasterSoundDisable && index != 0xff26) return 0xff;
+            if (MasterSoundDisable && index != Address.NR52) return 0xff;
 
             return index switch
             {
-                0xff10 => ToneSweep.NR10,
-                0xff11 => ToneSweep.NR11,
-                0xff12 => ToneSweep.NR12,
-                0xff13 => ToneSweep.NR13,
-                0xff14 => ToneSweep.NR14,
-
-                0xff16 => Tone.NR21,
-                0xff17 => Tone.NR22,
-                0xff18 => Tone.NR23,
-                0xff19 => Tone.NR24,
-
-                0xff1a => Wave.NR30,
-                0xff1b => Wave.NR31,
-                0xff1c => Wave.NR32,
-                0xff1d => Wave.NR33,
-                0xff1e => Wave.NR34,
-
-                0xff20 => Noise.NR41,
-                0xff21 => Noise.NR42,
-                0xff22 => Noise.NR43,
-                0xff23 => Noise.NR44,
-
-                0xff24 => NR50,
-                0xff25 => NR51,
-                0xff26 => NR52,
-
-                0xff30 => Wave[0],
-                0xff31 => Wave[1],
-                0xff32 => Wave[2],
-                0xff33 => Wave[3],
-                0xff34 => Wave[4],
-                0xff35 => Wave[5],
-                0xff36 => Wave[6],
-                0xff37 => Wave[7],
-                0xff38 => Wave[8],
-                0xff39 => Wave[9],
-                0xff3a => Wave[10],
-                0xff3b => Wave[11],
-                0xff3c => Wave[12],
-                0xff3d => Wave[13],
-                0xff3e => Wave[14],
-                0xff3f => Wave[15],
+                Address.NR10   => ToneSweep.NR10,
+                Address.NR11   => ToneSweep.NR11,
+                Address.NR12   => ToneSweep.NR12,
+                Address.NR13   => ToneSweep.NR13,
+                Address.NR14   => ToneSweep.NR14,
+                               
+                Address.NR21   => Tone.NR21,
+                Address.NR22   => Tone.NR22,
+                Address.NR23   => Tone.NR23,
+                Address.NR24   => Tone.NR24,
+                               
+                Address.NR30   => Wave.NR30,
+                Address.NR31   => Wave.NR31,
+                Address.NR32   => Wave.NR32,
+                Address.NR33   => Wave.NR33,
+                Address.NR34   => Wave.NR34,
+                               
+                Address.NR41   => Noise.NR41,
+                Address.NR42   => Noise.NR42,
+                Address.NR43   => Noise.NR43,
+                Address.NR44   => Noise.NR44,
+                               
+                Address.NR50   => NR50,
+                Address.NR51   => NR51,
+                Address.NR52   => NR52,
+                               
+                Address.Wave0   => Wave[0],
+                Address.Wave1   => Wave[1],
+                Address.Wave2   => Wave[2],
+                Address.Wave3   => Wave[3],
+                Address.Wave4   => Wave[4],
+                Address.Wave5   => Wave[5],
+                Address.Wave6   => Wave[6],
+                Address.Wave7   => Wave[7],
+                Address.Wave8   => Wave[8],
+                Address.Wave9   => Wave[9],
+                Address.Wave10 => Wave[10],
+                Address.Wave11 => Wave[11],
+                Address.Wave12 => Wave[12],
+                Address.Wave13 => Wave[13],
+                Address.Wave14 => Wave[14],
+                Address.Wave15 => Wave[15],
 
                 _ => 0xff
             };
@@ -358,52 +358,52 @@ public class APU
         set
         {
             //Todo, allow setting of length values on DMG0 (system we are targeting)
-            if (MasterSoundDisable && index != 0xff26) return;
+            if (MasterSoundDisable && index != Address.NR52) return;
 
             Action<byte> f = index switch
             {
-                0xff10 => x => ToneSweep.NR10 = x,
-                0xff11 => x => ToneSweep.NR11 = x,
-                0xff12 => x => ToneSweep.NR12 = x,
-                0xff13 => x => ToneSweep.NR13 = x,
-                0xff14 => x => ToneSweep.NR14 = x,
-
-                0xff16 => x => Tone.NR21 = x,
-                0xff17 => x => Tone.NR22 = x,
-                0xff18 => x => Tone.NR23 = x,
-                0xff19 => x => Tone.NR24 = x,
-
-                0xff1a => x => Wave.NR30 = x,
-                0xff1b => x => Wave.NR31 = x,
-                0xff1c => x => Wave.NR32 = x,
-                0xff1d => x => Wave.NR33 = x,
-                0xff1e => x => Wave.NR34 = x,
-
-                0xff20 => x => Noise.NR41 = x,
-                0xff21 => x => Noise.NR42 = x,
-                0xff22 => x => Noise.NR43 = x,
-                0xff23 => x => Noise.NR44 = x,
-
-                0xff24 => x => NR50 = x,
-                0xff25 => x => NR51 = x,
-                0xff26 => x => NR52 = x,
-
-                0xff30 => x => Wave[0] = x,
-                0xff31 => x => Wave[1] = x,
-                0xff32 => x => Wave[2] = x,
-                0xff33 => x => Wave[3] = x,
-                0xff34 => x => Wave[4] = x,
-                0xff35 => x => Wave[5] = x,
-                0xff36 => x => Wave[6] = x,
-                0xff37 => x => Wave[7] = x,
-                0xff38 => x => Wave[8] = x,
-                0xff39 => x => Wave[9] = x,
-                0xff3a => x => Wave[10] = x,
-                0xff3b => x => Wave[11] = x,
-                0xff3c => x => Wave[12] = x,
-                0xff3d => x => Wave[13] = x,
-                0xff3e => x => Wave[14] = x,
-                0xff3f => x => Wave[15] = x,
+               Address.NR10    => x => ToneSweep.NR10 = x,
+               Address.NR11    => x => ToneSweep.NR11 = x,
+               Address.NR12    => x => ToneSweep.NR12 = x,
+               Address.NR13    => x => ToneSweep.NR13 = x,
+               Address.NR14    => x => ToneSweep.NR14 = x,
+                             
+               Address.NR21    => x => Tone.NR21 = x,
+               Address.NR22    => x => Tone.NR22 = x,
+               Address.NR23    => x => Tone.NR23 = x,
+               Address.NR24    => x => Tone.NR24 = x,
+                             
+               Address.NR30    => x => Wave.NR30 = x,
+               Address.NR31    => x => Wave.NR31 = x,
+               Address.NR32    => x => Wave.NR32 = x,
+               Address.NR33    => x => Wave.NR33 = x,
+               Address.NR34    => x => Wave.NR34 = x,
+                             
+               Address.NR41    => x => Noise.NR41 = x,
+               Address.NR42    => x => Noise.NR42 = x,
+               Address.NR43    => x => Noise.NR43 = x,
+               Address.NR44    => x => Noise.NR44 = x,
+                             
+               Address.NR50    => x => NR50 = x,
+               Address.NR51    => x => NR51 = x,
+               Address.NR52    => x => NR52 = x,
+                             
+               Address.Wave0   => x => Wave[0] = x,
+               Address.Wave1   => x => Wave[1] = x,
+               Address.Wave2   => x => Wave[2] = x,
+               Address.Wave3   => x => Wave[3] = x,
+               Address.Wave4   => x => Wave[4] = x,
+               Address.Wave5   => x => Wave[5] = x,
+               Address.Wave6   => x => Wave[6] = x,
+               Address.Wave7   => x => Wave[7] = x,
+               Address.Wave8   => x => Wave[8] = x,
+               Address.Wave9   => x => Wave[9] = x,
+               Address.Wave10  => x => Wave[10] = x,
+               Address.Wave11  => x => Wave[11] = x,
+               Address.Wave12  => x => Wave[12] = x,
+               Address.Wave13  => x => Wave[13] = x,
+               Address.Wave14  => x => Wave[14] = x,
+                Address.Wave15 => x => Wave[15] = x,
 
                 _ => x => _ = x
             };

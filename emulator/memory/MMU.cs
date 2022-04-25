@@ -27,7 +27,7 @@ public sealed class MMU : IDisposable
                     >= 0xfe00 and < 0xfea0 => OAM.Locked ? (byte)0xff : OAM[at],
                     >= 0xfea0 and < 0xff00 => UnusableMEM[at],//This should be illegal?
                     >= 0xff00 and < 0xff10 => IORegisters[at].Read(),
-                    >= 0xff10 and < 0xff27 => APU[at],
+                    >= 0xff10 and < 0xff27 => APU[(sound.Address)at],
                     >= 0xff27 and < 0xff80 => IORegisters[at].Read(),
                     >= 0xff80 and < 0xffff => HRAM[at],
                     0xffff => InterruptEnable.Read(),
@@ -71,7 +71,7 @@ public sealed class MMU : IDisposable
                 IORegisters[at].Write(value);
                 break;
                 case >= 0xff10 and < 0xff27:
-                APU[at] = value;
+                APU[(sound.Address)at] = value;
                 break;
                 case >= 0xff27 and < 0xff80:
                 IORegisters[at].Write(value);
