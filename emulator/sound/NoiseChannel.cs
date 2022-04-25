@@ -5,11 +5,10 @@ namespace emulator.sound;
 
 public class NoiseChannel : Channel
 {
-    protected override int SoundLength { get; set; }
     public byte NR41
     {
-        get => 0xff;
-        set => SoundLength = value & 0x3f;
+        get => NRx1;
+        set => NRx1 = value;
     }
 
     private int envelopeVolume;

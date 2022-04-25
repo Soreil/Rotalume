@@ -11,8 +11,11 @@ internal class WaveChannel : Channel
         set => ChannelOff = value.GetBit(7);
     }
 
-    protected override int SoundLength { get; set; }
-    public byte NR31 { get => 0xff; set => SoundLength = value; }
+    public byte NR31
+    {
+        get => NRx1;
+        set => NRx1 = value;
+    }
 
     private WaveOutputLevel OutputLevel;
     public byte NR32

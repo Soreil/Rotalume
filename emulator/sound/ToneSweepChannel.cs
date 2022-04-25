@@ -69,7 +69,6 @@ internal class ToneSweepChannel : Channel
     }
 
     private WavePatternDuty wavePatternDuty;
-    protected override int SoundLength { get; set; }
 
     public byte NR11
     {
@@ -78,7 +77,7 @@ internal class ToneSweepChannel : Channel
         set
         {
             wavePatternDuty = (WavePatternDuty)(value >> 6);
-            SoundLength = value & 0x3f;
+            NRx1 = value;
         }
     }
 

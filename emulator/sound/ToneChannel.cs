@@ -12,7 +12,7 @@ internal class ToneChannel : Channel
         set
         {
             wavePatternDuty = (WavePatternDuty)(value >> 6);
-            SoundLength = value & 0x3f;
+            NRx1 = value;
         }
     }
 
@@ -59,7 +59,6 @@ internal class ToneChannel : Channel
 
     protected override int SoundLengthMAX => 64;
 
-    protected override int SoundLength { get; set; }
 
     private int WaveFormIndex;
 

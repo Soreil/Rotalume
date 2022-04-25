@@ -8,11 +8,14 @@ public abstract class Channel
 
 
         if (SoundLength <= 0) throw new Exception("Unexpected");
+
         SoundLength--;
         if (SoundLength == 0) ChannelEnabled = false;
     }
 
-    protected abstract int SoundLength { get; set; }
+    protected int SoundLength { get; set; }
+    protected byte NRx1 { get => 0xff; set => SoundLength = SoundLengthMAX - (value & (SoundLengthMAX - 1)); }
+
     protected abstract int SoundLengthMAX { get; }
 
     public bool IsOn() => ChannelEnabled;
