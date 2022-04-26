@@ -82,10 +82,10 @@ public class APU
     {
         get
         {
-            byte channels = (byte)((Convert.ToByte(ToneSweep.IsOn()) << 3) |
-                            (Convert.ToByte(Tone.IsOn()) << 2) |
-                            (Convert.ToByte(Wave.IsOn()) << 1) |
-                            (Convert.ToByte(Noise.IsOn()) << 0));
+            byte channels = (byte)((Convert.ToByte(Noise.IsOn()) << 3) |
+                            (Convert.ToByte(Wave.IsOn()) << 2) |
+                            (Convert.ToByte(Tone.IsOn()) << 1) |
+                            (Convert.ToByte(ToneSweep.IsOn()) << 0));
 
             return (byte)(0x70 | channels | (Convert.ToByte(MasterSoundDisable) << 7));
         }
@@ -131,9 +131,6 @@ public class APU
         if (MasterSoundDisable == false) return;
         MasterSoundDisable = false;
     }
-
-    //We should have this available as a namespace wide thing somehow
-    private const int baseClock = cpu.Constants.Frequency;
 
     private int SoundClock;
     private bool MasterSoundDisable;
