@@ -248,41 +248,49 @@ public class APU
         SoundClock++;
     }
 
-    public (byte left, byte right) Sample()
+    public (short left, short right) Sample()
     {
-        byte volumeLeft = 0;
-        byte volumeRight = 0;
+        short volumeLeft = 0;
+        short volumeRight = 0;
         if (ToneSweep.IsOn())
         {
-            if (Sound1LeftOn) volumeLeft += ToneSweep.Sample();
-            if (Sound1RightOn) volumeRight += ToneSweep.Sample();
+            var sample = (short)(ToneSweep.Sample() - 8);
+            if (Sound1LeftOn) volumeLeft += sample;
+            if (Sound1RightOn) volumeRight += sample;
         }
         if (Tone.IsOn())
         {
-            if (Sound2LeftOn) volumeLeft += Tone.Sample();
-            if (Sound2RightOn) volumeRight += Tone.Sample();
+            var sample = (short)(Tone.Sample() - 8);
+            if (Sound2LeftOn) volumeLeft += sample;
+            if (Sound2RightOn) volumeRight += sample;
         }
         if (Wave.IsOn())
         {
-            if (Sound3LeftOn) volumeLeft += Wave.Sample();
-            if (Sound3RightOn) volumeRight += Wave.Sample();
+            var sample = (short)(Wave.Sample() - 8);
+            if (Sound3LeftOn) volumeLeft += sample;
+            if (Sound3RightOn) volumeRight += sample;
         }
 
         if (Noise.IsOn())
         {
-            if (Sound4LeftOn) volumeLeft += Noise.Sample();
-            if (Sound4RightOn) volumeRight += Noise.Sample();
+            var sample = (short)(Noise.Sample() - 8);
+            if (Sound4LeftOn) volumeLeft += sample;
+            if (Sound4RightOn) volumeRight += sample;
         }
 
         if (OutputToLeftTerminal)
         {
-            volumeLeft *= (byte)(OutputVolumeLeft + 1);
+            volumeLeft *= (short)(OutputVolumeLeft + 1);
         }
 
         if (OutputToRightTerminal)
         {
-            volumeRight *= (byte)(OutputVolumeRight + 1);
+            volumeRight *= (short)(OutputVolumeRight + 1);
         }
+
+        //map to 16 bit space
+        volumeLeft *= 128;
+        volumeRight *= 128;
 
         return (volumeLeft, volumeRight);
     }
@@ -291,7 +299,14 @@ public class APU
     {
         get
         {
-            if (MasterSoundDisable && index != Address.NR52) return 0xff;
+            //Length registers are accesible during power off on the dmg
+            //if (MasterSoundDisable &&
+            //    index is not Address.NR52
+            //              or Address.NR11
+            //              or Address.NR21
+            //              or Address.NR31
+            //              or Address.NR41)
+            //    return 0xff;
 
             return index switch
             {
@@ -344,8 +359,9 @@ public class APU
 
         set
         {
-            //Todo, allow setting of length values on DMG0 (system we are targeting)
-            if (MasterSoundDisable && index != Address.NR52) return;
+            //We want to allow writes to the length counters
+            //As well as the wave table, even when the APU is off
+            if (MasterSoundDisable && UnwriteableDuringPowerOff(index)) return;
 
             Action<byte> f = index switch
             {
@@ -397,4 +413,27 @@ public class APU
             f(value);
         }
     }
+
+    private static bool UnwriteableDuringPowerOff(Address index) => index is
+                             (not Address.NR52
+                              or Address.NR11
+                              or Address.NR21
+                              or Address.NR31
+                              or Address.NR41
+                              or Address.Wave0
+                              or Address.Wave1
+                              or Address.Wave2
+                              or Address.Wave3
+                              or Address.Wave4
+                              or Address.Wave5
+                              or Address.Wave6
+                              or Address.Wave7
+                              or Address.Wave8
+                              or Address.Wave9
+                              or Address.Wave10
+                              or Address.Wave11
+                              or Address.Wave12
+                              or Address.Wave13
+                              or Address.Wave14
+                              or Address.Wave15);
 }

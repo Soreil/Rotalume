@@ -74,7 +74,7 @@ internal class GraphicalOutputTest
     }
 
 
-    [TestCase(@"C:\Users\sjon\Documents\Pokemon - Gold Version (UE) [C][!].gbc", 134)]
+    [TestCase(@"C:\Users\sjon\Documents\Pokemon - Gold Version (UE) [C][!].gbc", 40)]
     [TestCase(@"C:\Users\sjon\Documents\Pokemon Pinball (Europe) (En,Fr,De,Es,It) (SGB Enhanced).gbc", 20)]
     [Category("RequiresBootROM")]
     public void SoundFromPokemonGoldIntro(string path, int duration)
@@ -90,7 +90,7 @@ internal class GraphicalOutputTest
         int FramesDrawn = 0;
         render.FramePushed += (sender, e) => FramesDrawn++;
 
-        List<byte> samples = new();
+        List<short> samples = new();
         var sampleRate = emulator.cpu.Constants.Frequency / 44100.0;
         var sampleCount = 0;
 
@@ -100,18 +100,19 @@ internal class GraphicalOutputTest
 
             if (core.masterclock > sampleRate * sampleCount / 2)
             {
-                (byte left, byte right) = core.Sample();
+                (short left, short right) = core.Sample();
                 samples.Add(left);
                 samples.Add(right);
                 sampleCount += 2;
             }
         }
 
-        var wav = new WAV.WAVFile(samples.ToArray(), 2, 44100, 8);
+        var span = new ReadOnlySpan<short>(samples.ToArray());
+        var wav = new WAV.WAVFile<short>(span, 2, 44100, 16);
 
         using var file = File.Open(fn + ".wav", FileMode.Create, FileAccess.Write);
         using var writer = new BinaryWriter(file);
-        wav.Write(writer);
+        wav.Write(writer, span);
     }
 
     [Test]
@@ -125,7 +126,7 @@ internal class GraphicalOutputTest
         int FramesDrawn = 0;
         render.FramePushed += (sender, e) => FramesDrawn++;
 
-        List<byte> samples = new();
+        List<short> samples = new();
         var sampleRate = emulator.cpu.Constants.Frequency / 44100.0;
         var sampleCount = 0;
         while (core.CPU.PC != 0x100)
@@ -134,7 +135,7 @@ internal class GraphicalOutputTest
 
             if (core.masterclock > sampleRate * sampleCount / 2)
             {
-                (byte left, byte right) = core.Sample();
+                (short left, short right) = core.Sample();
                 samples.Add(left);
                 samples.Add(right);
                 sampleCount += 2;
@@ -146,10 +147,12 @@ internal class GraphicalOutputTest
 
         Assert.NotZero(SamplesWithSound);
 
-        var wav = new WAV.WAVFile(samples.ToArray(), 2, 44100, 8);
+        var span = new ReadOnlySpan<short>(samples.ToArray());
+        var wav = new WAV.WAVFile<short>(span, 2, 44100, 16);
 
         using var file = File.Open("bootromSound.wav", FileMode.Create, FileAccess.Write);
         using var writer = new BinaryWriter(file);
-        wav.Write(writer);
+        wav.Write(writer, span);
+
     }
 }

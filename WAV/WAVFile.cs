@@ -1,6 +1,8 @@
-﻿namespace WAV;
+﻿using System.Runtime.InteropServices;
 
-public class WAVFile
+namespace WAV;
+
+public class WAVFile<T> where T : unmanaged
 {
     private readonly byte[] RiffTag = new byte[] { (byte)'R', (byte)'I', (byte)'F', (byte)'F' };
     private readonly byte[] WaveTag = new byte[] { (byte)'W', (byte)'A', (byte)'V', (byte)'E' };
@@ -12,11 +14,10 @@ public class WAVFile
     private readonly ushort ChannelCount;
     private readonly int SampleRate;
     private readonly ushort BitsPerSample;
-    private readonly byte[] Data;
 
-    private int SubChunk2Size;
+    private readonly int SubChunk2Size;
 
-    public WAVFile(byte[] data, ushort channelCount, int sampleRate, ushort bitsPerSample)
+    public WAVFile(ReadOnlySpan<T> data, ushort channelCount, int sampleRate, ushort bitsPerSample)
     {
         Format = FormatType.PCM;
         FormatDatalength = 16;
@@ -25,10 +26,12 @@ public class WAVFile
         SampleRate = sampleRate;
         BitsPerSample = bitsPerSample;
 
-        SubChunk2Size = data.Length;
-
-        Data = data;
+        unsafe
+        {
+            SubChunk2Size = data.Length * sizeof(T);
+        }
     }
+
 
     private byte[] SerializeHeader()
     {
@@ -51,10 +54,13 @@ public class WAVFile
         return bytes.ToArray();
     }
 
-    public void Write(BinaryWriter writer)
+    public void Write(BinaryWriter writer, ReadOnlySpan<T> data)
     {
         var header = SerializeHeader();
         writer.Write(header);
-        writer.Write(Data);
+        var bytes = ToBytes(data);
+        writer.Write(bytes);
     }
+
+    public static ReadOnlySpan<byte> ToBytes(ReadOnlySpan<T> span) => MemoryMarshal.Cast<T, byte>(span);
 }
