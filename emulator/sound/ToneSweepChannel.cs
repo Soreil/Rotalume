@@ -141,7 +141,7 @@ internal class ToneSweepChannel : Channel
             UseLength = value.GetBit(6);
             Frequency = (ushort)((Frequency & 0xF8FF) | ((value & 0x07) << 8));
 
-            if (value.GetBit(7)) base.Trigger();
+            if (value.GetBit(7)) Trigger();
             else ChannelEnabled = false;
         }
     }

@@ -110,21 +110,25 @@ ioRegisters,
         CPU.Cycle += PPU.Tick;
         CPU.Cycle += APU.Tick;
         CPU.Cycle += DMA;
+        CPU.Cycle += (o, e) => masterclock++;
 
         CPU.Cycle += Timers.Tick;
         CPU.Cycle += PPU.Tick;
         CPU.Cycle += APU.Tick;
         CPU.Cycle += DMA;
+        CPU.Cycle += (o, e) => masterclock++;
 
         CPU.Cycle += Timers.Tick;
         CPU.Cycle += PPU.Tick;
         CPU.Cycle += APU.Tick;
         CPU.Cycle += DMA;
+        CPU.Cycle += (o, e) => masterclock++;
 
         CPU.Cycle += Timers.Tick;
         CPU.Cycle += PPU.Tick;
         CPU.Cycle += APU.Tick;
         CPU.Cycle += DMA;
+        CPU.Cycle += (o, e) => masterclock++;
     }
 
     private void DMA(object? o, EventArgs e)
@@ -208,11 +212,7 @@ ioRegisters,
         return controlRegisters;
     }
 
-    public void Step()
-    {
-        masterclock += 4;
-        CPU.Step();
-    }
+    public void Step() => CPU.Step();
 
     public (short left, short right) Sample() => APU.Sample();
 

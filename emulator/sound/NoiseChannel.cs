@@ -57,7 +57,9 @@ public class NoiseChannel : Channel
     private int FrequencyTimer;
     public byte NR43
     {
-        get => (byte)((DivisorShiftAmount << 4) | (Convert.ToByte(ShiftRegisterWidth) << 3) | (BaseDivisorCode & 0x07)); set
+        get => (byte)((DivisorShiftAmount << 4) | (Convert.ToByte(ShiftRegisterWidth) << 3) | (BaseDivisorCode & 0x07));
+
+        set
         {
             DivisorShiftAmount = value >> 4;
             ShiftRegisterWidth = value.GetBit(3);
@@ -94,6 +96,7 @@ public class NoiseChannel : Channel
             FrequencyTimer = GetDiv(BaseDivisorCode) << DivisorShiftAmount;
             ShiftRegister.Step(ShiftRegisterWidth);
         }
+        FrequencyTimer--;
     }
 
     private static int GetDiv(int frequencyDividerRatio) => frequencyDividerRatio switch
