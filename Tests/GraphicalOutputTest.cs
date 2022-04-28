@@ -74,7 +74,7 @@ internal class GraphicalOutputTest
     }
 
 
-    [TestCase(@"C:\Users\sjon\Documents\Pokemon - Gold Version (UE) [C][!].gbc", 40)]
+    [TestCase(@"C:\Users\sjon\Documents\Pokemon - Gold Version (UE) [C][!].gbc", 134)]
     [TestCase(@"C:\Users\sjon\Documents\Pokemon Pinball (Europe) (En,Fr,De,Es,It) (SGB Enhanced).gbc", 20)]
     [TestCase(@"C:\Users\sjon\Documents\Kirby's Dream Land (USA, Europe).gb", 40)]
     [Category("RequiresBootROM")]

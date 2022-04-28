@@ -26,7 +26,7 @@ internal class WaveChannel : Channel
 
     public ushort Frequency { get; private set; }
 
-    public byte NR33 { get => 0xff; set => Frequency = (ushort)((Frequency & 0xFFF0) | value); }
+    public byte NR33 { get => 0xff; set => Frequency = (ushort)((Frequency & 0xFF00) | value); }
 
     protected override bool UseLength { get; set; }
     public byte NR34
