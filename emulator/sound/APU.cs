@@ -4,25 +4,28 @@ public class APU
 {
     internal void SetStateWithoutBootrom()
     {
+        MasterSoundDisable = false;
+
         ToneSweep.NR10 = 0x80;
-        ToneSweep.NR11 = 0xB0;
+        ToneSweep.NR11 = 0x80;
         ToneSweep.NR12 = 0xf3;
+        ToneSweep.NR13 = 0xc1;
         ToneSweep.NR14 = 0xbf;
-        Tone.NR21 = 0x3f;
+        Tone.NR21 = 0x00;
         Tone.NR22 = 0x00;
-        Tone.NR23 = 0xff;
-        Tone.NR24 = 0xbf;
+        Tone.NR23 = 0x00;
+        Tone.NR24 = 0xb8;
         Wave.NR30 = 0x7f;
-        Wave.NR31 = 0xff;
+        Wave.NR31 = 0x00;
         Wave.NR32 = 0x9f;
-        Wave.NR33 = 0xff;
-        Wave.NR34 = 0xbf;
+        Wave.NR33 = 0x00;
+        Wave.NR34 = 0xb8;
+        Noise.NR41 = 0xc0;
         Noise.NR42 = 0x00;
         Noise.NR43 = 0x00;
         Noise.NR44 = 0xbf;
         NR50 = 0x77;
         NR51 = 0xf3;
-        NR52 = 0xf1;
     }
 
     private bool OutputToLeftTerminal;
@@ -77,7 +80,6 @@ public class APU
         }
     }
 
-
     private byte NR52
     {
         get
@@ -99,23 +101,23 @@ public class APU
     private void TurnOff()
     {
         ToneSweep.NR10 = 0;
-        ToneSweep.NR11 = 0;
+        //ToneSweep.NR11 = 0;
         ToneSweep.NR12 = 0;
         ToneSweep.NR13 = 0;
         ToneSweep.NR14 = 0;
 
-        Tone.NR21 = 0;
+        //Tone.NR21 = 0;
         Tone.NR22 = 0;
         Tone.NR23 = 0;
         Tone.NR24 = 0;
 
         Wave.NR30 = 0;
-        Wave.NR31 = 0;
+        //Wave.NR31 = 0;
         Wave.NR32 = 0;
         Wave.NR33 = 0;
         Wave.NR34 = 0;
 
-        Noise.NR41 = 0;
+        //Noise.NR41 = 0;
         Noise.NR42 = 0;
         Noise.NR43 = 0;
         Noise.NR44 = 0;
@@ -252,28 +254,28 @@ public class APU
     {
         short volumeLeft = 0;
         short volumeRight = 0;
+
         if (ToneSweep.IsOn())
         {
-            var sample = (short)(ToneSweep.Sample() - 8);
+            var sample = ToneSweep.DACOn() ? (short)(ToneSweep.Sample() - 8) : (short)0;
             if (Sound1LeftOn) volumeLeft += sample;
             if (Sound1RightOn) volumeRight += sample;
         }
         if (Tone.IsOn())
         {
-            var sample = (short)(Tone.Sample() - 8);
+            var sample = Tone.DACOn() ? (short)(Tone.Sample() - 8) : (short)0;
             if (Sound2LeftOn) volumeLeft += sample;
             if (Sound2RightOn) volumeRight += sample;
         }
         if (Wave.IsOn())
         {
-            var sample = (short)(Wave.Sample() - 8);
+            var sample = Wave.DACOn() ? (short)(Wave.Sample() - 8) : (short)0;
             if (Sound3LeftOn) volumeLeft += sample;
             if (Sound3RightOn) volumeRight += sample;
         }
-
         if (Noise.IsOn())
         {
-            var sample = (short)(Noise.Sample() - 8);
+            var sample = Noise.DACOn() ? (short)(Noise.Sample() - 8) : (short)0;
             if (Sound4LeftOn) volumeLeft += sample;
             if (Sound4RightOn) volumeRight += sample;
         }
@@ -282,7 +284,6 @@ public class APU
         {
             volumeLeft *= (short)(OutputVolumeLeft + 1);
         }
-
         if (OutputToRightTerminal)
         {
             volumeRight *= (short)(OutputVolumeRight + 1);

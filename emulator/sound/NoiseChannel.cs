@@ -69,8 +69,6 @@ public class NoiseChannel : Channel
         }
     }
 
-    protected override bool UseLength { get; set; }
-
     public byte NR44
     {
         get => (byte)((Convert.ToByte(UseLength) << 6) | 0xbf);
@@ -128,6 +126,8 @@ public class NoiseChannel : Channel
         var start = Convert.ToByte(ShiftRegister.Output());
         return (byte)(start * envelopeVolume);
     }
+
+    public override bool DACOn() => (NR42 >> 3) != 0;
 
     public NoiseChannel() => ShiftRegister = new();
 }

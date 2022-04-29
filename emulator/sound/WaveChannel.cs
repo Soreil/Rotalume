@@ -28,10 +28,9 @@ internal class WaveChannel : Channel
 
     public byte NR33 { get => 0xff; set => Frequency = (ushort)((Frequency & 0xFF00) | value); }
 
-    protected override bool UseLength { get; set; }
     public byte NR34
     {
-        get => (byte)(Convert.ToByte(UseLength) | 0xbf);
+        get => (byte)((Convert.ToByte(UseLength) << 6) | 0xbf);
         set
         {
             UseLength = value.GetBit(6);
@@ -69,18 +68,7 @@ internal class WaveChannel : Channel
 
 
     private byte sample;
-    private void ReadSampleFromTable()
-    {
-        var tmp = table[PositionCounter];
-        sample = OutputLevel switch
-        {
-            WaveOutputLevel.Mute => 0,
-            WaveOutputLevel.half => (byte)(tmp >> 1),
-            WaveOutputLevel.quarter => (byte)(tmp >> 2),
-            WaveOutputLevel.full => tmp,
-            _ => throw new NotSupportedException()
-        };
-    }
+    private void ReadSampleFromTable() => sample = table[PositionCounter];
 
     protected override void Trigger()
     {
@@ -88,7 +76,15 @@ internal class WaveChannel : Channel
         PositionCounter = 0;
     }
 
-    public override byte Sample() => sample;
+    public override byte Sample() => OutputLevel switch
+    {
+        WaveOutputLevel.Mute => 0,
+        WaveOutputLevel.half => (byte)(sample >> 1),
+        WaveOutputLevel.quarter => (byte)(sample >> 2),
+        WaveOutputLevel.full => sample,
+        _ => throw new NotSupportedException()
+    };
+    public override bool DACOn() => NR30.GetBit(7);
 
     public byte this[int n]
     {

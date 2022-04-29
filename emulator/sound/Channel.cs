@@ -19,10 +19,11 @@ public abstract class Channel
     public abstract void Clock();
 
     protected bool ChannelEnabled;
-    protected abstract bool UseLength { get; set; }
+    protected bool UseLength { get; set; }
 
     public abstract byte Sample();
 
+    public abstract bool DACOn();
     protected virtual void Trigger()
     {
         ChannelEnabled = true;

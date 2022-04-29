@@ -1,6 +1,4 @@
-﻿using System.Collections;
-
-namespace emulator.sound;
+﻿namespace emulator.sound;
 
 internal class SquareChannel : Channel
 {
@@ -64,10 +62,9 @@ internal class SquareChannel : Channel
 
     public byte NRs3 { get => 0xff; set => Frequency = (ushort)((Frequency & 0xFF00) | value); }
 
-    protected override bool UseLength { get; set; }
     public byte NRs4
     {
-        get => (byte)(Convert.ToByte(UseLength) | 0xbf);
+        get => (byte)((Convert.ToByte(UseLength) << 6) | 0xbf);
         set
         {
             UseLength = value.GetBit(6);
@@ -81,25 +78,24 @@ internal class SquareChannel : Channel
 
     private int WaveFormIndex;
 
-    private static BitArray GetWaveForm(WavePatternDuty pattern) => pattern switch
+    private static readonly byte[,] waveTable = new byte[4, 8]
     {
-        WavePatternDuty.Eigth => new(new bool[] { false, false, false, false, false, false, false, true }),
-        WavePatternDuty.Quarter => new(new bool[] { true, false, false, false, false, false, false, true }),
-        WavePatternDuty.Half => new(new bool[] { false, false, false, false, true, true, true, true }),
-        WavePatternDuty.ThreeFourths => new(new bool[] { false, true, true, true, true, true, true, false }),
-        _ => throw new NotSupportedException()
+        {0,0,0,0,0,0,0,1 },
+        {1,0,0,0,0,0,0,1 },
+        {0,0,0,0,1,1,1,1 },
+        {0,1,1,1,1,1,1,0 },
     };
 
     private byte CurrentSample;
 
     public override void Clock()
     {
-        var sample = Convert.ToByte(GetWaveForm(wavePatternDuty).Get(WaveFormIndex));
-
-        CurrentSample = (byte)(sample * envelopeVolume);
+        CurrentSample = waveTable[(int)wavePatternDuty, WaveFormIndex];
 
         WaveFormIndex++;
         WaveFormIndex &= 0x7;
     }
-    public override byte Sample() => CurrentSample;
+    public override byte Sample() => (byte)(CurrentSample * envelopeVolume);
+    public override bool DACOn() => (NRs2 >> 3) != 0;
 }
+
