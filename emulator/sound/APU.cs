@@ -205,9 +205,9 @@ public class APU
             break;
 
             case 7:
-            ToneSweep.TickVolEnv();
-            Tone.TickVolEnv();
-            Noise.TickVolEnv();
+            ToneSweep.envelope.Tick();
+            Tone.envelope.Tick();
+            Noise.envelope.Tick();
 
             FrameSequencerState = 0;
             break;

@@ -2,7 +2,6 @@
 using System.Collections;
 
 namespace emulator.sound;
-
 public class NoiseChannel : Channel
 {
     public byte NR41
@@ -11,41 +10,11 @@ public class NoiseChannel : Channel
         set => NRx1 = value;
     }
 
-    //https://nightshade256.github.io/2021/03/27/gb-sound-emulation.html
-    public void TickVolEnv()
-    {
-        if (EnvelopeSweepNumber == 0) return;
-        if (envelopeSweepTimer != 0) envelopeSweepTimer--;
-
-        if (envelopeSweepTimer == 0)
-        {
-            //Reload the envelope timer
-            envelopeSweepTimer = EnvelopeSweepNumber;
-
-            if (envelopeVolume < 0xf && EnvelopeIncreasing) envelopeVolume++;
-            if (envelopeVolume > 0x0 && !EnvelopeIncreasing) envelopeVolume--;
-
-        }
-    }
-
-    int envelopeVolume;
-
-    private int InitialEnvelopeVolume;
-    private bool EnvelopeIncreasing;
-    private int EnvelopeSweepNumber;
-
-    private int envelopeSweepTimer;
-
+    public readonly Envelope envelope;
     public byte NR42
     {
-        get => (byte)((InitialEnvelopeVolume << 4) | (Convert.ToByte(EnvelopeIncreasing) << 3) | (EnvelopeSweepNumber & 0x07));
-
-        set
-        {
-            InitialEnvelopeVolume = value >> 4;
-            EnvelopeIncreasing = value.GetBit(3);
-            EnvelopeSweepNumber = value & 0x7;
-        }
+        get => envelope.Register;
+        set => envelope.Register = value;
     }
 
 
@@ -115,8 +84,7 @@ public class NoiseChannel : Channel
         base.Trigger();
         ShiftRegister.ResetBits();
         //This channel has an envelope
-        envelopeSweepTimer = EnvelopeSweepNumber;
-        envelopeVolume = InitialEnvelopeVolume;
+        envelope.Trigger();
     }
 
     public override byte Sample() => MakeSample();
@@ -124,12 +92,16 @@ public class NoiseChannel : Channel
     public byte MakeSample()
     {
         var start = Convert.ToByte(ShiftRegister.Output());
-        return (byte)(start * envelopeVolume);
+        return (byte)(start * envelope.Volume);
     }
 
     public override bool DACOn() => (NR42 >> 3) != 0;
 
-    public NoiseChannel() => ShiftRegister = new();
+    public NoiseChannel()
+    {
+        ShiftRegister = new();
+        envelope = new();
+    }
 }
 
 public class LFSR

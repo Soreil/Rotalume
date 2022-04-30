@@ -2,6 +2,12 @@
 
 internal class SquareChannel : Channel
 {
+    public SquareChannel()
+    {
+        envelope = new();
+    }
+
+
     private WavePatternDuty wavePatternDuty;
     public byte NRs1
     {
@@ -14,48 +20,18 @@ internal class SquareChannel : Channel
         }
     }
 
-    //https://nightshade256.github.io/2021/03/27/gb-sound-emulation.html
-    public void TickVolEnv()
+
+    public readonly Envelope envelope;
+    public byte NRs2
     {
-        if (EnvelopeSweepNumber == 0) return;
-        if (envelopeSweepTimer != 0) envelopeSweepTimer--;
-
-        if (envelopeSweepTimer == 0)
-        {
-            //Reload the envelope timer
-            envelopeSweepTimer = EnvelopeSweepNumber;
-
-            if (envelopeVolume < 0xf && EnvelopeIncreasing) envelopeVolume++;
-            if (envelopeVolume > 0x0 && !EnvelopeIncreasing) envelopeVolume--;
-
-        }
+        get => envelope.Register;
+        set => envelope.Register = value;
     }
 
-    int envelopeVolume;
-
-    private int InitialEnvelopeVolume;
-    private bool EnvelopeIncreasing;
-    private int EnvelopeSweepNumber;
-
-    private int envelopeSweepTimer;
     protected override void Trigger()
     {
         base.Trigger();
-        //This channel has an envelope
-        envelopeSweepTimer = EnvelopeSweepNumber;
-        envelopeVolume = InitialEnvelopeVolume;
-    }
-
-    public byte NRs2
-    {
-        get => (byte)((InitialEnvelopeVolume << 4) | (Convert.ToByte(EnvelopeIncreasing) << 3) | (EnvelopeSweepNumber & 0x07));
-
-        set
-        {
-            InitialEnvelopeVolume = value >> 4;
-            EnvelopeIncreasing = value.GetBit(3);
-            EnvelopeSweepNumber = value & 0x7;
-        }
+        envelope.Trigger();
     }
 
     public ushort Frequency { get; protected set; }
@@ -95,7 +71,7 @@ internal class SquareChannel : Channel
         WaveFormIndex++;
         WaveFormIndex &= 0x7;
     }
-    public override byte Sample() => (byte)(CurrentSample * envelopeVolume);
+    public override byte Sample() => (byte)(CurrentSample * envelope.Volume);
     public override bool DACOn() => (NRs2 >> 3) != 0;
 }
 
