@@ -215,6 +215,7 @@ ioRegisters,
     public void Step() => CPU.Step();
 
     public (short left, short right) Sample() => APU.Sample();
+    public (short left, short right) SampleChannel1() => APU.SampleChannel1();
 
     protected virtual void Dispose(bool disposing)
     {

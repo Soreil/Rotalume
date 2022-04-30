@@ -252,30 +252,30 @@ public class APU
 
     public (short left, short right) Sample()
     {
-        short volumeLeft = 0;
-        short volumeRight = 0;
+        double volumeLeft = 0;
+        double volumeRight = 0;
 
         if (ToneSweep.IsOn())
         {
-            var sample = ToneSweep.DACOn() ? (short)(ToneSweep.Sample() - 8) : (short)0;
+            var sample = ToneSweep.DACOn() ? (short)(ToneSweep.Sample() - 7.5) : 0;
             if (Sound1LeftOn) volumeLeft += sample;
             if (Sound1RightOn) volumeRight += sample;
         }
         if (Tone.IsOn())
         {
-            var sample = Tone.DACOn() ? (short)(Tone.Sample() - 8) : (short)0;
+            var sample = Tone.DACOn() ? (short)(Tone.Sample() - 7.5) : 0;
             if (Sound2LeftOn) volumeLeft += sample;
             if (Sound2RightOn) volumeRight += sample;
         }
         if (Wave.IsOn())
         {
-            var sample = Wave.DACOn() ? (short)(Wave.Sample() - 8) : (short)0;
+            var sample = Wave.DACOn() ? (Wave.Sample() - 7.5) : 0;
             if (Sound3LeftOn) volumeLeft += sample;
             if (Sound3RightOn) volumeRight += sample;
         }
         if (Noise.IsOn())
         {
-            var sample = Noise.DACOn() ? (short)(Noise.Sample() - 8) : (short)0;
+            var sample = Noise.DACOn() ? (Noise.Sample() - 7.5) : 0;
             if (Sound4LeftOn) volumeLeft += sample;
             if (Sound4RightOn) volumeRight += sample;
         }
@@ -293,13 +293,39 @@ public class APU
         volumeLeft *= 128;
         volumeRight *= 128;
 
-        return (volumeLeft, volumeRight);
+        return ((short)volumeLeft, (short)volumeRight);
+    }
+
+    public (short left, short right) SampleChannel1()
+    {
+        double volumeLeft = 0;
+        double volumeRight = 0;
+
+        if (ToneSweep.IsOn())
+        {
+            var sample = ToneSweep.DACOn() ? (short)(ToneSweep.Sample() - 7.5) : 0;
+            if (Sound1LeftOn) volumeLeft += sample;
+            if (Sound1RightOn) volumeRight += sample;
+        }
+        if (OutputToLeftTerminal)
+        {
+            volumeLeft *= (short)(OutputVolumeLeft + 1);
+        }
+        if (OutputToRightTerminal)
+        {
+            volumeRight *= (short)(OutputVolumeRight + 1);
+        }
+
+        //map to 16 bit space
+        volumeLeft *= 512;
+        volumeRight *= 512;
+
+        return ((short)volumeLeft, (short)volumeRight);
     }
 
     public byte this[Address index]
     {
-        get
-        {
+        get =>
             //Length registers are accesible during power off on the dmg
             //if (MasterSoundDisable &&
             //    index is not Address.NR52
@@ -309,7 +335,7 @@ public class APU
             //              or Address.NR41)
             //    return 0xff;
 
-            return index switch
+            index switch
             {
                 Address.NR10 => ToneSweep.NR10,
                 Address.NR11 => ToneSweep.NR11,
@@ -356,7 +382,6 @@ public class APU
 
                 _ => 0xff
             };
-        }
 
         set
         {

@@ -42,9 +42,10 @@ public class Timers
         }
 
         //We want to tick when bit 5 of the top part turns to 1
+        //TODO: check how to do this correctly
         var topHalfNew = (byte)(InternalCounter >> 8);
         var topHalfOld = (byte)(oldInternalCounter >> 8);
-        if (topHalfNew.GetBit(5) && !topHalfOld.GetBit(5))
+        if (topHalfNew.GetBit(4) && !topHalfOld.GetBit(4))
         {
             OnAPUTick512z();
         }
