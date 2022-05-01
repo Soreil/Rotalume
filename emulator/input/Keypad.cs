@@ -67,7 +67,11 @@ public class Keypad
         return (byte)((joypad & 0xf) | 0xc0);
     }
 
-    internal (Action<byte> Write, Func<byte> Read) HookUpKeypad() => (Write: x => keypadFlags = (byte)(x & 0xf0), Read: () => UpdateJoypadPresses());
+    public byte Register
+    {
+        get => UpdateJoypadPresses();
+        set => keypadFlags = (byte)(value & 0xf0);
+    }
 
     private bool Rumbling;
 

@@ -5,19 +5,11 @@ public class Timers
 {
     public ushort InternalCounter;
 
-    public (Action<byte> Write, Func<byte> Read)[] HookUpTimers() => new (Action<byte> Write, Func<byte> Read)[] {
-            ( x => DIV = x,
-             () => DIV),
-
-            ( x => TIMA = x,
-             () => TIMA),
-
-            ( x => TMA = x,
-             () => TMA),
-
-            ( x => TAC = x,
-             () => TAC)
-        };
+    public Timers(sound.APU apu, InterruptRegisters interruptRegisters)
+    {
+        APUTick512Hz += apu.FrameSequencerClock;
+        Interrupt += interruptRegisters.EnableTimerInterrupt;
+    }
 
     public void Tick(object? o, EventArgs e)
     {
@@ -54,9 +46,9 @@ public class Timers
 
     private void OnAPUTick512z() => APUTick512Hz?.Invoke(this, EventArgs.Empty);
 
-    public event EventHandler? APUTick512Hz;
+    private event EventHandler? APUTick512Hz;
 
-    public event EventHandler? Interrupt;
+    private event EventHandler? Interrupt;
     private byte DIV
     {
         get => (byte)(InternalCounter >> 8);
@@ -135,5 +127,39 @@ public class Timers
             Interrupt?.Invoke(this, EventArgs.Empty);
         }
         TIMA++;
+    }
+
+    public byte this[int n]
+    {
+        get => n switch
+        {
+            0xff04 => DIV,
+            0xff05 => TIMA,
+            0xff06 => TMA,
+            0xff07 => TAC,
+            _ => throw new Exception("Not a timer register buddy")
+        };
+
+
+        set
+        {
+            switch (n)
+            {
+                case 0xff04:
+                DIV = value;
+                break;
+                case 0xff05:
+                TIMA = value;
+                break;
+                case 0xff06:
+                TMA = value;
+                break;
+                case 0xff07:
+                TAC = value;
+                break;
+                default:
+                throw new Exception("Not a timer m8");
+            }
+        }
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace emulator.sound;
+﻿using Microsoft.Extensions.Logging;
+
+namespace emulator.sound;
 
 public class APU
 {
@@ -142,8 +144,10 @@ public class APU
     private WaveChannel Wave { get; set; }
     private NoiseChannel Noise { get; set; }
 
-    public APU()
+    private ILogger Logger { get; set; }
+    public APU(ILogger<APU> logger)
     {
+        Logger = logger;
         Tone = new();
         ToneSweep = new();
         Wave = new();

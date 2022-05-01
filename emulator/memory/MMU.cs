@@ -8,14 +8,12 @@ public sealed class MMU : IDisposable
     private readonly OAM OAM;
     private readonly sound.APU APU;
 
-    private readonly Dictionary<ushort, (Action<byte> Write, Func<byte> Read)> IORegisters;
     private readonly HRAM HRAM;
-    private readonly (Action<byte> Write, Func<byte> Read) InterruptEnable;
     private readonly UnusableMEM UnusableMEM;
     public byte this[ushort at]
     {
-        get => BootROMActive && at < 0x100
-                ? bootROM![at]
+        get => BootRom.Active && at < 0x100
+                ? BootRom[at]
                 : at switch
                 {
                     >= 0 and < 0x4000 => Card[at],//bank0
@@ -25,12 +23,29 @@ public sealed class MMU : IDisposable
                     >= 0xc000 and < 0xe000 => WRAM[at],//wram
                     >= 0xe000 and < 0xFE00 => WRAM[at],//wram mirror
                     >= 0xfe00 and < 0xfea0 => OAM.Locked ? (byte)0xff : OAM[at],
-                    >= 0xfea0 and < 0xff00 => UnusableMEM[at],//This should be illegal?
-                    >= 0xff00 and < 0xff10 => IORegisters[at].Read(),
+                    >= 0xfea0 and < 0xff00 => UnusableMEM[at],
+
+                    0xff00 => Keypad.Register,
+                    0xff01 => Serial.Data,
+                    0xff02 => Serial.Control,
+
+                    >= 0xff04 and < 0xff08 => Timers[at],
+
+                    0xff0f => InterruptRegisters.InterruptFireRegister,
+
                     >= 0xff10 and < 0xff27 => APU[(sound.Address)at],
-                    >= 0xff27 and < 0xff80 => IORegisters[at].Read(),
+                    >= 0xff30 and < 0xff40 => APU[(sound.Address)at],
+
+                    not (ushort)graphics.Address.DMA and >= 0xff40 and < 0xff50 => PPU[(graphics.Address)at],
+
+                    (ushort)graphics.Address.DMA => DMA.Register,
+
+                    0xff50 => BootRom.Register,
                     >= 0xff80 and < 0xffff => HRAM[at],
-                    0xffff => InterruptEnable.Read(),
+
+                    0xffff => InterruptRegisters.InterruptControlRegister,
+
+                    _ => (byte)0xff
                 };
 
         set
@@ -65,72 +80,104 @@ public sealed class MMU : IDisposable
                 }
                 break;
                 case >= 0xfea0 and < 0xff00:
-                UnusableMEM[at] = value; //This should be illegal?
+                UnusableMEM[at] = value;
                 break;
-                case >= 0xff00 and < 0xff10:
-                IORegisters[at].Write(value);
+
+                case 0xff00:
+                Keypad.Register = value;
                 break;
+
+                case 0xff01:
+                Serial.Data = value;
+                break;
+
+                case 0xff02:
+                Serial.Control = value;
+                break;
+
+                case >= 0xff04 and < 0xff08:
+                Timers[at] = value;
+                break;
+
+                case 0xff0f:
+                InterruptRegisters.InterruptFireRegister = value;
+                break;
+
                 case >= 0xff10 and < 0xff27:
                 APU[(sound.Address)at] = value;
                 break;
-                case >= 0xff27 and < 0xff80:
-                IORegisters[at].Write(value);
+
+                case >= 0xff30 and < 0xff40:
+                APU[(sound.Address)at] = value;
                 break;
+
+                case not (ushort)graphics.Address.DMA and >= 0xff40 and < 0xff50:
+                PPU[(graphics.Address)at] = value;
+                break;
+
+                case (ushort)graphics.Address.DMA:
+                DMA.Register = value;
+                break;
+
+                case 0xff50:
+                BootRom.Register = value;
+                break;
+
                 case >= 0xff80 and < 0xffff:
                 HRAM[at] = value;
                 break;
                 case 0xffff:
-                InterruptEnable.Write(value);
+                InterruptRegisters.InterruptControlRegister = value;
                 break;
             }
         }
     }
 
-    private bool BootROMActive;
     private bool disposedValue;
 
-    internal (Action<byte> Write, Func<byte> Read) HookUpMemory()
-    {
-        void BootROMFlagController(byte b)
-        {
-            if (b == 1)
-            {
-                BootROMActive = false;
-            }
-        }
-        return
-            (
-        BootROMFlagController,
-         () => 0xff
-         );
-    }
-    private readonly byte[]? bootROM;
+    private readonly BootRom BootRom;
+    private readonly InterruptRegisters InterruptRegisters;
+    private readonly Keypad Keypad;
+    private readonly Serial Serial;
+    private readonly Timers Timers;
+    private readonly PPU PPU;
+    private readonly DMARegister DMA;
 
     public MMU(
-        byte[]? boot,
+        BootRom boot,
         MBC card,
         VRAM vram,
         OAM oam,
+
+        Keypad keypad,
+        Serial serial,
+        Timers timers,
         sound.APU apu,
-        Dictionary<ushort,(Action<byte> Write, Func<byte> Read)> ioRegisters,
-        (Action<byte> Write, Func<byte> Read) interruptEnable)
+        InterruptRegisters interruptRegisters,
+        PPU ppu,
+        DMARegister dma
+        )
     {
 
-        bootROM = boot; //Bootrom should be 256 bytes
-        BootROMActive = bootROM is not null;
 
         var wram = new WRAM();
         var hram = new HRAM();
+        UnusableMEM = new UnusableMEM();
 
         APU = apu;
         Card = card;
         VRAM = vram;
         WRAM = wram;
         OAM = oam;
-        IORegisters = ioRegisters;
         HRAM = hram;
-        InterruptEnable = interruptEnable;
-        UnusableMEM = new UnusableMEM();
+
+        BootRom = boot;
+        InterruptRegisters = interruptRegisters;
+        Keypad = keypad;
+        Serial = serial;
+        Timers = timers;
+        PPU = ppu;
+        DMA = dma;
     }
 
 

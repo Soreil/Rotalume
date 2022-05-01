@@ -1,68 +1,22 @@
 ﻿namespace emulator;
-
+using graphics;
 public class PPU
 {
     private long Clock;
     private readonly IFrameSink Writer;
-    public PPU(IFrameSink frameSink)
+    public PPU(IFrameSink frameSink, InterruptRegisters interruptRegisters, OAM OAM, VRAM VRAM)
     {
-        OAM = new OAM();
-        VRAM = new VRAM();
         Writer = frameSink;
+        this.OAM = OAM;
+        this.VRAM = VRAM;
+
+        VBlankInterrupt += interruptRegisters.EnableVBlankInterrupt;
+        STATInterrupt += interruptRegisters.EnableLCDSTATInterrupt;
     }
 
     public readonly OAM OAM;
     public readonly VRAM VRAM;
 
-    public (Action<byte> Write, Func<byte> Read)[] HookUpGraphics()
-    {
-        void LCDControlController(byte b) => LCDC = b;
-        byte ReadLCDControl() => LCDC;
-        void LCDStatController(byte b) => STAT = (byte)((b & 0xf8) | (STAT & 0x7));
-        byte ReadLCDStat() => STAT;
-        void ScrollYController(byte b) => SCY = b;
-        byte ReadScrollY() => SCY;
-        void ScrollXController(byte b) => SCX = b;
-        byte ReadScrollX() => SCX;
-        void LCDLineController(byte b) => LY = b;
-        byte ReadLine() => LY;
-        void PaletteController(byte b) => BGP = b;
-        byte ReadPalette() => BGP;
-        void OBP0Controller(byte b) => OBP0 = b;
-        byte ReadOBP0() => OBP0;
-        void OBP1Controller(byte b) => OBP1 = b;
-        byte ReadOBP1() => OBP1;
-        void WYController(byte b) => WY = b;
-        byte ReadWY() => WY;
-        void WXController(byte b) => WX = b;
-        byte ReadWX() => WX;
-        void LYCController(byte b) => LYC = b;
-        byte ReadLYC() => LYC;
-
-        return new (Action<byte> Write, Func<byte> Read)[] {
-            (LCDControlController,
-            ReadLCDControl),
-            (LCDStatController,
-            ReadLCDStat),
-            (ScrollYController,
-            ReadScrollY),
-            (ScrollXController,
-            ReadScrollX),
-            (LCDLineController,
-            ReadLine),
-            (LYCController,
-            ReadLYC),
-            (PaletteController,
-            ReadPalette),
-            (OBP0Controller,
-            ReadOBP0),
-            (OBP1Controller,
-            ReadOBP1),
-            (WYController,
-            ReadWY),
-            (WXController,
-            ReadWX)};
-    }
 
     //FF40 - FF4B, PPU control registers
     //FF40 
@@ -198,17 +152,6 @@ public class PPU
     }
 
     public Renderer? Renderer;
-    //public void Tick()
-    //{
-    //    if (Renderer is not null)
-    //    {
-    //        Clock++;
-    //        if (Clock != Renderer.TimeUntilWhichToPause)
-    //            System.Diagnostics.Debugger.Break();
-
-    //        Renderer.Render();
-    //    }
-    //}
     public void Tick(object? o, EventArgs e)
     {
         Clock++;
@@ -225,4 +168,42 @@ public class PPU
     //We could have more calls to SetLCDC for other bits in the LCDC register.
     //The LCDCEnable flag is only interesting at the moment it flips and the renderer null check should mean a recent flip
     private bool ScreenJustTurnedOn => LCDEnable && Renderer is null;
+
+    public byte this[Address addr]
+    {
+        get => addr switch
+        {
+            Address.LCDC => LCDC,
+            Address.STAT => STAT,
+            Address.SCY => SCY,
+            Address.SCX => SCX,
+            Address.LY => LY,
+            Address.LYC => LYC,
+            Address.WY => WY,
+            Address.WX => WX,
+            Address.BGP => BGP,
+            Address.OBP0 => OBP0,
+            Address.OBP1 => OBP1,
+            _ => 0xff
+        };
+
+
+        set
+        {
+            switch (addr)
+            {
+                case Address.LCDC: LCDC = value; break;
+                case Address.STAT: STAT = (byte)((value & 0xf8) | (STAT & 0x7)); break;
+                case Address.SCY: SCY = value; break;
+                case Address.SCX: SCX = value; break;
+                case Address.LY: LY = value; break;
+                case Address.LYC: LYC = value; break;
+                case Address.WY: WY = value; break;
+                case Address.WX: WX = value; break;
+                case Address.BGP: BGP = value; break;
+                case Address.OBP0: OBP0 = value; break;
+                case Address.OBP1: OBP1 = value; break;
+            }
+        }
+    }
 }
