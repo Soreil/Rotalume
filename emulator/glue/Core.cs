@@ -7,9 +7,6 @@ namespace emulator;
 
 public class Core : IDisposable
 {
-    //Global clock used by RTC carts
-    public long masterclock;
-
     public readonly CPU CPU;
 
     internal DMAControl DMA { get; }
@@ -19,6 +16,7 @@ public class Core : IDisposable
     public readonly MMU Memory;
     private readonly Timers Timers;
     private readonly InterruptRegisters InterruptRegisters;
+    private readonly MasterClock MasterClock;
 
     private static IHostBuilder CreateHostBuilder(string[] args) =>
     Host.CreateDefaultBuilder(args)
@@ -34,7 +32,8 @@ public class Core : IDisposable
         AddSingleton<PPU>().
         AddSingleton<CPU>().
         AddSingleton<DMARegister>().
-        AddSingleton<DMAControl>()
+        AddSingleton<DMAControl>().
+        AddSingleton<MasterClock>()
         );
 
     public Core(byte[] gameROM, byte[]? bootROM, string fileName, Keypad Keypad, IFrameSink frameSink)
@@ -49,7 +48,8 @@ public class Core : IDisposable
             services.
             AddSingleton(s => frameSink).
             AddSingleton(s => Keypad).
-            AddSingleton<MBC>(s => MakeCard(gameROM, fileName, s.GetRequiredService<Keypad>(), s.GetRequiredService<IFrameSink>())).
+            AddSingleton(s => new GameROM(gameROM, fileName)).
+            AddSingleton(s => CoreHelpers.MakeCard(s.GetRequiredService<GameROM>(), s.GetRequiredService<Keypad>(), s.GetRequiredService<IFrameSink>(), s.GetRequiredService<MasterClock>())).
             AddSingleton<BootRom>(s => new(bootROM))
             );
 
@@ -68,6 +68,10 @@ public class Core : IDisposable
 
         DMA = host.Services.GetRequiredService<DMAControl>();
 
+
+
+        MasterClock = host.Services.GetRequiredService<MasterClock>();
+
         CPU.OAMCorruption += PPU.OAM.Corrupt;
 
         //We have to replicate the state of the system post boot without running the bootrom
@@ -78,7 +82,6 @@ public class Core : IDisposable
 
             //timers
             Timers.SetStateWithoutBootrom();
-
 
             //sound
             APU.SetStateWithoutBootrom();
@@ -94,67 +97,35 @@ public class Core : IDisposable
         CPU.Cycle += PPU.Tick;
         CPU.Cycle += APU.Tick;
         CPU.Cycle += DMA.DMA;
-        CPU.Cycle += (o, e) => masterclock++;
+        CPU.Cycle += MasterClock.Tick;
 
         CPU.Cycle += Timers.Tick;
         CPU.Cycle += PPU.Tick;
         CPU.Cycle += APU.Tick;
         CPU.Cycle += DMA.DMA;
-        CPU.Cycle += (o, e) => masterclock++;
+        CPU.Cycle += MasterClock.Tick;
 
         CPU.Cycle += Timers.Tick;
         CPU.Cycle += PPU.Tick;
         CPU.Cycle += APU.Tick;
         CPU.Cycle += DMA.DMA;
-        CPU.Cycle += (o, e) => masterclock++;
+        CPU.Cycle += MasterClock.Tick;
 
         CPU.Cycle += Timers.Tick;
         CPU.Cycle += PPU.Tick;
         CPU.Cycle += APU.Tick;
         CPU.Cycle += DMA.DMA;
-        CPU.Cycle += (o, e) => masterclock++;
+        CPU.Cycle += MasterClock.Tick;
     }
-
-    private MBC MakeCard(byte[] gameROM, string fileName, Keypad Keypad, IFrameSink frameSink)
-    {
-        var Header = new CartHeader(gameROM);
-
-        MBC Card;
-        if (Header.HasBattery())
-        {
-            var mmf = Header.MakeMemoryMappedFile(fileName);
-            Card = Header.HasClock() ? Header.MakeMBC(gameROM, mmf, () => masterclock) : Header.MakeMBC(gameROM, mmf);
-        }
-        else
-        {
-            Card = Header.MakeMBC(gameROM);
-        }
-
-        //Writing out the RTC too often would be very heavy. This writes it out once per frame.
-        //
-        if (Header.Type == CartType.MBC3_TIMER_RAM_BATTERY)
-        {
-            var SaveRTC = ((MBC3)Card).SaveRTC();
-
-            void h(object? x, EventArgs y) => SaveRTC();
-            frameSink.FramePushed += h;
-        }
-
-        if (Card is MBC5WithRumble rumble)
-        {
-            rumble.RumbleStateChange += Keypad.ToggleRumble;
-        }
-
-        return Card;
-    }
-
-    private bool disposedValue;
 
     public void Step() => CPU.Step();
 
     public (short left, short right) Sample() => APU.Sample();
     public (short left, short right) SampleChannel1() => APU.SampleChannel1();
 
+    public long Time() => MasterClock.Now();
+
+    private bool disposedValue;
     protected virtual void Dispose(bool disposing)
     {
         if (!disposedValue)

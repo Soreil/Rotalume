@@ -42,7 +42,7 @@ internal class MBC3 : MBC
 
     private readonly MemoryMappedViewAccessor? ClockStorage;
 
-    public MBC3(CartHeader header, byte[] gameROM, MemoryMappedFile file, Func<long>? getClock = null)
+    public MBC3(CartHeader header, byte[] gameROM, MemoryMappedFile file, MasterClock? getClock = null)
     {
         this.gameROM = gameROM;
         RAMBanks = file.CreateViewAccessor(0, header.RAM_Size);
@@ -70,7 +70,7 @@ internal class MBC3 : MBC
             var GameboyTicksElapsed = (long)(DotNetTicksElapsed * (TicksPerSecond / 10000000.0));
             InitialOffsetFromSave += GameboyTicksElapsed;
 
-            GetRTC = () => getClock() + InitialOffsetFromSave;
+            GetRTC = () => getClock.Now() + InitialOffsetFromSave;
         }
     }
 

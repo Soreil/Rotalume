@@ -31,7 +31,7 @@ internal class SoundTests
         {
             core.Step();
 
-            if (core.masterclock > sampleRate * sampleCount)
+            if (core.Time() > sampleRate * sampleCount)
             {
                 (short left, short right) = core.Sample();
                 samples.Add(left);
@@ -71,7 +71,7 @@ internal class SoundTests
         {
             core.Step();
 
-            if (core.masterclock > sampleRate * sampleCount)
+            if (core.Time() > sampleRate * sampleCount)
             {
                 (short left, short right) = core.SampleChannel1();
                 samples.Add(left);
@@ -106,7 +106,7 @@ internal class SoundTests
         {
             core.Step();
 
-            if (core.masterclock > sampleRate * sampleCount)
+            if (core.Time() > sampleRate * sampleCount)
             {
                 (short left, short right) = core.Sample();
                 samples.Add(left);

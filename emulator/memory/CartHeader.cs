@@ -91,7 +91,7 @@ internal record CartHeader
         _ => false,
     };
 
-    public MBC MakeMBC(byte[] gameROM, System.IO.MemoryMappedFiles.MemoryMappedFile file, Func<long> clock) => Type switch
+    public MBC MakeMBC(byte[] gameROM, System.IO.MemoryMappedFiles.MemoryMappedFile file, MasterClock clock) => Type switch
     {
         CartType.MBC3_TIMER_BATTERY => new MBC3(this, gameROM, file, clock),
         CartType.MBC3_TIMER_RAM_BATTERY => new MBC3(this, gameROM, file, clock),
