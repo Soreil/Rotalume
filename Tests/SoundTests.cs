@@ -5,9 +5,9 @@ namespace Tests;
 
 internal class SoundTests
 {
-    [TestCase(@"C:\Users\sjon\source\repos\Soreil\Rotalume\Tests\rom\game\Pokemon - Gold Version (UE) [C][!].gbc", 60)]
-    [TestCase(@"C:\Users\sjon\source\repos\Soreil\Rotalume\Tests\rom\game\Pokemon Pinball (Europe) (En,Fr,De,Es,It) (SGB Enhanced).gbc", 20)]
-    [TestCase(@"C:\Users\sjon\source\repos\Soreil\Rotalume\Tests\rom\game\Kirby's Dream Land (USA, Europe).gb", 40)]
+    [TestCase(@"rom\game\Pokemon - Gold Version (UE) [C][!].gbc", 60)]
+    [TestCase(@"rom\game\Pokemon Pinball (Europe) (En,Fr,De,Es,It) (SGB Enhanced).gbc", 20)]
+    [TestCase(@"rom\game\Kirby's Dream Land (USA, Europe).gb", 40)]
     [TestCase(@"C:\Users\sjon\source\repos\rgbds\sound\hello-world.gb", 20)]
     [Category("RequiresBootROM")]
     public void SoundSample(string path, int duration)
@@ -48,7 +48,7 @@ internal class SoundTests
         wav.Write(writer, span);
     }
 
-    [TestCase(@"C:\Users\sjon\source\repos\Soreil\Rotalume\Tests\rom\game\Pokemon - Gold Version (UE) [C][!].gbc", 60)]
+    [TestCase(@"rom\game\Pokemon - Gold Version (UE) [C][!].gbc", 60)]
     [Category("RequiresBootROM")]
     public void PokemonGoldChannel1(string path, int duration)
     {

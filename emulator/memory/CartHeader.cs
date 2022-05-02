@@ -159,7 +159,22 @@ internal record CartHeader
         {
             throw new FileLoadException("Existing save size too small");
         }
-        return System.IO.MemoryMappedFiles.MemoryMappedFile.CreateFromFile(path);
+
+        System.IO.MemoryMappedFiles.MemoryMappedFile? res = null;
+
+        while (res is null)
+        {
+            try
+            {
+                res = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateFromFile(path);
+            }
+            catch (IOException)
+            {
+                //We want to wait a bit before checking again in the hope the file will at some point release
+                Thread.Sleep(10);
+            }
+        }
+        return res!;
     }
 
     private int RequiredSaveFileSize()

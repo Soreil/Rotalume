@@ -345,3 +345,4 @@ healthchecksdb
 /rgbds
 *.gbc
 *.diagsession
+/Tests/rom/DMG_ROM_BOOT.bin
