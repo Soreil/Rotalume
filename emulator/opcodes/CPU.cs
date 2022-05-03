@@ -1,4 +1,6 @@
-﻿namespace emulator;
+﻿using Microsoft.Extensions.Logging;
+
+namespace emulator;
 
 public partial class CPU
 {
@@ -8,7 +10,7 @@ public partial class CPU
     public readonly Registers Registers;
     private readonly MMU Memory;
     public ushort PC;
-
+    private readonly ILogger Logger;
 
     private HaltState Halted = HaltState.off;
 
@@ -16,10 +18,11 @@ public partial class CPU
 
     public Action Op(CBOpcode op) => CbOps[(int)op];
 
-    public CPU(MMU mMU, InterruptRegisters interruptRegisters)
+    public CPU(MMU mMU, InterruptRegisters interruptRegisters, ILogger<CPU> logger)
     {
         Memory = mMU;
         ISR = interruptRegisters;
+        Logger = logger;
 
         StdOps = new Action[0x100];
         StdOps[(int)Opcode.NOP] = NOP;
@@ -57,7 +60,7 @@ public partial class CPU
         StdOps[(int)Opcode.JR_NZ_r8] = JR(Flag.NZ);
         StdOps[(int)Opcode.LD_HL_d16] = LD_D16(WideRegister.HL);
         StdOps[(int)Opcode.LDI_AT_HL_A] = LDI;
-        StdOps[(int)Opcode.INC_HL] = INC_HL;
+        StdOps[(int)Opcode.INC_HL] = INC(WideRegister.HL);
         StdOps[(int)Opcode.INC_H] = INC(Register.H);
         StdOps[(int)Opcode.DEC_H] = DEC(Register.H);
         StdOps[(int)Opcode.LD_H_d8] = LD_D8(Register.H);

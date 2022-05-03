@@ -115,7 +115,7 @@ public class PPU
         _ => throw new IndexOutOfRangeException()
     };
 
-    private bool LCDEnable => LCDC.GetBit(7);
+    public bool LCDEnable => LCDC.GetBit(7);
     public ushort TileMapDisplaySelect => (ushort)(LCDC.GetBit(6) ? 0x9C00 : 0x9800);
     public bool WindowDisplayEnable => LCDC.GetBit(5);
     public ushort BGAndWindowTileDataSelect => (ushort)(LCDC.GetBit(4) ? 0x8000 : 0x9000);

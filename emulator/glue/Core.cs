@@ -68,11 +68,14 @@ public class Core : IDisposable
 
         DMA = host.Services.GetRequiredService<DMAControl>();
 
-
+        var OAM = host.Services.GetRequiredService<OAM>();
 
         MasterClock = host.Services.GetRequiredService<MasterClock>();
 
-        CPU.OAMCorruption += PPU.OAM.Corrupt;
+        CPU.OAMCorruption += (o, e) =>
+        {
+            if (PPU.LCDEnable) OAM.Corrupt(o, e);
+        };
 
         //We have to replicate the state of the system post boot without running the bootrom
         if (bootROM == null)

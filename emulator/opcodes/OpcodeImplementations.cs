@@ -1,4 +1,5 @@
-﻿namespace emulator;
+﻿
+namespace emulator;
 
 public partial class CPU
 {
@@ -91,10 +92,11 @@ public partial class CPU
     }
 
     public static void NOP() { }
-    public Action LD_D16(WideRegister p0) => () =>
+    public Action LD_D16(WideRegister reg) => () =>
     {
         var arg = ReadWide();
-        Registers.Set(p0, arg);
+
+        Registers.Set(reg, arg);
     };
 
     public void LDI()
@@ -129,20 +131,15 @@ public partial class CPU
         Registers.HL = 0x8403;
         Registers.SP = 0xfffe;
     }
-    public Action INC(WideRegister p0) => () =>
+    public Action INC(WideRegister reg) => () =>
     {
-        var hl = Registers.Get(p0);
-        var target = (ushort)(hl + 1);
-        Registers.Set(p0, target);
+        var wide = Registers.Get(reg);
+        if ((wide >> 8) == 0xfe) CorruptOAM();
+
+        var target = (ushort)(wide + 1);
+        Registers.Set(reg, target);
         CycleElapsed();
     };
-
-    public void INC_HL()
-    {
-        if (Registers.H == 0xfe) CorruptOAM();
-        Registers.HL++;
-        CycleElapsed();
-    }
 
     public event EventHandler? OAMCorruption;
 
@@ -250,11 +247,15 @@ public partial class CPU
             CycleElapsed();
         };
 
-    public Action DEC(WideRegister p0) => () =>
+    public Action DEC(WideRegister reg) => () =>
     {
-        var hl = Registers.Get(p0);
-        var target = (ushort)(hl - 1);
-        Registers.Set(p0, target);
+        var wide = Registers.Get(reg);
+
+        //We want to corrupt in case a wide register has the top byte set to 0xfe
+        if ((wide >> 8) == 0xfe) CorruptOAM();
+
+        var target = (ushort)(wide - 1);
+        Registers.Set(reg, target);
         CycleElapsed();
     };
 
@@ -541,7 +542,9 @@ public partial class CPU
     };
     public Action POP(WideRegister p0) => () =>
     {
-        Registers.Set(p0, ReadWide(Registers.SP));
+        var wide = ReadWide(Registers.SP);
+        if ((wide >> 8) == 0xfe) CorruptOAM();
+        Registers.Set(p0, wide);
         Registers.SP += 2;
     };
     public Action JP_A16(Flag p0) => () =>
@@ -590,7 +593,10 @@ public partial class CPU
     public Action PUSH(WideRegister p0) => () =>
     {
         CycleElapsed();
-        Push(Registers.Get(p0));
+        var reg = Registers.Get(p0);
+        if ((reg >> 8) == 0xfe) CorruptOAM();
+
+        Push(reg);
     };
     public void ADD_A_d8()
     {
