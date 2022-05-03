@@ -18,7 +18,6 @@ public class DMARegister
 
 public class DMAControl
 {
-
     public OAM OAM { get; }
     public MMU MMU { get; }
 

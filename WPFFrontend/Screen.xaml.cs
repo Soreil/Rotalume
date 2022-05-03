@@ -116,7 +116,7 @@ public partial class Screen : Window
             }
         }
 
-        var gameboy = new Core(
+        using var gameboy = new Core(
             File.ReadAllBytes(path),
       bootrom,
       Path.GetFileNameWithoutExtension(path),
@@ -135,7 +135,6 @@ public partial class Screen : Window
                 }
             }
         }
-        gameboy.Dispose();
     }
 
     private bool FpsLockEnabled() => FPSLimitEnable.IsChecked;

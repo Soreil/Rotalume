@@ -12,6 +12,7 @@ public class Core : IDisposable
     private readonly APU APU;
     private readonly MasterClock MasterClock;
     private readonly MBC MBC;
+    public readonly MMU Memory;
 
     private bool disposedValue;
 
@@ -59,7 +60,7 @@ public class Core : IDisposable
 
         var Timers = host.Services.GetRequiredService<Timers>();
 
-        var Memory = host.Services.GetRequiredService<MMU>();
+        Memory = host.Services.GetRequiredService<MMU>();
 
         CPU = host.Services.GetRequiredService<CPU>();
 
