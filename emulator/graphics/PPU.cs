@@ -29,7 +29,7 @@ public class PPU
             _LCDC = value;
             if (ScreenJustTurnedOn)
             {
-                Renderer = new Renderer(this, Writer, Clock); //We want a new renderer so all the internal state resets including clocking
+                Renderer = new Renderer(this, Writer, Clock - 4); //We want a new renderer so all the internal state resets including clocking
             }
             else if ((!LCDEnable) && Renderer is not null)
             {
