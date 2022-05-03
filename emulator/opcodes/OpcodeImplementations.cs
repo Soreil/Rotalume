@@ -42,6 +42,8 @@ public partial class CPU
     }
     private void Push(ushort s)
     {
+        if ((Registers.SP >> 8) == 0xfe) CorruptOAMAcess();
+
         Registers.SP--;
         Memory[Registers.SP] = (byte)(s >> 8);
         CycleElapsed();
@@ -105,6 +107,7 @@ public partial class CPU
         var value = Registers.A;
         Write(address, value);
         Registers.Set(WideRegister.HL, (ushort)(address + 1));
+        if (address >> 8 == 0xfe) CorruptOAMAddress();
     }
 
     public void LDD()
@@ -113,6 +116,7 @@ public partial class CPU
         var value = Registers.A;
         Write(address, value);
         Registers.Set(WideRegister.HL, (ushort)(address - 1));
+        if (address >> 8 == 0xfe) CorruptOAMAddress();
     }
 
     public Action LD(WideRegister p0) => () =>
@@ -134,16 +138,18 @@ public partial class CPU
     public Action INC(WideRegister reg) => () =>
     {
         var wide = Registers.Get(reg);
-        if ((wide >> 8) == 0xfe) CorruptOAM();
+        if ((wide >> 8) == 0xfe) CorruptOAMAddress();
 
         var target = (ushort)(wide + 1);
         Registers.Set(reg, target);
         CycleElapsed();
     };
 
-    public event EventHandler? OAMCorruption;
+    public event EventHandler<OAMCorruptionEventArgs>? OAMCorruption;
 
-    private void CorruptOAM() => OAMCorruption?.Invoke(this, EventArgs.Empty);
+    private void CorruptOAMAcess() => OAMCorruption?.Invoke(this, new OAMCorruptionEventArgs { IsOAMReadOrWrite = true });
+    private void CorruptOAMAddress() => OAMCorruption?.Invoke(this, new OAMCorruptionEventArgs { IsOAMReadOrWrite = false });
+
 
     public Action INC(Register p0) => () =>
     {
@@ -226,6 +232,7 @@ public partial class CPU
         var addr = Registers.HL;
         var value = Read(addr);
         Registers.A = value;
+        if (Registers.HL >> 8 == 0xfe) CorruptOAMAddress();
         Registers.HL++;
         CycleElapsed();
 
@@ -235,6 +242,7 @@ public partial class CPU
         var addr = Registers.HL;
         var value = Read(addr);
         Registers.A = value;
+        if (Registers.HL >> 8 == 0xfe) CorruptOAMAddress();
         Registers.HL--;
         CycleElapsed();
     }
@@ -252,7 +260,7 @@ public partial class CPU
         var wide = Registers.Get(reg);
 
         //We want to corrupt in case a wide register has the top byte set to 0xfe
-        if ((wide >> 8) == 0xfe) CorruptOAM();
+        if ((wide >> 8) == 0xfe) CorruptOAMAddress();
 
         var target = (ushort)(wide - 1);
         Registers.Set(reg, target);
@@ -542,10 +550,13 @@ public partial class CPU
     };
     public Action POP(WideRegister p0) => () =>
     {
+        if ((Registers.SP >> 8) == 0xfe && p0 != WideRegister.AF) CorruptOAMAcess();
         var wide = ReadWide(Registers.SP);
-        if ((wide >> 8) == 0xfe) CorruptOAM();
         Registers.Set(p0, wide);
-        Registers.SP += 2;
+        Registers.SP++;
+        if ((Registers.SP >> 8) == 0xfe && p0 != WideRegister.AF) CorruptOAMAcess();
+        //We should really make this a bit cleaner than it is currently
+        Registers.SP++;
     };
     public Action JP_A16(Flag p0) => () =>
     {
@@ -594,7 +605,6 @@ public partial class CPU
     {
         CycleElapsed();
         var reg = Registers.Get(p0);
-        if ((reg >> 8) == 0xfe) CorruptOAM();
 
         Push(reg);
     };
