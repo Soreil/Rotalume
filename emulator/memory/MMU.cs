@@ -1,6 +1,6 @@
 ﻿namespace emulator;
 
-public sealed class MMU : IDisposable
+public sealed class MMU
 {
     private readonly MBC Card;
     private readonly VRAM VRAM;
@@ -133,8 +133,6 @@ public sealed class MMU : IDisposable
         }
     }
 
-    private bool disposedValue;
-
     private readonly BootRom BootRom;
     private readonly InterruptRegisters InterruptRegisters;
     private readonly Keypad Keypad;
@@ -180,39 +178,8 @@ public sealed class MMU : IDisposable
         DMA = dma;
     }
 
-
     public void Write(ushort at, byte arg) => this[at] = arg;
     public byte Read(ushort at) => this[at];
 
     public byte ExternalBusRAM(ushort at) => at < 0xfe00 ? this[at] : WRAM[at];
-
-    private void Dispose(bool disposing)
-    {
-        if (!disposedValue)
-        {
-            if (disposing)
-            {
-                Card.Dispose();
-                // TODO: dispose managed state (managed objects)
-            }
-
-            // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-            // TODO: set large fields to null
-            disposedValue = true;
-        }
-    }
-
-    // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
-    // ~MMU()
-    // {
-    //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-    //     Dispose(disposing: false);
-    // }
-
-    public void Dispose()
-    {
-        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
-    }
 }

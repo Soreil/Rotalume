@@ -9,14 +9,11 @@ public class Core : IDisposable
 {
     public readonly CPU CPU;
 
-    internal DMAControl DMA { get; }
-
     private readonly APU APU;
-    private readonly PPU PPU;
-    public readonly MMU Memory;
-    private readonly Timers Timers;
-    private readonly InterruptRegisters InterruptRegisters;
     private readonly MasterClock MasterClock;
+    private readonly MBC MBC;
+
+    private bool disposedValue;
 
     private static IHostBuilder CreateHostBuilder(string[] args) =>
     Host.CreateDefaultBuilder(args)
@@ -55,22 +52,25 @@ public class Core : IDisposable
 
         var host = hostBuilder.Start();
 
-        InterruptRegisters = host.Services.GetRequiredService<InterruptRegisters>();
+        var InterruptRegisters = host.Services.GetRequiredService<InterruptRegisters>();
 
         APU = host.Services.GetRequiredService<APU>();
-        PPU = host.Services.GetRequiredService<PPU>();
+        var PPU = host.Services.GetRequiredService<PPU>();
 
-        Timers = host.Services.GetRequiredService<Timers>();
+        var Timers = host.Services.GetRequiredService<Timers>();
 
-        Memory = host.Services.GetRequiredService<MMU>();
+        var Memory = host.Services.GetRequiredService<MMU>();
 
         CPU = host.Services.GetRequiredService<CPU>();
 
-        DMA = host.Services.GetRequiredService<DMAControl>();
+        var DMA = host.Services.GetRequiredService<DMAControl>();
 
         var OAM = host.Services.GetRequiredService<OAM>();
 
         MasterClock = host.Services.GetRequiredService<MasterClock>();
+
+        MBC = host.Services.GetRequiredService<MBC>();
+
 
         CPU.OAMCorruption += (o, e) =>
         {
@@ -138,14 +138,13 @@ public class Core : IDisposable
 
     public long Time() => MasterClock.Now();
 
-    private bool disposedValue;
     protected virtual void Dispose(bool disposing)
     {
         if (!disposedValue)
         {
             if (disposing)
             {
-                Memory.Dispose();
+                MBC.Dispose();
                 // TODO: dispose managed state (managed objects)
             }
 
