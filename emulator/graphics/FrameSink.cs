@@ -1,24 +1,20 @@
 ﻿using System.Diagnostics;
-using System.Runtime.InteropServices;
 
 namespace emulator;
 
 public class FrameSink : IFrameSink
 {
-    private readonly byte[] frameData;
-
-    private readonly Func<IntPtr> Lock;
-    private readonly Action Unlock;
+    private byte[] frameData;
+    private byte[] lastFrame;
 
     private const long timePerFrame = (long)(TimeSpan.TicksPerSecond / (cpu.Constants.Frequency / (double)graphics.Constants.TicksPerFrame));
     private readonly Stopwatch stopWatch = new();
     private readonly Func<bool> LimitFPS;
-    public FrameSink(Func<IntPtr> Lock, Action Unlock, Func<bool> LimitFPS)
+    public FrameSink(Func<bool> LimitFPS)
     {
         frameData = new byte[graphics.Constants.ScreenHeight * graphics.Constants.ScreenWidth];
+        lastFrame = new byte[graphics.Constants.ScreenHeight * graphics.Constants.ScreenWidth];
 
-        this.Lock = Lock;
-        this.Unlock = Unlock;
         this.LimitFPS = LimitFPS;
 
         stopWatch.Start();
@@ -34,6 +30,13 @@ public class FrameSink : IFrameSink
 
     public event EventHandler? FramePushed;
 
+    public byte[] GetFrame()
+    {
+        var buffer = new byte[frameData.Length];
+        lastFrame.CopyTo(buffer, 0);
+        return buffer;
+    }
+
     public void Draw()
     {
         if (LimitFPS())
@@ -45,16 +48,8 @@ public class FrameSink : IFrameSink
         }
         stopWatch.Restart();
 
-        var ptr = Lock();
-        if (ptr != IntPtr.Zero)
-        {
-            unsafe
-            {
-                Marshal.Copy(frameData, 0, ptr, frameData.Length);
-            }
-        }
-        Unlock();
-
+        //Swap current buffer and last buffer
+        (lastFrame, frameData) = (frameData, lastFrame);
         Position = 0;
         OnFramePushed(EventArgs.Empty);
     }

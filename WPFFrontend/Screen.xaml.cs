@@ -8,7 +8,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 
 namespace WPFFrontend;
 
@@ -21,87 +20,29 @@ public partial class Screen : Window
     {
         InitializeComponent();
 
-        bmp = new WriteableBitmap(BitmapWidth, BitmapHeight, 96, 96, PixelFormats.Gray8, null);
-        var whitescreen = new byte[BitmapWidth * BitmapHeight];
-        for (int i = 0; i < whitescreen.Length; i++) whitescreen[i] = 0xff;
-        bmp.WritePixels(new Int32Rect(0, 0, BitmapWidth, BitmapHeight), whitescreen, BitmapWidth, 0);
-        Display.Source = bmp;
+        display = new GameboyScreen(Display);
         RenderOptions.SetBitmapScalingMode(Display, BitmapScalingMode.NearestNeighbor);
 
         FPSDisplayEnable.Checked += (x, y) => FPS.Visibility = Visibility.Visible;
         FPSDisplayEnable.Unchecked += (x, y) => FPS.Visibility = Visibility.Collapsed;
 
-        XboxController.UpdateFrequency = 5;
-        XboxController.StartPolling();
-
-        var Controller1 = new XboxControllerWithInterruptHandler(XboxController.RetrieveController(0));
-        var Controller2 = new XboxControllerWithInterruptHandler(XboxController.RetrieveController(1));
-        var Controller3 = new XboxControllerWithInterruptHandler(XboxController.RetrieveController(2));
-        var Controller4 = new XboxControllerWithInterruptHandler(XboxController.RetrieveController(3));
-
-        Dictionary<Key, JoypadKey> mappedKeys = new()
-        {
-            { Key.X, JoypadKey.A },
-            { Key.LeftShift, JoypadKey.Select },
-            { Key.RightShift, JoypadKey.Select },
-            { Key.Z, JoypadKey.B },
-            { Key.Down, JoypadKey.Down },
-            { Key.Left, JoypadKey.Left },
-            { Key.Right, JoypadKey.Right },
-            { Key.Up, JoypadKey.Up },
-            { Key.Enter, JoypadKey.Start }
-        };
-
-        var UnconnectedKeyboard = new KeyBoardWithInterruptHandler(mappedKeys);
-
-        KeyDown += new KeyEventHandler(UnconnectedKeyboard.Down);
-        KeyUp += new KeyEventHandler(UnconnectedKeyboard.Up);
-
-        var kb = new IGameControllerKeyboardBridge(UnconnectedKeyboard);
-
-        var Controllers = new List<IGameController> { new IGameControllerXboxBridge(Controller1), new IGameControllerXboxBridge(Controller2), new IGameControllerXboxBridge(Controller3), new IGameControllerXboxBridge(Controller4) };
-        InputDevices = new(kb, Controllers);
+        input = new();
         Default.IsChecked = true;
+
+        performance = new();
     }
 
-    private readonly InputDevices InputDevices;
+    private readonly Performance performance;
+    private readonly GameboyScreen display;
+    private readonly Input input;
 
     private volatile bool paused;
     private volatile bool CancelRequested;
     private void Gameboy(string path, bool bootromEnabled)
     {
-        var lockCb = new Func<IntPtr>(Lock);
         var fpsCheckCb = new Func<bool>(FpsLockEnabled);
-        var unlockCb = new Action(Unlock);
 
         byte[]? bootrom = bootromEnabled ? File.ReadAllBytes(@"..\..\..\..\emulator\bootrom\DMG_ROM_BOOT.bin") : null;
-
-        IntPtr LockCB()
-        {
-            if (CancellationTokenSource.IsCancellationRequested) return IntPtr.Zero;
-            try
-            {
-                return Dispatcher.Invoke(lockCb,
-        System.Windows.Threading.DispatcherPriority.Render, CancellationTokenSource.Token);
-            }
-            catch (TaskCanceledException)
-            {
-                return IntPtr.Zero;
-            }
-        }
-
-        void UnlockCB()
-        {
-            try
-            {
-                Dispatcher.Invoke(unlockCb,
-        System.Windows.Threading.DispatcherPriority.Render, CancellationTokenSource.Token);
-            }
-            catch (TaskCanceledException)
-            {
-
-            }
-        }
 
         bool FPSLimiterEnabled()
         {
@@ -116,12 +57,26 @@ public partial class Screen : Window
             }
         }
 
+
+        var framePushedCb = new Action<object?, EventArgs>(display.Fs_FramePushed);
+
+        void FramePushed(object? o, EventArgs e)
+        {
+            _ = Dispatcher.Invoke(framePushedCb,
+               System.Windows.Threading.DispatcherPriority.Render, o, e);
+        }
+
+
+        var fs = new FrameSink(FPSLimiterEnabled);
+
+        fs.FramePushed += FramePushed;
+
         using var gameboy = new Core(
             File.ReadAllBytes(path),
       bootrom,
       Path.GetFileNameWithoutExtension(path),
-      new Keypad(InputDevices),
-      new FrameSink(LockCB, UnlockCB, FPSLimiterEnabled)
+      new Keypad(input.Devices),
+      fs
       );
 
         while (!CancelRequested)
@@ -138,54 +93,7 @@ public partial class Screen : Window
     }
 
     private bool FpsLockEnabled() => FPSLimitEnable.IsChecked;
-    private IntPtr Lock()
-    {
-        bmp.Lock();
-        return bmp.BackBuffer;
-    }
-    private void Unlock()
-    {
-        bmp.AddDirtyRect(new Int32Rect(0, 0, (int)bmp.Width, (int)bmp.Height));
-        bmp.Unlock();
-        AddFrameTimeToQueue();
-        UpdateLabel();
-    }
 
-    private readonly WriteableBitmap bmp;
-
-    private int currentFrame;
-    private void AddFrameTimeToQueue()
-    {
-        FrameTimes[currentFrame++] = DateTime.Now;
-        if (currentFrame == 16)
-        {
-            FrameTime = Delta(15, 14).TotalMilliseconds;
-            AverageFPS();
-            currentFrame = 0;
-        }
-    }
-
-    private readonly DateTime[] FrameTimes = new DateTime[16];
-
-    private double FrameTime;
-    private double GameboyFPS;
-    private void AverageFPS()
-    {
-        TimeSpan deltas = TimeSpan.Zero;
-        for (int i = 1; i < FrameTimes.Length; i++)
-        {
-            deltas += Delta(i, i - 1);
-        }
-
-        GameboyFPS = TimeSpan.FromSeconds(1) / (deltas / (FrameTimes.Length - 1));
-    }
-    private TimeSpan Delta(int i, int j) => FrameTimes[i] - FrameTimes[j];
-
-    private int frameNumber;
-    private void UpdateLabel() => FPS.Content = string.Format("Frame:{0}\t FrameTime:{1:N2}\t FPS:{2:N2}",
-            frameNumber++,
-            FrameTime,
-            GameboyFPS);
 
     private Task? GameThread;
     private void LoadROM(object sender, DragEventArgs e)
@@ -216,9 +124,6 @@ public partial class Screen : Window
     }
 
     private CancellationTokenSource CancellationTokenSource = new();
-    private const int BitmapWidth = 160;
-    private const int BitmapHeight = 144;
-
     private void SpinUpNewGameboy(string fn)
     {
         ShutdownGameboy();
@@ -257,16 +162,7 @@ public partial class Screen : Window
         }
         if (e.Key == Key.S)
         {
-            if (bmp is not null)
-            {
-                string fileName = string.Format(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) +
-      @"\Screenshot" + "_" +
-      DateTime.Now.ToString("(dd_MMMM_hh_mm_ss_tt)") + ".png");
-                using FileStream fs = new(fileName, FileMode.Create);
-                var encoder = new PngBitmapEncoder();
-                encoder.Frames.Add(BitmapFrame.Create(bmp));
-                encoder.Save(fs);
-            }
+            display.SaveScreenShot();
         }
     }
 
@@ -287,7 +183,7 @@ public partial class Screen : Window
     {
         if (sender is null) return;
         var li = (RadioButton)sender;
-        InputDevices.SelectedController = li.Content switch
+        input.Devices.SelectedController = li.Content switch
         {
             "1" => 1,
             "2" => 2,
