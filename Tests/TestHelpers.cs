@@ -13,7 +13,7 @@ public static class TestHelpers
     {
         var bootrom = LoadBootROM();
         var gamerom = LoadGameROM();
-        frameSink ??= new FrameSink(() => IntPtr.Zero, () => { }, () => false);
+        frameSink ??= new FrameSink( () => false);
 
         return new Core(
             gamerom,
@@ -38,7 +38,7 @@ public static class TestHelpers
         }
         else gameromPaddedToSize = gamerom;
 
-        frameSink ??= new FrameSink(() => IntPtr.Zero, () => { }, () => false);
+        frameSink ??= new FrameSink( () => false);
 
         return new Core(gameromPaddedToSize,
             null,
