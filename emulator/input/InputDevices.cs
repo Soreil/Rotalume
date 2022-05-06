@@ -48,5 +48,16 @@ public class InputDevices
         if (SelectedController != 0) mappedControllers[SelectedController - 1].Rumble(leftMotor, rightMotor);
     }
 
-    public bool this[JoypadKey index] => SelectedController != 0 ? mappedControllers[SelectedController - 1][index] || Keyboard[index] : Keyboard[index];
+    public bool this[JoypadKey index]
+    {
+        get
+        {
+            //We consider keyboard to be the controller mapped to index 0, setting the selected controller to 0 is effectively a way to turn off the joypad
+            if (SelectedController != 0)
+            {
+                return mappedControllers[SelectedController - 1][index] || Keyboard[index];
+            }
+            else return Keyboard[index];
+        }
+    }
 }

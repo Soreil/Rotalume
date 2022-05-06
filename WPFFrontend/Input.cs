@@ -44,7 +44,11 @@ public class Input : IDisposable
 
     public readonly InputDevices Devices;
 
-    public int SelectedController;
+    public int SelectedController
+    {
+        get => Devices.SelectedController;
+        set => Devices.SelectedController = value;
+    }
     private bool disposedValue;
 
     private event KeyEventHandler? KeyDown;

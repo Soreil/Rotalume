@@ -15,10 +15,15 @@ internal class GameBoyViewModel : INotifyPropertyChanged, IDisposable
         display = new GameboyScreen(Display);
 
         input = new();
+        System.Windows.Application.Current.MainWindow.KeyUp += input.KeyUpHandler;
+        System.Windows.Application.Current.MainWindow.KeyDown += input.KeyDownHandler;
 
         performance = new();
 
         display.FrameDrawn += Display_FrameDrawn;
+
+        //We want to have one of the controllers selected since controllers are not zero indexed.
+        SelectedController = 1;
     }
 
     private void Display_FrameDrawn(object? sender, EventArgs e)
@@ -53,6 +58,11 @@ internal class GameBoyViewModel : INotifyPropertyChanged, IDisposable
     }
 
     public bool FpsLockEnabled
+    {
+        get;
+        set;
+    }
+    public bool ShowPerformanceData
     {
         get;
         set;
