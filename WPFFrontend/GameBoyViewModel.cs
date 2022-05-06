@@ -80,11 +80,23 @@ internal class GameBoyViewModel : INotifyPropertyChanged, IDisposable
         set;
     }
 
+    public bool UseInterframeBlending
+    {
+        get => display.UseInterFrameBlending;
+        set
+        {
+            if (display.UseInterFrameBlending != value)
+            {
+                display.UseInterFrameBlending = value;
+                OnPropertyChange(nameof(UseInterframeBlending));
+            }
+        }
+    }
+
     public void Pause() => Paused = true;
 
     public void SaveScreenShot() => display.SaveScreenShot();
 
-    public volatile bool CancelRequested;
     private void Gameboy(string path, bool bootromEnabled)
     {
         var fpsCheckCb = new Func<bool>(() => FpsLockEnabled);
@@ -96,7 +108,7 @@ internal class GameBoyViewModel : INotifyPropertyChanged, IDisposable
             try
             {
                 return System.Windows.Application.Current.Dispatcher.Invoke(fpsCheckCb,
-                    System.Windows.Threading.DispatcherPriority.Render, CancellationTokenSource.Token);
+                    System.Windows.Threading.DispatcherPriority.Render, CancelGameboySource.Token);
             }
             catch (TaskCanceledException)
             {
@@ -118,7 +130,7 @@ internal class GameBoyViewModel : INotifyPropertyChanged, IDisposable
             try
             {
                 System.Windows.Application.Current.Dispatcher.Invoke(draw,
-                  System.Windows.Threading.DispatcherPriority.Render, CancellationTokenSource.Token);
+                  System.Windows.Threading.DispatcherPriority.Render, CancelGameboySource.Token);
             }
             catch (TaskCanceledException)
             {
@@ -139,7 +151,7 @@ internal class GameBoyViewModel : INotifyPropertyChanged, IDisposable
       fs
       );
 
-        while (!CancelRequested)
+        while (!CancelGameboySource.IsCancellationRequested)
         {
             gameboy.Step();
             if (Paused)
@@ -154,13 +166,13 @@ internal class GameBoyViewModel : INotifyPropertyChanged, IDisposable
 
     private Task? GameThread;
 
-    private CancellationTokenSource CancellationTokenSource = new();
+    private CancellationTokenSource CancelGameboySource = new();
     private bool disposedValue;
 
     public void SpinUpNewGameboy(string fn)
     {
         ShutdownGameboy();
-        CancellationTokenSource = new();
+        CancelGameboySource = new();
 
         var br = BootRomEnabled;
 
@@ -177,10 +189,8 @@ internal class GameBoyViewModel : INotifyPropertyChanged, IDisposable
     {
         if (GameThread is not null)
         {
-            CancelRequested = true;
-            CancellationTokenSource.Cancel();
+            CancelGameboySource.Cancel();
             GameThread.Wait();
-            CancelRequested = false;
         }
     }
 

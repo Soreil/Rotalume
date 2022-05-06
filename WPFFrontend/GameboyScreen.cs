@@ -13,7 +13,7 @@ public class GameboyScreen
     private const int BitmapHeight = 144;
 
     public readonly WriteableBitmap buffer;
-
+    private byte[]? previousFrame;
     public GameboyScreen(Image image)
     {
         buffer = new WriteableBitmap(BitmapWidth, BitmapHeight, 96, 96, PixelFormats.Gray8, null);
@@ -23,6 +23,8 @@ public class GameboyScreen
         image.Source = buffer;
         RenderOptions.SetBitmapScalingMode(image, BitmapScalingMode.NearestNeighbor);
     }
+
+    public bool UseInterFrameBlending { get; set; }
 
     internal void SaveScreenShot()
     {
@@ -35,18 +37,31 @@ DateTime.Now.ToString("(dd_MMMM_hh_mm_ss_tt)") + ".png");
         encoder.Save(fs);
     }
 
+    private byte[] Blend(byte[] newPixels)
+    {
+        if (previousFrame is null) return newPixels;
+
+        var output = new byte[newPixels.Length];
+        //We want an even blend ratio so we just take the average all all the pixels.
+        for (int i = 0; i < newPixels.Length; i++)
+        {
+            output[i] = (byte)((newPixels[i] + previousFrame[i]) / 2);
+        }
+
+        return output;
+    }
+
     public void Fs_FramePushed(byte[] pixels)
     {
-        WriteOutputFrame(pixels);
+        if (UseInterFrameBlending) WriteOutputFrame(Blend(pixels));
+        else WriteOutputFrame(pixels);
+
+        previousFrame = pixels;
     }
 
     public event EventHandler? FrameDrawn;
 
-    protected virtual void OnFrameDrawn(EventArgs e)
-    {
-        FrameDrawn?.Invoke(this, e);
-    }
-
+    protected virtual void OnFrameDrawn(EventArgs e) => FrameDrawn?.Invoke(this, e);
 
     private void WriteOutputFrame(byte[] pixels)
     {

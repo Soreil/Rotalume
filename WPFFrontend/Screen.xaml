@@ -27,6 +27,7 @@
                 <MenuItem Name="FPSLimitEnable" Header="_Limit FPS" IsCheckable="True" IsChecked="{Binding FpsLockEnabled}"/>
                 <MenuItem Name="BootRomEnable" Header="_Use Bootrom" IsCheckable="True" IsChecked="{Binding BootRomEnabled}"/>
                 <MenuItem Name="FPSDisplayEnable" Header="_Show Performance Metrics" IsCheckable="True" IsChecked="{Binding ShowPerformanceData}"/>
+                <MenuItem Name="FrameBlendingEnable" Header="_Use Frame Blending" IsCheckable="True" IsChecked="{Binding UseInterframeBlending}"/>
             </MenuItem>
             
             <MenuItem Header="_Controller">
