@@ -9,8 +9,8 @@ namespace WPFFrontend;
 
 public class GameboyScreen
 {
-    const int BitmapWidth = 160;
-    const int BitmapHeight = 144;
+    private const int BitmapWidth = 160;
+    private const int BitmapHeight = 144;
 
     public readonly WriteableBitmap buffer;
 
@@ -21,6 +21,7 @@ public class GameboyScreen
         for (int i = 0; i < whitescreen.Length; i++) whitescreen[i] = 0xff;
         buffer.WritePixels(new Int32Rect(0, 0, BitmapWidth, BitmapHeight), whitescreen, BitmapWidth, 0);
         image.Source = buffer;
+        RenderOptions.SetBitmapScalingMode(image, BitmapScalingMode.NearestNeighbor);
     }
 
     internal void SaveScreenShot()
@@ -34,19 +35,18 @@ DateTime.Now.ToString("(dd_MMMM_hh_mm_ss_tt)") + ".png");
         encoder.Save(fs);
     }
 
-    public void Fs_FramePushed(object? sender, EventArgs e)
+    public void Fs_FramePushed(byte[] pixels)
     {
-        if (sender is null) throw new Exception();
-
-        var frameSink = (emulator.FrameSink)sender;
-
-        if (frameSink is null) throw new Exception();
-
-        var pixels = frameSink.GetFrame();
-
         WriteOutputFrame(pixels);
-
     }
+
+    public event EventHandler? FrameDrawn;
+
+    protected virtual void OnFrameDrawn(EventArgs e)
+    {
+        FrameDrawn?.Invoke(this, e);
+    }
+
 
     private void WriteOutputFrame(byte[] pixels)
     {
@@ -71,5 +71,6 @@ DateTime.Now.ToString("(dd_MMMM_hh_mm_ss_tt)") + ".png");
             // Release the back buffer and make it available for display.
             buffer.Unlock();
         }
+        OnFrameDrawn(EventArgs.Empty);
     }
 }

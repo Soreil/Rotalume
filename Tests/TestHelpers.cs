@@ -23,10 +23,7 @@ public static class TestHelpers
             frameSink);
     }
 
-    public static Core NewCore(byte[] gamerom, IFrameSink? frameSink = null)
-    {
-        return NewCore(gamerom, "", frameSink);
-    }
+    public static Core NewCore(byte[] gamerom, IFrameSink? frameSink = null) => NewCore(gamerom, "", frameSink);
 
     public static Core NewCore(byte[] gamerom, string fileName, IFrameSink? frameSink = null)
     {

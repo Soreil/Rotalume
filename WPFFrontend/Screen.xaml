@@ -4,7 +4,9 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Rotalume" SizeToContent="WidthAndHeight" KeyDown="Window_KeyDown">
+        Title="Rotalume" SizeToContent="WidthAndHeight" KeyDown="Window_KeyDown"
+        >
+    
     <Window.CommandBindings>
         <CommandBinding Command="ApplicationCommands.Open"
                         Executed="LoadROMPopUp"
@@ -13,17 +15,20 @@
                         Executed="CloseGameboyRequest"
                         CanExecute="CommandBinding_CanExecute"/>
     </Window.CommandBindings>
+    
     <StackPanel AllowDrop="True" Drop="LoadROM">
         <Menu>
             <MenuItem Header="_File">
                 <MenuItem Header="_Open" InputGestureText="Ctrl+O" Command="ApplicationCommands.Open"/>
                 <MenuItem Header="_Stop" Command="MediaCommands.Stop"/>
             </MenuItem>
+            
             <MenuItem Header="_Options">
                 <MenuItem Name="FPSLimitEnable" Header="_Limit FPS" IsCheckable="True" IsChecked="True"/>
                 <MenuItem Name="BootRomEnable" Header="_Use Bootrom" IsCheckable="True" IsChecked="False"/>
                 <MenuItem Name="FPSDisplayEnable" Header="_Show Performance Metrics" IsCheckable="True" IsChecked="False"/>
             </MenuItem>
+            
             <MenuItem Header="_Controller">
                 <MenuItem>
                     <MenuItem.Header>
@@ -37,7 +42,22 @@
                 </MenuItem>
             </MenuItem>
         </Menu>
-        <Label Name="FPS" Content="" Visibility="Collapsed"  Padding="0,0,0,4"/>
+
+        <Label Name="FPS" Content="{Binding PerformanceStatus, UpdateSourceTrigger=PropertyChanged}" Padding="0,0,0,4">
+            <Label.Style>
+                <Style TargetType="Label">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsChecked,ElementName=FPSDisplayEnable}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsChecked,ElementName=FPSDisplayEnable}" Value="False">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Label.Style>
+        </Label>
+
         <Image Name="Display" Height="576" Width="640"/>
     </StackPanel>
 </Window>

@@ -1,11 +1,9 @@
-﻿using System.Windows.Controls;
-
-namespace WPFFrontend;
+﻿namespace WPFFrontend;
 
 public class Performance
 {
     private int currentFrame;
-    public void AddFrameTimeToQueue()
+    private void AddFrameTimeToQueue()
     {
         FrameTimes[currentFrame++] = DateTime.Now;
         if (currentFrame == 16)
@@ -33,8 +31,15 @@ public class Performance
     private TimeSpan Delta(int i, int j) => FrameTimes[i] - FrameTimes[j];
 
     private int frameNumber;
-    public void UpdateLabel(Label fps) => fps.Content = string.Format("Frame:{0}\t FrameTime:{1:N2}\t FPS:{2:N2}",
-            frameNumber++,
-            FrameTime,
-            GameboyFPS);
+    public string Update()
+    {
+        AddFrameTimeToQueue();
+
+        return string.Format("Frame:{0}\t FrameTime:{1:N2}\t FPS:{2:N2}",
+             frameNumber++,
+             FrameTime,
+             GameboyFPS);
+    }
+
+    public string Label = "";
 }
