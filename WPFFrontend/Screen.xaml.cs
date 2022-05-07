@@ -3,6 +3,8 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace WPFFrontend;
 
@@ -12,11 +14,17 @@ namespace WPFFrontend;
 public partial class Screen : Window
 {
     private readonly GameBoyViewModel viewModel;
-    public Screen()
+
+    private const int BitmapWidth = 160;
+    private const int BitmapHeight = 144;
+    public Screen(GameBoyViewModel vm)
     {
         InitializeComponent();
-        viewModel = new GameBoyViewModel(Display);
-        DataContext = viewModel;
+
+        Display.Source = new WriteableBitmap(BitmapWidth, BitmapHeight, 96, 96, PixelFormats.Gray8, null);
+        RenderOptions.SetBitmapScalingMode(Display, BitmapScalingMode.NearestNeighbor);
+
+        viewModel = vm;
     }
 
     private void LoadROM(object sender, DragEventArgs e)

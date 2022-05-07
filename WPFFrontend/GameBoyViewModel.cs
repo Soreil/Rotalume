@@ -5,20 +5,18 @@ using System.IO;
 
 namespace WPFFrontend;
 
-internal class GameBoyViewModel : INotifyPropertyChanged, IDisposable
+public class GameBoyViewModel : INotifyPropertyChanged, IDisposable
 {
     private readonly Performance performance;
     private readonly GameboyScreen display;
     private readonly Input input;
-    public GameBoyViewModel(System.Windows.Controls.Image Display)
+    public GameBoyViewModel(GameboyScreen gameboyScreen, Input input, Performance performance)
     {
-        display = new GameboyScreen(Display);
+        display = gameboyScreen;
 
-        input = new();
-        System.Windows.Application.Current.MainWindow.KeyUp += input.KeyUpHandler;
-        System.Windows.Application.Current.MainWindow.KeyDown += input.KeyDownHandler;
+        this.input = input;
 
-        performance = new();
+        this.performance = performance;
 
         display.FrameDrawn += Display_FrameDrawn;
 
@@ -26,9 +24,21 @@ internal class GameBoyViewModel : INotifyPropertyChanged, IDisposable
         SelectedController = 1;
     }
 
+    private byte[]? image;
+    public byte[] DisplayFrame
+    {
+        get => image!;
+        set
+        {
+            image = value;
+            OnPropertyChange(nameof(DisplayFrame));
+        }
+    }
+
     private void Display_FrameDrawn(object? sender, EventArgs e)
     {
         PerformanceStatus = performance.Update();
+        DisplayFrame = display.output;
     }
 
     public string PerformanceStatus
