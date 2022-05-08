@@ -58,9 +58,7 @@ DateTime.Now.ToString("(dd_MMMM_hh_mm_ss_tt)") + ".png");
 
         var encoder = new PngBitmapEncoder();
 
-        using Stream stream = new MemoryStream(currentFrame);
-
-        encoder.Frames.Add(BitmapFrame.Create(stream));
+        encoder.Frames.Add(BitmapFrame.Create(output));
         encoder.Save(fs);
     }
 

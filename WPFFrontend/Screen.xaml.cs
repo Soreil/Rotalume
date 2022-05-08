@@ -43,17 +43,7 @@ public partial class Screen : Window
         ((GameBoyViewModel)this.DataContext).SpinUpNewGameboy(ofd.FileName);
     }
     private void CloseGameboyRequest(object sender, RoutedEventArgs e) => ((GameBoyViewModel)this.DataContext).ShutdownGameboy();
-    private void Window_KeyDown(object sender, KeyEventArgs e)
-    {
-        if (e.Key == Key.P)
-        {
-            ((GameBoyViewModel)this.DataContext).Pause();
-        }
-        if (e.Key == Key.S)
-        {
-            ((GameBoyViewModel)this.DataContext).SaveScreenShot();
-        }
-    }
+
     private void CommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e) => e.CanExecute = true;
     private void RadioButton_Checked(object sender, RoutedEventArgs e)
     {

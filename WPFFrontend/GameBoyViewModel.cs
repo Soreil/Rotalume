@@ -2,24 +2,36 @@
 
 using System.ComponentModel;
 using System.IO;
+using System.Windows.Input;
 using System.Windows.Media.Imaging;
 
 namespace WPFFrontend;
 
 public class GameBoyViewModel : INotifyPropertyChanged, IDisposable
 {
-    private readonly Performance performance;
-    private readonly GameboyScreen display;
+    private readonly Performance Performance;
+    private readonly GameboyScreen Screen;
     private readonly Input input;
-    public GameBoyViewModel(GameboyScreen gameboyScreen, Input input, Performance performance)
+    private readonly Model Model;
+
+    public ICommand ScreenShotCommand { get; }
+    public ICommand PauseCommand { get; }
+
+    public GameBoyViewModel(GameboyScreen gameboyScreen, Input input, Performance performance, ScreenShotCommand screenShotCommand, PauseCommand pauseCommand, Model model)
     {
-        display = gameboyScreen;
+        Screen = gameboyScreen;
 
         this.input = input;
 
-        this.performance = performance;
+        this.Performance = performance;
 
-        display.FrameDrawn += Display_FrameDrawn;
+        ScreenShotCommand = screenShotCommand;
+
+        PauseCommand = pauseCommand;
+
+        Model = model;
+
+        Screen.FrameDrawn += Display_FrameDrawn;
 
         //We want to have one of the controllers selected since controllers are not zero indexed.
         SelectedController = 1;
@@ -38,18 +50,18 @@ public class GameBoyViewModel : INotifyPropertyChanged, IDisposable
 
     private void Display_FrameDrawn(object? sender, EventArgs e)
     {
-        PerformanceStatus = performance.Update();
-        DisplayFrame = display.output;
+        PerformanceStatus = Performance.Update();
+        DisplayFrame = Screen.output;
     }
 
     public string PerformanceStatus
     {
-        get => performance.Label;
+        get => Performance.Label;
         set
         {
-            if (performance.Label != value)
+            if (Performance.Label != value)
             {
-                performance.Label = value;
+                Performance.Label = value;
                 OnPropertyChange(nameof(PerformanceStatus));
             }
         }
@@ -85,28 +97,18 @@ public class GameBoyViewModel : INotifyPropertyChanged, IDisposable
         set;
     }
 
-    public bool Paused
-    {
-        get;
-        set;
-    }
-
     public bool UseInterframeBlending
     {
-        get => display.UseInterFrameBlending;
+        get => Screen.UseInterFrameBlending;
         set
         {
-            if (display.UseInterFrameBlending != value)
+            if (Screen.UseInterFrameBlending != value)
             {
-                display.UseInterFrameBlending = value;
+                Screen.UseInterFrameBlending = value;
                 OnPropertyChange(nameof(UseInterframeBlending));
             }
         }
     }
-
-    public void Pause() => Paused = true;
-
-    public void SaveScreenShot() => display.SaveScreenShot();
 
     private void Gameboy(string path, bool bootromEnabled)
     {
@@ -136,7 +138,7 @@ public class GameBoyViewModel : INotifyPropertyChanged, IDisposable
             var frame = pixels.GetFrame();
 
 
-            var draw = new Action(() => display.Fs_FramePushed(frame));
+            var draw = new Action(() => Screen.Fs_FramePushed(frame));
 
             try
             {
@@ -165,9 +167,9 @@ public class GameBoyViewModel : INotifyPropertyChanged, IDisposable
         while (!CancelGameboySource.IsCancellationRequested)
         {
             gameboy.Step();
-            if (Paused)
+            if (Model.Paused)
             {
-                while (Paused)
+                while (Model.Paused)
                 {
                     Thread.Sleep(10);
                 }

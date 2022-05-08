@@ -17,7 +17,11 @@ Host.CreateDefaultBuilder(args)
     AddSingleton<GameBoyViewModel>().
     AddSingleton<GameboyScreen>().
     AddSingleton<Performance>().
-    AddSingleton<Input>()
+    AddSingleton<Input>().
+    AddSingleton<ScreenShotCommand>().
+    AddSingleton<PauseCommand>().
+    AddSingleton<Model>()
+
     );
 
     private readonly IHost host;

@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:wpffrontend="clr-namespace:WPFFrontend" d:DataContext="{d:DesignInstance Type=wpffrontend:GameBoyViewModel}"
         mc:Ignorable="d"
-        Title="Rotalume" SizeToContent="WidthAndHeight" KeyDown="Window_KeyDown"
+        Title="Rotalume" SizeToContent="WidthAndHeight"
         >
 
     <Window.CommandBindings>
@@ -15,6 +15,11 @@
                         Executed="CloseGameboyRequest"
                         CanExecute="CommandBinding_CanExecute"/>
     </Window.CommandBindings>
+
+    <Window.InputBindings>
+        <KeyBinding Key="S" Command="{Binding ScreenShotCommand}"/>
+        <KeyBinding Key="P" Command="{Binding PauseCommand}"/>
+    </Window.InputBindings>
 
     <StackPanel AllowDrop="True" Drop="LoadROM">
         <Menu>
