@@ -11,13 +11,9 @@ namespace WPFFrontend;
 /// </summary>
 public partial class Screen : Window
 {
-    private readonly GameBoyViewModel viewModel;
-
-    public Screen(GameBoyViewModel vm)
+    public Screen()
     {
         InitializeComponent();
-
-        viewModel = vm;
     }
 
     private void LoadROM(object sender, DragEventArgs e)
@@ -30,7 +26,7 @@ public partial class Screen : Window
             //Check that the file isn't a folder
             if (fileNames is not null && fileNames.Length == 1 && File.Exists(fileNames[0]))
             {
-                viewModel.SpinUpNewGameboy(fileNames[0]);
+                ((GameBoyViewModel)this.DataContext).SpinUpNewGameboy(fileNames[0]);
             }
         }
 
@@ -44,18 +40,18 @@ public partial class Screen : Window
             return;
         }
 
-        viewModel.SpinUpNewGameboy(ofd.FileName);
+        ((GameBoyViewModel)this.DataContext).SpinUpNewGameboy(ofd.FileName);
     }
-    private void CloseGameboyRequest(object sender, RoutedEventArgs e) => viewModel.ShutdownGameboy();
+    private void CloseGameboyRequest(object sender, RoutedEventArgs e) => ((GameBoyViewModel)this.DataContext).ShutdownGameboy();
     private void Window_KeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.P)
         {
-            viewModel.Pause();
+            ((GameBoyViewModel)this.DataContext).Pause();
         }
         if (e.Key == Key.S)
         {
-            viewModel.SaveScreenShot();
+            ((GameBoyViewModel)this.DataContext).SaveScreenShot();
         }
     }
     private void CommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e) => e.CanExecute = true;
@@ -63,7 +59,7 @@ public partial class Screen : Window
     {
         if (sender is null) return;
         var li = (RadioButton)sender;
-        viewModel.SelectedController = li.Content switch
+        ((GameBoyViewModel)this.DataContext).SelectedController = li.Content switch
         {
             "1" => 1,
             "2" => 2,
@@ -74,7 +70,7 @@ public partial class Screen : Window
     }
     protected override void OnClosing(CancelEventArgs e)
     {
-        viewModel.Dispose();
+        ((GameBoyViewModel)this.DataContext).Dispose();
 
         //This should be triggered by the thread shutting down but it gets stuck calling back in to this thread
         //via the dispatcher before it even has a chance to acknowledge cancelrequested often.

@@ -31,7 +31,7 @@ Host.CreateDefaultBuilder(args)
     {
         var vm = host.Services.GetRequiredService<GameBoyViewModel>();
 
-        var mainWindow = new Screen(vm) { DataContext = vm };
+        var mainWindow = new Screen() { DataContext = vm };
 
         var input = host.Services.GetRequiredService<Input>();
         KeyboardViewModelBridge.Connect(input, mainWindow);
