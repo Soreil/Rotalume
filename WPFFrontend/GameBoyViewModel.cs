@@ -2,6 +2,7 @@
 
 using System.ComponentModel;
 using System.IO;
+using System.Windows.Media.Imaging;
 
 namespace WPFFrontend;
 
@@ -24,8 +25,8 @@ public class GameBoyViewModel : INotifyPropertyChanged, IDisposable
         SelectedController = 1;
     }
 
-    private byte[]? image;
-    public byte[] DisplayFrame
+    private BitmapSource? image;
+    public BitmapSource DisplayFrame
     {
         get => image!;
         set

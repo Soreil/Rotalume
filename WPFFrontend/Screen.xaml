@@ -59,6 +59,6 @@
             </Label.Style>
         </Label>
 
-        <Image Name="Display" Height="576" Width="640" Source="{Binding DisplayFrame}"/>
+        <Image Name="Display" Height="576" Width="640" Source="{Binding DisplayFrame, UpdateSourceTrigger=PropertyChanged}" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
     </StackPanel>
 </Window>
