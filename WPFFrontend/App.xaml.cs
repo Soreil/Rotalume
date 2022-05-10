@@ -20,7 +20,10 @@ Host.CreateDefaultBuilder(args)
     AddSingleton<Input>().
     AddSingleton<ScreenShotCommand>().
     AddSingleton<PauseCommand>().
-    AddSingleton<Model>()
+    AddSingleton<Model>().
+    AddSingleton<PopUpCommand>().
+    AddSingleton<StopCommand>().
+    AddSingleton<ControllerIDConverter>()
 
     );
 
@@ -34,8 +37,9 @@ Host.CreateDefaultBuilder(args)
     private void OnStartup(object sender, StartupEventArgs e)
     {
         var vm = host.Services.GetRequiredService<GameBoyViewModel>();
+        var model = host.Services.GetRequiredService<Model>();
 
-        var mainWindow = new Screen() { DataContext = vm };
+        var mainWindow = new Screen(model) { DataContext = vm };
 
         var input = host.Services.GetRequiredService<Input>();
         KeyboardViewModelBridge.Connect(input, mainWindow);

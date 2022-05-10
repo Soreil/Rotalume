@@ -37,4 +37,8 @@
 		</ApplicationDefinition>
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Page Include="App.xaml" />
+	</ItemGroup>
+
 </Project>
