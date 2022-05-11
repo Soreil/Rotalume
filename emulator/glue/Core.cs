@@ -12,6 +12,9 @@ public class Core : IDisposable
     private readonly APU APU;
     private readonly MasterClock MasterClock;
     private readonly MBC MBC;
+
+    public Samples Samples { get; }
+
     public readonly MMU Memory;
 
     private bool disposedValue;
@@ -31,7 +34,8 @@ public class Core : IDisposable
         AddSingleton<CPU>().
         AddSingleton<DMARegister>().
         AddSingleton<DMAControl>().
-        AddSingleton<MasterClock>()
+        AddSingleton<MasterClock>().
+        AddSingleton<Samples>()
         );
 
     public Core(byte[] gameROM, byte[]? bootROM, string fileName, Keypad Keypad, IFrameSink frameSink)
@@ -72,6 +76,7 @@ public class Core : IDisposable
 
         MBC = host.Services.GetRequiredService<MBC>();
 
+        Samples = host.Services.GetRequiredService<Samples>();
 
         CPU.OAMCorruption += (o, e) =>
         {
@@ -130,12 +135,11 @@ public class Core : IDisposable
         CPU.Cycle += APU.Tick;
         CPU.Cycle += DMA.DMA;
         CPU.Cycle += MasterClock.Tick;
+
+        CPU.Cycle += Samples.Sample;
     }
 
     public void Step() => CPU.Step();
-
-    public (short left, short right) Sample() => APU.Sample();
-    public (short left, short right) SampleChannel1() => APU.SampleChannel1();
 
     public long Time() => MasterClock.Now();
 

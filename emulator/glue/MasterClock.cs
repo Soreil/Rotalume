@@ -1,6 +1,6 @@
 ﻿namespace emulator;
 
-internal class MasterClock
+public class MasterClock
 {
     private long clock;
     public void Tick(object? o, EventArgs e)

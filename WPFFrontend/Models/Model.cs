@@ -4,11 +4,12 @@ using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
 
+using WPFFrontend.Audio;
+
 namespace WPFFrontend;
 
 public class Model : INotifyPropertyChanged
 {
-
     public Model(GameboyScreen gameboyScreen,
         Input input,
         Performance performance
@@ -61,6 +62,7 @@ public class Model : INotifyPropertyChanged
     public GameboyScreen GameboyScreen { get; }
     public Input Input { get; }
     public Performance Performance { get; }
+    public Player? Player { get; set; }
 
     private void Gameboy(string path, bool bootromEnabled)
     {
@@ -80,7 +82,6 @@ public class Model : INotifyPropertyChanged
                 return false;
             }
         }
-
 
         void FramePushed(object? o, EventArgs e)
         {
@@ -116,6 +117,9 @@ public class Model : INotifyPropertyChanged
       fs
       );
 
+        Player player = new Player(gameboy.Samples);
+        player.Play();
+
         while (!CancelGameboySource.IsCancellationRequested)
         {
             gameboy.Step();
@@ -127,9 +131,11 @@ public class Model : INotifyPropertyChanged
                 }
             }
         }
+        player.Stop();
     }
 
     private Task? GameThread;
+
 
     private CancellationTokenSource CancelGameboySource = new();
     private bool disposedValue;
@@ -178,8 +184,6 @@ public class Model : INotifyPropertyChanged
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
     }
-
-
 
     protected void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
