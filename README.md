@@ -1,9 +1,9 @@
 # Rotalume
 
 This is supposed to become a somewhat accurate gameboy emulator targeting the original Dot Matrix Game hardware. The emulator can currently play a bunch of games.
-To run the emulator one can simply run ```dotnet run -p .\emulator.csproj``` in the emulator subfolder. If performance is wanting add the ```-c Release ``` flag.
+To run the emulator one can simply run ```dotnet run``` in the WPFFrontend folder. If performance is wanting add the ```-c Release ``` flag.
 
-This project is using WPF and .NET 6 with C# 10.
+This project is using WPF for the graphical front end and .NET 6 with C# 10 for the emulator core.
 
 Savegames:
 Savegames are written to ```%appdata%\rotalume```, the savefile name is based on the internal name in the game ROM.
@@ -14,7 +14,6 @@ Controller support:
 - Rumble is supported for games which have a rumble motor in the cartridge.
 
 Missing major features:
-- Sound
 - Serial (no multiplayer)
 
 Test coverage:
@@ -28,10 +27,13 @@ Test coverage:
 - ax6 rtc3test: Basic tests and accuracy tests working. No support yet for reading back minutes and seconds above 60 and hours above 24
 - dmg-acid2
 - Runs Pokemon Red
-- Runs Pokemon Silver
+- Runs Pokemon Silver (buggy sound)
+- Runs Pokemon Pinball (full sound)
 
 Bugs:
 - Sprite conflicts are not handled correctly, sometimes this will result in a sprite not being drawn if it collides with another sprite
+- Sound is not properly synchronized to the video yet, over time there will be increasing delay on the sound
 
 Planned:
 - BESS (Best Effort Save State) format support
+- Extremely basic serial support for some emulated peripherals like the game boy printer
