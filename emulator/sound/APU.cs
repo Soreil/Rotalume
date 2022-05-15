@@ -254,8 +254,23 @@ public class APU
         SoundClock++;
     }
 
+    private double capacitorLeft;
+    private double capacitorRight;
+
+    private (double, double) HighPass(double left, double right)
+    {
+        var outputLeft = left - capacitorLeft;
+        capacitorLeft = left - outputLeft * Math.Pow(0.999958, 64);
+
+        var outputRight = right - capacitorRight;
+        capacitorRight = right - outputRight * Math.Pow(0.999958, 64);
+
+        return (outputLeft, outputRight);
+    }
     public (short left, short right) Sample()
     {
+        if (!ToneSweep.IsOn() && !Tone.IsOn() && !Wave.IsOn() && !Noise.IsOn()) return (0, 0);
+
         double volumeLeft = 0;
         double volumeRight = 0;
 
@@ -297,34 +312,11 @@ public class APU
         volumeLeft *= 128;
         volumeRight *= 128;
 
-        return ((short)volumeLeft, (short)volumeRight);
-    }
+        var asFloatLeft = volumeLeft / (1 << 15);
+        var asFloatRight = volumeRight / (1 << 15);
+        (var left, var right) = HighPass(asFloatLeft, asFloatRight);
 
-    public (short left, short right) SampleChannel1()
-    {
-        double volumeLeft = 0;
-        double volumeRight = 0;
-
-        if (ToneSweep.IsOn())
-        {
-            var sample = ToneSweep.DACOn() ? (short)(ToneSweep.Sample() - 7.5) : 0;
-            if (Sound1LeftOn) volumeLeft += sample;
-            if (Sound1RightOn) volumeRight += sample;
-        }
-        if (OutputToLeftTerminal)
-        {
-            volumeLeft *= (short)(OutputVolumeLeft + 1);
-        }
-        if (OutputToRightTerminal)
-        {
-            volumeRight *= (short)(OutputVolumeRight + 1);
-        }
-
-        //map to 16 bit space
-        volumeLeft *= 512;
-        volumeRight *= 512;
-
-        return ((short)volumeLeft, (short)volumeRight);
+        return ((short)(left * (1 << 15)), (short)(right * (1 << 15)));
     }
 
     public byte this[Address index]
@@ -392,6 +384,8 @@ public class APU
             //We want to allow writes to the length counters
             //As well as the wave table, even when the APU is off
             if (MasterSoundDisable && UnwriteableDuringPowerOff(index)) return;
+
+            //Logger.LogInformation($@"Time:{DateTime.Now:ss.ffff} 		CYC:{SoundClock}			 addr:{index}		{value}");
 
             Action<byte> f = index switch
             {

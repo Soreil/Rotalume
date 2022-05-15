@@ -14,8 +14,8 @@ public class PPU
         STATInterrupt += interruptRegisters.EnableLCDSTATInterrupt;
     }
 
-    public readonly OAM OAM;
-    public readonly VRAM VRAM;
+    private readonly OAM OAM;
+    private readonly VRAM VRAM;
 
 
     //FF40 - FF4B, PPU control registers
@@ -29,7 +29,7 @@ public class PPU
             _LCDC = value;
             if (ScreenJustTurnedOn)
             {
-                Renderer = new Renderer(this, Writer, Clock - 4); //We want a new renderer so all the internal state resets including clocking
+                Renderer = new Renderer(this, OAM, VRAM, Writer, Clock - 4); //We want a new renderer so all the internal state resets including clocking
             }
             else if ((!LCDEnable) && Renderer is not null)
             {

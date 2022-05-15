@@ -3,15 +3,19 @@
 public class Renderer
 {
     private readonly PPU PPU;
+    private readonly OAM OAM;
+    private readonly VRAM VRAM;
     public long TimeUntilWhichToPause;
     private readonly IFrameSink fs;
     private bool SkippingLYIncrementBecauseStartingLineOne = true;
-    public Renderer(PPU ppu, IFrameSink destination, long offset)
+    public Renderer(PPU ppu, OAM oam, VRAM vram, IFrameSink destination, long offset)
     {
         fs = destination;
         PPU = ppu;
+        OAM = oam;
+        VRAM = vram;
         ppu.Mode = Mode.OAMSearch;
-        fetcher = new PixelFetcher(PPU);
+        fetcher = new PixelFetcher(PPU,VRAM,OAM);
         TimeUntilWhichToPause += offset;
     }
 
@@ -31,24 +35,24 @@ public class Renderer
 
             if (PPU.Mode == Mode.OAMSearch)
             {
-                PPU.OAM.Locked = true;
-                PPU.VRAM.Locked = false;
+                OAM.Locked = true;
+                VRAM.Locked = false;
             }
             else if (PPU.Mode == Mode.Transfer)
             {
-                PPU.OAM.Locked = true;
-                PPU.VRAM.Locked = true;
+                OAM.Locked = true;
+                VRAM.Locked = true;
             }
 
             else if (PPU.Mode == Mode.HBlank)
             {
-                PPU.OAM.Locked = false;
-                PPU.VRAM.Locked = false;
+                OAM.Locked = false;
+                VRAM.Locked = false;
             }
             else
             {
-                PPU.OAM.Locked = false;
-                PPU.VRAM.Locked = false;
+                OAM.Locked = false;
+                VRAM.Locked = false;
 
                 //According to TCAGBD the OAM flag is also triggering on this
                 if (PPU.Enable_VBlankInterrupt || PPU.Enable_OAM_Interrupt)

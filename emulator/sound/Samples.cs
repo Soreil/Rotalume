@@ -1,8 +1,6 @@
-﻿using emulator.sound;
+﻿using System.Runtime.InteropServices;
 
-using System.Runtime.InteropServices;
-
-namespace emulator;
+namespace emulator.sound;
 
 public class Samples
 {
@@ -18,9 +16,10 @@ public class Samples
 
     public List<short> Buffer;
 
-    private const int SamplePeriod = 64;
+    public const int SamplePeriod = 64;
+    private const int SamplesPerSecond = cpu.Constants.Frequency / SamplePeriod;
 
-    const int SamplesPerSecond = cpu.Constants.Frequency / SamplePeriod;
+    private double sampleRatePerformanceScaler = 1;
 
     public void Sample(object? sender, EventArgs e)
     {
@@ -44,10 +43,27 @@ public class Samples
             return sampleCount;
         }
 
+        //We are starving
+        if (Buffer.Count < sampleCount)
+        {
+            sampleRatePerformanceScaler *= 0.999;
+        }
+        //We have way too many samples
+        else if (Buffer.Count > sampleCount * 3)
+        {
+            sampleRatePerformanceScaler *= 1.001;
+        }
+        else
+        {
+            var sampleRateOffset = sampleRatePerformanceScaler - 1.0;
+            sampleRatePerformanceScaler = 1.0 + (sampleRateOffset * 0.5);
+        }
+
+
         //There is likely a missmatch, for example if we are sampling at 65k in the emulator
         //but 44100 is expected as output we will have about 1.48x times as much samples as
         //need to be put in to the output buffer
-        var SampleRatio = SamplesPerSecond / (double)sampleRate;
+        var SampleRatio = SamplesPerSecond / (double)sampleRate * sampleRatePerformanceScaler;
         //SamplesNeeded is how many samples we are actually being asked to deliver
         var SamplesNeeded = sampleCount * SampleRatio;
 

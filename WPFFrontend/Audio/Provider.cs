@@ -1,11 +1,11 @@
-﻿using emulator;
+﻿using emulator.sound;
 
 using NAudio.Wave;
 
 namespace WPFFrontend.Audio;
 internal class Provider : WaveProvider16
 {
-    public Provider(int SampleRate, emulator.Samples samples) : base(SampleRate, 2)
+    public Provider(int SampleRate, Samples samples) : base(SampleRate, 2)
     {
         this.SampleRate = SampleRate;
         Samples = samples;

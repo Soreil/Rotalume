@@ -73,12 +73,19 @@ public partial class CPU
 
     private ushort ReadWide(ushort at)
     {
-        Span<byte> buf = stackalloc byte[2];
-        buf[0] = Memory[at];
+        var tophalf = Memory[at];
         CycleElapsed();
-        buf[1] = Memory[(ushort)(at + 1)];
+        var bottomHalf = Memory[(ushort)(at + 1)];
         CycleElapsed();
-        return BitConverter.ToUInt16(buf);
+
+        return (ushort)((bottomHalf << 8) | tophalf);
+
+        //Span<byte> buf = stackalloc byte[2];
+        //buf[0] = Memory[at];
+        //CycleElapsed();
+        //buf[1] = Memory[(ushort)(at + 1)];
+        //CycleElapsed();
+        //return BitConverter.ToUInt16(buf);
     }
     private void Write(ushort at, ushort arg)
     {
