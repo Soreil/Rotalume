@@ -46,17 +46,17 @@ public class Samples
         //We are starving
         if (Buffer.Count < sampleCount)
         {
-            sampleRatePerformanceScaler *= 0.999;
+            sampleRatePerformanceScaler *= 0.9999;
         }
         //We have way too many samples
         else if (Buffer.Count > sampleCount * 3)
         {
-            sampleRatePerformanceScaler *= 1.001;
+            sampleRatePerformanceScaler *= 1.0001;
         }
         else
         {
             var sampleRateOffset = sampleRatePerformanceScaler - 1.0;
-            sampleRatePerformanceScaler = 1.0 + (sampleRateOffset * 0.5);
+            sampleRatePerformanceScaler = 1.0 + (sampleRateOffset * 0.9);
         }
 
 
