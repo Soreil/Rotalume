@@ -13,6 +13,7 @@ public class Samples
 
     public MasterClock MasterClock { get; }
     public APU APU { get; }
+    public int SampleRate => SamplesPerSecond;
 
     public List<short> Buffer;
 

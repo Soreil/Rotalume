@@ -130,8 +130,8 @@ public class PPU
         set => STAT = (byte)(STAT & 0xFC | (int)value & 0x3);
     }
 
-    public event EventHandler? STATInterrupt;
-    public event EventHandler? VBlankInterrupt;
+    private event EventHandler? STATInterrupt;
+    private event EventHandler? VBlankInterrupt;
 
     public void OnSTATInterrupt() => STATInterrupt?.Invoke(this, EventArgs.Empty);
     public void OnVBlankInterrupt() => VBlankInterrupt?.Invoke(this, EventArgs.Empty);
@@ -151,7 +151,7 @@ public class PPU
         }
     }
 
-    public Renderer? Renderer;
+    private Renderer? Renderer;
     public void Tick(object? o, EventArgs e)
     {
         Clock++;
