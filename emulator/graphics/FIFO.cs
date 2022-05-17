@@ -2,7 +2,7 @@
 
 public class FIFO<T>
 {
-    //Whether or not the FIFO actually holds 16 or 8 items isn't entirely clear to me.
+    //FIXME capacity is actually 8
     private const int Capacity = 16;
     private const int mask = Capacity - 1;
     private int Position;

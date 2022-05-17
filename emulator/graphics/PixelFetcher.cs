@@ -97,7 +97,7 @@ public class PixelFetcher
 
                 var pos = sprite.XFlipped ? (i - 1) : graphics.Constants.SpriteWidth - i;
                 var existingSpritePixel = SpriteFIFO.At(pos);
-                var candidate = new FIFOSpritePixel(paletteIndex, sprite.SpriteToBackgroundPriority, sprite.Palette);
+                var candidate = new FIFOSpritePixel(sprite.Palette,paletteIndex, sprite.SpriteToBackgroundPriority);
 
                 if (ShouldReplace(existingSpritePixel, candidate))
                 {
@@ -127,7 +127,7 @@ public class PixelFetcher
             var pix = BGFIFO.Pop();
             //Do we need to pop in order to do this?
             //Do we need pixels in the fifo to do this?
-            return ppu.BackgroundColor(ppu.BGDisplayEnable ? pix.color : 0);
+            return ppu.BackgroundColor(ppu.BGDisplayEnable ? pix.Color : 0);
         }
         else
         {
@@ -143,8 +143,8 @@ public class PixelFetcher
         {
             //obj to bg priority bit is set to true so the sprite pixel
             //will be behind bg color 1,2,3
-            return sp.priority && bp.color != 0
-                ? ppu.BackgroundColor(ppu.BGDisplayEnable ? bp.color : 0)
+            return sp.priority && bp.Color != 0
+                ? ppu.BackgroundColor(ppu.BGDisplayEnable ? bp.Color : 0)
                 : sp.Palette switch
                 {
                     0 => ppu.SpritePalette0(sp.color),
@@ -155,7 +155,7 @@ public class PixelFetcher
         }
         else
         {
-            return ppu.BackgroundColor(ppu.BGDisplayEnable ? bp.color : 0);
+            return ppu.BackgroundColor(ppu.BGDisplayEnable ? bp.Color : 0);
         }
     }
 
@@ -166,7 +166,7 @@ public class PixelFetcher
         //Fill the fifo lower half with transparant pixels
         for (int i = SpriteFIFO.Count; i < graphics.Constants.SpriteWidth; i = SpriteFIFO.Count)
         {
-            SpriteFIFO.Push(new FIFOSpritePixel(0, false, 0));
+            SpriteFIFO.Push(new FIFOSpritePixel(0, 0, false));
         }
 
         var sprite = FirstMatchingSprite();

@@ -44,6 +44,8 @@ s.X < graphics.Constants.ScreenWidth + graphics.Constants.SpriteWidth &&
 line >= s.Y - graphics.Constants.DoubleSpriteHeight &&
 line < s.Y - graphics.Constants.DoubleSpriteHeight + spriteHeight;
 
+    //Sprites are accessed sequentially. The only check if the sprite overlaps the current line's Y position
+    //Only 10 sprites can be used per line
     public int SpritesOnLine(Span<SpriteAttributes> buffer, int line, int spriteHeight)
     {
         int spriteCount = 0;
@@ -63,11 +65,12 @@ line < s.Y - graphics.Constants.DoubleSpriteHeight + spriteHeight;
         return spriteCount;
     }
 
+    //TODO: actual proper corruption algorithm
     internal void Corrupt(object? sender, EventArgs e)
     {
         for (int i = 0; i < Size; i++)
         {
-            this[i+Start] = (byte)i;
+            this[i + Start] = (byte)i;
         }
     }
 }
