@@ -31,7 +31,7 @@ public sealed class MMU
 
                     >= 0xff04 and < 0xff08 => Timers[at],
 
-                    0xff0f => InterruptRegisters.InterruptFireRegister,
+                    0xff0f => InterruptRegisters.Request,
 
                     >= 0xff10 and < 0xff27 => APU[(sound.Address)at],
                     >= 0xff30 and < 0xff40 => APU[(sound.Address)at],
@@ -43,7 +43,7 @@ public sealed class MMU
                     0xff50 => BootRom.Register,
                     >= 0xff80 and < 0xffff => HRAM[at],
 
-                    0xffff => InterruptRegisters.InterruptControlRegister,
+                    0xffff => InterruptRegisters.Enable,
 
                     _ => (byte)0xff
                 };
@@ -100,7 +100,7 @@ public sealed class MMU
                 break;
 
                 case 0xff0f:
-                InterruptRegisters.InterruptFireRegister = value;
+                InterruptRegisters.Request = value;
                 break;
 
                 case >= 0xff10 and < 0xff27:
@@ -127,7 +127,7 @@ public sealed class MMU
                 HRAM[at] = value;
                 break;
                 case 0xffff:
-                InterruptRegisters.InterruptControlRegister = value;
+                InterruptRegisters.Enable = value;
                 break;
             }
         }

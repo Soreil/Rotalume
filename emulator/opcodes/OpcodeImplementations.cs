@@ -8,7 +8,7 @@ public partial class CPU
     public void DisableInterrupts() => ISR.IME = false;
     public void Halt() => Halted = ISR.IME
                ? HaltState.normal
-               : (ISR.InterruptFireRegister & ISR.InterruptControlRegister & 0x1f) == 0 ? HaltState.normalIME0 : HaltState.haltbug;
+               : (ISR.Request & ISR.Enable & 0x1f) == 0 ? HaltState.normalIME0 : HaltState.haltbug;
 
 
     //Wrapper to allow easier handling of (HL) usage

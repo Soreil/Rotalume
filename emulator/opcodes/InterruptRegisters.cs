@@ -1,33 +1,118 @@
 ﻿namespace emulator;
 
+public enum Interrupt
+{
+    VBlank,
+    STAT,
+    Timer,
+    Serial,
+    Joypad
+}
+
 public class InterruptRegisters
 {
     //Interrupt Master Enable
     public bool IME;
     //We want to enable Interrupts on the next M cycle if this is set
     public bool InterruptEnableScheduled;
-    private byte _IE = 0xe0;
 
-    //0xFF0F register
-    public byte InterruptFireRegister
+    public void EnableInterruptsIfScheduled()
     {
-        get => _IE;
-        set => _IE = (byte)((value & 0x1f) | 0xe0);
+        if (InterruptEnableScheduled)
+        {
+            IME = true;
+            InterruptEnableScheduled = false;
+        }
     }
 
-    //0xFFFF register
-    public byte InterruptControlRegister;
+    public List<Interrupt> Fired()
+    {
+        var ret = new List<Interrupt>();
+        if (VBlankEnabled && VBlankRequested) ret.Add(Interrupt.VBlank);
+        if (STATEnabled && STATRequested) ret.Add(Interrupt.STAT);
+        if (TimerEnabled && TimerRequested) ret.Add(Interrupt.Timer);
+        if (SerialEnabled && SerialRequested) ret.Add(Interrupt.Serial);
+        if (JoypadEnabled && JoypadRequested) ret.Add(Interrupt.Joypad);
 
-    private void TriggerEvent(object? sender, EventArgs e) => _IE.SetBit(4);
+        return ret;
+    }
 
+    internal void ClearInterrupt(Interrupt interrupt)
+    {
+        if (interrupt == Interrupt.VBlank) VBlankRequested = false;
+        if (interrupt == Interrupt.STAT)     STATRequested = false;
+        if (interrupt == Interrupt.Timer)   TimerRequested = false;
+        if (interrupt == Interrupt.Serial) SerialRequested = false;
+        if (interrupt == Interrupt.Joypad) JoypadRequested = false;
+    }
 
-    //These functions are only ever called by one user and could just be lambdas inplace.
-    internal void EnableVBlankInterrupt(object? sender, EventArgs e) => _IE.SetBit(0);
-    internal void EnableLCDSTATInterrupt(object? sender, EventArgs e) => _IE.SetBit(1);
-    internal void EnableTimerInterrupt(object? sender, EventArgs e) => _IE.SetBit(2);
+    internal static ushort Address(Interrupt interrupt) => interrupt switch
+    {
+        Interrupt.VBlank => 0x40,
+        Interrupt.STAT => 0x48,
+        Interrupt.Timer => 0x50,
+        Interrupt.Serial => 0x58,
+        Interrupt.Joypad => 0x60,
+        _ => throw new Exception()
+    };
+
+    //The request register only uses the bottom 5 bits
+    public byte Request
+    {
+        get => (byte)(Convert.ToByte(VBlankRequested) |
+                 Convert.ToByte(STATRequested) << 1 |
+                  Convert.ToByte(TimerRequested) << 2 |
+                   Convert.ToByte(SerialRequested) << 3 |
+                    Convert.ToByte(JoypadRequested) << 4 |
+            0xe0);
+        set
+        {
+            VBlankRequested = value.GetBit(0);
+            STATRequested = value.GetBit(1);
+            TimerRequested = value.GetBit(2);
+            SerialRequested = value.GetBit(3);
+            JoypadRequested = value.GetBit(4);
+        }
+    }
+
+    public bool VBlankRequested { get; private set; }
+    public bool TimerRequested { get; private set; }
+    public bool STATRequested { get; private set; }
+    public bool JoypadRequested { get; private set; }
+    public bool SerialRequested { get; private set; }
+
+    //The enable register only uses the bottom 5 bits
+    public byte Enable
+    {
+        get => (byte)(Convert.ToByte(VBlankEnabled) |
+                 Convert.ToByte(STATEnabled) << 1 |
+                  Convert.ToByte(TimerEnabled) << 2 |
+                   Convert.ToByte(SerialEnabled) << 3 |
+                    Convert.ToByte(JoypadEnabled) << 4 |
+            0xe0);
+        set
+        {
+            VBlankEnabled = value.GetBit(0);
+            STATEnabled = value.GetBit(1);
+            TimerEnabled = value.GetBit(2);
+            SerialEnabled = value.GetBit(3);
+            JoypadEnabled = value.GetBit(4);
+        }
+    }
+
+    public bool VBlankEnabled { get; private set; }
+    public bool TimerEnabled { get; private set; }
+    public bool STATEnabled { get; private set; }
+    public bool JoypadEnabled { get; private set; }
+    public bool SerialEnabled { get; private set; }
+
+    private void TriggerEvent(object? sender, EventArgs e) => JoypadRequested = true;
+    internal void EnableVBlankInterrupt(object? sender, EventArgs e) => VBlankRequested = true;
+    internal void EnableLCDSTATInterrupt(object? sender, EventArgs e) => STATRequested = true;
+    internal void EnableTimerInterrupt(object? sender, EventArgs e) => TimerRequested = true;
     internal void SetStateWithoutBootrom()
     {
-        InterruptFireRegister = 0xe1;
+        Request = 0xe1;
         IME = true;
     }
 

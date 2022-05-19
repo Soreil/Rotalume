@@ -585,11 +585,7 @@ public partial class CPU
     internal void Step()
     {
         var didInterrupt = DoInterrupt();
-        if (ISR.InterruptEnableScheduled)
-        {
-            ISR.IME = true;
-            ISR.InterruptEnableScheduled = false;
-        }
+        ISR.EnableInterruptsIfScheduled();
 
         //If we did not do an interrupt we can do a normal CPU instruction instead
         if (!didInterrupt)
