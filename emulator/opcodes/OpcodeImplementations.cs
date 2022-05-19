@@ -6,9 +6,12 @@ public partial class CPU
     public void EnableInterruptsDelayed() => ISR.InterruptEnableScheduled = true;
     public void EnableInterrupts() => ISR.IME = true;
     public void DisableInterrupts() => ISR.IME = false;
-    public void Halt() => Halted = ISR.IME
-               ? HaltState.normal
-               : (ISR.Request & ISR.Enable & 0x1f) == 0 ? HaltState.normalIME0 : HaltState.haltbug;
+    public void Halt()
+    {
+        Halted = ISR.IME
+? HaltState.NormalIME1
+: (ISR.Request & ISR.Enable & 0x1f) == 0 ? HaltState.normalIME0 : HaltState.haltbug;
+    }
 
 
     //Wrapper to allow easier handling of (HL) usage

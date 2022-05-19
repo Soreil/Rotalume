@@ -3,7 +3,7 @@
 public enum HaltState
 {
     off,
-    normal,
+    NormalIME1,
     normalIME0,
     haltbug
 }

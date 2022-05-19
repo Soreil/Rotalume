@@ -6,16 +6,13 @@ public partial class CPU
     {
         var coincidence = ISR.Fired();
 
-        if (coincidence.Any() && Halted == HaltState.normal)
+        if (coincidence.Any() && Halted == HaltState.NormalIME1)
         {
             Halted = HaltState.off;
-            //This 4 extra clock cycles is from TCAGBD.
-            CycleElapsed();
         }
         else if (coincidence.Any() && Halted == HaltState.normalIME0)
         {
             Halted = HaltState.off;
-            CycleElapsed();
             return true;
         }
 
