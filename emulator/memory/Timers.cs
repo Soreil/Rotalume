@@ -32,12 +32,20 @@ public class Timers
 
         fallingEdgePrevious = valueForFallingEdgeDetector;
 
+        if (IgnoreTIMAWriteTicks > 0)
+        {
+            IgnoreTIMAWriteTicks--;
+        }
+
         if (DelayTicks > 0)
         {
             DelayTicks--;
             if (DelayTicks == 0)
             {
+                //We are in the [B] M-cycle according to TCAGBD here
                 TIMA = TMA;
+                IgnoreTIMAWriteTicks = 4;
+                Interrupt?.Invoke(this, EventArgs.Empty);
             }
         }
 
@@ -107,17 +115,31 @@ public class Timers
 
     private byte TMA;
 
-    private byte TIMA;
+    private byte tima;
+    private byte TIMA
+    {
+        get => tima;
+        set
+        {
+            if (IgnoreTIMAWriteTicks != 0) return;
+
+            tima = value;
+            //When writing a value to TIMA in case [A] it prevents the interrupt handling and reload from TMA
+            DelayTicks = 0;
+        }
+    }
 
     //When TIMA overflows it should delay writing the value for 4 cycles
     private const int DelayDuration = 4;
     private uint DelayTicks;
+    private uint IgnoreTIMAWriteTicks;
     private void IncrementTIMA()
     {
         if (TIMA == 0xff)
         {
+            TIMA = 0;
             DelayTicks = DelayDuration;
-            Interrupt?.Invoke(this, EventArgs.Empty);
+            return;
         }
         TIMA++;
     }
