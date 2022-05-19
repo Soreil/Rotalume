@@ -113,7 +113,19 @@ public class Timers
         _ => throw new NotImplementedException(),
     };
 
-    private byte TMA;
+    private byte tma;
+    private byte TMA
+    {
+        get => tma;
+        set
+        {
+            if (IgnoreTIMAWriteTicks != 0)
+            {
+                tima = value;
+            }
+            tma = value;
+        }
+    }
 
     private byte tima;
     private byte TIMA
