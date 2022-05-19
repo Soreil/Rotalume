@@ -46,7 +46,7 @@ public class GameboyScreen
         output = MakeBitmap(currentFrame);
     }
 
-    public bool UseInterFrameBlending { get; set; }
+    public bool UseInterFrameBlending;
 
     internal void SaveScreenShot()
     {

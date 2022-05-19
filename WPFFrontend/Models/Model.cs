@@ -1,23 +1,20 @@
 ﻿using emulator;
 
-using System.ComponentModel;
+using Microsoft.Toolkit.Mvvm.ComponentModel;
+
 using System.IO;
-using System.Runtime.CompilerServices;
 
 using WPFFrontend.Audio;
 
 namespace WPFFrontend;
 
-public class Model : INotifyPropertyChanged
+public class Model : ObservableObject
 {
     public Model(GameboyScreen gameboyScreen,
-        Input input,
-        Performance performance
-        )
+        Input input        )
     {
         GameboyScreen = gameboyScreen;
         Input = input;
-        Performance = performance;
     }
     public bool Paused
     {
@@ -43,25 +40,15 @@ public class Model : INotifyPropertyChanged
         }
     }
 
-    public int SelectedController
-    {
-        get => Input.SelectedController;
-        set => Input.SelectedController = value;
-    }
     public bool FpsLockEnabled
     {
         get;
         set;
     }
-    public bool BootRomEnabled
-    {
-        get;
-        set;
-    }
+    public bool BootRomEnabled;
 
     public GameboyScreen GameboyScreen { get; }
     public Input Input { get; }
-    public Performance Performance { get; }
     public Player? Player { get; set; }
 
     private void Gameboy(string path, bool bootromEnabled)
@@ -184,8 +171,4 @@ public class Model : INotifyPropertyChanged
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
     }
-
-    protected void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-
-    public event PropertyChangedEventHandler? PropertyChanged;
 }

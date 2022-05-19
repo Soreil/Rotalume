@@ -19,9 +19,9 @@ Host.CreateDefaultBuilder(args)
     AddSingleton<Performance>().
     AddSingleton<Input>().
     AddSingleton<ScreenShotCommand>().
-    AddSingleton<PauseCommand>().
+    AddSingleton<Pause>().
     AddSingleton<Model>().
-    AddSingleton<PopUpCommand>().
+    AddSingleton<PopUp>().
     AddSingleton<StopCommand>().
     AddSingleton<ControllerIDConverter>()
 

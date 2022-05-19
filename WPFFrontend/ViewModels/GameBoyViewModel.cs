@@ -1,12 +1,13 @@
 ﻿
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
+using Microsoft.Toolkit.Mvvm.ComponentModel;
+using Microsoft.Toolkit.Mvvm.Input;
+
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 
 namespace WPFFrontend;
 
-public class GameBoyViewModel : INotifyPropertyChanged
+public class GameBoyViewModel : ObservableObject
 {
     private readonly Performance Performance;
     private readonly GameboyScreen Screen;
@@ -16,31 +17,31 @@ public class GameBoyViewModel : INotifyPropertyChanged
     public ICommand StopCommand { get; }
     public ControllerIDConverter ControllerIDConverter { get; }
     public Model Model { get; }
+    public Input Input { get; }
     public ICommand LoadROMPopUp { get; }
 
     public GameBoyViewModel(GameboyScreen gameboyScreen,
         Performance performance,
-        ScreenShotCommand screenShotCommand,
-        PauseCommand pauseCommand,
-        PopUpCommand popUpCommand,
-        StopCommand stopCommand,
+        Pause pause,
+        PopUp popUp,
         ControllerIDConverter controllerIDConverter,
-        Model model)
+        Model model,
+        Input input)
     {
         Screen = gameboyScreen;
 
+        Performance = performance;
 
-        this.Performance = performance;
+        ScreenShotCommand = new RelayCommand(Screen.SaveScreenShot);
 
-        ScreenShotCommand = screenShotCommand;
+        PauseCommand = new RelayCommand(pause.Execute);
 
-        PauseCommand = pauseCommand;
+        LoadROMPopUp = new RelayCommand(popUp.LoadROMPopUp);
 
-        LoadROMPopUp = popUpCommand;
-
-        StopCommand = stopCommand;
+        StopCommand = new RelayCommand(model.ShutdownGameboy);
         ControllerIDConverter = controllerIDConverter;
         Model = model;
+        Input = input;
         Screen.FrameDrawn += Display_FrameDrawn;
     }
 
@@ -64,60 +65,36 @@ public class GameBoyViewModel : INotifyPropertyChanged
     public string PerformanceStatus
     {
         get => Performance.Label;
-        set
-        {
-            if (Performance.Label != value)
-            {
-                Performance.Label = value;
-                OnPropertyChanged();
-            }
-        }
+        set => _ = SetProperty(ref Performance.Label, value);
     }
 
-    public bool FpsLockEnabled
-    {
-        get => Model.FpsLockEnabled;
-        set => Model.FpsLockEnabled = value;
-    }
     public bool BootRomEnabled
     {
         get => Model.BootRomEnabled;
-        set => Model.BootRomEnabled = value;
-    }
-
-    public bool ShowPerformanceData
-    {
-        get;
-        set;
+        set => _ = SetProperty(ref Model.BootRomEnabled, value);
     }
 
     public bool UseInterframeBlending
     {
         get => Screen.UseInterFrameBlending;
-        set
-        {
-            if (Screen.UseInterFrameBlending != value)
-            {
-                Screen.UseInterFrameBlending = value;
-                OnPropertyChanged();
-            }
-        }
+        set => _ = SetProperty(ref Screen.UseInterFrameBlending, value);
     }
 
     public int SelectedController
     {
-        get => Model.SelectedController;
+        get => Input.SelectedController;
+        set => _ = SetProperty(Input.SelectedController, value, Input, (i, s) => i.SelectedController = s);
+    }
+    public bool FpsLockEnabled
+    {
+        get => Model.FpsLockEnabled;
         set
         {
-            if (Model.SelectedController != value)
+            if (Model.FpsLockEnabled != value)
             {
-                Model.SelectedController = value;
+                Model.FpsLockEnabled = value;
                 OnPropertyChanged();
             }
         }
     }
-
-    protected void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-
-    public event PropertyChangedEventHandler? PropertyChanged;
 }
