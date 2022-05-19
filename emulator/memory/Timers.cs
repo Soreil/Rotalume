@@ -5,6 +5,9 @@ public class Timers
 {
     public ushort InternalCounter;
 
+    //The previous value has a NOT gate in front of it so we want to set it to true initally
+    private bool fallingEdgePrevious = true;
+
     public Timers(sound.APU apu, InterruptRegisters interruptRegisters)
     {
         APUTick512Hz += apu.FrameSequencerClock;
@@ -15,19 +18,24 @@ public class Timers
     {
         var oldInternalCounter = InternalCounter;
         InternalCounter++;
-        if (TACEnable)
-        {
 
-            //Overflowing internalcounter shouldn't be an issue here.
-            var overflow = ((InternalCounter) & TACFrequency) == 0;
-            if (overflow && (oldInternalCounter & TACFrequency) != 0)
-            {
-                IncrementTIMA();
-            }
+
+        var overflow = IsSet(InternalCounter, TACSelectedBit);
+
+        var valueForFallingEdgeDetector = overflow && TACEnable;
+
+        //falling edge detector
+        if ((!valueForFallingEdgeDetector) && fallingEdgePrevious)
+        {
+            IncrementTIMA();
         }
+
+        fallingEdgePrevious = valueForFallingEdgeDetector;
+
         if (DelayTicks > 0)
         {
-            if (DelayTicks-- == 0)
+            DelayTicks--;
+            if (DelayTicks == 0)
             {
                 TIMA = TMA;
             }
@@ -44,6 +52,7 @@ public class Timers
 
     }
 
+    private static bool IsSet(ushort internalCounter, int tACSelectedBit) => (internalCounter & (1 << tACSelectedBit)) != 0;
     private void OnAPUTick512z() => APUTick512Hz?.Invoke(this, EventArgs.Empty);
 
     private event EventHandler? APUTick512Hz;
@@ -54,33 +63,17 @@ public class Timers
         get => (byte)(InternalCounter >> 8);
         set
         {
-            var overflow = (InternalCounter & TACFrequency) != 0;
-            if (overflow)
-            {
-                IncrementTIMA();
-            }
-
             InternalCounter = 0;
         }
     }
 
     private byte TAC
     {
-        get => (byte)(0xf8 | (Convert.ToInt32(TACEnable) << 2) | PositionToBits(TACFrequency));
+        get => (byte)(0xf8 | (Convert.ToInt32(TACEnable) << 2) | PositionToBits(TACSelectedBit));
         set
         {
-            var glitch = TACEnable
-&& (!value.GetBit(2)
-                    ? (InternalCounter & TACFrequency) != 0
-                    : ((InternalCounter & TACFrequency) != 0) &&
-                             ((InternalCounter & (BitPosition(value))) == 0));
-            if (glitch)
-            {
-                IncrementTIMA();
-            }
-
             TACEnable = value.GetBit(2);
-            TACFrequency = BitPosition(value);
+            TACSelectedBit = BitPosition(value);
         }
     }
 
@@ -93,22 +86,22 @@ public class Timers
     }
 
     private bool TACEnable;
-    private int TACFrequency;
+    private int TACSelectedBit;
 
     private static int BitPosition(byte b) => (b & 0x03) switch
     {
-        0 => 1 << 9,
-        1 => 1 << 3,
-        2 => 1 << 5,
-        3 => 1 << 7,
+        0 => 9,
+        1 => 3,
+        2 => 5,
+        3 => 7,
         _ => throw new NotImplementedException(),
     };
     private static byte PositionToBits(int p) => p switch
     {
-        1 << 9 => 0,
-        1 << 3 => 1,
-        1 << 5 => 2,
-        1 << 7 => 3,
+        9 => 0,
+        3 => 1,
+        5 => 2,
+        7 => 3,
         _ => throw new NotImplementedException(),
     };
 
