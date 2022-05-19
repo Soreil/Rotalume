@@ -50,6 +50,21 @@ internal class GraphicalOutputTest
 
     [TestCase(@"rom\mooneye-test-suite\acceptance\instr\daa.gb", @"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\instr\expected.png", "outputDAA.bmp", 100)]
 
+    [TestCase(@"rom\mooneye-test-suite\acceptance\timer\div_write.gb", @"rom\mooneye-test-suite\acceptance\timer\div_write.png", "div_write.bmp", 100)]
+    [TestCase(@"rom\mooneye-test-suite\acceptance\timer\rapid_toggle.gb", @"rom\mooneye-test-suite\acceptance\timer\rapid_toggle.png", "rapid_toggle.bmp", 100)]
+    [TestCase(@"rom\mooneye-test-suite\acceptance\timer\tim00.gb", @"rom\mooneye-test-suite\acceptance\timer\tim00.png", "tim00.bmp", 100)]
+    [TestCase(@"rom\mooneye-test-suite\acceptance\timer\tim00_div_trigger.gb", @"rom\mooneye-test-suite\acceptance\timer\tim00_div_trigger.png", "tim00_div_trigger.bmp", 100)]
+    [TestCase(@"rom\mooneye-test-suite\acceptance\timer\tim01.gb", @"rom\mooneye-test-suite\acceptance\timer\tim01.png", "tim01.bmp", 100)]
+    [TestCase(@"rom\mooneye-test-suite\acceptance\timer\tim01_div_trigger.gb", @"rom\mooneye-test-suite\acceptance\timer\tim01_div_trigger.png", "tim01_div_trigger.bmp", 100)]
+    [TestCase(@"rom\mooneye-test-suite\acceptance\timer\tim10.gb", @"rom\mooneye-test-suite\acceptance\timer\tim10.png", "tim10.bmp", 100)]
+    [TestCase(@"rom\mooneye-test-suite\acceptance\timer\tim10_div_trigger.gb", @"rom\mooneye-test-suite\acceptance\timer\tim10_div_trigger.png", "tim10_div_trigger.bmp", 100)]
+    [TestCase(@"rom\mooneye-test-suite\acceptance\timer\tim11.gb", @"rom\mooneye-test-suite\acceptance\timer\tim11.png", "tim11.bmp", 100)]
+    [TestCase(@"rom\mooneye-test-suite\acceptance\timer\tim11_div_trigger.gb", @"rom\mooneye-test-suite\acceptance\timer\tim11_div_trigger.png", "tim11_div_trigger.bmp", 100)]
+    [TestCase(@"rom\mooneye-test-suite\acceptance\timer\tima_reload.gb", @"rom\mooneye-test-suite\acceptance\timer\tima_reload.png", "tima_reload.bmp", 100)]
+    [TestCase(@"rom\mooneye-test-suite\acceptance\timer\tima_write_reloading.gb", @"rom\mooneye-test-suite\acceptance\timer\tima_write_reloading.png", "tima_write_reloading.bmp", 100)]
+    [TestCase(@"rom\mooneye-test-suite\acceptance\timer\tma_write_reloading.gb", @"rom\mooneye-test-suite\acceptance\timer\tma_write_reloading.png", "tma_write_reloading.bmp", 100)]
+
+
     public void TestFrameMatchesExpectedFrame(string romPath, string imagePath, string outputFile, int frameToCheck)
     {
         var render = new TestRenderDevice();
