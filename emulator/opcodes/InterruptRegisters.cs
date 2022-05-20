@@ -116,8 +116,5 @@ public class InterruptRegisters
         IME = true;
     }
 
-    public InterruptRegisters(Keypad keypad)
-    {
-        keypad.Input.KeyWentDown += TriggerEvent;
-    }
+    public InterruptRegisters(Keypad keypad) => keypad.Input.KeyWentDown += TriggerEvent;
 }

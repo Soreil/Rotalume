@@ -2,10 +2,7 @@
 
 internal class SquareChannel : Channel
 {
-    public SquareChannel()
-    {
-        envelope = new();
-    }
+    public SquareChannel() => envelope = new();
 
 
     private WavePatternDuty wavePatternDuty;

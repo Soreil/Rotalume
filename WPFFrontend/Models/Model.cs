@@ -106,7 +106,7 @@ public class Model : ObservableObject
       fs
       );
 
-        Player player = new Player(gameboy.Samples);
+        using var player = new Player(gameboy.Samples);
         player.Play();
 
         while (!CancelGameboySource.IsCancellationRequested)
