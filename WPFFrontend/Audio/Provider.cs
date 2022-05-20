@@ -20,12 +20,11 @@ internal class Provider : WaveProvider16
 public class Player
 {
     private readonly Provider provider;
-    private readonly WaveOut waveOut;
+    private readonly WasapiOut waveOut;
 
     public Player(Samples samples)
     {
-        waveOut = new WaveOut();
-        waveOut.DesiredLatency = 50;
+        waveOut = new WasapiOut(NAudio.CoreAudioApi.AudioClientShareMode.Shared, 100);
 
         provider = new Provider(44100, samples);
 

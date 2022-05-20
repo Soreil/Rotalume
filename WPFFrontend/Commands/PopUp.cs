@@ -20,5 +20,4 @@ public class PopUp
 
         Model.ROM = ofd.FileName;
     }
-
 }
