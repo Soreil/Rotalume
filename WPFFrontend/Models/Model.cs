@@ -5,16 +5,18 @@ using Microsoft.Toolkit.Mvvm.ComponentModel;
 using System.IO;
 
 using WPFFrontend.Audio;
+using WPFFrontend.Services;
 
 namespace WPFFrontend;
 
 public class Model : ObservableObject
 {
     public Model(GameboyScreen gameboyScreen,
-        Input input        )
+        Input input, FileService fileService)
     {
         GameboyScreen = gameboyScreen;
         Input = input;
+        FileService = fileService;
     }
     public bool Paused
     {
@@ -22,18 +24,17 @@ public class Model : ObservableObject
         set;
     }
 
-    private string rom = "";
-    public string ROM
+    public string? ROM
     {
-        get => rom;
+        get => FileService.ROMPath;
         set
         {
-            if (value != rom)
+            if (value != FileService.ROMPath)
             {
-                rom = value;
-                if (rom is not null)
+                FileService.ROMPath = value;
+                if (FileService.ROMPath is not null)
                 {
-                    SpinUpNewGameboy();
+                    SpinUpNewGameboy(FileService.ROMPath);
                 }
                 OnPropertyChanged();
             }
@@ -49,6 +50,7 @@ public class Model : ObservableObject
 
     public GameboyScreen GameboyScreen { get; }
     public Input Input { get; }
+    public FileService FileService { get; }
     public Player? Player { get; set; }
 
     private void Gameboy(string path, bool bootromEnabled)
@@ -127,7 +129,7 @@ public class Model : ObservableObject
     private CancellationTokenSource CancelGameboySource = new();
     private bool disposedValue;
 
-    public void SpinUpNewGameboy()
+    public void SpinUpNewGameboy(string path)
     {
         ShutdownGameboy();
         CancelGameboySource = new();
@@ -138,7 +140,7 @@ public class Model : ObservableObject
         {
             Thread.CurrentThread.IsBackground = true;
             Thread.CurrentThread.Name = "Gaming";
-            Gameboy(ROM, br);
+            Gameboy(path, br);
         });
 
         GameThread.Start();

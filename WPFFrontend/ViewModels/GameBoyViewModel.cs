@@ -13,6 +13,7 @@ public class GameBoyViewModel : ObservableObject
     private readonly GameboyScreen Screen;
 
     public ICommand ScreenShotCommand { get; }
+    public ICommand DebugScreenShotCommand { get; }
     public ICommand PauseCommand { get; }
     public ICommand StopCommand { get; }
     public ControllerIDConverter ControllerIDConverter { get; }
@@ -33,6 +34,9 @@ public class GameBoyViewModel : ObservableObject
         Performance = performance;
 
         ScreenShotCommand = new RelayCommand(Screen.SaveScreenShot);
+        DebugScreenShotCommand = new RelayCommand(Screen.DebugSaveScreenShot);
+
+
 
         PauseCommand = new RelayCommand(pause.Execute);
 

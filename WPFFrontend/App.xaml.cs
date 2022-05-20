@@ -3,6 +3,8 @@ using Microsoft.Extensions.Hosting;
 
 using System.Windows;
 
+using WPFFrontend.Services;
+
 namespace WPFFrontend;
 
 /// <summary>
@@ -18,11 +20,10 @@ Host.CreateDefaultBuilder(args)
     AddSingleton<GameboyScreen>().
     AddSingleton<Performance>().
     AddSingleton<Input>().
-    AddSingleton<ScreenShotCommand>().
     AddSingleton<Pause>().
     AddSingleton<Model>().
     AddSingleton<PopUp>().
-    AddSingleton<StopCommand>().
+    AddSingleton<FileService>().
     AddSingleton<ControllerIDConverter>()
 
     );

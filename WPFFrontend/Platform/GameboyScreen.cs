@@ -2,6 +2,8 @@
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
+using WPFFrontend.Services;
+
 namespace WPFFrontend;
 
 public class GameboyScreen
@@ -38,22 +40,38 @@ public class GameboyScreen
         return Source;
     }
 
-    public GameboyScreen()
+    public GameboyScreen(FileService fileService)
     {
         currentFrame = new byte[BitmapWidth * BitmapHeight];
         for (int i = 0; i < currentFrame.Length; i++)
             currentFrame[i] = 0xff;
         output = MakeBitmap(currentFrame);
+        FileService = fileService;
     }
 
     public bool UseInterFrameBlending;
+
+    public FileService FileService { get; }
+
+    internal void DebugSaveScreenShot()
+    {
+        var romPath = FileService.ROMPath;
+        if (romPath is null) return;
+
+        var path = Path.ChangeExtension(romPath, ".png");
+        WriteScreenShot(path);
+    }
 
     internal void SaveScreenShot()
     {
         string fileName = string.Format(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) +
 @"\Screenshot" + "_" +
 DateTime.Now.ToString("(dd_MMMM_hh_mm_ss_tt)") + ".png");
+        WriteScreenShot(fileName);
+    }
 
+    private void WriteScreenShot(string fileName)
+    {
         using FileStream fs = new(fileName, FileMode.Create);
 
         var encoder = new PngBitmapEncoder();
