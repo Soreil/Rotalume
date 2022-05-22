@@ -91,7 +91,7 @@ public class APU
                             (Convert.ToByte(Tone.IsOn()) << 1) |
                             (Convert.ToByte(ToneSweep.IsOn()) << 0));
 
-            return (byte)(0x70 | channels | (Convert.ToByte(MasterSoundDisable) << 7));
+            return (byte)(0x70 | channels | (Convert.ToByte(!MasterSoundDisable) << 7));
         }
         set
         {
