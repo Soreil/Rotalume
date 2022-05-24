@@ -1,4 +1,7 @@
-﻿using System.IO;
+﻿using Microsoft.Toolkit.Mvvm.ComponentModel;
+using Microsoft.Toolkit.Mvvm.Input;
+
+using System.IO;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -6,7 +9,7 @@ using WPFFrontend.Services;
 
 namespace WPFFrontend;
 
-public class GameboyScreen
+public partial class GameboyScreen : ObservableObject
 {
     private const int BitmapWidth = 160;
     private const int BitmapHeight = 144;
@@ -49,11 +52,13 @@ public class GameboyScreen
         FileService = fileService;
     }
 
-    public bool UseInterFrameBlending;
+    [ObservableProperty]
+    private bool useInterFrameBlending;
 
     public FileService FileService { get; }
 
-    internal void DebugSaveScreenShot()
+    [ICommand]
+    public void DebugScreenShot()
     {
         var romPath = FileService.ROMPath;
         if (romPath is null) return;
@@ -62,7 +67,8 @@ public class GameboyScreen
         WriteScreenShot(path);
     }
 
-    internal void SaveScreenShot()
+    [ICommand]
+    public void ScreenShot()
     {
         string fileName = string.Format(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) +
 @"\Screenshot" + "_" +

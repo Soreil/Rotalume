@@ -20,9 +20,7 @@ Host.CreateDefaultBuilder(args)
     AddSingleton<GameboyScreen>().
     AddSingleton<Performance>().
     AddSingleton<Input>().
-    AddSingleton<Pause>().
     AddSingleton<Model>().
-    AddSingleton<PopUp>().
     AddSingleton<FileService>().
     AddSingleton<ControllerIDConverter>()
 

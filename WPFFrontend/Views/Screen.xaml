@@ -13,8 +13,8 @@
     </Window.Resources>
 
     <Window.InputBindings>
-        <KeyBinding Key="S" Command="{Binding ScreenShotCommand}"/>
-        <KeyBinding Key="D" Command="{Binding DebugScreenShotCommand}"/>
+        <KeyBinding Key="S" Command="{Binding Screen.ScreenShotCommand}"/>
+        <KeyBinding Key="D" Command="{Binding Screen.DebugScreenShotCommand}"/>
         <KeyBinding Key="P" Command="{Binding PauseCommand}"/>
     </Window.InputBindings>
 
@@ -22,7 +22,7 @@
     <StackPanel>
         <Menu>
             <MenuItem Header="_File">
-                <MenuItem Header="_Open" InputGestureText="Ctrl+O" Command="{Binding LoadROMPopUp}"/>
+                <MenuItem Header="_Open" InputGestureText="Ctrl+O" Command="{Binding LoadROMPopUpCommand}"/>
                 <MenuItem Header="_Stop" Command="{Binding StopCommand}"/>
             </MenuItem>
 
@@ -30,24 +30,24 @@
                 <MenuItem Name="FPSLimitEnable" Header="_Limit FPS" IsCheckable="True" IsChecked="{Binding  FpsLockEnabled}"/>
                 <MenuItem Name="BootRomEnable" Header="_Use Bootrom" IsCheckable="True" IsChecked="{Binding BootRomEnabled}"/>
                 <MenuItem Name="FPSDisplayEnable" Header="_Show Performance Metrics" IsCheckable="True"/>
-                <MenuItem Name="FrameBlendingEnable" Header="_Use Frame Blending" IsCheckable="True" IsChecked="{Binding UseInterframeBlending}"/>
+                <MenuItem Name="FrameBlendingEnable" Header="_Use Frame Blending" IsCheckable="True" IsChecked="{Binding Screen.UseInterFrameBlending}"/>
             </MenuItem>
 
             <MenuItem Header="_Controller">
                 <MenuItem>
                     <MenuItem.Header>
                         <StackPanel>
-                            <RadioButton GroupName="Controller" Content="1" IsChecked="{Binding SelectedController, Converter={StaticResource ResourceKey=controllerIDConverter}, ConverterParameter=1}" />
-                            <RadioButton GroupName="Controller" Content="2" IsChecked="{Binding SelectedController, Converter={StaticResource ResourceKey=controllerIDConverter}, ConverterParameter=2}" />
-                            <RadioButton GroupName="Controller" Content="3" IsChecked="{Binding SelectedController, Converter={StaticResource ResourceKey=controllerIDConverter}, ConverterParameter=3}" />
-                            <RadioButton GroupName="Controller" Content="4" IsChecked="{Binding SelectedController, Converter={StaticResource ResourceKey=controllerIDConverter}, ConverterParameter=4}" />
+                            <RadioButton GroupName="Controller" Content="1" IsChecked="{Binding Input.SelectedController, Converter={StaticResource ResourceKey=controllerIDConverter}, ConverterParameter=1}" />
+                            <RadioButton GroupName="Controller" Content="2" IsChecked="{Binding Input.SelectedController, Converter={StaticResource ResourceKey=controllerIDConverter}, ConverterParameter=2}" />
+                            <RadioButton GroupName="Controller" Content="3" IsChecked="{Binding Input.SelectedController, Converter={StaticResource ResourceKey=controllerIDConverter}, ConverterParameter=3}" />
+                            <RadioButton GroupName="Controller" Content="4" IsChecked="{Binding Input.SelectedController, Converter={StaticResource ResourceKey=controllerIDConverter}, ConverterParameter=4}" />
                         </StackPanel>
                     </MenuItem.Header>
                 </MenuItem>
             </MenuItem>
         </Menu>
 
-        <Label Name="FPS" Content="{Binding PerformanceStatus, UpdateSourceTrigger=PropertyChanged}" Padding="0,0,0,4">
+        <Label Name="FPS" Content="{Binding Performance.Label, UpdateSourceTrigger=PropertyChanged}" Padding="0,0,0,4">
             <Label.Style>
                 <Style TargetType="Label">
                     <Style.Triggers>

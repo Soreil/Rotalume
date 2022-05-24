@@ -7,24 +7,18 @@ using System.Windows.Media.Imaging;
 
 namespace WPFFrontend;
 
-public class GameBoyViewModel : ObservableObject
+public partial class GameBoyViewModel : ObservableObject
 {
-    private readonly Performance Performance;
-    private readonly GameboyScreen Screen;
+    public Performance Performance { get; }
+    public GameboyScreen Screen { get; }
 
-    public ICommand ScreenShotCommand { get; }
-    public ICommand DebugScreenShotCommand { get; }
-    public ICommand PauseCommand { get; }
     public ICommand StopCommand { get; }
     public ControllerIDConverter ControllerIDConverter { get; }
-    public Model Model { get; }
+    private Model Model { get; }
     public Input Input { get; }
-    public ICommand LoadROMPopUp { get; }
 
     public GameBoyViewModel(GameboyScreen gameboyScreen,
         Performance performance,
-        Pause pause,
-        PopUp popUp,
         ControllerIDConverter controllerIDConverter,
         Model model,
         Input input)
@@ -33,15 +27,6 @@ public class GameBoyViewModel : ObservableObject
 
         Performance = performance;
 
-        ScreenShotCommand = new RelayCommand(Screen.SaveScreenShot);
-        DebugScreenShotCommand = new RelayCommand(Screen.DebugSaveScreenShot);
-
-
-
-        PauseCommand = new RelayCommand(pause.Execute);
-
-        LoadROMPopUp = new RelayCommand(popUp.LoadROMPopUp);
-
         StopCommand = new RelayCommand(model.ShutdownGameboy);
         ControllerIDConverter = controllerIDConverter;
         Model = model;
@@ -49,27 +34,29 @@ public class GameBoyViewModel : ObservableObject
         Screen.FrameDrawn += Display_FrameDrawn;
     }
 
-    private BitmapSource? image;
-    public BitmapSource DisplayFrame
+    [ObservableProperty]
+    private BitmapSource? displayFrame;
+
+    [ICommand]
+    private void Pause() => Model.Paused = !Model.Paused;
+
+    [ICommand]
+    public void LoadROMPopUp()
     {
-        get => image!;
-        set
+        var ofd = new Microsoft.Win32.OpenFileDialog() { DefaultExt = ".gb", Filter = "ROM Files (*.gb;*.gbc)|*.gb;*.gbc" };
+        var result = ofd.ShowDialog();
+        if (result == false)
         {
-            image = value;
-            OnPropertyChanged();
+            return;
         }
+
+        Model.ROM = ofd.FileName;
     }
 
-    public void Display_FrameDrawn(object? sender, EventArgs e)
+    private void Display_FrameDrawn(object? sender, EventArgs e)
     {
-        PerformanceStatus = Performance.Update();
+        Performance.Update();
         DisplayFrame = Screen.output;
-    }
-
-    public string PerformanceStatus
-    {
-        get => Performance.Label;
-        set => _ = SetProperty(ref Performance.Label, value);
     }
 
     public bool BootRomEnabled
@@ -77,28 +64,10 @@ public class GameBoyViewModel : ObservableObject
         get => Model.BootRomEnabled;
         set => _ = SetProperty(ref Model.BootRomEnabled, value);
     }
-
-    public bool UseInterframeBlending
-    {
-        get => Screen.UseInterFrameBlending;
-        set => _ = SetProperty(ref Screen.UseInterFrameBlending, value);
-    }
-
-    public int SelectedController
-    {
-        get => Input.SelectedController;
-        set => _ = SetProperty(Input.SelectedController, value, Input, (i, s) => i.SelectedController = s);
-    }
+    
     public bool FpsLockEnabled
     {
         get => Model.FpsLockEnabled;
-        set
-        {
-            if (Model.FpsLockEnabled != value)
-            {
-                Model.FpsLockEnabled = value;
-                OnPropertyChanged();
-            }
-        }
+        set => _ = SetProperty(Model.FpsLockEnabled, value, Model, (i, s) => i.FpsLockEnabled = s);
     }
 }

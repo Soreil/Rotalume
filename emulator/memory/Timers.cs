@@ -89,6 +89,13 @@ public class Timers
         set
         {
             InternalCounter = 0;
+
+            HandleTIMAOverflowTrigger();
+
+            HandleTIMAReloadDelay();
+
+            HandleAPUOverflowTrigger();
+
         }
     }
 
@@ -108,6 +115,12 @@ public class Timers
         TAC = 0;
         TMA = 0;
         InternalCounter = 0x1800;
+        HandleTIMAOverflowTrigger();
+
+        HandleTIMAReloadDelay();
+
+        HandleAPUOverflowTrigger();
+
     }
 
     private bool TACEnable;

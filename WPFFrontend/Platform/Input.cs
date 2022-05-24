@@ -2,11 +2,13 @@
 
 using J2i.Net.XInputWrapper;
 
+using Microsoft.Toolkit.Mvvm.ComponentModel;
+
 using System.Windows.Input;
 
 namespace WPFFrontend;
 
-public class Input : IDisposable
+public class Input : ObservableObject, IDisposable
 {
     private InputDevices MakeNewInput()
     {
@@ -47,8 +49,13 @@ public class Input : IDisposable
     public int SelectedController
     {
         get => Devices.SelectedController;
-        set => Devices.SelectedController = value;
+        set => _ = SetProperty(
+                Devices.SelectedController,
+                value,
+                Devices,
+                (dev, controller) => dev.SelectedController = controller);
     }
+
     private bool disposedValue;
 
     private event KeyEventHandler? KeyDown;

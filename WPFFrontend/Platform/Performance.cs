@@ -1,6 +1,8 @@
-﻿namespace WPFFrontend;
+﻿using Microsoft.Toolkit.Mvvm.ComponentModel;
 
-public class Performance
+namespace WPFFrontend;
+
+public partial class Performance : ObservableObject
 {
     private int currentFrame;
     private void AddFrameTimeToQueue()
@@ -31,15 +33,16 @@ public class Performance
     private TimeSpan Delta(int i, int j) => FrameTimes[i] - FrameTimes[j];
 
     private int frameNumber;
-    public string Update()
+    public void Update()
     {
         AddFrameTimeToQueue();
 
-        return string.Format("Frame:{0}\t FrameTime:{1:N2}\t FPS:{2:N2}",
+        Label = string.Format("Frame:{0}\t FrameTime:{1:N2}\t FPS:{2:N2}",
              frameNumber++,
              FrameTime,
              GameboyFPS);
     }
 
-    public string Label = "";
+    [ObservableProperty]
+    public string? label;
 }
