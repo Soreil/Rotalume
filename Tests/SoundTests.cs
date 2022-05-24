@@ -1,7 +1,4 @@
-﻿
-using emulator;
-
-using NUnit.Framework;
+﻿using NUnit.Framework;
 
 namespace Tests;
 

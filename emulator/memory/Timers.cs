@@ -8,6 +8,9 @@ public class Timers
     //The previous value has a NOT gate in front of it so we want to set it to true initally
     private bool fallingEdgePrevious = true;
 
+    //The previous value has a NOT gate in front of it so we want to set it to true initally
+    private bool fallingEdgeAPUTriggerPrevious = true;
+
     public Timers(sound.APU apu, InterruptRegisters interruptRegisters)
     {
         APUTick512Hz += apu.FrameSequencerClock;
@@ -16,22 +19,17 @@ public class Timers
 
     public void Tick(object? o, EventArgs e)
     {
-        var oldInternalCounter = InternalCounter;
         InternalCounter++;
 
+        HandleTIMAOverflowTrigger();
 
-        var overflow = IsSet(InternalCounter, TACSelectedBit);
+        HandleTIMAReloadDelay();
 
-        var valueForFallingEdgeDetector = overflow && TACEnable;
+        HandleAPUOverflowTrigger();
+    }
 
-        //falling edge detector
-        if ((!valueForFallingEdgeDetector) && fallingEdgePrevious)
-        {
-            IncrementTIMA();
-        }
-
-        fallingEdgePrevious = valueForFallingEdgeDetector;
-
+    private void HandleTIMAReloadDelay()
+    {
         if (IgnoreTIMAWriteTicks > 0)
         {
             IgnoreTIMAWriteTicks--;
@@ -48,16 +46,35 @@ public class Timers
                 Interrupt?.Invoke(this, EventArgs.Empty);
             }
         }
+    }
 
-        //We want to tick when bit 5 of the top part turns to 1
-        //TODO: check how to do this correctly
-        var topHalfNew = (byte)(InternalCounter >> 8);
-        var topHalfOld = (byte)(oldInternalCounter >> 8);
-        if (topHalfNew.GetBit(4) && !topHalfOld.GetBit(4))
+    private void HandleTIMAOverflowTrigger()
+    {
+        var overflow = IsSet(InternalCounter, TACSelectedBit);
+
+        var valueForFallingEdgeDetector = overflow && TACEnable;
+
+        //falling edge detector
+        if ((!valueForFallingEdgeDetector) && fallingEdgePrevious)
+        {
+            IncrementTIMA();
+        }
+
+        fallingEdgePrevious = valueForFallingEdgeDetector;
+    }
+
+    private void HandleAPUOverflowTrigger()
+    {
+        var overflow = IsSet(InternalCounter, APUTriggerBit);
+
+
+        //falling edge detector
+        if (!overflow && fallingEdgeAPUTriggerPrevious)
         {
             OnAPUTick512z();
         }
 
+        fallingEdgeAPUTriggerPrevious = overflow;
     }
 
     private static bool IsSet(ushort internalCounter, int tACSelectedBit) => (internalCounter & (1 << tACSelectedBit)) != 0;
@@ -96,6 +113,7 @@ public class Timers
     private bool TACEnable;
     private int TACSelectedBit;
 
+    private const int APUTriggerBit = 12;
     private static int BitPosition(byte b) => (b & 0x03) switch
     {
         0 => 9,

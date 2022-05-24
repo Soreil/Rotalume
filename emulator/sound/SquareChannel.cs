@@ -17,7 +17,6 @@ internal class SquareChannel : Channel
         }
     }
 
-
     public readonly Envelope envelope;
     public byte NRs2
     {
