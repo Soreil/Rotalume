@@ -1,7 +1,9 @@
 ﻿using System.ComponentModel;
 using System.Windows;
 
-namespace WPFFrontend;
+using WPFFrontend.Models;
+
+namespace WPFFrontend.Views;
 
 /// <summary>
 /// Interaction logic for Screen.xaml

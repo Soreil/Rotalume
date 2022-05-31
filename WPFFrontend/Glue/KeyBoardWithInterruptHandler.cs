@@ -2,7 +2,7 @@
 
 using System.Windows.Input;
 
-namespace WPFFrontend;
+namespace WPFFrontend.Glue;
 
 public class KeyBoardWithInterruptHandler
 {

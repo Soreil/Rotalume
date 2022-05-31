@@ -2,7 +2,7 @@
 using System.Windows.Data;
 using System.Windows.Markup;
 
-namespace WPFFrontend;
+namespace WPFFrontend.Views;
 
 [ValueConversion(typeof(bool), typeof(int))]
 public class ControllerIDConverter : MarkupExtension, IValueConverter

@@ -1,6 +1,6 @@
 ﻿using emulator;
 
-namespace WPFFrontend;
+namespace WPFFrontend.Glue;
 
 internal class IGameControllerKeyboardBridge : IGameController
 {

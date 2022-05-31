@@ -5,9 +5,10 @@ using Microsoft.Toolkit.Mvvm.ComponentModel;
 using System.IO;
 
 using WPFFrontend.Audio;
+using WPFFrontend.Platform;
 using WPFFrontend.Services;
 
-namespace WPFFrontend;
+namespace WPFFrontend.Models;
 
 public class Model : ObservableObject
 {
@@ -33,9 +34,7 @@ public class Model : ObservableObject
             {
                 FileService.ROMPath = value;
                 if (FileService.ROMPath is not null)
-                {
                     SpinUpNewGameboy(FileService.ROMPath);
-                }
                 OnPropertyChanged();
             }
         }
@@ -57,7 +56,7 @@ public class Model : ObservableObject
     {
         var fpsCheckCb = new Func<bool>(() => FpsLockEnabled);
 
-        byte[]? bootrom = bootromEnabled ? File.ReadAllBytes(@"..\..\..\..\emulator\bootrom\DMG_ROM_BOOT.bin") : null;
+        var bootrom = bootromEnabled ? File.ReadAllBytes(@"..\..\..\..\emulator\bootrom\DMG_ROM_BOOT.bin") : null;
 
         bool FPSLimiterEnabled()
         {
@@ -113,12 +112,8 @@ public class Model : ObservableObject
         {
             gameboy.Step();
             if (Paused)
-            {
                 while (Paused)
-                {
                     Thread.Sleep(10);
-                }
-            }
         }
         player.Stop();
     }

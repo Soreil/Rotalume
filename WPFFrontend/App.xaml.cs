@@ -3,7 +3,12 @@ using Microsoft.Extensions.Hosting;
 
 using System.Windows;
 
+using WPFFrontend.Glue;
+using WPFFrontend.Models;
+using WPFFrontend.Platform;
 using WPFFrontend.Services;
+using WPFFrontend.ViewModels;
+using WPFFrontend.Views;
 
 namespace WPFFrontend;
 
@@ -38,7 +43,7 @@ Host.CreateDefaultBuilder(args)
         var vm = host.Services.GetRequiredService<GameBoyViewModel>();
         var model = host.Services.GetRequiredService<Model>();
 
-        var mainWindow = new Screen(model) { DataContext = vm };
+        var mainWindow = new Views.Screen(model) { DataContext = vm };
 
         var input = host.Services.GetRequiredService<Input>();
         KeyboardViewModelBridge.Connect(input, mainWindow);

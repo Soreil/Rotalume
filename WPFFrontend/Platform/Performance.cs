@@ -1,6 +1,6 @@
 ﻿using Microsoft.Toolkit.Mvvm.ComponentModel;
 
-namespace WPFFrontend;
+namespace WPFFrontend.Platform;
 
 public partial class Performance : ObservableObject
 {

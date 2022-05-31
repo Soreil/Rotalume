@@ -6,7 +6,9 @@ using Microsoft.Toolkit.Mvvm.ComponentModel;
 
 using System.Windows.Input;
 
-namespace WPFFrontend;
+using WPFFrontend.Glue;
+
+namespace WPFFrontend.Platform;
 
 public class Input : ObservableObject, IDisposable
 {
@@ -74,10 +76,7 @@ public class Input : ObservableObject, IDisposable
         if (!disposedValue)
         {
             if (disposing)
-            {
                 XboxController.StopPolling();
-                // TODO: dispose managed state (managed objects)
-            }
 
             // TODO: free unmanaged resources (unmanaged objects) and override finalizer
             // TODO: set large fields to null

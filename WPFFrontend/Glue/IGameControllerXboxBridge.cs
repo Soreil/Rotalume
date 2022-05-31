@@ -1,7 +1,8 @@
 ﻿using emulator;
+
 using J2i.Net.XInputWrapper;
 
-namespace WPFFrontend;
+namespace WPFFrontend.Glue;
 
 internal class IGameControllerXboxBridge : IGameController
 {

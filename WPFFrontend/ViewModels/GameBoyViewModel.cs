@@ -5,7 +5,11 @@ using Microsoft.Toolkit.Mvvm.Input;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 
-namespace WPFFrontend;
+using WPFFrontend.Models;
+using WPFFrontend.Platform;
+using WPFFrontend.Views;
+
+namespace WPFFrontend.ViewModels;
 
 public partial class GameBoyViewModel : ObservableObject
 {

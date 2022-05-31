@@ -1,9 +1,10 @@
-﻿<Window x:Class="WPFFrontend.Screen"
-        xmlns:local="clr-namespace:WPFFrontend"
+﻿<Window x:Class="WPFFrontend.Views.Screen"
+        xmlns:local="clr-namespace:WPFFrontend.Views"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:wpffrontend="clr-namespace:WPFFrontend" d:DataContext="{d:DesignInstance Type=wpffrontend:GameBoyViewModel}"
+        xmlns:VM="clr-namespace:WPFFrontend.ViewModels"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" d:DataContext="{d:DesignInstance Type=VM:GameBoyViewModel}"
         mc:Ignorable="d"
         Title="Rotalume" SizeToContent="WidthAndHeight"
         >

@@ -7,7 +7,7 @@ using System.Windows.Media.Imaging;
 
 using WPFFrontend.Services;
 
-namespace WPFFrontend;
+namespace WPFFrontend.Platform;
 
 public partial class GameboyScreen : ObservableObject
 {
