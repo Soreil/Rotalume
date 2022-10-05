@@ -1,12 +1,12 @@
-﻿namespace J2i.Net.XInputWrapper;
+﻿using System.Timers;
+
+using Timer = System.Timers.Timer;
+
+namespace J2i.Net.XInputWrapper;
 
 public class XboxController
 {
     private readonly int _playerIndex;
-    private static bool keepRunning;
-    private static bool isRunning;
-    private static readonly object SyncLock;
-    private static Thread? pollingThread;
     private bool _stopMotorTimerActive;
     private DateTime _stopMotorTime;
     private XInputBatteryInformation _batteryInformationGamepad;
@@ -34,7 +34,6 @@ public class XboxController
     static XboxController()
     {
         Controllers = new XboxController[ControllerLimit];
-        SyncLock = new object();
         for (int i = 0; i < ControllerLimit; ++i)
         {
             Controllers[i] = new XboxController(i);
@@ -121,52 +120,30 @@ public class XboxController
 
     public bool IsConnected { get; internal set; }
 
-    #region Polling
-    public static void StartPolling()
+    private static Timer? timer;
+
+    public static void PollerLoop()
     {
-        if (!isRunning)
+        if (timer is not null) return;
+
+        var t = new Timer(UpdateFrequency)
         {
-            lock (SyncLock)
-            {
-                if (!isRunning)
-                {
-                    pollingThread = new Thread(PollerLoop);
-                    pollingThread.Start();
-                }
-            }
+            AutoReset = true
+        };
+        t.Elapsed += new ElapsedEventHandler(OnTimedEvent);
+        t.Start();
+        timer = t;
+    }
+
+    private static void OnTimedEvent(object? source, ElapsedEventArgs e)
+    {
+        foreach (var c in Controllers)
+        {
+            c.UpdateState();
         }
     }
 
-    public static void StopPolling()
-    {
-        if (isRunning)
-            keepRunning = false;
-    }
-
-    private static void PollerLoop()
-    {
-        lock (SyncLock)
-        {
-            if (isRunning)
-                return;
-            isRunning = true;
-        }
-        keepRunning = true;
-        while (keepRunning)
-        {
-            foreach (var c in Controllers)
-            {
-                c.UpdateState();
-            }
-            Thread.Sleep(UpdateFrequency);
-        }
-        lock (SyncLock)
-        {
-            isRunning = false;
-        }
-    }
-
-    public void UpdateState()
+    private void UpdateState()
     {
         int result = XInput.XInputGetState(_playerIndex, ref gamepadStateCurrent);
         IsConnected = result == 0;
@@ -184,7 +161,6 @@ public class XboxController
             _ = XInput.XInputSetState(_playerIndex, ref stopStrength);
         }
     }
-    #endregion
 
     #region Motor Functions
     public void Vibrate(double leftMotor, double rightMotor) => Vibrate(leftMotor, rightMotor, TimeSpan.MinValue);

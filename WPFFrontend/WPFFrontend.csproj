@@ -1,5 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+	<Target Name="RemoveDuplicateAnalyzers" BeforeTargets="CoreCompile">
+		<!-- Work around https://github.com/dotnet/wpf/issues/6792 -->
+
+		<ItemGroup>
+			<FilteredAnalyzer Include="@(Analyzer->Distinct())" />
+			<Analyzer Remove="@(Analyzer)" />
+			<Analyzer Include="@(FilteredAnalyzer)" />
+		</ItemGroup>
+	</Target>
+
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
 		<TargetFramework>net6.0-windows</TargetFramework>
@@ -29,11 +39,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Page Include="App.xaml" />
+		<Page Include="App.xaml" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Commands\" />
+		        <FilteredAnalyzer Include="@(Analyzer-&gt;Distinct())" />
+<Folder Include="Commands\" />
 	</ItemGroup>
 
 </Project>

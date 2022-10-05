@@ -6,23 +6,24 @@ public partial class CPU
     {
         var coincidence = ISR.Fired();
 
-        if (coincidence.Any() && Halted == HaltState.NormalIME1)
+        if (coincidence is not null && Halted == HaltState.NormalIME1)
         {
             Halted = HaltState.off;
         }
-        else if (coincidence.Any() && Halted == HaltState.normalIME0)
+        else if (coincidence is not null && Halted == HaltState.normalIME0)
         {
             Halted = HaltState.off;
             return true;
         }
 
-        if (!ISR.IME || !coincidence.Any())
+        if (!ISR.IME || coincidence is null)
         {
             return false; //Interrupts have to be globally enabled to use them
         }
 
         //This section follows https://gbdev.io/pandocs/Interrupts.html#interrupt-handling
-        var interrupt = coincidence.First();
+
+        Interrupt interrupt = (Interrupt)coincidence;
 
         ISR.IME = false;
         ISR.ClearInterrupt(interrupt);

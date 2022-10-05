@@ -15,7 +15,7 @@ public class Input : ObservableObject, IDisposable
     private InputDevices MakeNewInput()
     {
         XboxController.UpdateFrequency = 5;
-        XboxController.StartPolling();
+        XboxController.PollerLoop();
 
         var Controller1 = new XboxControllerWithInterruptHandler(XboxController.RetrieveController(0));
         var Controller2 = new XboxControllerWithInterruptHandler(XboxController.RetrieveController(1));
@@ -76,11 +76,11 @@ public class Input : ObservableObject, IDisposable
         if (!disposedValue)
         {
             if (disposing)
-                XboxController.StopPolling();
+                // XboxController.Dispose();
 
-            // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-            // TODO: set large fields to null
-            disposedValue = true;
+                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+                // TODO: set large fields to null
+                disposedValue = true;
         }
     }
 

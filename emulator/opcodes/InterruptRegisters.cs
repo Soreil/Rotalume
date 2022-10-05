@@ -25,16 +25,15 @@ public class InterruptRegisters
         }
     }
 
-    public List<Interrupt> Fired()
+    public Interrupt? Fired()
     {
-        var ret = new List<Interrupt>();
-        if (VBlankEnabled && VBlankRequested) ret.Add(Interrupt.VBlank);
-        if (STATEnabled && STATRequested) ret.Add(Interrupt.STAT);
-        if (TimerEnabled && TimerRequested) ret.Add(Interrupt.Timer);
-        if (SerialEnabled && SerialRequested) ret.Add(Interrupt.Serial);
-        if (JoypadEnabled && JoypadRequested) ret.Add(Interrupt.Joypad);
+        if (VBlankEnabled && VBlankRequested) return Interrupt.VBlank;
+        if (STATEnabled && STATRequested)     return Interrupt.STAT;
+        if (TimerEnabled && TimerRequested)   return Interrupt.Timer;
+        if (SerialEnabled && SerialRequested) return Interrupt.Serial;
+        if (JoypadEnabled && JoypadRequested) return Interrupt.Joypad;
 
-        return ret;
+        return null;
     }
 
     internal void ClearInterrupt(Interrupt interrupt)

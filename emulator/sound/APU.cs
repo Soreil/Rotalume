@@ -155,6 +155,11 @@ public class APU
     }
 
     private int FrameSequencerState;
+
+    //The Frame Sequencer state machine cycles through 8 states which
+    //can clock audio channel length counters
+    //the source for the frame sequencer clock derives from the
+    //div register in the timer subsystem.
     public void FrameSequencerClock(object? o, EventArgs e)
     {
         switch (FrameSequencerState)
@@ -221,6 +226,9 @@ public class APU
         }
     }
 
+    //In the current design a tick is executed every T cycle,
+    //It should be possible to modify the APU to work on M cycles
+    //Instead because supposedly everything is divisible by 4.
     internal void Tick(object? o, EventArgs e)
     {
         if (MasterSoundDisable) return;
@@ -257,6 +265,9 @@ public class APU
     private double capacitorLeft;
     private double capacitorRight;
 
+    //The HighPass filter is supposed to smooth out pops and produce
+    //a more realistic sound. The current values here are completely
+    //untested for accuracy.
     private (double, double) HighPass(double left, double right)
     {
         var outputLeft = left - capacitorLeft;
@@ -267,6 +278,9 @@ public class APU
 
         return (outputLeft, outputRight);
     }
+
+    //Sample produces a 2 channel 16 bit sample, this method affects the internal state
+    //of the APU because it call the HighPass filter which affects the emulated capacitors.
     public (short left, short right) Sample()
     {
         if (!ToneSweep.IsOn() && !Tone.IsOn() && !Wave.IsOn() && !Noise.IsOn()) return (0, 0);
@@ -314,6 +328,7 @@ public class APU
 
         var asFloatLeft = volumeLeft / (1 << 15);
         var asFloatRight = volumeRight / (1 << 15);
+
         (var left, var right) = HighPass(asFloatLeft, asFloatRight);
 
         return ((short)(left * (1 << 15)), (short)(right * (1 << 15)));

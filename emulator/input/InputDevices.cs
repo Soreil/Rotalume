@@ -43,6 +43,7 @@ public class InputDevices
         foreach (var k in gameControllers) mappedControllers.Add(new MappedController(k));
     }
 
+    //Most game controllers have two seperate (potentially of different strength) motors
     public void Vibrate(double leftMotor, double rightMotor)
     {
         if (SelectedController != 0) mappedControllers[SelectedController - 1].Rumble(leftMotor, rightMotor);
