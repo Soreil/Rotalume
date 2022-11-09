@@ -1,6 +1,6 @@
 ﻿
-using Microsoft.Toolkit.Mvvm.ComponentModel;
-using Microsoft.Toolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
@@ -41,10 +41,10 @@ public partial class GameBoyViewModel : ObservableObject
     [ObservableProperty]
     private BitmapSource? displayFrame;
 
-    [ICommand]
+    [RelayCommand]
     private void Pause() => Model.Paused = !Model.Paused;
 
-    [ICommand]
+    [RelayCommand]
     public void LoadROMPopUp()
     {
         var ofd = new Microsoft.Win32.OpenFileDialog() { DefaultExt = ".gb", Filter = "ROM Files (*.gb;*.gbc)|*.gb;*.gbc" };

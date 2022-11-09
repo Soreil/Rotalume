@@ -4,10 +4,10 @@ namespace WAV;
 
 public class WAVFile<T> where T : unmanaged
 {
-    private readonly byte[] RiffTag = new byte[] { (byte)'R', (byte)'I', (byte)'F', (byte)'F' };
-    private readonly byte[] WaveTag = new byte[] { (byte)'W', (byte)'A', (byte)'V', (byte)'E' };
-    private readonly byte[] FmtTag = new byte[] { (byte)'f', (byte)'m', (byte)'t', 0x20 };
-    private readonly byte[] DatTag = new byte[] { (byte)'d', (byte)'a', (byte)'t', (byte)'a' };
+    private static readonly byte[] RiffTag = new byte[] { (byte)'R', (byte)'I', (byte)'F', (byte)'F' };
+    private static readonly byte[] WaveTag = new byte[] { (byte)'W', (byte)'A', (byte)'V', (byte)'E' };
+    private static readonly byte[] FmtTag = new byte[] { (byte)'f', (byte)'m', (byte)'t', 0x20 };
+    private static readonly byte[] DatTag = new byte[] { (byte)'d', (byte)'a', (byte)'t', (byte)'a' };
 
     private readonly int FormatDatalength;
     private readonly FormatType Format;

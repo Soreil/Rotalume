@@ -1,5 +1,6 @@
-﻿using Microsoft.Toolkit.Mvvm.ComponentModel;
-using Microsoft.Toolkit.Mvvm.Input;
+﻿using Microsoft.Extensions.Logging;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 using System.IO;
 using System.Windows.Media;
@@ -43,21 +44,23 @@ public partial class GameboyScreen : ObservableObject
         return Source;
     }
 
-    public GameboyScreen(FileService fileService)
+    public GameboyScreen(FileService fileService, ILogger<GameboyScreen> logger)
     {
         currentFrame = new byte[BitmapWidth * BitmapHeight];
         for (int i = 0; i < currentFrame.Length; i++)
             currentFrame[i] = 0xff;
         output = MakeBitmap(currentFrame);
         FileService = fileService;
+        Logger = logger;
     }
 
     [ObservableProperty]
     private bool useInterFrameBlending;
 
     public FileService FileService { get; }
+    public ILogger<GameboyScreen> Logger { get; }
 
-    [ICommand]
+    [RelayCommand]
     public void DebugScreenShot()
     {
         var romPath = FileService.ROMPath;
@@ -67,7 +70,7 @@ public partial class GameboyScreen : ObservableObject
         WriteScreenShot(path);
     }
 
-    [ICommand]
+    [RelayCommand]
     public void ScreenShot()
     {
         string fileName = string.Format(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) +

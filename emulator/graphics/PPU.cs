@@ -1,21 +1,25 @@
 ﻿namespace emulator;
 using graphics;
+
+using Microsoft.Extensions.Logging;
+
 public class PPU
 {
     private long Clock;
     private readonly IFrameSink Writer;
-    public PPU(IFrameSink frameSink, InterruptRegisters interruptRegisters, OAM OAM, VRAM VRAM)
+    public PPU(IFrameSink frameSink, InterruptRegisters interruptRegisters, OAM OAM, VRAM VRAM, ILogger<PPU> logger)
     {
         Writer = frameSink;
         this.OAM = OAM;
         this.VRAM = VRAM;
-
+        this.logger = logger;
         VBlankInterrupt += interruptRegisters.EnableVBlankInterrupt;
         STATInterrupt += interruptRegisters.EnableLCDSTATInterrupt;
     }
 
     private readonly OAM OAM;
     private readonly VRAM VRAM;
+    private readonly ILogger<PPU> logger;
 
 
     //FF40 - FF4B, PPU control registers
@@ -29,13 +33,18 @@ public class PPU
             _LCDC = value;
             if (ScreenJustTurnedOn)
             {
+                logger.LogInformation("Turning on PPU");
+                Writer.Resume();
                 Renderer = new Renderer(this, OAM, VRAM, Writer, Clock - 4); //We want a new renderer so all the internal state resets including clocking
             }
             else if ((!LCDEnable) && Renderer is not null)
             {
+                logger.LogInformation("Turning off PPU");
                 Writer.Draw(); //If there is a partially written frame when we delete the old renderer the next
                                //instantiation of renderer will overwrite the end of the buffer because LY starts at 0 despite
                                //there already being data written to the output buffer
+                
+                Writer.Pause(); //We are not currently drawing a frame so it would be pointless to measure the duration. 
 
                 Renderer = null; //We want to destroy the old renderer so it can't keep running after requested to turn off
                 LY = 0;

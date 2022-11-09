@@ -577,7 +577,7 @@ public partial class CPU
     private void CycleElapsed()
     {
         OurCycles++;
-        Cycle?.Invoke(this, EventArgs.Empty);
+        Cycle!.Invoke(this, EventArgs.Empty);
     }
 
     public event EventHandler? Cycle;

@@ -2,7 +2,7 @@
 
 using J2i.Net.XInputWrapper;
 
-using Microsoft.Toolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 using System.Windows.Input;
 
@@ -10,7 +10,7 @@ using WPFFrontend.Glue;
 
 namespace WPFFrontend.Platform;
 
-public class Input : ObservableObject, IDisposable
+public class Input : ObservableObject
 {
     private InputDevices MakeNewInput()
     {
@@ -58,8 +58,6 @@ public class Input : ObservableObject, IDisposable
                 (dev, controller) => dev.SelectedController = controller);
     }
 
-    private bool disposedValue;
-
     private event KeyEventHandler? KeyDown;
     private event KeyEventHandler? KeyUp;
 
@@ -69,32 +67,5 @@ public class Input : ObservableObject, IDisposable
     public Input()
     {
         Devices = MakeNewInput();
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!disposedValue)
-        {
-            if (disposing)
-                // XboxController.Dispose();
-
-                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-                // TODO: set large fields to null
-                disposedValue = true;
-        }
-    }
-
-    // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
-    // ~Input()
-    // {
-    //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-    //     Dispose(disposing: false);
-    // }
-
-    public void Dispose()
-    {
-        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
     }
 }

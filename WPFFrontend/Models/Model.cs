@@ -1,6 +1,7 @@
 ﻿using emulator;
 
-using Microsoft.Toolkit.Mvvm.ComponentModel;
+using Microsoft.Extensions.Logging;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 using System.IO;
 
@@ -13,11 +14,12 @@ namespace WPFFrontend.Models;
 public class Model : ObservableObject
 {
     public Model(GameboyScreen gameboyScreen,
-        Input input, FileService fileService)
+        Input input, FileService fileService, ILogger<FrameSink> logger)
     {
         GameboyScreen = gameboyScreen;
         Input = input;
         FileService = fileService;
+        Logger = logger;
     }
     public bool Paused
     {
@@ -50,6 +52,7 @@ public class Model : ObservableObject
     public GameboyScreen GameboyScreen { get; }
     public Input Input { get; }
     public FileService FileService { get; }
+    public ILogger<FrameSink> Logger { get; }
     public Player? Player { get; set; }
 
     private void Gameboy(string path, bool bootromEnabled)
@@ -93,7 +96,7 @@ public class Model : ObservableObject
         }
 
 
-        var fs = new FrameSink(FPSLimiterEnabled);
+        var fs = new FrameSink(FPSLimiterEnabled, Logger);
 
         fs.FramePushed += FramePushed;
 
@@ -156,7 +159,6 @@ public class Model : ObservableObject
             if (disposing)
             {
                 ShutdownGameboy();
-                Input.Dispose();
             }
 
             disposedValue = true;
