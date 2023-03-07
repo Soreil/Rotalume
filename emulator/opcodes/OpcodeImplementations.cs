@@ -470,24 +470,29 @@ public partial class CPU
     {
         var lhs = Registers.A;
         var carry = Convert.ToInt32(Registers.Carry);
-        Registers.A = (byte)(lhs + rhs + carry);
+
+        var sum = lhs + rhs + carry;
+
+        Registers.A = (byte)sum;
 
         Registers.Negative = false;
-        Registers.Zero = ((byte)(lhs + rhs + carry)) == 0;
+        Registers.Zero = ((byte)sum) == 0;
         Registers.Half = ((lhs & 0xf) + (rhs & 0xf) + carry) > 0x0F;
-        Registers.Carry = (lhs + rhs + carry) > 0xff;
+        Registers.Carry = sum > 0xff;
     }
 
     private void SBC(byte rhs)
     {
         var lhs = Registers.A;
         var carry = Convert.ToInt32(Registers.Carry);
-        Registers.A = (byte)(lhs - rhs - carry);
+
+        var sum = lhs - rhs - carry;
+        Registers.A = (byte)sum;
 
         Registers.Negative = true;
-        Registers.Zero = ((byte)(lhs - rhs - carry)) == 0;
+        Registers.Zero = ((byte)sum) == 0;
         Registers.Half = (lhs & 0xf) < ((rhs & 0xf) + carry);
-        Registers.Carry = lhs - rhs - carry is > 0xff or < 0;
+        Registers.Carry = sum is > 0xff or < 0;
     }
 
     public Action AND(Register p0) => () =>

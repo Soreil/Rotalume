@@ -1,5 +1,7 @@
 ﻿using emulator;
 
+using Microsoft.Extensions.Logging.Abstractions;
+
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
@@ -13,7 +15,9 @@ public static class TestHelpers
     {
         var bootrom = LoadBootROM();
         var gamerom = LoadGameROM();
-        frameSink ??= new FrameSink( () => false);
+
+        var logger = NullLogger<FrameSink>.Instance;
+        frameSink ??= new FrameSink(() => false, logger);
 
         return new Core(
             gamerom,
@@ -35,7 +39,8 @@ public static class TestHelpers
         }
         else gameromPaddedToSize = gamerom;
 
-        frameSink ??= new FrameSink( () => false);
+        var logger = NullLogger<FrameSink>.Instance;
+        frameSink ??= new FrameSink(() => false, logger);
 
         return new Core(gameromPaddedToSize,
             null,

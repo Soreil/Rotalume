@@ -577,10 +577,10 @@ public partial class CPU
     private void CycleElapsed()
     {
         OurCycles++;
-        Cycle!.Invoke(this, EventArgs.Empty);
+        Cycle();
     }
 
-    public event EventHandler? Cycle;
+    public Action Cycle = () => { };
 
     internal void Step()
     {

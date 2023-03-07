@@ -3,10 +3,7 @@
 public class MasterClock
 {
     private long clock;
-    public void Tick(object? o, EventArgs e)
-    {
-        clock++;
-    }
+    public void Tick() => clock++;
 
     public long Now() => clock;
 }

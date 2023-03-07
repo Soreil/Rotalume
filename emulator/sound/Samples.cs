@@ -22,7 +22,7 @@ public class Samples
 
     private double sampleRatePerformanceScaler = 1;
 
-    public void Sample(object? sender, EventArgs e)
+    public void Sample()
     {
         if (MasterClock.Now() % SamplePeriod == 0)
         {

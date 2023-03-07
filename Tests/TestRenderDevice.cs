@@ -24,10 +24,14 @@ internal class TestRenderDevice : IFrameSink
     }
 
     public byte[] Image { get; set; }
+    public bool Paused { get; private set; }
 
     public void Write(ReadOnlySpan<byte> buffer)
     {
         buffer.CopyTo(new Span<byte>(backingBuffer, index, buffer.Length));
         index += buffer.Length;
     }
+
+    public void Pause() => Paused= true;
+    public void Resume() => Paused= false;
 }

@@ -22,7 +22,7 @@ public class DMAControl
     public MMU MMU { get; }
 
     public DMARegister Register { get; }
-    public void DMA(object? o, EventArgs e)
+    public void DMA()
     {
         if (Register.TicksLeft != 0)
         {

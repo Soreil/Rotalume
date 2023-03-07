@@ -112,31 +112,18 @@ public class Core : IDisposable
             InterruptRegisters.SetStateWithoutBootrom();
         }
 
-        CPU.Cycle += Timers.Tick;
-        CPU.Cycle += PPU.Tick;
-        CPU.Cycle += APU.Tick;
-        CPU.Cycle += DMA.DMA;
-        CPU.Cycle += MasterClock.Tick;
-
-        CPU.Cycle += Timers.Tick;
-        CPU.Cycle += PPU.Tick;
-        CPU.Cycle += APU.Tick;
-        CPU.Cycle += DMA.DMA;
-        CPU.Cycle += MasterClock.Tick;
-
-        CPU.Cycle += Timers.Tick;
-        CPU.Cycle += PPU.Tick;
-        CPU.Cycle += APU.Tick;
-        CPU.Cycle += DMA.DMA;
-        CPU.Cycle += MasterClock.Tick;
-
-        CPU.Cycle += Timers.Tick;
-        CPU.Cycle += PPU.Tick;
-        CPU.Cycle += APU.Tick;
-        CPU.Cycle += DMA.DMA;
-        CPU.Cycle += MasterClock.Tick;
-
-        CPU.Cycle += Samples.Sample;
+        CPU.Cycle = () =>
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                Timers.Tick();
+                PPU.Tick();
+                APU.Tick();
+                DMA.DMA();
+                MasterClock.Tick();
+            }
+            Samples.Sample();
+        };
     }
 
     public void Step() => CPU.Step();

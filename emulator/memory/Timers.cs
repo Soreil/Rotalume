@@ -17,7 +17,7 @@ public class Timers
         Interrupt += interruptRegisters.EnableTimerInterrupt;
     }
 
-    public void Tick(object? o, EventArgs e)
+    public void Tick()
     {
         InternalCounter++;
 

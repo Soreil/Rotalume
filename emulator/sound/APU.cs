@@ -137,6 +137,8 @@ public class APU
     }
 
     private int SoundClock;
+
+    //MasterSoundDisable is a global toggle with which the APU hardware can be disabled.
     private bool MasterSoundDisable;
 
     private ToneSweepChannel ToneSweep { get; set; }
@@ -229,7 +231,7 @@ public class APU
     //In the current design a tick is executed every T cycle,
     //It should be possible to modify the APU to work on M cycles
     //Instead because supposedly everything is divisible by 4.
-    internal void Tick(object? o, EventArgs e)
+    internal void Tick()
     {
         if (MasterSoundDisable) return;
 
@@ -279,10 +281,13 @@ public class APU
         return (outputLeft, outputRight);
     }
 
+    private static int ReadSample(Channel ch) => ch.DACOn() ? (short)(ch.Sample() - 7.5) : 0;
+
     //Sample produces a 2 channel 16 bit sample, this method affects the internal state
     //of the APU because it call the HighPass filter which affects the emulated capacitors.
     public (short left, short right) Sample()
     {
+        //Early exit in case all the channels are disabled.
         if (!ToneSweep.IsOn() && !Tone.IsOn() && !Wave.IsOn() && !Noise.IsOn()) return (0, 0);
 
         double volumeLeft = 0;
@@ -290,25 +295,25 @@ public class APU
 
         if (ToneSweep.IsOn())
         {
-            var sample = ToneSweep.DACOn() ? (short)(ToneSweep.Sample() - 7.5) : 0;
+            var sample = ReadSample(ToneSweep);
             if (Sound1LeftOn) volumeLeft += sample;
             if (Sound1RightOn) volumeRight += sample;
         }
         if (Tone.IsOn())
         {
-            var sample = Tone.DACOn() ? (short)(Tone.Sample() - 7.5) : 0;
+            var sample = ReadSample(Tone);
             if (Sound2LeftOn) volumeLeft += sample;
             if (Sound2RightOn) volumeRight += sample;
         }
         if (Wave.IsOn())
         {
-            var sample = Wave.DACOn() ? (Wave.Sample() - 7.5) : 0;
+            var sample = ReadSample(Wave);
             if (Sound3LeftOn) volumeLeft += sample;
             if (Sound3RightOn) volumeRight += sample;
         }
         if (Noise.IsOn())
         {
-            var sample = Noise.DACOn() ? (Noise.Sample() - 7.5) : 0;
+            var sample = ReadSample(Noise);
             if (Sound4LeftOn) volumeLeft += sample;
             if (Sound4RightOn) volumeRight += sample;
         }

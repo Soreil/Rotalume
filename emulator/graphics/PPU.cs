@@ -161,7 +161,7 @@ public class PPU
     }
 
     private Renderer? Renderer;
-    public void Tick(object? o, EventArgs e)
+    public void Tick()
     {
         Clock++;
         if (Renderer is not null)
