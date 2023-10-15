@@ -17,7 +17,4 @@ internal class NoRTCException : Exception
     {
     }
 
-    protected NoRTCException(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-    }
 }

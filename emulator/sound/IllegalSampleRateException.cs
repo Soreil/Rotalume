@@ -17,7 +17,4 @@ internal class IllegalSampleRateException : Exception
     {
     }
 
-    protected IllegalSampleRateException(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-    }
 }

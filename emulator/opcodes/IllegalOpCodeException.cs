@@ -17,7 +17,4 @@ internal class IllegalOpCodeException : Exception
     {
     }
 
-    protected IllegalOpCodeException(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-    }
 }

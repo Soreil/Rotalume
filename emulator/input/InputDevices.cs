@@ -39,7 +39,7 @@ public class InputDevices
     {
         Keyboard = new(keyboard);
         Keyboard.controller.AddEventHandler(OnUnderLyingChanged);
-        mappedControllers = new();
+        mappedControllers = [];
         foreach (var k in gameControllers) mappedControllers.Add(new MappedController(k));
     }
 

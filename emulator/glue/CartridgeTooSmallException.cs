@@ -17,7 +17,4 @@ internal class CartridgeTooSmallException : Exception
     {
     }
 
-    protected CartridgeTooSmallException(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-    }
 }

@@ -17,7 +17,4 @@ internal class ShadeDoesNotRepresentAColourException : Exception
     {
     }
 
-    protected ShadeDoesNotRepresentAColourException(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-    }
 }

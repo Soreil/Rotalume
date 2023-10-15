@@ -8,7 +8,7 @@ public class Samples
     {
         MasterClock = masterClock;
         APU = aPU;
-        Buffer = new();
+        Buffer = [];
     }
 
     public MasterClock MasterClock { get; }

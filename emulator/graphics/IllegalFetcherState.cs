@@ -17,7 +17,4 @@ internal class IllegalFetcherState : Exception
     {
     }
 
-    protected IllegalFetcherState(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-    }
 }

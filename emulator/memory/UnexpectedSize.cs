@@ -17,7 +17,4 @@ internal class UnexpectedSize : Exception
     {
     }
 
-    protected UnexpectedSize(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-    }
 }

@@ -29,6 +29,7 @@ internal class GraphicalOutputTest
 
         outputImage.SaveAsBmp("outputBootROM.bmp");
 
+        //For some reason we are missing the (R) part of the image on the righthand side here.
         Assert.IsTrue(TestHelpers.AreEqual((Image<L8>)expectedImage, outputImage));
     }
 

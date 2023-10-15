@@ -12,7 +12,7 @@
 
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
-		<TargetFramework>net7.0-windows</TargetFramework>
+		<TargetFramework>net8.0-windows</TargetFramework>
 		<UseWPF>true</UseWPF>
 		<AssemblyName>WPFFrontend</AssemblyName>
 		<RootNamespace>WPFFrontend</RootNamespace>
@@ -20,6 +20,13 @@
 		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <Compile Remove="Commands\**" />
+	  <EmbeddedResource Remove="Commands\**" />
+	  <None Remove="Commands\**" />
+	  <Page Remove="Commands\**" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.0.0" />
@@ -44,7 +51,6 @@
 
 	<ItemGroup>
 		        <FilteredAnalyzer Include="@(Analyzer-&gt;Distinct())" />
-<Folder Include="Commands\" />
 	</ItemGroup>
 
 </Project>

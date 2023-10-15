@@ -17,7 +17,4 @@ internal class SpriteDomainError : Exception
     {
     }
 
-    protected SpriteDomainError(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-    }
 }

@@ -17,7 +17,4 @@ internal class IllegalSpritePalette : Exception
     {
     }
 
-    protected IllegalSpritePalette(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-    }
 }

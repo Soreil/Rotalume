@@ -16,8 +16,4 @@ internal class UnsupportedJoypadButton : Exception
     public UnsupportedJoypadButton(string? message, Exception? innerException) : base(message, innerException)
     {
     }
-
-    protected UnsupportedJoypadButton(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-    }
 }

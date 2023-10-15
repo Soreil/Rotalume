@@ -17,7 +17,4 @@ internal class NoMatchingSprites : Exception
     {
     }
 
-    protected NoMatchingSprites(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-    }
 }

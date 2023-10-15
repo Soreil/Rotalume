@@ -18,7 +18,7 @@ public class PixelFetcher
 
     private int FetcherStep;
     private bool PushedEarly;
-    private readonly HashSet<int> WindowLY = new();
+    private readonly HashSet<int> WindowLY = [];
 
     //Line finished resets all state which is only relevant for a single line
     internal void LineFinished()

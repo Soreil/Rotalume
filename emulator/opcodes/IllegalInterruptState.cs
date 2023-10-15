@@ -17,7 +17,4 @@ internal class IllegalInterruptState : Exception
     {
     }
 
-    protected IllegalInterruptState(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-    }
 }

@@ -17,7 +17,4 @@ internal class NotAValidRTCRegister : Exception
     {
     }
 
-    protected NotAValidRTCRegister(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-    }
 }

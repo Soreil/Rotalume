@@ -17,7 +17,4 @@ internal class NoBatteryPresentException : Exception
     {
     }
 
-    protected NoBatteryPresentException(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-    }
 }
