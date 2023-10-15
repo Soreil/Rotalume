@@ -1,8 +1,8 @@
-﻿using emulator;
+﻿using emulator.input;
 
 namespace WPFFrontend.Glue;
 
-internal class IGameControllerKeyboardBridge : IGameController
+internal class IGameControllerKeyboardBridge(KeyBoardWithInterruptHandler keyboard) : IGameController
 {
     public bool IsAPressed => keyboard.A;
     public bool IsSelectPressed => keyboard.Select;
@@ -14,10 +14,6 @@ internal class IGameControllerKeyboardBridge : IGameController
     public bool IsStartPressed => keyboard.Start;
     public void Vibrate(double leftMotor, double rightMotor) { }
 
-    private readonly KeyBoardWithInterruptHandler keyboard;
-
     public void AddEventHandler(EventHandler<EventArgs> e) => keyboard.KeyWentDown += e;
     public void RemoveEventHandler(EventHandler<EventArgs> e) => keyboard.KeyWentDown -= e;
-
-    public IGameControllerKeyboardBridge(KeyBoardWithInterruptHandler keyboard) => this.keyboard = keyboard;
 }

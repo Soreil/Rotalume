@@ -1,7 +1,6 @@
 ﻿using System.IO.MemoryMappedFiles;
 
-namespace emulator;
-
+namespace emulator.memory.mappers;
 internal class MBC1WithBatteryBackedRAM : MBC
 {
     private readonly byte[] gameROM;

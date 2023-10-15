@@ -13,5 +13,5 @@ public struct XInputBatteryInformation
     [FieldOffset(1)]
     internal byte BatteryLevel;
 
-    public override string ToString() => string.Format("{0} {1}", (BatteryTypes)BatteryType, (BatteryLevel)BatteryLevel);
+    public override readonly string ToString() => string.Format("{0} {1}", (BatteryTypes)BatteryType, (BatteryLevel)BatteryLevel);
 }

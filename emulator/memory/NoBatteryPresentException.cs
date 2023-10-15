@@ -1,7 +1,4 @@
-﻿using System.Runtime.Serialization;
-
-namespace emulator;
-
+﻿namespace emulator.memory;
 [Serializable]
 internal class NoBatteryPresentException : Exception
 {

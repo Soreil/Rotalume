@@ -1,5 +1,5 @@
 ﻿
-namespace emulator;
+namespace emulator.graphics;
 
 public record struct SpriteAttributes(
 

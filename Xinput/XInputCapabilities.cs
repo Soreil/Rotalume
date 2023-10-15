@@ -7,7 +7,7 @@ public struct XInputCapabilities
 {
     [MarshalAs(UnmanagedType.I1)]
     [FieldOffset(0)]
-    readonly byte Type;
+    private readonly byte Type;
 
     [MarshalAs(UnmanagedType.I1)]
     [FieldOffset(1)]

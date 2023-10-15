@@ -1,4 +1,4 @@
-﻿namespace emulator;
+﻿namespace emulator.graphics;
 
 public enum Shade : byte
 {

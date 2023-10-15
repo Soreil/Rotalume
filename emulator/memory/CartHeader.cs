@@ -1,5 +1,7 @@
-﻿namespace emulator;
+﻿using emulator.glue;
+using emulator.memory.mappers;
 
+namespace emulator.memory;
 internal record CartHeader
 {
     public string Title { get; init; }

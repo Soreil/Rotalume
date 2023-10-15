@@ -1,5 +1,4 @@
-﻿namespace emulator;
-
+﻿namespace emulator.memory.mappers;
 public abstract class MBC : IDisposable
 {
     protected const int ROMStart = 0x0000;

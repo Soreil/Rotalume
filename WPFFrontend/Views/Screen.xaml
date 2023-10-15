@@ -16,7 +16,7 @@
     <Window.InputBindings>
         <KeyBinding Key="S" Command="{Binding Screen.ScreenShotCommand}"/>
         <KeyBinding Key="D" Command="{Binding Screen.DebugScreenShotCommand}"/>
-        <KeyBinding Key="P" Command="{Binding PauseCommand}"/>
+        <KeyBinding Key="P" Command="{Binding TogglePauseCommand}"/>
     </Window.InputBindings>
 
     <!--AllowDrop="True" Drop="LoadROM" -->
@@ -48,7 +48,7 @@
             </MenuItem>
         </Menu>
 
-        <Label Name="FPS" Content="{Binding Performance.Label, UpdateSourceTrigger=PropertyChanged}" Padding="0,0,0,4">
+        <Label Name="FPS" Content="{Binding Performance.PerformanceDisplayText, UpdateSourceTrigger=PropertyChanged}" Padding="0,0,0,4">
             <Label.Style>
                 <Style TargetType="Label">
                     <Style.Triggers>

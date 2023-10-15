@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace emulator;
+namespace emulator.registers;
 
 [StructLayout(LayoutKind.Explicit)]
 public struct UnionRegister

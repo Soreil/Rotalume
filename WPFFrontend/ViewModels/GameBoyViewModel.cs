@@ -13,7 +13,7 @@ namespace WPFFrontend.ViewModels;
 
 public partial class GameBoyViewModel : ObservableObject
 {
-    public Performance Performance { get; }
+    public GameboyTimingInfo Performance { get; }
     public GameboyScreen Screen { get; }
 
     public ICommand StopCommand { get; }
@@ -22,7 +22,7 @@ public partial class GameBoyViewModel : ObservableObject
     public Input Input { get; }
 
     public GameBoyViewModel(GameboyScreen gameboyScreen,
-        Performance performance,
+        GameboyTimingInfo performance,
         ControllerIDConverter controllerIDConverter,
         Model model,
         Input input)
@@ -42,7 +42,7 @@ public partial class GameBoyViewModel : ObservableObject
     private BitmapSource? displayFrame;
 
     [RelayCommand]
-    private void Pause() => Model.Paused = !Model.Paused;
+    private void TogglePause() => Model.Paused = !Model.Paused;
 
     [RelayCommand]
     public void LoadROMPopUp()

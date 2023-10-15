@@ -3,16 +3,10 @@
 using NAudio.Wave;
 
 namespace WPFFrontend.Audio;
-internal class Provider : WaveProvider16
+internal class Provider(int SampleRate, Samples samples) : WaveProvider16(SampleRate, 2)
 {
-    public Provider(int SampleRate, Samples samples) : base(SampleRate, 2)
-    {
-        this.SampleRate = SampleRate;
-        Samples = samples;
-    }
-
-    public int SampleRate { get; }
-    public Samples Samples { get; }
+    public int SampleRate { get; } = SampleRate;
+    public Samples Samples { get; } = samples;
 
     public override int Read(short[] buffer, int offset, int sampleCount) => Samples.GetSamples(buffer, offset, sampleCount, SampleRate);
 }

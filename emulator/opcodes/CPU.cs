@@ -1,7 +1,9 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using emulator.memory;
+using emulator.registers;
 
-namespace emulator;
+using Microsoft.Extensions.Logging;
 
+namespace emulator.opcodes;
 public partial class CPU
 {
     private readonly Action[] StdOps;

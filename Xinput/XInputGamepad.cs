@@ -33,7 +33,7 @@ internal struct XInputGamepad
     [FieldOffset(10)]
     internal short sThumbRY;
 
-    internal bool IsButtonPressed(int buttonFlags) => (wButtons & buttonFlags) == buttonFlags;
+    internal readonly bool IsButtonPressed(int buttonFlags) => (wButtons & buttonFlags) == buttonFlags;
 
     internal void Copy(XInputGamepad source)
     {

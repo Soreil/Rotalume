@@ -10,7 +10,7 @@ namespace WPFFrontend.Views;
 /// </summary>
 public partial class Screen : Window
 {
-    Model Model;
+    private readonly Model Model;
     public Screen(Model model)
     {
         InitializeComponent();

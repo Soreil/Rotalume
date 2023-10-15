@@ -1,6 +1,4 @@
-﻿using System.Runtime.Serialization;
-
-namespace emulator;
+﻿namespace emulator.graphics;
 
 [Serializable]
 internal class IllegalSpritePalette : Exception

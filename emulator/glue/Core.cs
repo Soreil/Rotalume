@@ -1,9 +1,14 @@
-﻿using emulator.sound;
+﻿using emulator.graphics;
+using emulator.input;
+using emulator.memory;
+using emulator.memory.mappers;
+using emulator.opcodes;
+using emulator.sound;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace emulator;
+namespace emulator.glue;
 
 public class Core : IDisposable
 {

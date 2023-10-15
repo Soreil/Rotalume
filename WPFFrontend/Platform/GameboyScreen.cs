@@ -16,7 +16,7 @@ public partial class GameboyScreen : ObservableObject
     private const int BitmapHeight = 144;
 
     private byte[]? previousFrame;
-    private byte[] currentFrame;
+    private readonly byte[] currentFrame;
 
     public BitmapSource output;
 
@@ -66,6 +66,7 @@ public partial class GameboyScreen : ObservableObject
         var romPath = FileService.ROMPath;
         if (romPath is null) return;
 
+        //This is ugly
         var path = Path.ChangeExtension(romPath, ".png");
         WriteScreenShot(path);
     }
@@ -73,6 +74,7 @@ public partial class GameboyScreen : ObservableObject
     [RelayCommand]
     public void ScreenShot()
     {
+        //All of the parameters here should come from configuration
         string fileName = string.Format(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) +
 @"\Screenshot" + "_" +
 DateTime.Now.ToString("(dd_MMMM_hh_mm_ss_tt)") + ".png");
@@ -89,6 +91,9 @@ DateTime.Now.ToString("(dd_MMMM_hh_mm_ss_tt)") + ".png");
         encoder.Save(fs);
     }
 
+    //The reason blending frames is done is so better emulate the look of a gameboy screen.
+    //There is quite a large amount of image retention on a normal gameboy screen and blending two frames gives
+    //a decently convincing level of blurriness. Some games also rely on this behaviour to look correct.
     private byte[] Blend(byte[] newPixels)
     {
         if (previousFrame is null) return newPixels;
@@ -97,7 +102,7 @@ DateTime.Now.ToString("(dd_MMMM_hh_mm_ss_tt)") + ".png");
         //We want an even blend ratio so we just take the average all all the pixels.
         for (int i = 0; i < newPixels.Length; i++)
         {
-            output[i] = (byte)((newPixels[i] + previousFrame[i]) / 2);
+            output[i] = (byte)((newPixels[i] + previousFrame![i]) / 2);
         }
 
         return output;
@@ -105,8 +110,7 @@ DateTime.Now.ToString("(dd_MMMM_hh_mm_ss_tt)") + ".png");
 
     public void Fs_FramePushed(byte[] pixels)
     {
-        if (UseInterFrameBlending) WriteOutputFrame(Blend(pixels));
-        else WriteOutputFrame(pixels);
+        WriteOutputFrame(UseInterFrameBlending ? Blend(pixels) : pixels);
 
         previousFrame = pixels;
     }

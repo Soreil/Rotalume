@@ -1,7 +1,8 @@
-﻿using System.IO.MemoryMappedFiles;
+﻿using emulator.opcodes;
 
-namespace emulator;
+using System.IO.MemoryMappedFiles;
 
+namespace emulator.memory.mappers;
 internal enum RTCRegister
 {
     Invalid = 0x00,
@@ -27,7 +28,7 @@ internal class MBC3 : MBC
     private readonly Func<long>? GetRTC;
     private readonly bool hasClock;
 
-    private const long TicksPerSecond = cpu.Constants.Frequency;
+    private const long TicksPerSecond = CPUTimingConstants.Frequency;
     private const long TicksPerMinute = TicksPerSecond * 60;
     private const long TicksPerHour = TicksPerMinute * 60;
     private const long TicksPerDay = TicksPerHour * 24;
@@ -42,7 +43,7 @@ internal class MBC3 : MBC
 
     private readonly MemoryMappedViewAccessor? ClockStorage;
 
-    public MBC3(CartHeader header, byte[] gameROM, MemoryMappedFile file, MasterClock? getClock = null)
+    public MBC3(CartHeader header, byte[] gameROM, MemoryMappedFile file, glue.MasterClock? getClock = null)
     {
         this.gameROM = gameROM;
         RAMBanks = file.CreateViewAccessor(0, header.RAM_Size);

@@ -1,8 +1,9 @@
-﻿namespace emulator;
-using graphics;
+﻿
+using emulator.opcodes;
 
 using Microsoft.Extensions.Logging;
 
+namespace emulator.graphics;
 public class PPU
 {
     private long Clock;

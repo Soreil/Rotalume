@@ -1,4 +1,4 @@
-﻿namespace emulator;
+﻿namespace emulator.glue;
 
 public class MasterClock
 {

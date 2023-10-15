@@ -1,10 +1,10 @@
-﻿using emulator;
+﻿using emulator.input;
 
 using System.Windows.Input;
 
 namespace WPFFrontend.Glue;
 
-public class KeyBoardWithInterruptHandler
+public class KeyBoardWithInterruptHandler(Dictionary<Key, JoypadKey> mappedKeys)
 {
     public event EventHandler<EventArgs>? KeyWentDown;
 
@@ -17,14 +17,11 @@ public class KeyBoardWithInterruptHandler
     public bool DpadUp { get; internal set; }
     public bool Start { get; internal set; }
 
-    private readonly Dictionary<Key, JoypadKey> _mappedKeys;
-    public KeyBoardWithInterruptHandler(Dictionary<Key, JoypadKey> mappedKeys) => _mappedKeys = mappedKeys;
-
     public void Down(object? sender, KeyEventArgs e)
     {
-        if (!_mappedKeys.ContainsKey(e.Key)) return;
+        if (!mappedKeys.TryGetValue(e.Key, out var value)) return;
 
-        switch (_mappedKeys[e.Key])
+        switch (value)
         {
             case JoypadKey.A:
             A = true; break;
@@ -49,9 +46,9 @@ public class KeyBoardWithInterruptHandler
 
     public void Up(object? sender, KeyEventArgs e)
     {
-        if (!_mappedKeys.ContainsKey(e.Key)) return;
+        if (!mappedKeys.TryGetValue(e.Key, out var value)) return;
 
-        switch (_mappedKeys[e.Key])
+        switch (value)
         {
             case JoypadKey.A:
             A = false; break;

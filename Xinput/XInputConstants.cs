@@ -75,6 +75,7 @@ internal class XInputConstants
     //
     // Flags for XINPUT_CAPABILITIES
     //
+    [Flags]
     internal enum CapabilityFlags
     {
         XINPUT_CAPS_VOICE_SUPPORTED = 0x0004,

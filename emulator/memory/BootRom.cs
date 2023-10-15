@@ -1,16 +1,8 @@
-﻿namespace emulator;
+﻿namespace emulator.memory;
 
-public class BootRom
+public class BootRom(byte[]? rom)
 {
-    private readonly byte[]? rom;
-
-    public BootRom(byte[]? rom)
-    {
-        Active = rom is not null;
-        this.rom = rom;
-    }
-
-    public bool Active { get; private set; }
+    public bool Active { get; private set; } = rom is not null;
     public byte Register { get => 0xff; set => Active = false; }
 
     public void Disable() => Active = false;

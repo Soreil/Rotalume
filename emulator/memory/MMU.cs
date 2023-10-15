@@ -1,5 +1,10 @@
-﻿namespace emulator;
+﻿using emulator.glue;
+using emulator.graphics;
+using emulator.input;
+using emulator.memory.mappers;
+using emulator.opcodes;
 
+namespace emulator.memory;
 public sealed class MMU
 {
     private readonly MBC Card;
@@ -36,9 +41,9 @@ public sealed class MMU
                     >= 0xff10 and < 0xff27 => APU[(sound.Address)at],
                     >= 0xff30 and < 0xff40 => APU[(sound.Address)at],
 
-                    not (ushort)graphics.Address.DMA and >= 0xff40 and < 0xff50 => PPU[(graphics.Address)at],
+                    not (ushort)Address.DMA and >= 0xff40 and < 0xff50 => PPU[(Address)at],
 
-                    (ushort)graphics.Address.DMA => DMA.Register,
+                    (ushort)Address.DMA => DMA.Register,
 
                     0xff50 => BootRom.Register,
                     >= 0xff80 and < 0xffff => HRAM[at],

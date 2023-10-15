@@ -1,5 +1,4 @@
-﻿namespace emulator;
-
+﻿namespace emulator.opcodes;
 public enum HaltState
 {
     off,

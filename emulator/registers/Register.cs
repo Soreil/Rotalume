@@ -1,4 +1,4 @@
-﻿namespace emulator;
+﻿namespace emulator.registers;
 
 public enum Register
 {

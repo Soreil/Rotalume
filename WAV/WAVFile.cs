@@ -4,10 +4,10 @@ namespace WAV;
 
 public class WAVFile<T> where T : unmanaged
 {
-    private static readonly byte[] RiffTag = new byte[] { (byte)'R', (byte)'I', (byte)'F', (byte)'F' };
-    private static readonly byte[] WaveTag = new byte[] { (byte)'W', (byte)'A', (byte)'V', (byte)'E' };
-    private static readonly byte[] FmtTag = new byte[] { (byte)'f', (byte)'m', (byte)'t', 0x20 };
-    private static readonly byte[] DatTag = new byte[] { (byte)'d', (byte)'a', (byte)'t', (byte)'a' };
+    private static readonly byte[] RiffTag = "RIFF"u8.ToArray();
+    private static readonly byte[] WaveTag = "WAVE"u8.ToArray();
+    private static readonly byte[] FmtTag = "fmt "u8.ToArray();
+    private static readonly byte[] DatTag = "data"u8.ToArray();
 
     private readonly int FormatDatalength;
     private readonly FormatType Format;
@@ -32,7 +32,6 @@ public class WAVFile<T> where T : unmanaged
         }
     }
 
-
     private byte[] SerializeHeader()
     {
         List<byte> bytes = new(40);
@@ -51,7 +50,7 @@ public class WAVFile<T> where T : unmanaged
         bytes.AddRange(DatTag);
         bytes.AddRange(BitConverter.GetBytes(SubChunk2Size));
 
-        return bytes.ToArray();
+        return [.. bytes];
     }
 
     public void Write(BinaryWriter writer, ReadOnlySpan<T> data)

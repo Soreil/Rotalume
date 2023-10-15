@@ -1,7 +1,4 @@
-﻿using System.Runtime.Serialization;
-
-namespace emulator;
-
+﻿namespace emulator.input;
 [Serializable]
 internal class UnsupportedJoypadButton : Exception
 {

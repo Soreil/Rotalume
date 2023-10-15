@@ -23,7 +23,7 @@ Host.CreateDefaultBuilder(args)
         services.
     AddSingleton<GameBoyViewModel>().
     AddSingleton<GameboyScreen>().
-    AddSingleton<Performance>().
+    AddSingleton<GameboyTimingInfo>().
     AddSingleton<Input>().
     AddSingleton<Model>().
     AddSingleton<FileService>().
@@ -34,7 +34,7 @@ Host.CreateDefaultBuilder(args)
     private readonly IHost host;
     public App()
     {
-        var hostBuilder = CreateHostBuilder(Array.Empty<string>());
+        var hostBuilder = CreateHostBuilder([]);
 
         host = hostBuilder.Start();
     }
@@ -43,7 +43,7 @@ Host.CreateDefaultBuilder(args)
         var vm = host.Services.GetRequiredService<GameBoyViewModel>();
         var model = host.Services.GetRequiredService<Model>();
 
-        var mainWindow = new Views.Screen(model) { DataContext = vm };
+        var mainWindow = new Screen(model) { DataContext = vm };
 
         var input = host.Services.GetRequiredService<Input>();
         KeyboardViewModelBridge.Connect(input, mainWindow);

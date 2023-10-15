@@ -1,6 +1,6 @@
 ﻿namespace emulator.graphics;
 
-public static class Constants
+public static class GraphicConstants
 {
     public const int ScreenWidth = 160;
     public const int ScreenHeight = 144;

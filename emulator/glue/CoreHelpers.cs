@@ -1,4 +1,9 @@
-﻿namespace emulator;
+﻿using emulator.graphics;
+using emulator.input;
+using emulator.memory;
+using emulator.memory.mappers;
+
+namespace emulator.glue;
 
 internal static class CoreHelpers
 {

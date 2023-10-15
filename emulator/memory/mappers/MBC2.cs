@@ -1,7 +1,6 @@
 ﻿using System.IO.MemoryMappedFiles;
 
-namespace emulator;
-
+namespace emulator.memory.mappers;
 internal class HalfRAM : IDisposable
 {
     private readonly MemoryMappedViewAccessor _ram;

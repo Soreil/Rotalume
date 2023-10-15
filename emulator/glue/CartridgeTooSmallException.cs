@@ -1,6 +1,4 @@
-﻿using System.Runtime.Serialization;
-
-namespace emulator;
+﻿namespace emulator.glue;
 
 [Serializable]
 internal class CartridgeTooSmallException : Exception

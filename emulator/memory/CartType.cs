@@ -1,5 +1,4 @@
-﻿namespace emulator;
-
+﻿namespace emulator.memory;
 public enum CartType : byte
 {
     ROM_ONLY = 0x00,

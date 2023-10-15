@@ -2,24 +2,24 @@
 
 namespace J2i.Net.XInputWrapper;
 
-internal static class XInput
+internal static partial class XInput
 {
-    [DllImport("xinput1_4.dll")]
-    internal static extern int XInputGetState
+    [LibraryImport("xinput1_4.dll")]
+    internal static partial int XInputGetState
     (
         int dwUserIndex,  // [in] Index of the gamer associated with the device
         ref XInputState pState        // [out] Receives the current state
     );
 
-    [DllImport("xinput1_4.dll")]
-    internal static extern int XInputSetState
+    [LibraryImport("xinput1_4.dll")]
+    internal static partial int XInputSetState
     (
         int dwUserIndex,  // [in] Index of the gamer associated with the device
         ref XInputVibration pVibration    // [in, out] The vibration information to send to the controller
     );
 
-    [DllImport("xinput1_4.dll")]
-    internal static extern int XInputGetCapabilities
+    [LibraryImport("xinput1_4.dll")]
+    internal static partial int XInputGetCapabilities
     (
         int dwUserIndex,   // [in] Index of the gamer associated with the device
         int dwFlags,       // [in] Input flags that identify the device type
@@ -27,16 +27,16 @@ internal static class XInput
     );
 
 
-    [DllImport("xinput1_4.dll")]
-    internal static extern int XInputGetBatteryInformation
+    [LibraryImport("xinput1_4.dll")]
+    internal static partial int XInputGetBatteryInformation
     (
           int dwUserIndex,        // Index of the gamer associated with the device
           byte devType,            // Which device on this user index
         ref XInputBatteryInformation pBatteryInformation // Contains the level and types of batteries
     );
 
-    [DllImport("xinput1_4.dll")]
-    internal static extern int XInputGetKeystroke
+    [LibraryImport("xinput1_4.dll")]
+    internal static partial int XInputGetKeystroke
     (
         int dwUserIndex,              // Index of the gamer associated with the device
         int dwReserved,               // Reserved for future use

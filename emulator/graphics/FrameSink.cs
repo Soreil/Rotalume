@@ -2,22 +2,22 @@
 
 using System.Diagnostics;
 
-namespace emulator;
+namespace emulator.graphics;
 
 public class FrameSink : IFrameSink
 {
     private byte[] frameData;
     private byte[] lastFrame;
 
-    private const long timePerFrame = (long)(TimeSpan.TicksPerSecond / (cpu.Constants.Frequency / (double)graphics.Constants.TicksPerFrame));
+    private const long timePerFrame = (long)(TimeSpan.TicksPerSecond / (opcodes.CPUTimingConstants.Frequency / (double)GraphicConstants.TicksPerFrame));
     private readonly Stopwatch stopWatch = new();
     private readonly Func<bool> LimitFPS;
     private readonly ILogger<FrameSink> logger;
 
     public FrameSink(Func<bool> LimitFPS, ILogger<FrameSink> logger)
     {
-        frameData = new byte[graphics.Constants.ScreenHeight * graphics.Constants.ScreenWidth];
-        lastFrame = new byte[graphics.Constants.ScreenHeight * graphics.Constants.ScreenWidth];
+        frameData = new byte[GraphicConstants.ScreenHeight * GraphicConstants.ScreenWidth];
+        lastFrame = new byte[GraphicConstants.ScreenHeight * GraphicConstants.ScreenWidth];
 
         this.LimitFPS = LimitFPS;
         this.logger = logger;

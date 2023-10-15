@@ -1,5 +1,6 @@
-﻿namespace emulator;
+﻿using emulator.input;
 
+namespace emulator.opcodes;
 public enum Interrupt
 {
     VBlank,

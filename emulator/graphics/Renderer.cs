@@ -1,4 +1,4 @@
-﻿namespace emulator;
+﻿namespace emulator.graphics;
 
 public class Renderer
 {
@@ -121,17 +121,17 @@ public class Renderer
         Stage3TickCount++;
         TimeUntilWhichToPause++;
 
-        if (fetcher.PixelsSentToLCD == graphics.Constants.ScreenWidth)
+        if (fetcher.PixelsSentToLCD == graphics.GraphicConstants.ScreenWidth)
             ResetLineSpecificState();
     }
-    private void VBlank() => TimeUntilWhichToPause += graphics.Constants.ScanlineDuration;
+    private void VBlank() => TimeUntilWhichToPause += graphics.GraphicConstants.ScanlineDuration;
     private void OAMSearch()
     {
         if (PPU.Enable_OAM_Interrupt)
             PPU.OnSTATInterrupt();
 
         fetcher.GetSprites();
-        TimeUntilWhichToPause += graphics.Constants.OAMSearchDuration;
+        TimeUntilWhichToPause += graphics.GraphicConstants.OAMSearchDuration;
         ScheduledModeChange = Mode.Transfer;
     }
 
@@ -140,7 +140,7 @@ public class Renderer
         if (PPU.Enable_HBlankInterrupt)
             PPU.OnSTATInterrupt();
 
-        TimeUntilWhichToPause += graphics.Constants.ScanLineRemainderAfterOAMSearch - TotalTimeSpentInStage3;
+        TimeUntilWhichToPause += graphics.GraphicConstants.ScanLineRemainderAfterOAMSearch - TotalTimeSpentInStage3;
 
         ScheduledModeChange = PPU.LY == 143 ? Mode.VBlank : Mode.OAMSearch;
         return;
@@ -150,7 +150,7 @@ public class Renderer
     {
         ScheduledModeChange = Mode.HBlank;
 
-        Span<byte> output = stackalloc byte[graphics.Constants.ScreenWidth];
+        Span<byte> output = stackalloc byte[graphics.GraphicConstants.ScreenWidth];
 
         for (int i = 0; i < output.Length; i++)
         {

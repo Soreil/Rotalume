@@ -1,4 +1,4 @@
-using emulator;
+using emulator.registers;
 
 using NUnit.Framework;
 

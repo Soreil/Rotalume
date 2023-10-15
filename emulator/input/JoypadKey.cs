@@ -1,5 +1,4 @@
-﻿namespace emulator;
-
+﻿namespace emulator.input;
 public enum JoypadKey
 {
     A,

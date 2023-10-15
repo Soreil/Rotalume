@@ -1,4 +1,4 @@
-﻿namespace emulator;
+﻿namespace emulator.graphics;
 
 public class OAM
 {
@@ -37,12 +37,12 @@ public class OAM
 
     private const int maxSpritesOnLine = 10;
 
-    private static bool OnLine(SpriteAttributes s, int line, int spriteHeight) => (s.Y + spriteHeight) > graphics.Constants.DoubleSpriteHeight &&
-s.Y < graphics.Constants.ScreenWidth &&
+    private static bool OnLine(SpriteAttributes s, int line, int spriteHeight) => (s.Y + spriteHeight) > graphics.GraphicConstants.DoubleSpriteHeight &&
+s.Y < graphics.GraphicConstants.ScreenWidth &&
 s.X != 0 &&
-s.X < graphics.Constants.ScreenWidth + graphics.Constants.SpriteWidth &&
-line >= s.Y - graphics.Constants.DoubleSpriteHeight &&
-line < s.Y - graphics.Constants.DoubleSpriteHeight + spriteHeight;
+s.X < graphics.GraphicConstants.ScreenWidth + graphics.GraphicConstants.SpriteWidth &&
+line >= s.Y - graphics.GraphicConstants.DoubleSpriteHeight &&
+line < s.Y - graphics.GraphicConstants.DoubleSpriteHeight + spriteHeight;
 
     //Sprites are accessed sequentially. The only check if the sprite overlaps the current line's Y position
     //Only 10 sprites can be used per line

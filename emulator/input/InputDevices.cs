@@ -1,5 +1,4 @@
-﻿namespace emulator;
-
+﻿namespace emulator.input;
 public class InputDevices
 {
     private int _selectedController;
@@ -35,7 +34,7 @@ public class InputDevices
 
     private readonly MappedController Keyboard;
 
-    public InputDevices(IGameController keyboard, List<IGameController> gameControllers)
+    public InputDevices(IGameController keyboard, IEnumerable<IGameController> gameControllers)
     {
         Keyboard = new(keyboard);
         Keyboard.controller.AddEventHandler(OnUnderLyingChanged);

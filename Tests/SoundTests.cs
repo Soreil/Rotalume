@@ -23,7 +23,7 @@ internal class SoundTests
         render.FramePushed += (sender, e) => FramesDrawn++;
 
 
-        var samplesWanted = core.Samples.SampleRate * duration;
+        var samplesWanted = emulator.sound.Samples.SampleRate * duration;
 
         while (core.Samples.Buffer.Count < samplesWanted)
         {
@@ -31,7 +31,7 @@ internal class SoundTests
         }
 
         var span = new ReadOnlySpan<short>(core.Samples.Buffer.ToArray());
-        var wav = new WAV.WAVFile<short>(span, 2, core.Samples.SampleRate, 16);
+        var wav = new WAV.WAVFile<short>(span, 2, emulator.sound.Samples.SampleRate, 16);
 
         using var file = File.Open(fn + ".wav", FileMode.Create, FileAccess.Write);
         using var writer = new BinaryWriter(file);
@@ -62,7 +62,7 @@ internal class SoundTests
         Assert.IsTrue(SamplesWithSound);
 
         var span = new ReadOnlySpan<short>(core.Samples.Buffer.ToArray());
-        var wav = new WAV.WAVFile<short>(span, 2, core.Samples.SampleRate, 16);
+        var wav = new WAV.WAVFile<short>(span, 2, emulator.sound.Samples.SampleRate, 16);
 
         using var file = File.Open("bootromSound.wav", FileMode.Create, FileAccess.Write);
         using var writer = new BinaryWriter(file);

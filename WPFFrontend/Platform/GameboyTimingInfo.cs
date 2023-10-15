@@ -2,7 +2,7 @@
 
 namespace WPFFrontend.Platform;
 
-public partial class Performance : ObservableObject
+public partial class GameboyTimingInfo : ObservableObject
 {
     private int currentFrame;
     private void AddFrameTimeToQueue()
@@ -10,7 +10,7 @@ public partial class Performance : ObservableObject
         FrameTimes[currentFrame++] = DateTime.Now;
         if (currentFrame == 16)
         {
-            FrameTime = Delta(15, 14).TotalMilliseconds;
+            FrameTime = Elapsed(15, 14).TotalMilliseconds;
             AverageFPS();
             currentFrame = 0;
         }
@@ -22,27 +22,27 @@ public partial class Performance : ObservableObject
     private double GameboyFPS;
     private void AverageFPS()
     {
-        TimeSpan deltas = TimeSpan.Zero;
+        TimeSpan totalElapsed = TimeSpan.Zero;
         for (int i = 1; i < FrameTimes.Length; i++)
         {
-            deltas += Delta(i, i - 1);
+            totalElapsed += Elapsed(i, i - 1);
         }
 
-        GameboyFPS = TimeSpan.FromSeconds(1) / (deltas / (FrameTimes.Length - 1));
+        GameboyFPS = TimeSpan.FromSeconds(1) / (totalElapsed / (FrameTimes.Length - 1));
     }
-    private TimeSpan Delta(int i, int j) => FrameTimes[i] - FrameTimes[j];
+    private TimeSpan Elapsed(int i, int j) => FrameTimes[i] - FrameTimes[j];
 
     private int frameNumber;
     public void Update()
     {
         AddFrameTimeToQueue();
 
-        Label = string.Format("Frame:{0}\t FrameTime:{1:N2}\t FPS:{2:N2}",
+        PerformanceDisplayText = string.Format("Frame:{0}\t FrameTime:{1:N2}\t FPS:{2:N2}",
              frameNumber++,
              FrameTime,
              GameboyFPS);
     }
 
     [ObservableProperty]
-    public string? label;
+    public string? performanceDisplayText;
 }

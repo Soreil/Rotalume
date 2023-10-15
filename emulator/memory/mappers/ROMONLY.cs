@@ -1,5 +1,4 @@
-﻿namespace emulator;
-
+﻿namespace emulator.memory.mappers;
 internal class ROMONLY : MBC
 {
     private readonly byte[] gameROM;

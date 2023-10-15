@@ -1,6 +1,7 @@
 ﻿
-namespace emulator;
+using emulator.registers;
 
+namespace emulator.opcodes;
 public partial class CPU
 {
     public void EnableInterruptsDelayed() => ISR.InterruptEnableScheduled = true;

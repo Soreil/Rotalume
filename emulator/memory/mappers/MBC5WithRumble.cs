@@ -1,7 +1,6 @@
 ﻿using System.IO.MemoryMappedFiles;
 
-namespace emulator;
-
+namespace emulator.memory.mappers;
 internal class MBC5WithRumble : MBC5
 {
     public MBC5WithRumble(CartHeader cartHeader, byte[] gameROM, MemoryMappedFile memoryMappedFile) : base(cartHeader, gameROM, memoryMappedFile)

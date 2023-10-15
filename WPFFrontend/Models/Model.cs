@@ -1,5 +1,4 @@
-﻿using emulator;
-
+﻿
 using Microsoft.Extensions.Logging;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -8,19 +7,15 @@ using System.IO;
 using WPFFrontend.Audio;
 using WPFFrontend.Platform;
 using WPFFrontend.Services;
+using emulator.graphics;
+using emulator.glue;
+using emulator.input;
 
 namespace WPFFrontend.Models;
 
-public class Model : ObservableObject
+public class Model(GameboyScreen gameboyScreen,
+    Input input, FileService fileService, ILogger<FrameSink> logger) : ObservableObject
 {
-    public Model(GameboyScreen gameboyScreen,
-        Input input, FileService fileService, ILogger<FrameSink> logger)
-    {
-        GameboyScreen = gameboyScreen;
-        Input = input;
-        FileService = fileService;
-        Logger = logger;
-    }
     public bool Paused
     {
         get;
@@ -49,10 +44,10 @@ public class Model : ObservableObject
     }
     public bool BootRomEnabled;
 
-    public GameboyScreen GameboyScreen { get; }
-    public Input Input { get; }
-    public FileService FileService { get; }
-    public ILogger<FrameSink> Logger { get; }
+    public GameboyScreen GameboyScreen { get; } = gameboyScreen;
+    public Input Input { get; } = input;
+    public FileService FileService { get; } = fileService;
+    public ILogger<FrameSink> Logger { get; } = logger;
     public Player? Player { get; set; }
 
     private void Gameboy(string path, bool bootromEnabled)
@@ -121,7 +116,7 @@ public class Model : ObservableObject
         player.Stop();
     }
 
-    private Task? GameThread;
+    private Task? GameTask;
 
 
     private CancellationTokenSource CancelGameboySource = new();
@@ -134,21 +129,21 @@ public class Model : ObservableObject
 
         var br = BootRomEnabled;
 
-        GameThread = new Task(() =>
+        GameTask = new Task(() =>
         {
             Thread.CurrentThread.IsBackground = true;
             Thread.CurrentThread.Name = "Gaming";
             Gameboy(path, br);
         });
 
-        GameThread.Start();
+        GameTask.Start();
     }
     public void ShutdownGameboy()
     {
-        if (GameThread is not null)
+        if (GameTask is not null)
         {
             CancelGameboySource.Cancel();
-            GameThread.Wait();
+            GameTask.Wait();
         }
     }
 

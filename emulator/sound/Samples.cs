@@ -1,24 +1,20 @@
-﻿using System.Runtime.InteropServices;
+﻿using emulator.glue;
+using emulator.opcodes;
+
+using System.Runtime.InteropServices;
 
 namespace emulator.sound;
 
-public class Samples
+public class Samples(MasterClock masterClock, APU apu)
 {
-    public Samples(MasterClock masterClock, APU aPU)
-    {
-        MasterClock = masterClock;
-        APU = aPU;
-        Buffer = [];
-    }
+    public MasterClock MasterClock { get; } = masterClock;
 
-    public MasterClock MasterClock { get; }
-    private APU APU { get; }
-    public int SampleRate => SamplesPerSecond;
+    public static int SampleRate => SamplesPerSecond;
 
-    public List<short> Buffer;
+    public List<short> Buffer = [];
 
     public const int SamplePeriod = 64;
-    private const int SamplesPerSecond = cpu.Constants.Frequency / SamplePeriod;
+    private const int SamplesPerSecond = CPUTimingConstants.Frequency / SamplePeriod;
 
     private double sampleRatePerformanceScaler = 1;
 
@@ -26,7 +22,7 @@ public class Samples
     {
         if (MasterClock.Now() % SamplePeriod == 0)
         {
-            (var left, var right) = APU.Sample();
+            (var left, var right) = apu.Sample();
             Buffer.Add(left);
             Buffer.Add(right);
         }

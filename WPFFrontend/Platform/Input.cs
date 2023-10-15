@@ -1,5 +1,4 @@
-﻿using emulator;
-
+﻿
 using J2i.Net.XInputWrapper;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -7,12 +6,31 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using System.Windows.Input;
 
 using WPFFrontend.Glue;
+using emulator.input;
 
 namespace WPFFrontend.Platform;
 
 public class Input : ObservableObject
 {
-    private InputDevices MakeNewInput()
+    public readonly InputDevices Devices;
+
+    public int SelectedController
+    {
+        get => Devices.SelectedController;
+        set => _ = SetProperty(
+                Devices.SelectedController,
+                value,
+                Devices,
+                (dev, controller) => dev.SelectedController = controller);
+    }
+
+    private event KeyEventHandler? KeyDown;
+    private event KeyEventHandler? KeyUp;
+
+    public void KeyDownHandler(object? o, KeyEventArgs e) => KeyDown?.Invoke(o, e);
+    public void KeyUpHandler(object? o, KeyEventArgs e) => KeyUp?.Invoke(o, e);
+
+    public Input()
     {
         XboxController.UpdateFrequency = 5;
         XboxController.PollerLoop();
@@ -42,30 +60,12 @@ public class Input : ObservableObject
 
         var kb = new IGameControllerKeyboardBridge(UnconnectedKeyboard);
 
-        var Controllers = new List<IGameController> { new IGameControllerXboxBridge(Controller1), new IGameControllerXboxBridge(Controller2), new IGameControllerXboxBridge(Controller3), new IGameControllerXboxBridge(Controller4) };
-        return new InputDevices(kb, Controllers);
-    }
 
-    public readonly InputDevices Devices;
-
-    public int SelectedController
-    {
-        get => Devices.SelectedController;
-        set => _ = SetProperty(
-                Devices.SelectedController,
-                value,
-                Devices,
-                (dev, controller) => dev.SelectedController = controller);
-    }
-
-    private event KeyEventHandler? KeyDown;
-    private event KeyEventHandler? KeyUp;
-
-    public void KeyDownHandler(object? o, KeyEventArgs e) => KeyDown?.Invoke(o, e);
-    public void KeyUpHandler(object? o, KeyEventArgs e) => KeyUp?.Invoke(o, e);
-
-    public Input()
-    {
-        Devices = MakeNewInput();
+        Devices = new InputDevices(kb, new IGameController[] {
+            new IGameControllerXboxBridge(Controller1),
+            new IGameControllerXboxBridge(Controller2),
+            new IGameControllerXboxBridge(Controller3),
+            new IGameControllerXboxBridge(Controller4) }
+        );
     }
 }

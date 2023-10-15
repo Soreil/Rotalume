@@ -1,5 +1,4 @@
-﻿namespace emulator;
-
+﻿namespace emulator.input;
 public class MappedController
 {
     public readonly IGameController controller;

@@ -1,4 +1,4 @@
-﻿namespace emulator;
+﻿namespace emulator.graphics;
 
 public class PixelFetcher
 {
@@ -90,12 +90,12 @@ public class PixelFetcher
     {
         if (SpriteFIFO.Count <= 8)
         {
-            for (var i = graphics.Constants.SpriteWidth; i > 0; i--)
+            for (var i = graphics.GraphicConstants.SpriteWidth; i > 0; i--)
             {
                 var paletteIndex = Convert.ToByte(low.GetBit(i - 1));
                 paletteIndex |= (byte)(Convert.ToByte(high.GetBit(i - 1)) << 1);
 
-                var pos = sprite.XFlipped ? (i - 1) : graphics.Constants.SpriteWidth - i;
+                var pos = sprite.XFlipped ? (i - 1) : graphics.GraphicConstants.SpriteWidth - i;
                 var existingSpritePixel = SpriteFIFO.At(pos);
                 var candidate = new FIFOSpritePixel(sprite.Palette,paletteIndex, sprite.SpriteToBackgroundPriority);
 
@@ -164,7 +164,7 @@ public class PixelFetcher
     private void PushSpriteRowToPixelFetcher()
     {
         //Fill the fifo lower half with transparant pixels
-        for (int i = SpriteFIFO.Count; i < graphics.Constants.SpriteWidth; i = SpriteFIFO.Count)
+        for (int i = SpriteFIFO.Count; i < graphics.GraphicConstants.SpriteWidth; i = SpriteFIFO.Count)
         {
             SpriteFIFO.Push(new FIFOSpritePixel(0, 0, false));
         }
@@ -172,7 +172,7 @@ public class PixelFetcher
         var sprite = FirstMatchingSprite();
 
         //16 pixel offset before lines can be offscreen taken out
-        var y = ppu.LY - (sprite.Y - graphics.Constants.DoubleSpriteHeight);
+        var y = ppu.LY - (sprite.Y - graphics.GraphicConstants.DoubleSpriteHeight);
         if (sprite.YFlipped)
         {
             y = ppu.SpriteHeight == 8 ? 7 - y : 15 - y;
@@ -184,7 +184,7 @@ public class PixelFetcher
         }
 
         var ID = ppu.SpriteHeight == 8 ? sprite.ID : sprite.ID & 0xfe;
-        var addr = 0x8000 + ID * graphics.Constants.BitsPerSpriteTile + (2 * y);
+        var addr = 0x8000 + ID * graphics.GraphicConstants.BitsPerSpriteTile + (2 * y);
         var low = VRAM[addr];
         var high = VRAM[addr + 1];
         PushSpriteRow(low, high, sprite);
@@ -195,7 +195,7 @@ public class PixelFetcher
 
     private int PixelsPopped;
     public int PixelsSentToLCD;
-    public readonly Shade[] LineShadeBuffer = new Shade[graphics.Constants.ScreenWidth];
+    public readonly Shade[] LineShadeBuffer = new Shade[graphics.GraphicConstants.ScreenWidth];
     internal void AttemptToPushAPixel()
     {
         var pix = RenderPixel();
@@ -308,7 +308,7 @@ public class PixelFetcher
     {
         if (BGFIFO.Count <= 8)
         {
-            for (var i = graphics.Constants.SpriteWidth; i > 0; i--)
+            for (var i = graphics.GraphicConstants.SpriteWidth; i > 0; i--)
             {
                 var paletteIndex = Convert.ToByte(tileDataLow.GetBit(i - 1));
                 paletteIndex |= (byte)(Convert.ToByte(tileDataHigh.GetBit(i - 1)) << 1);
