@@ -1,15 +1,6 @@
-﻿
-using Microsoft.Extensions.Logging;
-using CommunityToolkit.Mvvm.ComponentModel;
-
-using System.IO;
-
-using WPFFrontend.Audio;
+﻿using WPFFrontend.Audio;
 using WPFFrontend.Platform;
 using WPFFrontend.Services;
-using emulator.graphics;
-using emulator.glue;
-using emulator.input;
 
 namespace WPFFrontend.Models;
 
