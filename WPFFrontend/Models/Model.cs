@@ -1,11 +1,21 @@
-﻿using WPFFrontend.Audio;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+
+using emulator.glue;
+using emulator.graphics;
+using emulator.input;
+
+using Microsoft.Extensions.Logging;
+
+using System.IO;
+
+using WPFFrontend.Audio;
 using WPFFrontend.Platform;
 using WPFFrontend.Services;
 
 namespace WPFFrontend.Models;
 
 public class Model(GameboyScreen gameboyScreen,
-    Input input, FileService fileService, ILogger<FrameSink> logger) : ObservableObject
+    Input input, FileService fileService, ILogger<FrameSink> logger) : ObservableObject,IDisposable
 {
     public bool Paused
     {
@@ -41,7 +51,7 @@ public class Model(GameboyScreen gameboyScreen,
     public ILogger<FrameSink> Logger { get; } = logger;
     public Player? Player { get; set; }
 
-    private void Gameboy(string path, bool bootromEnabled)
+    private void Gameboy(string gameRomPath, bool bootromEnabled)
     {
         var fpsCheckCb = new Func<bool>(() => FpsLockEnabled);
 
@@ -87,9 +97,9 @@ public class Model(GameboyScreen gameboyScreen,
         fs.FramePushed += FramePushed;
 
         using var gameboy = new Core(
-            File.ReadAllBytes(path),
+            File.ReadAllBytes(gameRomPath),
       bootrom,
-      Path.GetFileNameWithoutExtension(path),
+      Path.GetFileNameWithoutExtension(gameRomPath),
       new Keypad(Input.Devices),
       fs
       );
@@ -108,7 +118,6 @@ public class Model(GameboyScreen gameboyScreen,
     }
 
     private Task? GameTask;
-
 
     private CancellationTokenSource CancelGameboySource = new();
     private bool disposedValue;
@@ -134,7 +143,7 @@ public class Model(GameboyScreen gameboyScreen,
         if (GameTask is not null)
         {
             CancelGameboySource.Cancel();
-            GameTask.Wait();
+            GameTask?.Wait();
         }
     }
 

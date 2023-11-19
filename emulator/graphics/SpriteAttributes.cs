@@ -1,17 +1,16 @@
 ﻿
 namespace emulator.graphics;
 
-public record struct SpriteAttributes(
-
+public readonly record struct SpriteAttributes(
     byte Y,
     byte X,
     byte ID,
     byte Flags) : IComparable<SpriteAttributes>
 {
-    public bool SpriteToBackgroundPriority => Flags.GetBit(7);
-    public bool YFlipped => Flags.GetBit(6);
-    public bool XFlipped => Flags.GetBit(5);
-    public byte Palette => Convert.ToByte(Flags.GetBit(4));
+    public readonly bool SpriteToBackgroundPriority => Flags.GetBit(7);
+    public readonly bool YFlipped => Flags.GetBit(6);
+    public readonly bool XFlipped => Flags.GetBit(5);
+    public readonly byte Palette => Convert.ToByte(Flags.GetBit(4));
 
-    int IComparable<SpriteAttributes>.CompareTo(SpriteAttributes other) => X.CompareTo(other.X);
+    readonly int IComparable<SpriteAttributes>.CompareTo(SpriteAttributes other) => X.CompareTo(other.X);
 }

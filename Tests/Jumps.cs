@@ -1,4 +1,4 @@
-﻿using emulator;
+﻿using emulator.opcodes;
 
 using NUnit.Framework;
 

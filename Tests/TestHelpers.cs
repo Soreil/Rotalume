@@ -1,4 +1,6 @@
-﻿using emulator;
+﻿using emulator.glue;
+using emulator.graphics;
+using emulator.input;
 
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -23,7 +25,7 @@ public static class TestHelpers
             gamerom,
             bootrom,
             "tetrisTest",
-            new(new InputDevices(new MockGameController(), new())),
+            new(new InputDevices(new MockGameController(), Array.Empty<IGameController>())),
             frameSink);
     }
 
@@ -45,7 +47,7 @@ public static class TestHelpers
         return new Core(gameromPaddedToSize,
             null,
             fileName,
-            new(new InputDevices(new MockGameController(), new())),
+            new(new InputDevices(new MockGameController(), Array.Empty<IGameController>())),
             frameSink);
     }
 

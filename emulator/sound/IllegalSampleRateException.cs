@@ -1,6 +1,4 @@
-﻿using System.Runtime.Serialization;
-
-namespace emulator;
+﻿namespace emulator;
 
 [Serializable]
 internal class IllegalSampleRateException : Exception

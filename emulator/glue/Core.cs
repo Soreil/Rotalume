@@ -50,7 +50,7 @@ public class Core : IDisposable
             throw new CartridgeTooSmallException("Cartridge file has to be at least 8kb in size");
         }
 
-        var hostBuilder = CreateHostBuilder(Array.Empty<string>());
+        var hostBuilder = CreateHostBuilder([]);
         hostBuilder = hostBuilder.ConfigureServices((_, services) =>
             services.
             AddSingleton(s => frameSink).

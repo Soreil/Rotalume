@@ -1,3 +1,3 @@
 ﻿namespace emulator.graphics;
 
-public record struct FIFOPixel(byte Color);
+public readonly record struct FIFOPixel(byte Color);

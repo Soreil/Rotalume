@@ -1,6 +1,6 @@
 ﻿namespace emulator.graphics;
 
-public enum Mode
+public enum Mode : byte
 {
     HBlank = 0,
     VBlank = 1,

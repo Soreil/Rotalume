@@ -1,3 +1,5 @@
+using emulator.glue;
+using emulator.opcodes;
 using emulator.registers;
 
 using NUnit.Framework;
@@ -23,7 +25,7 @@ public class WideLoads
 
     private static Core SetupA020Buffered()
     {
-        var c = TestHelpers.NewCore(new byte[] { 0x20, 0xa0 });
+        var c = TestHelpers.NewCore([0x20, 0xa0]);
         return c;
     }
 
@@ -72,8 +74,7 @@ public class WideLoads
     [Test]
     public void LD_SP_d16_v2()
     {
-        var p = TestHelpers.NewCore(new byte[]
-        { (byte)Opcode.LD_SP_d16, 0x12, 0x45 }
+        var p = TestHelpers.NewCore([(byte)Opcode.LD_SP_d16, 0x12, 0x45]
         );
 
         p.Step();
@@ -104,14 +105,14 @@ public class WideLoads
 
     private static Core Setup0x77BufferedDecoder()
     {
-        var c = TestHelpers.NewCore(new byte[] { 0x77 });
+        var c = TestHelpers.NewCore([0x77]);
         return c;
     }
 
     [Test]
     public void LDD_AT_HL_A()
     {
-        var core = TestHelpers.NewCore(Array.Empty<byte>());
+        var core = TestHelpers.NewCore([]);
         var dec = core.CPU;
         dec.Registers.Set(WideRegister.HL, 0xa001);
         dec.Registers.Set(Register.A, 0x77);
@@ -136,7 +137,7 @@ public class WideLoads
     [Test]
     public void LDI_AT_HL_A()
     {
-        var core = TestHelpers.NewCore(Array.Empty<byte>());
+        var core = TestHelpers.NewCore([]);
         var dec = core.CPU;
         dec.Registers.Set(WideRegister.HL, 0xa000);
         dec.Registers.Set(Register.A, 0x77);
@@ -172,7 +173,7 @@ public class WideLoads
     [Test]
     public void ADD_HL_BC()
     {
-        var core = TestHelpers.NewCore(Array.Empty<byte>());
+        var core = TestHelpers.NewCore([]);
         var dec = core.CPU;
 
         dec.Registers.HL = (0x8a23);
@@ -188,7 +189,7 @@ public class WideLoads
     [Test]
     public void ADD_HL_HL()
     {
-        var core = TestHelpers.NewCore(Array.Empty<byte>());
+        var core = TestHelpers.NewCore([]);
         var dec = core.CPU;
 
         dec.Registers.HL = (0x8a23);
@@ -204,7 +205,7 @@ public class WideLoads
     [Test]
     public void LD_A_B()
     {
-        var core = TestHelpers.NewCore(Array.Empty<byte>());
+        var core = TestHelpers.NewCore([]);
         var dec = core.CPU;
 
         dec.Registers.B = (0x10);
@@ -217,7 +218,7 @@ public class WideLoads
     [Test]
     public void LD_AT_C_A()
     {
-        var core = TestHelpers.NewCore(Array.Empty<byte>());
+        var core = TestHelpers.NewCore([]);
         var dec = core.CPU;
 
         dec.Registers.A = (0x10);
@@ -231,7 +232,7 @@ public class WideLoads
     [Test]
     public void LD_A_AT_C()
     {
-        var core = TestHelpers.NewCore(Array.Empty<byte>());
+        var core = TestHelpers.NewCore([]);
         var dec = core.CPU;
 
         core.Memory.Write(0xfffe, 0x10);

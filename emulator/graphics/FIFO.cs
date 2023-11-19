@@ -8,6 +8,7 @@ public class FIFO<T>
     private int Position;
     public int Count;
     private readonly T[] buffer = new T[Capacity];
+
     public void Clear()
     {
         Count = 0;

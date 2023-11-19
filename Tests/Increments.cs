@@ -1,4 +1,5 @@
-﻿using emulator.registers;
+﻿using emulator.opcodes;
+using emulator.registers;
 
 using NUnit.Framework;
 
@@ -9,7 +10,7 @@ public class Increments
     [Test]
     public void INC_SP()
     {
-        var dec = TestHelpers.NewCore(new byte[] { (byte)Opcode.INC_SP });
+        var dec = TestHelpers.NewCore([(byte)Opcode.INC_SP]);
 
         {
             dec.CPU.Registers.Set(WideRegister.SP, 20);
@@ -84,7 +85,7 @@ public class Increments
     [Test]
     public void INC_A()
     {
-        var dec = TestHelpers.NewCore(new byte[] { (byte)Opcode.INC_A });
+        var dec = TestHelpers.NewCore([(byte)Opcode.INC_A]);
         {
             dec.CPU.Registers.Set(Register.A, 20);
 
@@ -101,12 +102,12 @@ public class Increments
     [Test]
     public void DEC_A()
     {
-        var dec = TestHelpers.NewCore(new byte[]
-        {
+        var dec = TestHelpers.NewCore(
+        [
             (byte)Opcode.DEC_A,
             (byte)Opcode.DEC_A,
             (byte)Opcode.DEC_A,
-        });
+        ]);
 
         {
             dec.CPU.Registers.Set(Register.A, 20);
@@ -145,12 +146,12 @@ public class Increments
     [Test]
     public void ADD_A_B()
     {
-        var core = TestHelpers.NewCore(new byte[]
-        {
+        var core = TestHelpers.NewCore(
+        [
             (byte)Opcode.ADD_A_B,
             (byte)Opcode.ADD_A_B,
             (byte)Opcode.ADD_A_B,
-        });
+        ]);
 
         var dec = core.CPU;
 
@@ -184,11 +185,11 @@ public class Increments
     [Test]
     public void DAA_wrap_around()
     {
-        var core = TestHelpers.NewCore(new byte[]
-        {
+        var core = TestHelpers.NewCore(
+        [
             (byte)Opcode.ADD_A_B,
             (byte)Opcode.DAA,
-        });
+        ]);
 
         var dec = core.CPU;
 
@@ -209,11 +210,11 @@ public class Increments
     [Test]
     public void DAA_99()
     {
-        var core = TestHelpers.NewCore(new byte[]
-        {
+        var core = TestHelpers.NewCore(
+        [
             (byte)Opcode.ADD_A_B,
             (byte)Opcode.DAA,
-        });
+        ]);
 
         var dec = core.CPU;
 
@@ -236,11 +237,11 @@ public class Increments
 
     public void DAA_0109()
     {
-        var core = TestHelpers.NewCore(new byte[]
-        {
+        var core = TestHelpers.NewCore(
+        [
             (byte)Opcode.ADD_A_B,
             (byte)Opcode.DAA,
-        });
+        ]);
 
         var dec = core.CPU;
 
@@ -258,11 +259,11 @@ public class Increments
     [Test]
     public void DAA_00()
     {
-        var core = TestHelpers.NewCore(new byte[]
-        {
+        var core = TestHelpers.NewCore(
+        [
             (byte)Opcode.ADD_A_B,
             (byte)Opcode.DAA,
-        });
+        ]);
 
         var dec = core.CPU;
 
@@ -287,11 +288,11 @@ public class Increments
     [Test]
     public void DAA_SUB_1009()
     {
-        var core = TestHelpers.NewCore(new byte[]
-        {
+        var core = TestHelpers.NewCore(
+        [
             (byte)Opcode.SUB_B,
             (byte)Opcode.DAA,
-        });
+        ]);
 
         var dec = core.CPU;
 
@@ -312,7 +313,7 @@ public class Increments
     [Test]
     public void DAA_83()
     {
-        var core = TestHelpers.NewCore(new byte[] { (byte)Opcode.ADD_A_B, (byte)Opcode.DAA });
+        var core = TestHelpers.NewCore([(byte)Opcode.ADD_A_B, (byte)Opcode.DAA]);
 
         var dec = core.CPU;
         {

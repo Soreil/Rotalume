@@ -2,7 +2,7 @@
 
 namespace emulator.sound;
 
-public class APU
+public class APU(ILogger<APU> logger)
 {
     internal void SetStateWithoutBootrom()
     {
@@ -50,6 +50,7 @@ public class APU
             OutputVolumeRight = value & 0x7;
         }
     }
+
     private bool Sound4LeftOn;
     private bool Sound3LeftOn;
     private bool Sound2LeftOn;
@@ -141,20 +142,12 @@ public class APU
     //MasterSoundDisable is a global toggle with which the APU hardware can be disabled.
     private bool MasterSoundDisable;
 
-    private ToneSweepChannel ToneSweep { get; set; }
-    private ToneChannel Tone { get; set; }
-    private WaveChannel Wave { get; set; }
-    private NoiseChannel Noise { get; set; }
+    private ToneSweepChannel ToneSweep { get; set; } = new();
+    private ToneChannel Tone { get; set; } = new();
+    private WaveChannel Wave { get; set; } = new();
+    private NoiseChannel Noise { get; set; } = new();
 
-    private ILogger Logger { get; set; }
-    public APU(ILogger<APU> logger)
-    {
-        Logger = logger;
-        Tone = new();
-        ToneSweep = new();
-        Wave = new();
-        Noise = new();
-    }
+    private ILogger Logger { get; set; } = logger;
 
     private int FrameSequencerState;
 

@@ -7,7 +7,8 @@ public enum Interrupt
     STAT,
     Timer,
     Serial,
-    Joypad
+    Joypad,
+    None
 }
 
 public class InterruptRegisters
@@ -26,7 +27,7 @@ public class InterruptRegisters
         }
     }
 
-    public Interrupt? Fired()
+    public Interrupt Fired()
     {
         if (VBlankEnabled && VBlankRequested) return Interrupt.VBlank;
         if (STATEnabled && STATRequested)     return Interrupt.STAT;
@@ -34,7 +35,7 @@ public class InterruptRegisters
         if (SerialEnabled && SerialRequested) return Interrupt.Serial;
         if (JoypadEnabled && JoypadRequested) return Interrupt.Joypad;
 
-        return null;
+        return Interrupt.None;
     }
 
     internal void ClearInterrupt(Interrupt interrupt)

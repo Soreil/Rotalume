@@ -15,7 +15,7 @@ public class Renderer
         OAM = oam;
         VRAM = vram;
         ppu.Mode = Mode.OAMSearch;
-        fetcher = new PixelFetcher(PPU,VRAM,OAM);
+        fetcher = new PixelFetcher(PPU, VRAM, OAM);
         TimeUntilWhichToPause += offset;
     }
 
@@ -24,14 +24,15 @@ public class Renderer
 
     public int TotalTimeSpentInStage3 { get; private set; }
 
-    private Mode? ScheduledModeChange;
+    private bool ModeChangeRequested;
+    private Mode ModeChangeRequest;
     public void Render()
     {
         //Increment mode and set lock states
-        if (ScheduledModeChange is not null)
+        if (ModeChangeRequested)
         {
-            PPU.Mode = (Mode)ScheduledModeChange;
-            ScheduledModeChange = null;
+            PPU.Mode = ModeChangeRequest;
+            ModeChangeRequested = false;
 
             if (PPU.Mode == Mode.OAMSearch)
             {
@@ -78,7 +79,8 @@ public class Renderer
             {
                 PPU.LY = 0;
                 fetcher.FrameFinished();
-                ScheduledModeChange = Mode.OAMSearch;
+                ModeChangeRequested = true;
+                ModeChangeRequest = Mode.OAMSearch;
                 SkippingLYIncrementBecauseStartingLineOne = true;
                 return;
             }
@@ -132,7 +134,8 @@ public class Renderer
 
         fetcher.GetSprites();
         TimeUntilWhichToPause += graphics.GraphicConstants.OAMSearchDuration;
-        ScheduledModeChange = Mode.Transfer;
+        ModeChangeRequested = true;
+        ModeChangeRequest = Mode.Transfer;
     }
 
     private void HBlank()
@@ -142,13 +145,15 @@ public class Renderer
 
         TimeUntilWhichToPause += graphics.GraphicConstants.ScanLineRemainderAfterOAMSearch - TotalTimeSpentInStage3;
 
-        ScheduledModeChange = PPU.LY == 143 ? Mode.VBlank : Mode.OAMSearch;
+        ModeChangeRequested = true;
+        ModeChangeRequest = PPU.LY == 143 ? Mode.VBlank : Mode.OAMSearch;
         return;
     }
 
     private void ResetLineSpecificState()
     {
-        ScheduledModeChange = Mode.HBlank;
+        ModeChangeRequested = true;
+        ModeChangeRequest = Mode.HBlank;
 
         Span<byte> output = stackalloc byte[graphics.GraphicConstants.ScreenWidth];
 

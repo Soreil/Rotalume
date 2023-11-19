@@ -1,16 +1,9 @@
 ﻿namespace emulator.graphics;
 
-public class PixelFetcher
+public class PixelFetcher(PPU p, VRAM vram, OAM oam)
 {
     private readonly FIFO<FIFOPixel> BGFIFO = new();
     private readonly FIFO<FIFOSpritePixel> SpriteFIFO = new();
-    public PixelFetcher(PPU p, VRAM vram, OAM oam)
-    {
-        ppu = p;
-        VRAM = vram;
-        OAM = oam;
-    }
-
     private int scanlineX;
     private byte tileIndex;
     private byte tileDataLow;
@@ -97,7 +90,7 @@ public class PixelFetcher
 
                 var pos = sprite.XFlipped ? (i - 1) : graphics.GraphicConstants.SpriteWidth - i;
                 var existingSpritePixel = SpriteFIFO.At(pos);
-                var candidate = new FIFOSpritePixel(sprite.Palette,paletteIndex, sprite.SpriteToBackgroundPriority);
+                var candidate = new FIFOSpritePixel(sprite.Palette, paletteIndex, sprite.SpriteToBackgroundPriority);
 
                 if (ShouldReplace(existingSpritePixel, candidate))
                 {
@@ -191,7 +184,9 @@ public class PixelFetcher
         SpritesFinished++;
     }
 
-    private bool CanRenderASprite() => ppu.OBJDisplayEnable && SpriteCount - SpritesFinished != 0 && ContainsSprite() && BGFIFO.Count != 0;
+    private bool CanRenderASprite() => BGFIFO.Count != 0 &&
+        ppu.OBJDisplayEnable && SpriteCount - SpritesFinished != 0
+        && ContainsSprite();
 
     private int PixelsPopped;
     public int PixelsSentToLCD;
@@ -225,7 +220,7 @@ public class PixelFetcher
 
     private bool ContainsSprite()
     {
-        var wanted = scanlineX + 8 - (ppu.SCX & 7);
+        byte wanted = (byte)(scanlineX + 8 - (ppu.SCX & 7));
         for (int i = SpritesFinished; i < SpriteCount; i++)
         {
             if (SpriteAttributes[i].X == wanted)
@@ -268,9 +263,9 @@ public class PixelFetcher
 
     private bool inWindow;
 
-    public PPU ppu { get; }
-    public VRAM VRAM { get; }
-    public OAM OAM { get; }
+    public PPU ppu { get; } = p;
+    public VRAM VRAM { get; } = vram;
+    public OAM OAM { get; } = oam;
 
     private byte FetchTileID()
     {
@@ -290,10 +285,7 @@ public class PixelFetcher
         var windowStartY = WindowLY.Count - 1;
 
         //TODO: handle tick cost of this condition
-        if (windowStartX < 0)
-        {
-            windowStartX = 0;
-        }
+        windowStartX = int.Clamp(windowStartX, 0, 256);
 
         var tileX = inWindow ? ((scanlineX + BGFIFO.Count) / 8) - (windowStartX / 8) :
                                ((ppu.SCX / 8) + ((scanlineX + BGFIFO.Count) / 8)) & 0x1f;
@@ -308,13 +300,18 @@ public class PixelFetcher
     {
         if (BGFIFO.Count <= 8)
         {
-            for (var i = graphics.GraphicConstants.SpriteWidth; i > 0; i--)
+            for (var i = GraphicConstants.SpriteWidth; i > 0; i--)
             {
-                var paletteIndex = Convert.ToByte(tileDataLow.GetBit(i - 1));
-                paletteIndex |= (byte)(Convert.ToByte(tileDataHigh.GetBit(i - 1)) << 1);
-
-                BGFIFO.Push(new(paletteIndex));
+                var pixel = new FIFOPixel((tileDataHigh.GetBit(i - 1), tileDataLow.GetBit(i - 1)) switch
+                {
+                    (false, false) => 0,
+                    (false, true) => 1,
+                    (true, false) => 2,
+                    (true, true) => 3,
+                });
+                BGFIFO.Push(pixel);
             }
+
             return true;
         }
 
