@@ -100,7 +100,7 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
         }
     }
 
-    private static bool ShouldReplace(FIFOSpritePixel existingSpritePixel, FIFOSpritePixel candidate) => (candidate.color != 0 && existingSpritePixel.color == 0) || (candidate.priority && !existingSpritePixel.priority);
+    private static bool ShouldReplace(FIFOSpritePixel existingSpritePixel, FIFOSpritePixel candidate) => (candidate.Color != 0 && existingSpritePixel.Color == 0) || (candidate.Priority && !existingSpritePixel.Priority);
 
     public Shade? RenderPixel()
     {
@@ -132,16 +132,16 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
     {
         var bp = BGFIFO.Pop();
         var sp = SpriteFIFO.Pop();
-        if (sp.color != 0 && ppu.OBJDisplayEnable)
+        if (sp.Color != 0 && ppu.OBJDisplayEnable)
         {
             //obj to bg priority bit is set to true so the sprite pixel
             //will be behind bg color 1,2,3
-            return sp.priority && bp.Color != 0
+            return sp.Priority && bp.Color != 0
                 ? ppu.BackgroundColor(ppu.BGDisplayEnable ? bp.Color : 0)
                 : sp.Palette switch
                 {
-                    0 => ppu.SpritePalette0(sp.color),
-                    1 => ppu.SpritePalette1(sp.color),
+                    0 => ppu.SpritePalette0(sp.Color),
+                    1 => ppu.SpritePalette1(sp.Color),
                     _ => throw new IllegalSpritePalette()
                 };
 
