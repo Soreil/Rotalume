@@ -59,7 +59,7 @@ internal class SoundTests
         var SampleCount = core.Samples.Buffer.Count;
         var SamplesWithSound = core.Samples.Buffer.Any(x => x != 0);
 
-        Assert.IsTrue(SamplesWithSound);
+        Assert.That(SamplesWithSound, Is.True);
 
         var span = new ReadOnlySpan<short>(core.Samples.Buffer.ToArray());
         var wav = new WAV.WAVFile<short>(span, 2, emulator.sound.Samples.SampleRate, 16);

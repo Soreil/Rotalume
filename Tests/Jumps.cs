@@ -64,8 +64,8 @@ public class Jumps
 
         while (p.CPU.PC != 0x100 + inst.Length)
             p.Step();
-        Assert.AreEqual(0x10b, p.CPU.PC);
-        Assert.IsTrue(p.CPU.Registers.Zero);
+        Assert.That(0x10b, Is.EqualTo(p.CPU.PC));
+        Assert.That(p.CPU.Registers.Zero, Is.True);
     }
 
     //[Test]

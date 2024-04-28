@@ -25,7 +25,7 @@ public static class TestHelpers
             gamerom,
             bootrom,
             "tetrisTest",
-            new(new InputDevices(new MockGameController(), Array.Empty<IGameController>())),
+            new(new InputDevices(new MockGameController(), [])),
             frameSink);
     }
 
@@ -47,7 +47,7 @@ public static class TestHelpers
         return new Core(gameromPaddedToSize,
             null,
             fileName,
-            new(new InputDevices(new MockGameController(), Array.Empty<IGameController>())),
+            new(new InputDevices(new MockGameController(), [])),
             frameSink);
     }
 

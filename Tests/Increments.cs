@@ -18,7 +18,7 @@ public class Increments
 
             TestHelpers.StepOneCPUInstruction(dec);
 
-            Assert.AreEqual(before + 1, dec.CPU.Registers.Get(WideRegister.SP));
+            Assert.That(before + 1, Is.EqualTo(dec.CPU.Registers.Get(WideRegister.SP)));
         }
     }
 
@@ -91,11 +91,11 @@ public class Increments
 
             TestHelpers.StepOneCPUInstruction(dec);
 
-            Assert.AreEqual(21, dec.CPU.Registers.Get(Register.A));
+            Assert.That(21, Is.EqualTo(dec.CPU.Registers.Get(Register.A)));
 
-            Assert.IsTrue(!dec.CPU.Registers.Negative);
-            Assert.IsTrue(!dec.CPU.Registers.Zero);
-            Assert.IsTrue(!dec.CPU.Registers.Half);
+            Assert.That(dec.CPU.Registers.Negative,Is.False);
+            Assert.That(dec.CPU.Registers.Zero,Is.False);
+            Assert.That(dec.CPU.Registers.Half,Is.False);
         }
     }
 
@@ -114,33 +114,33 @@ public class Increments
 
             TestHelpers.StepOneCPUInstruction(dec);
 
-            Assert.AreEqual(19, dec.CPU.Registers.Get(Register.A));
+            Assert.That(19, Is.EqualTo(dec.CPU.Registers.Get(Register.A)));
 
-            Assert.IsTrue(dec.CPU.Registers.Negative);
-            Assert.IsTrue(!dec.CPU.Registers.Zero);
-            Assert.IsTrue(!dec.CPU.Registers.Half);
+            Assert.That(dec.CPU.Registers.Negative,Is.True);
+            Assert.That(dec.CPU.Registers.Zero,Is.False);
+            Assert.That(dec.CPU.Registers.Half,Is.False);
         }
         {
             dec.CPU.Registers.Set(Register.A, 0x10);
 
             TestHelpers.StepOneCPUInstruction(dec);
 
-            Assert.AreEqual(0xf, dec.CPU.Registers.Get(Register.A));
+            Assert.That(0xf, Is.EqualTo(dec.CPU.Registers.Get(Register.A)));
 
-            Assert.IsTrue(dec.CPU.Registers.Negative);
-            Assert.IsTrue(!dec.CPU.Registers.Zero);
-            Assert.IsTrue(dec.CPU.Registers.Half);
+            Assert.That(dec.CPU.Registers.Negative,Is.True);
+            Assert.That(dec.CPU.Registers.Zero,Is.False);
+            Assert.That(dec.CPU.Registers.Half,Is.True);
         }
         {
             dec.CPU.Registers.Set(Register.A, 0x0F);
 
             TestHelpers.StepOneCPUInstruction(dec);
 
-            Assert.AreEqual(0x0E, dec.CPU.Registers.Get(Register.A));
+            Assert.That(0x0E, Is.EqualTo(dec.CPU.Registers.Get(Register.A)));
 
-            Assert.IsTrue(dec.CPU.Registers.Negative);
-            Assert.IsTrue(!dec.CPU.Registers.Zero);
-            Assert.IsTrue(!dec.CPU.Registers.Half);
+            Assert.That(dec.CPU.Registers.Negative,Is.True);
+            Assert.That(dec.CPU.Registers.Zero,Is.False);
+            Assert.That(dec.CPU.Registers.Half,Is.False);
         }
     }
     [Test]
@@ -161,7 +161,7 @@ public class Increments
 
             TestHelpers.StepOneCPUInstruction(core);
 
-            Assert.AreEqual(0x99, dec.Registers.Get(Register.A));
+            Assert.That(0x99, Is.EqualTo(dec.Registers.Get(Register.A)));
         }
         {
             dec.Registers.Set(Register.A, 0xF0);
@@ -169,8 +169,8 @@ public class Increments
 
             TestHelpers.StepOneCPUInstruction(core);
 
-            Assert.AreEqual(0xFF, dec.Registers.Get(Register.A));
-            Assert.IsTrue(!dec.Registers.Carry);
+            Assert.That(0xFF, Is.EqualTo(dec.Registers.Get(Register.A)));
+            Assert.That(dec.Registers.Carry,Is.False);
         }
         {
             dec.Registers.Set(Register.A, 0xF0);
@@ -178,8 +178,8 @@ public class Increments
 
             TestHelpers.StepOneCPUInstruction(core);
 
-            Assert.AreEqual(0, dec.Registers.Get(Register.A));
-            Assert.IsTrue(dec.Registers.Carry);
+            Assert.That(0, Is.EqualTo(dec.Registers.Get(Register.A)));
+            Assert.That(dec.Registers.Carry,Is.True);
         }
     }
     [Test]
@@ -199,12 +199,12 @@ public class Increments
 
             TestHelpers.StepOneCPUInstruction(core);
 
-            Assert.AreEqual(0x9a, dec.Registers.Get(Register.A));
+            Assert.That(0x9a, Is.EqualTo(dec.Registers.Get(Register.A)));
 
             TestHelpers.StepOneCPUInstruction(core);
 
-            Assert.AreEqual(0x00, dec.Registers.Get(Register.A));
-            Assert.IsTrue(dec.Registers.Carry);
+            Assert.That(0x00, Is.EqualTo(dec.Registers.Get(Register.A)));
+            Assert.That(dec.Registers.Carry,Is.True);
         }
     }
     [Test]
@@ -224,12 +224,12 @@ public class Increments
 
             TestHelpers.StepOneCPUInstruction(core);
 
-            Assert.AreEqual(0x99, dec.Registers.Get(Register.A));
+            Assert.That(0x99, Is.EqualTo(dec.Registers.Get(Register.A)));
 
             TestHelpers.StepOneCPUInstruction(core);
 
-            Assert.AreEqual(0x99, dec.Registers.Get(Register.A));
-            Assert.IsTrue(!dec.Registers.Carry);
+            Assert.That(0x99, Is.EqualTo(dec.Registers.Get(Register.A)));
+            Assert.That(dec.Registers.Carry,Is.False);
         }
 
     }
@@ -250,11 +250,11 @@ public class Increments
 
         TestHelpers.StepOneCPUInstruction(core);
 
-        Assert.AreEqual(0x0a, dec.Registers.Get(Register.A));
+        Assert.That(0x0a, Is.EqualTo(dec.Registers.Get(Register.A)));
 
         TestHelpers.StepOneCPUInstruction(core);
 
-        Assert.AreEqual(0x10, dec.Registers.Get(Register.A));
+        Assert.That(0x10, Is.EqualTo(dec.Registers.Get(Register.A)));
     }
     [Test]
     public void DAA_00()
@@ -272,17 +272,16 @@ public class Increments
 
         TestHelpers.StepOneCPUInstruction(core);
 
-        Assert.AreEqual(0x9a, dec.Registers.Get(Register.A));
-        Assert.True(!dec.Registers.Half);
-        Assert.True(!dec.Registers.Negative);
+        Assert.That(0x9a, Is.EqualTo(dec.Registers.Get(Register.A)));
+        Assert.That(dec.Registers.Half,Is.False);
+        Assert.That(dec.Registers.Negative,Is.False);
 
         TestHelpers.StepOneCPUInstruction(core);
 
-        Assert.AreEqual(0, dec.Registers.Get(Register.A));
-
-        Assert.True(dec.Registers.Carry);
-        Assert.True(!dec.Registers.Half);
-        Assert.True(dec.Registers.Zero);
+        Assert.That(0, Is.EqualTo(dec.Registers.Get(Register.A)));
+        Assert.That(dec.Registers.Carry,Is.True);
+        Assert.That(dec.Registers.Half,Is.False);
+        Assert.That(dec.Registers.Zero,Is.True);
     }
 
     [Test]
@@ -302,11 +301,11 @@ public class Increments
 
             TestHelpers.StepOneCPUInstruction(core);
 
-            Assert.AreEqual(0x0f, dec.Registers.Get(Register.A));
+            Assert.That(0x0f, Is.EqualTo(dec.Registers.Get(Register.A)));
 
             TestHelpers.StepOneCPUInstruction(core);
 
-            Assert.AreEqual(0x09, dec.Registers.Get(Register.A));
+            Assert.That(0x09, Is.EqualTo(dec.Registers.Get(Register.A)));
         }
 
     }
@@ -322,12 +321,12 @@ public class Increments
 
             dec.Op(Opcode.ADD_A_B)();
 
-            Assert.AreEqual(0x7D, dec.Registers.Get(Register.A));
+            Assert.That(0x7D, Is.EqualTo(dec.Registers.Get(Register.A)));
 
             dec.Op(Opcode.DAA)();
 
-            Assert.AreEqual(0x83, dec.Registers.Get(Register.A));
-            Assert.IsTrue(!dec.Registers.Carry);
+            Assert.That(0x83, Is.EqualTo(dec.Registers.Get(Register.A)));
+            Assert.That(dec.Registers.Carry,Is.False);
         }
 
     }

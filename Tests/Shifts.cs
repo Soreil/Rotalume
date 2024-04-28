@@ -18,27 +18,27 @@ public class Shifts
 
             dec.Op(Opcode.RLCA)();
 
-            Assert.AreEqual(1, dec.Registers.Get(Register.A));
+            Assert.That(1, Is.EqualTo(dec.Registers.Get(Register.A)));
 
-            Assert.IsTrue(dec.Registers.Carry);
+            Assert.That(dec.Registers.Carry, Is.True);
         }
         {
             dec.Registers.Set(Register.A, 0);
 
             dec.Op(Opcode.RLCA)();
 
-            Assert.AreEqual(0, dec.Registers.Get(Register.A));
+            Assert.That(0, Is.EqualTo(dec.Registers.Get(Register.A)));
 
-            Assert.IsTrue(!dec.Registers.Carry);
+            Assert.That(dec.Registers.Carry, Is.False);
         }
         {
             dec.Registers.Set(Register.A, 0xff);
 
             dec.Op(Opcode.RLCA)();
 
-            Assert.AreEqual(0xff, dec.Registers.Get(Register.A));
+            Assert.That(0xff, Is.EqualTo(dec.Registers.Get(Register.A)));
 
-            Assert.IsTrue(dec.Registers.Carry);
+            Assert.That(dec.Registers.Carry, Is.True);
         }
     }
     [Test]
@@ -52,27 +52,27 @@ public class Shifts
 
             dec.Op(Opcode.RRCA)();
 
-            Assert.AreEqual(0x80, dec.Registers.Get(Register.A));
+            Assert.That(0x80, Is.EqualTo(dec.Registers.Get(Register.A)));
 
-            Assert.IsTrue(dec.Registers.Carry);
+            Assert.That(dec.Registers.Carry, Is.True);
         }
         {
             dec.Registers.Set(Register.A, 0xFF);
 
             dec.Op(Opcode.RRCA)();
 
-            Assert.AreEqual(0xFF, dec.Registers.Get(Register.A));
+            Assert.That(0xFF, Is.EqualTo(dec.Registers.Get(Register.A)));
 
-            Assert.IsTrue(dec.Registers.Carry);
+            Assert.That(dec.Registers.Carry, Is.True);
         }
         {
             dec.Registers.Set(Register.A, 0);
 
             dec.Op(Opcode.RRCA)();
 
-            Assert.AreEqual(0, dec.Registers.Get(Register.A));
+            Assert.That(0, Is.EqualTo(dec.Registers.Get(Register.A)));
 
-            Assert.IsTrue(!dec.Registers.Carry);
+            Assert.That(dec.Registers.Carry,Is.False);
         }
     }
     [Test]
@@ -84,7 +84,7 @@ public class Shifts
         dec.Registers.A = (0xff);
         dec.Op(Opcode.CPL)();
 
-        Assert.AreEqual(0, dec.Registers.A);
+        Assert.That(0, Is.EqualTo(dec.Registers.A));
     }
     [Test]
     public void SCF()
@@ -94,7 +94,7 @@ public class Shifts
 
         dec.Op(Opcode.SCF)();
 
-        Assert.IsTrue(dec.Registers.Carry);
+        Assert.That(dec.Registers.Carry,Is.True);
     }
     [Test]
     public void CCF()
@@ -104,9 +104,9 @@ public class Shifts
         dec.Registers.Carry = false;
 
         dec.Op(Opcode.CCF)();
-        Assert.IsTrue(dec.Registers.Carry);
+        Assert.That(dec.Registers.Carry,Is.True);
 
         dec.Op(Opcode.CCF)();
-        Assert.IsTrue(!dec.Registers.Carry);
+        Assert.That(dec.Registers.Carry,Is.False);
     }
 }

@@ -19,18 +19,26 @@ internal class GraphicalOutputTest
 
         var core = TestHelpers.NewBootCore(render);
 
+        var outputDir = Directory.CreateDirectory(nameof(NintendoLogoShowsUpInTheCenterAtTheEndOfBooting));
+
         int FramesDrawn = 0;
-        render.FramePushed += (sender, e) => FramesDrawn++;
+        render.FramePushed += async (sender, e) =>
+        {
+            var img = Image.LoadPixelData<L8>(render.Image, 160, 144);
+            await img.SaveAsBmpAsync(Path.Combine(outputDir.FullName, $"output{FramesDrawn}.bmp"));
+            FramesDrawn++;
+        };
 
         while (core.CPU.PC != 0x100)
             core.Step();
 
         var outputImage = Image.LoadPixelData<L8>(render.Image, 160, 144);
 
-        outputImage.SaveAsBmp("outputBootROM.bmp");
+        Console.WriteLine($"Wrote debug image for bootrom to:{outputDir.FullName}");
+        outputImage.SaveAsBmp(Path.Combine(outputDir.FullName, "outputBootROM.bmp"));
 
         //For some reason we are missing the (R) part of the image on the righthand side here.
-        Assert.IsTrue(TestHelpers.AreEqual((Image<L8>)expectedImage, outputImage));
+        Assert.That(TestHelpers.AreEqual((Image<L8>)expectedImage, outputImage), Is.True);
     }
 
     [TestCase(@"rom\blargg\cpu_instrs\cpu_instrs.gb", @"..\..\..\..\Tests\rom\blargg\cpu_instrs\expected.png", "outputBlargCPUTest.bmp", 4000)]
@@ -86,6 +94,6 @@ internal class GraphicalOutputTest
 
         outputImage.SaveAsBmp(outputFile);
 
-        Assert.IsTrue(TestHelpers.AreEqual((Image<L8>)expectedImage, outputImage));
+        Assert.That(TestHelpers.AreEqual((Image<L8>)expectedImage, outputImage), Is.True);
     }
 }

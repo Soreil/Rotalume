@@ -19,8 +19,8 @@ public class WideLoads
 
         var after = dec.CPU.Registers.BC;
 
-        Assert.AreNotEqual(before, after);
-        Assert.AreEqual(after, 0xa020);
+        Assert.That(before, Is.Not.EqualTo(after));
+        Assert.That(after, Is.EqualTo(0xa020));
     }
 
     private static Core SetupA020Buffered()
@@ -40,8 +40,8 @@ public class WideLoads
 
         var after = dec.CPU.Registers.DE;
 
-        Assert.AreNotEqual(before, after);
-        Assert.AreEqual(after, 0xa020);
+        Assert.That(before, Is.Not.EqualTo(after));
+        Assert.That(after, Is.EqualTo(0xa020));
     }
     [Test]
     public void LD_HL_d16()
@@ -54,8 +54,8 @@ public class WideLoads
 
         var after = dec.CPU.Registers.HL;
 
-        Assert.AreNotEqual(before, after);
-        Assert.AreEqual(after, 0xa020);
+        Assert.That(before, Is.Not.EqualTo(after));
+        Assert.That(after, Is.EqualTo(0xa020));
     }
     [Test]
     public void LD_SP_d16()
@@ -68,8 +68,8 @@ public class WideLoads
 
         var after = dec.CPU.Registers.SP;
 
-        Assert.AreNotEqual(before, after);
-        Assert.AreEqual(after, 0xa020);
+        Assert.That(before, Is.Not.EqualTo(after));
+        Assert.That(after, Is.EqualTo(0xa020));
     }
     [Test]
     public void LD_SP_d16_v2()
@@ -78,9 +78,8 @@ public class WideLoads
         );
 
         p.Step();
-        Assert.AreEqual(0x103, p.CPU.PC);
-        Assert.AreEqual(0x4512, p.CPU.Registers.SP);
-        //Assert.AreEqual(12 - 1, p.CPU.TicksWeAreWaitingFor);
+        Assert.That(0x103, Is.EqualTo(p.CPU.PC));
+        Assert.That(0x4512, Is.EqualTo(p.CPU.Registers.SP));
     }
 
     [Test]
@@ -97,10 +96,10 @@ public class WideLoads
         var after = dec.CPU.Registers.HL;
         var memoryAfter = dec.Memory.Read(after);
 
-        Assert.AreEqual(before, after);
-        Assert.AreNotEqual(memoryBefore, memoryAfter);
+        Assert.That(before, Is.EqualTo(after));
+        Assert.That(memoryBefore, Is.Not.EqualTo(memoryAfter));
 
-        Assert.AreEqual(0x77, memoryAfter);
+        Assert.That(0x77, Is.EqualTo(memoryAfter));
     }
 
     private static Core Setup0x77BufferedDecoder()
@@ -127,11 +126,11 @@ public class WideLoads
 
         var memoryAfterButAtOldHL = core.Memory.Read(before);
 
-        Assert.AreEqual(before - 1, after);
-        Assert.AreEqual(memoryBefore, memoryAfter);
+        Assert.That(before - 1, Is.EqualTo(after));
+        Assert.That(memoryBefore, Is.EqualTo(memoryAfter));
 
-        Assert.AreNotEqual(0x77, memoryAfter);
-        Assert.AreEqual(0x77, memoryAfterButAtOldHL);
+        Assert.That(0x77, Is.Not.EqualTo(memoryAfter));
+        Assert.That(0x77, Is.EqualTo(memoryAfterButAtOldHL));
     }
 
     [Test]
@@ -152,11 +151,11 @@ public class WideLoads
 
         var memoryAfterButAtOldHL = core.Memory.Read(before);
 
-        Assert.AreEqual(before + 1, after);
-        Assert.AreEqual(memoryBefore, memoryAfter);
+        Assert.That(before + 1, Is.EqualTo(after));
+        Assert.That(memoryBefore, Is.EqualTo(memoryAfter));
 
-        Assert.AreNotEqual(0x77, memoryAfter);
-        Assert.AreEqual(0x77, memoryAfterButAtOldHL);
+        Assert.That(0x77, Is.Not.EqualTo(memoryAfter));
+        Assert.That(0x77, Is.EqualTo(memoryAfterButAtOldHL));
     }
 
     //[Test]
@@ -176,15 +175,15 @@ public class WideLoads
         var core = TestHelpers.NewCore([]);
         var dec = core.CPU;
 
-        dec.Registers.HL = (0x8a23);
-        dec.Registers.BC = (0x0605);
+        dec.Registers.HL = 0x8a23;
+        dec.Registers.BC = 0x0605;
 
         dec.Op(Opcode.ADD_HL_BC)();
 
-        Assert.AreEqual(0x9028, dec.Registers.HL);
-        Assert.IsTrue(dec.Registers.Half);
-        Assert.IsTrue(!dec.Registers.Negative);
-        Assert.IsTrue(!dec.Registers.Carry);
+        Assert.That(0x9028, Is.EqualTo(dec.Registers.HL));
+        Assert.That(dec.Registers.Half, Is.True);
+        Assert.That(dec.Registers.Negative, Is.False);
+        Assert.That(dec.Registers.Carry, Is.False);
     }
     [Test]
     public void ADD_HL_HL()
@@ -192,14 +191,14 @@ public class WideLoads
         var core = TestHelpers.NewCore([]);
         var dec = core.CPU;
 
-        dec.Registers.HL = (0x8a23);
+        dec.Registers.HL = 0x8a23;
 
         dec.Op(Opcode.ADD_HL_HL)();
 
-        Assert.AreEqual(0x1446, dec.Registers.HL);
-        Assert.IsTrue(dec.Registers.Half);
-        Assert.IsTrue(!dec.Registers.Negative);
-        Assert.IsTrue(dec.Registers.Carry);
+        Assert.That(0x1446, Is.EqualTo(dec.Registers.HL));
+        Assert.That(dec.Registers.Half, Is.True);
+        Assert.That(dec.Registers.Negative, Is.False);
+        Assert.That(dec.Registers.Carry, Is.True);
     }
 
     [Test]
@@ -208,11 +207,11 @@ public class WideLoads
         var core = TestHelpers.NewCore([]);
         var dec = core.CPU;
 
-        dec.Registers.B = (0x10);
+        dec.Registers.B = 0x10;
 
         dec.Op(Opcode.LD_A_B)();
 
-        Assert.AreEqual(0x10, dec.Registers.A);
+        Assert.That(0x10, Is.EqualTo(dec.Registers.A));
 
     }
     [Test]
@@ -221,12 +220,12 @@ public class WideLoads
         var core = TestHelpers.NewCore([]);
         var dec = core.CPU;
 
-        dec.Registers.A = (0x10);
-        dec.Registers.C = (0xfe);
+        dec.Registers.A = 0x10;
+        dec.Registers.C = 0xfe;
 
         dec.Op(Opcode.LD_AT_C_A)();
 
-        Assert.AreEqual(0x10, core.Memory.Read(0xfffe));
+        Assert.That(0x10, Is.EqualTo(core.Memory.Read(0xfffe)));
 
     }
     [Test]
@@ -236,12 +235,12 @@ public class WideLoads
         var dec = core.CPU;
 
         core.Memory.Write(0xfffe, 0x10);
-        dec.Registers.C = (0xfe);
+        dec.Registers.C = 0xfe;
 
 
         dec.Op(Opcode.LD_A_AT_C)();
 
-        Assert.AreEqual(0x10, dec.Registers.A);
+        Assert.That(0x10, Is.EqualTo(dec.Registers.A));
 
     }
 }
