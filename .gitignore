@@ -346,3 +346,4 @@ healthchecksdb
 *.gbc
 *.diagsession
 /Tests/rom/DMG_ROM_BOOT.bin
+/Tests/rom/dmg_rom.bin

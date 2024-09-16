@@ -47,13 +47,3 @@ public class XboxControllerWithInterruptHandler
 
     protected virtual void OnAnyKeyDown(EventArgs e) => KeyWentDown?.Invoke(this, e);
 }
-
-internal record State(
-    bool IsDPadUpPressed,
-    bool IsDPadDownPressed,
-    bool IsDPadLeftPressed,
-    bool IsDPadRightPressed,
-    bool IsAPressed,
-    bool IsBPressed,
-    bool IsBackPressed,
-    bool IsStartPressed);

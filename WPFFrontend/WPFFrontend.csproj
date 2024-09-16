@@ -1,18 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<Target Name="RemoveDuplicateAnalyzers" BeforeTargets="CoreCompile">
-		<!-- Work around https://github.com/dotnet/wpf/issues/6792 -->
-
-		<ItemGroup>
-			<FilteredAnalyzer Include="@(Analyzer-&gt;Distinct())" />
-			<Analyzer Remove="@(Analyzer)" />
-			<Analyzer Include="@(FilteredAnalyzer)" />
-		</ItemGroup>
-	</Target>
-
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
-		<TargetFramework>net8.0-windows</TargetFramework>
+		<TargetFramework>net9.0-windows</TargetFramework>
 		<UseWPF>true</UseWPF>
 		<AssemblyName>WPFFrontend</AssemblyName>
 		<RootNamespace>WPFFrontend</RootNamespace>
@@ -22,14 +12,22 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Compile Remove="Commands\**" />
-	  <EmbeddedResource Remove="Commands\**" />
-	  <None Remove="Commands\**" />
-	  <Page Remove="Commands\**" />
+		<Compile Remove="Commands\**" />
+		<EmbeddedResource Remove="Commands\**" />
+		<None Remove="Commands\**" />
+		<Page Remove="Commands\**" />
 	</ItemGroup>
 
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+	</PropertyGroup>
+
 	<ItemGroup>
-		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.1" />
 		<PackageReference Include="NAudio" Version="2.2.1" />
 	</ItemGroup>
 
@@ -47,10 +45,6 @@
 
 	<ItemGroup>
 		<Page Include="App.xaml" />
-	</ItemGroup>
-
-	<ItemGroup>
-		        <FilteredAnalyzer Include="@(Analyzer-&gt;Distinct())" />
 	</ItemGroup>
 
 </Project>

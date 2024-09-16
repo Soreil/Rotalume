@@ -12,7 +12,7 @@ namespace Tests;
 public static class TestHelpers
 {
     private static byte[] LoadGameROM() => File.ReadAllBytes(@"rom\Tetris (World) (Rev A).gb");
-    private static byte[] LoadBootROM() => File.ReadAllBytes(@"rom\DMG_ROM_BOOT.bin");
+    private static byte[] LoadBootROM() => File.ReadAllBytes(@"rom\dmg_rom.bin");
     public static Core NewBootCore(IFrameSink? frameSink = null)
     {
         var bootrom = LoadBootROM();
