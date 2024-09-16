@@ -15,13 +15,9 @@ using WPFFrontend.Services;
 namespace WPFFrontend.Models;
 
 public class Model(GameboyScreen gameboyScreen,
-    Input input, FileService fileService, ILogger<FrameSink> logger) : ObservableObject,IDisposable
+    Input input, FileService fileService, ILogger<FrameSink> logger) : ObservableObject, IDisposable
 {
-    public bool Paused
-    {
-        get;
-        set;
-    }
+    public bool Paused { get; set; }
 
     public string? ROM
     {
@@ -38,11 +34,7 @@ public class Model(GameboyScreen gameboyScreen,
         }
     }
 
-    public bool FpsLockEnabled
-    {
-        get;
-        set;
-    }
+    public bool FpsLockEnabled { get; set; }
     public bool BootRomEnabled;
 
     public GameboyScreen GameboyScreen { get; } = gameboyScreen;
@@ -111,8 +103,12 @@ public class Model(GameboyScreen gameboyScreen,
         {
             gameboy.Step();
             if (Paused)
+            {
                 while (Paused)
+                {
                     Thread.Sleep(10);
+                }
+            }
         }
         player.Stop();
     }
@@ -129,15 +125,14 @@ public class Model(GameboyScreen gameboyScreen,
 
         var br = BootRomEnabled;
 
-        GameTask = new Task(() =>
+        GameTask = Task.Run(() =>
         {
             Thread.CurrentThread.IsBackground = true;
             Thread.CurrentThread.Name = "Gaming";
             Gameboy(path, br);
         });
-
-        GameTask.Start();
     }
+
     public void ShutdownGameboy()
     {
         if (GameTask is not null)

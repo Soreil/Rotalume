@@ -7,36 +7,33 @@ namespace emulator.glue;
 
 internal static class CoreHelpers
 {
-    internal static MBC MakeCard(GameROM gameROM, Keypad Keypad, IFrameSink frameSink, MasterClock masterclock)
+    internal static MBC MakeCard(GameROM gameROM, Keypad keypad, IFrameSink frameSink, MasterClock masterClock)
     {
-        var Header = new CartHeader(gameROM.ROM);
+        var header = new CartHeader(gameROM.ROM);
 
-        MBC Card;
-        if (Header.HasBattery())
+        MBC card;
+        if (header.HasBattery())
         {
-            var mmf = Header.MakeMemoryMappedFile(gameROM.FileName);
-            Card = Header.HasClock() ? Header.MakeMBC(gameROM.ROM, mmf, masterclock) : Header.MakeMBC(gameROM.ROM, mmf);
+            var mmf = header.MakeMemoryMappedFile(gameROM.FileName);
+            card = header.HasClock() ? header.MakeMBC(gameROM.ROM, mmf, masterClock) : header.MakeMBC(gameROM.ROM, mmf);
         }
         else
         {
-            Card = Header.MakeMBC(gameROM.ROM);
+            card = header.MakeMBC(gameROM.ROM);
         }
 
-        //Writing out the RTC too often would be very heavy. This writes it out once per frame.
-        //
-        if (Header.Type == CartType.MBC3_TIMER_RAM_BATTERY)
+        // Writing out the RTC too often would be very heavy. This writes it out once per frame.
+        if (header.Type == CartType.MBC3_TIMER_RAM_BATTERY)
         {
-            var SaveRTC = ((MBC3)Card).SaveRTC();
-
-            void h(object? x, EventArgs y) => SaveRTC();
-            frameSink.FramePushed += h;
+            var saveRTC = ((MBC3)card).SaveRTC();
+            frameSink.FramePushed += (x, y) => saveRTC();
         }
 
-        if (Card is MBC5WithRumble rumble)
+        if (card is MBC5WithRumble rumble)
         {
-            rumble.RumbleStateChange += Keypad.ToggleRumble;
+            rumble.RumbleStateChange += keypad.ToggleRumble;
         }
 
-        return Card;
+        return card;
     }
 }

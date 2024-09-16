@@ -1,7 +1,10 @@
 ﻿using emulator.glue;
 using emulator.memory.mappers;
 
+using System.Security.Cryptography;
+
 namespace emulator.memory;
+
 internal record CartHeader
 {
     public string Title { get; init; }
@@ -9,7 +12,6 @@ internal record CartHeader
 
     private static readonly string SaveFormatExtension = ".sav";
 
-    //ROM size in bytes. Supposedly some of these values don't actually exist as a mapping used by any games.
     private static int ROM_Size_Mapping(byte b) => b switch
     {
         0x00 => 32 * 1024,
@@ -27,7 +29,6 @@ internal record CartHeader
         _ => throw new UnexpectedSize("Non standard ROM size")
     };
 
-    //RAM Size in bytes
     private static int RAM_Size_Mapping(byte b) => b switch
     {
         0x00 => 0,
@@ -41,6 +42,7 @@ internal record CartHeader
 
     public int ROM_Size { get; init; }
     public int RAM_Size { get; init; }
+
     internal bool HasRumble() => Type switch
     {
         CartType.MBC5_RUMBLE => true,
@@ -51,23 +53,18 @@ internal record CartHeader
 
     public CartHeader(ReadOnlySpan<byte> gameROM)
     {
-        // 0x134 is the offset in to the game rom where the title starts. For gameboy colour games this length should be treated as
-        //shorter than 16 bytes since they reused some of the bytes for other purposes.
         var titleArea = gameROM.Slice(0x134, 16);
-
         Span<char> t = stackalloc char[16];
 
         for (int i = 0; i < titleArea.Length; i++)
             t[i] = titleArea[i] == '\0' ? ' ' : (char)titleArea[i];
 
         Title = new string(t).Trim();
-
         Type = (CartType)gameROM[0x147];
-
         ROM_Size = ROM_Size_Mapping(gameROM[0x148]);
         RAM_Size = RAM_Size_Mapping(gameROM[0x149]);
 
-        using var hash = System.Security.Cryptography.SHA256.Create();
+        using var hash = SHA256.Create();
     }
 
     internal bool HasBattery() => Type switch
@@ -125,7 +122,6 @@ internal record CartHeader
         _ => throw new NotImplementedException(),
     };
 
-    //A cartridge requires a battery in order to be able to keep state while the system is off
     public System.IO.MemoryMappedFiles.MemoryMappedFile MakeMemoryMappedFile(string fileName)
     {
         if (!HasBattery())
@@ -133,30 +129,24 @@ internal record CartHeader
             throw new NoBatteryPresentException("We need a battery for it to be relevant to keep a save file on disk");
         }
 
-        //This retrieves %appdata% path
         var root = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-
         var RotalumeFolder = Path.Combine(root, "rotalume");
         var saveFolder = Path.Combine(RotalumeFolder, "saves");
-        _ = Directory.CreateDirectory(saveFolder);
 
-        var path = saveFolder + Path.DirectorySeparatorChar + fileName + SaveFormatExtension;
+        if (!Directory.Exists(saveFolder))
+        {
+            _ = Directory.CreateDirectory(saveFolder);
+        }
+
+        var path = Path.Combine(saveFolder, fileName + SaveFormatExtension);
 
         if (!File.Exists(path))
         {
             var size = RequiredSaveFileSize();
-
             var buffer = new byte[size];
-            //Since this is supposed to be RAM we should probably initialize it so random values but 0xff does fine too
-            for (int i = 0; i < size; i++)
-            {
-                buffer[i] = 0xff;
-            }
-
+            buffer.AsSpan().Fill(0xff);
             File.WriteAllBytes(path, buffer);
         }
-        //We don't have versioning yet for save files. If we ever wind up changing the format this will at least catch it if that causes a size change
-        //We probably shouldn't assume files are going to get created on disk at exactly the size we requested, they might be a bit bigger.
         else if (new FileInfo(path).Length < RequiredSaveFileSize())
         {
             throw new FileLoadException("Existing save size too small");
@@ -172,7 +162,6 @@ internal record CartHeader
             }
             catch (IOException)
             {
-                //We want to wait a bit before checking again in the hope the file will at some point release
                 Thread.Sleep(10);
             }
         }
@@ -181,28 +170,17 @@ internal record CartHeader
 
     private int RequiredSaveFileSize()
     {
-        int size = 0;
-        if (RAM_Size != 0)
-        {
-            size += RAM_Size;
-        }
-        //MBC2 does not report a size in the header but instead has a fixed 2k internal RAM
-        else if (Type == CartType.MBC2_BATTERY)
-        {
-            size += 0x2000;
-        }
-        //16 bytes to store clock should be plenty
+        int size = RAM_Size != 0 ? RAM_Size : (Type == CartType.MBC2_BATTERY ? 0x2000 : 0);
         if (HasClock())
         {
             size += 16;
         }
-
         return size;
     }
 
     private static string SanitizeFilename(string title)
     {
-        var invalids = Path.GetInvalidFileNameChars();
+        var invalids = new HashSet<char>(Path.GetInvalidFileNameChars());
         return new string(title.Where(x => !invalids.Contains(x)).ToArray());
     }
 }

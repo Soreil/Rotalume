@@ -3,7 +3,7 @@
 [Serializable]
 internal class CartridgeTooSmallException : Exception
 {
-    public CartridgeTooSmallException()
+    public CartridgeTooSmallException() : base("The cartridge is too small.")
     {
     }
 
@@ -14,5 +14,4 @@ internal class CartridgeTooSmallException : Exception
     public CartridgeTooSmallException(string? message, Exception? innerException) : base(message, innerException)
     {
     }
-
 }

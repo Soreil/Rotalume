@@ -1,7 +1,8 @@
 ﻿namespace emulator.input;
-public class MappedController
+
+public class MappedController(IGameController gameController)
 {
-    public readonly IGameController controller;
+    public readonly IGameController controller = gameController;
 
     public bool this[JoypadKey index] => index switch
     {
@@ -15,8 +16,6 @@ public class MappedController
         JoypadKey.Down => controller.IsDPadDownPressed,
         _ => throw new UnsupportedJoypadButton("Unmapped control")
     };
-
-    public MappedController(IGameController gameController) => controller = gameController;
 
     public void Rumble(double leftMotor, double rightMotor) => controller.Vibrate(leftMotor, rightMotor);
 }

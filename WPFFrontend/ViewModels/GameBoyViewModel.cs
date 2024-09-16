@@ -11,7 +11,7 @@ using WPFFrontend.Views;
 
 namespace WPFFrontend.ViewModels;
 
-public partial class GameBoyViewModel : ObservableObject
+public partial class GameBoyViewModel : ObservableObject, IDisposable
 {
     public GameboyTimingInfo Performance { get; }
     public GameboyScreen Screen { get; }
@@ -28,9 +28,7 @@ public partial class GameBoyViewModel : ObservableObject
         Input input)
     {
         Screen = gameboyScreen;
-
         Performance = performance;
-
         StopCommand = new RelayCommand(model.ShutdownGameboy);
         ControllerIDConverter = controllerIDConverter;
         Model = model;
@@ -49,12 +47,10 @@ public partial class GameBoyViewModel : ObservableObject
     {
         var ofd = new Microsoft.Win32.OpenFileDialog() { DefaultExt = ".gb", Filter = "ROM Files (*.gb;*.gbc)|*.gb;*.gbc" };
         var result = ofd.ShowDialog();
-        if (result == false)
+        if (result == true)
         {
-            return;
+            Model.ROM = ofd.FileName;
         }
-
-        Model.ROM = ofd.FileName;
     }
 
     private void Display_FrameDrawn(object? sender, EventArgs e)
@@ -66,12 +62,18 @@ public partial class GameBoyViewModel : ObservableObject
     public bool BootRomEnabled
     {
         get => Model.BootRomEnabled;
-        set => _ = SetProperty(ref Model.BootRomEnabled, value);
+        set => SetProperty(ref Model.BootRomEnabled, value);
     }
-    
+
     public bool FpsLockEnabled
     {
         get => Model.FpsLockEnabled;
-        set => _ = SetProperty(Model.FpsLockEnabled, value, Model, (i, s) => i.FpsLockEnabled = s);
+        set => SetProperty(Model.FpsLockEnabled, value, Model, (i, s) => i.FpsLockEnabled = s);
+    }
+
+    public void Dispose()
+    {
+        Screen.FrameDrawn -= Display_FrameDrawn;
+        GC.SuppressFinalize(this);
     }
 }

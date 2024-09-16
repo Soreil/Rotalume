@@ -4,8 +4,10 @@ using System.Windows.Input;
 
 namespace WPFFrontend.Glue;
 
-public class KeyBoardWithInterruptHandler(Dictionary<Key, JoypadKey> mappedKeys)
+public class KeyBoardWithInterruptHandler
 {
+    private readonly Dictionary<Key, Action<bool>> keyActions;
+
     public event EventHandler<EventArgs>? KeyWentDown;
 
     public bool A { get; internal set; }
@@ -17,55 +19,40 @@ public class KeyBoardWithInterruptHandler(Dictionary<Key, JoypadKey> mappedKeys)
     public bool DpadUp { get; internal set; }
     public bool Start { get; internal set; }
 
+    public KeyBoardWithInterruptHandler(Dictionary<Key, JoypadKey> mappedKeys)
+    {
+        keyActions = [];
+        foreach (var (key, value) in mappedKeys)
+        {
+            keyActions[key] = value switch
+            {
+                JoypadKey.A => (state) => A = state,
+                JoypadKey.B => (state) => B = state,
+                JoypadKey.Select => (state) => Select = state,
+                JoypadKey.Start => (state) => Start = state,
+                JoypadKey.Up => (state) => DpadUp = state,
+                JoypadKey.Down => (state) => DpadDown = state,
+                JoypadKey.Left => (state) => DpadLeft = state,
+                JoypadKey.Right => (state) => DpadRight = state,
+                _ => throw new ArgumentOutOfRangeException(nameof(value), $"Unsupported JoypadKey value: {value}")
+            };
+        }
+    }
+
     public void Down(object? sender, KeyEventArgs e)
     {
-        if (!mappedKeys.TryGetValue(e.Key, out var value)) return;
-
-        switch (value)
+        if (keyActions.TryGetValue(e.Key, out var KeyDown))
         {
-            case JoypadKey.A:
-            A = true; break;
-            case JoypadKey.B:
-            B = true; break;
-            case JoypadKey.Select:
-            Select = true; break;
-            case JoypadKey.Start:
-            Start = true; break;
-            case JoypadKey.Up:
-            DpadUp = true; break;
-            case JoypadKey.Down:
-            DpadDown = true; break;
-            case JoypadKey.Left:
-            DpadLeft = true; break;
-            case JoypadKey.Right:
-            DpadRight = true; break;
+            KeyDown(true);
+            OnAnyKeyDown(EventArgs.Empty);
         }
-
-        OnAnyKeyDown(EventArgs.Empty);
     }
 
     public void Up(object? sender, KeyEventArgs e)
     {
-        if (!mappedKeys.TryGetValue(e.Key, out var value)) return;
-
-        switch (value)
+        if (keyActions.TryGetValue(e.Key, out var KeyUp))
         {
-            case JoypadKey.A:
-            A = false; break;
-            case JoypadKey.B:
-            B = false; break;
-            case JoypadKey.Select:
-            Select = false; break;
-            case JoypadKey.Start:
-            Start = false; break;
-            case JoypadKey.Up:
-            DpadUp = false; break;
-            case JoypadKey.Down:
-            DpadDown = false; break;
-            case JoypadKey.Left:
-            DpadLeft = false; break;
-            case JoypadKey.Right:
-            DpadRight = false; break;
+            KeyUp(false);
         }
     }
 

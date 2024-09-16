@@ -37,12 +37,12 @@ public class OAM
 
     private const int maxSpritesOnLine = 10;
 
-    private static bool OnLine(SpriteAttributes s, int line, int spriteHeight) => (s.Y + spriteHeight) > graphics.GraphicConstants.DoubleSpriteHeight &&
-s.Y < graphics.GraphicConstants.ScreenWidth &&
+    private static bool OnLine(SpriteAttributes s, int line, int spriteHeight) => (s.Y + spriteHeight) > GraphicConstants.DoubleSpriteHeight &&
+s.Y < GraphicConstants.ScreenWidth &&
 s.X != 0 &&
-s.X < graphics.GraphicConstants.ScreenWidth + graphics.GraphicConstants.SpriteWidth &&
-line >= s.Y - graphics.GraphicConstants.DoubleSpriteHeight &&
-line < s.Y - graphics.GraphicConstants.DoubleSpriteHeight + spriteHeight;
+s.X < GraphicConstants.ScreenWidth + GraphicConstants.SpriteWidth &&
+line >= s.Y - GraphicConstants.DoubleSpriteHeight &&
+line < s.Y - GraphicConstants.DoubleSpriteHeight + spriteHeight;
 
     //Sprites are accessed sequentially. The only check if the sprite overlaps the current line's Y position
     //Only 10 sprites can be used per line

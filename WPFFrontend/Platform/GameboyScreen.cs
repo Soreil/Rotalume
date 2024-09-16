@@ -1,6 +1,7 @@
-﻿using Microsoft.Extensions.Logging;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
+using Microsoft.Extensions.Logging;
 
 using System.IO;
 using System.Windows.Media;
@@ -14,6 +15,9 @@ public partial class GameboyScreen : ObservableObject
 {
     private const int BitmapWidth = 160;
     private const int BitmapHeight = 144;
+    private const int BitsPerPixel = 8;
+    private const double Dpi = 96.0;
+    private static readonly int Stride = ((BitsPerPixel * BitmapWidth) + 31) / 32 * 4;
 
     private byte[]? previousFrame;
     private readonly byte[] currentFrame;
@@ -23,32 +27,27 @@ public partial class GameboyScreen : ObservableObject
     private static BitmapSource MakeBitmap(byte[] output)
     {
         var fmt = PixelFormats.Gray8;
-        var width = BitmapWidth;
-        var bitsPerPixel = 8;
-        var height = BitmapHeight;
-        var stride = ((bitsPerPixel * width) + 31) / 32 * 4;
-        var dpi = 96.0;
 
-        var Source = BitmapSource.Create(
-            width,
-            height,
-            dpi,
-            dpi,
+        var source = BitmapSource.Create(
+            BitmapWidth,
+            BitmapHeight,
+            Dpi,
+            Dpi,
             fmt,
             BitmapPalettes.Gray256,
             output,
-            stride);
+            Stride);
 
-        Source.Freeze();
+        source.Freeze();
 
-        return Source;
+        return source;
     }
 
     public GameboyScreen(FileService fileService, ILogger<GameboyScreen> logger)
     {
         currentFrame = new byte[BitmapWidth * BitmapHeight];
-        for (int i = 0; i < currentFrame.Length; i++)
-            currentFrame[i] = 0xff;
+        Array.Fill(currentFrame, (byte)0xff);
+
         output = MakeBitmap(currentFrame);
         FileService = fileService;
         Logger = logger;
@@ -75,9 +74,9 @@ public partial class GameboyScreen : ObservableObject
     public void ScreenShot()
     {
         //All of the parameters here should come from configuration
-        string fileName = string.Format(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) +
-@"\Screenshot" + "_" +
-DateTime.Now.ToString("(dd_MMMM_hh_mm_ss_tt)") + ".png");
+        string fileName = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+            $"Screenshot_{DateTime.Now:dd_MMMM_hh_mm_ss_tt}.png");
         WriteScreenShot(fileName);
     }
 

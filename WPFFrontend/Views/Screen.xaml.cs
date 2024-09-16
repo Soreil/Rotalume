@@ -10,16 +10,16 @@ namespace WPFFrontend.Views;
 /// </summary>
 public partial class Screen : Window
 {
-    private readonly Model Model;
+    private readonly Model model;
     public Screen(Model model)
     {
         InitializeComponent();
-        Model = model;
+        this.model = model;
     }
 
     protected override void OnClosing(CancelEventArgs e)
     {
-        Model.Dispose();
+        model.Dispose();
 
         //This should be triggered by the thread shutting down but it gets stuck calling back in to this thread
         //via the dispatcher before it even has a chance to acknowledge cancelrequested often.

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace emulator.graphics;
 
@@ -24,16 +25,11 @@ public class FrameSink : IFrameSink
         stopWatch.Start();
     }
 
-    private int Position { get; set; }
+    private int position;
 
-    private bool paused;
-    public bool Paused => paused;
+    public bool Paused { get; private set; }
 
-    protected virtual void OnFramePushed(EventArgs e)
-    {
-        if (FramePushed is not null)
-            FramePushed(this, e);
-    }
+    protected virtual void OnFramePushed(EventArgs e) => FramePushed?.Invoke(this, e);
 
     public event EventHandler? FramePushed;
 
@@ -64,24 +60,25 @@ public class FrameSink : IFrameSink
 
         //Swap current buffer and last buffer
         (lastFrame, frameData) = (frameData, lastFrame);
-        Position = 0;
+        position = 0;
         OnFramePushed(EventArgs.Empty);
     }
 
     public void Write(ReadOnlySpan<byte> buffer)
     {
-        buffer.CopyTo(new Span<byte>(frameData, Position, buffer.Length));
-        Position += buffer.Length;
+        var span = MemoryMarshal.CreateSpan(ref frameData[position], buffer.Length);
+        buffer.CopyTo(span);
+        position += buffer.Length;
     }
 
     public void Pause()
     {
         stopWatch.Stop();
-        paused = true;
+        Paused = true;
     }
     public void Resume()
     {
         stopWatch.Restart();
-        paused = false;
+        Paused = false;
     }
 }

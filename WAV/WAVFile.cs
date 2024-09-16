@@ -34,23 +34,23 @@ public class WAVFile<T> where T : unmanaged
 
     private byte[] SerializeHeader()
     {
-        List<byte> bytes = new(40);
+        byte[] header = new byte[44];
 
-        bytes.AddRange(RiffTag);
-        bytes.AddRange(BitConverter.GetBytes(36 + SubChunk2Size));
-        bytes.AddRange(WaveTag);
-        bytes.AddRange(FmtTag);
-        bytes.AddRange(BitConverter.GetBytes(FormatDatalength));
-        bytes.AddRange(BitConverter.GetBytes((ushort)Format));
-        bytes.AddRange(BitConverter.GetBytes(ChannelCount));
-        bytes.AddRange(BitConverter.GetBytes(SampleRate));
-        bytes.AddRange(BitConverter.GetBytes(SampleRate * ChannelCount * BitsPerSample / 8));
-        bytes.AddRange(BitConverter.GetBytes((ushort)(ChannelCount * BitsPerSample / 8)));
-        bytes.AddRange(BitConverter.GetBytes(BitsPerSample));
-        bytes.AddRange(DatTag);
-        bytes.AddRange(BitConverter.GetBytes(SubChunk2Size));
+        Buffer.BlockCopy(RiffTag, 0, header, 0, 4);
+        _ = BitConverter.TryWriteBytes(header.AsSpan(4, 4), 36 + SubChunk2Size);
+        Buffer.BlockCopy(WaveTag, 0, header, 8, 4);
+        Buffer.BlockCopy(FmtTag, 0, header, 12, 4);
+        _ = BitConverter.TryWriteBytes(header.AsSpan(16, 4), FormatDatalength);
+        _ = BitConverter.TryWriteBytes(header.AsSpan(20, 2), (ushort)Format);
+        _ = BitConverter.TryWriteBytes(header.AsSpan(22, 2), ChannelCount);
+        _ = BitConverter.TryWriteBytes(header.AsSpan(24, 4), SampleRate);
+        _ = BitConverter.TryWriteBytes(header.AsSpan(28, 4), SampleRate * ChannelCount * BitsPerSample / 8);
+        _ = BitConverter.TryWriteBytes(header.AsSpan(32, 2), (ushort)(ChannelCount * BitsPerSample / 8));
+        _ = BitConverter.TryWriteBytes(header.AsSpan(34, 2), BitsPerSample);
+        Buffer.BlockCopy(DatTag, 0, header, 36, 4);
+        _ = BitConverter.TryWriteBytes(header.AsSpan(40, 4), SubChunk2Size);
 
-        return [.. bytes];
+        return header;
     }
 
     public void Write(BinaryWriter writer, ReadOnlySpan<T> data)

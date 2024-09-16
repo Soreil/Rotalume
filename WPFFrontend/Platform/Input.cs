@@ -17,11 +17,14 @@ public class Input : ObservableObject
     public int SelectedController
     {
         get => Devices.SelectedController;
-        set => _ = SetProperty(
-                Devices.SelectedController,
-                value,
-                Devices,
-                (dev, controller) => dev.SelectedController = controller);
+        set
+        {
+            if (Devices.SelectedController != value)
+            {
+                Devices.SelectedController = value;
+                OnPropertyChanged(nameof(SelectedController));
+            }
+        }
     }
 
     private event KeyEventHandler? KeyDown;
@@ -35,37 +38,34 @@ public class Input : ObservableObject
         XboxController.UpdateFrequency = 5;
         XboxController.PollerLoop();
 
-        var Controller1 = new XboxControllerWithInterruptHandler(XboxController.RetrieveController(0));
-        var Controller2 = new XboxControllerWithInterruptHandler(XboxController.RetrieveController(1));
-        var Controller3 = new XboxControllerWithInterruptHandler(XboxController.RetrieveController(2));
-        var Controller4 = new XboxControllerWithInterruptHandler(XboxController.RetrieveController(3));
+        var controllers = new List<XboxControllerWithInterruptHandler>
+            {
+                new(XboxController.RetrieveController(0)),
+                new(XboxController.RetrieveController(1)),
+                new(XboxController.RetrieveController(2)),
+                new(XboxController.RetrieveController(3))
+            };
 
-        Dictionary<Key, JoypadKey> mappedKeys = new()
-        {
-            { Key.X, JoypadKey.A },
-            { Key.LeftShift, JoypadKey.Select },
-            { Key.RightShift, JoypadKey.Select },
-            { Key.Z, JoypadKey.B },
-            { Key.Down, JoypadKey.Down },
-            { Key.Left, JoypadKey.Left },
-            { Key.Right, JoypadKey.Right },
-            { Key.Up, JoypadKey.Up },
-            { Key.Enter, JoypadKey.Start }
-        };
+        var mappedKeys = new Dictionary<Key, JoypadKey>
+            {
+                { Key.X, JoypadKey.A },
+                { Key.LeftShift, JoypadKey.Select },
+                { Key.RightShift, JoypadKey.Select },
+                { Key.Z, JoypadKey.B },
+                { Key.Down, JoypadKey.Down },
+                { Key.Left, JoypadKey.Left },
+                { Key.Right, JoypadKey.Right },
+                { Key.Up, JoypadKey.Up },
+                { Key.Enter, JoypadKey.Start }
+            };
 
-        var UnconnectedKeyboard = new KeyBoardWithInterruptHandler(mappedKeys);
+        var unconnectedKeyboard = new KeyBoardWithInterruptHandler(mappedKeys);
 
-        KeyDown += new KeyEventHandler(UnconnectedKeyboard.Down);
-        KeyUp += new KeyEventHandler(UnconnectedKeyboard.Up);
+        KeyDown += unconnectedKeyboard.Down;
+        KeyUp += unconnectedKeyboard.Up;
 
-        var kb = new IGameControllerKeyboardBridge(UnconnectedKeyboard);
+        var kb = new IGameControllerKeyboardBridge(unconnectedKeyboard);
 
-
-        Devices = new InputDevices(kb, new IGameController[] {
-            new IGameControllerXboxBridge(Controller1),
-            new IGameControllerXboxBridge(Controller2),
-            new IGameControllerXboxBridge(Controller3),
-            new IGameControllerXboxBridge(Controller4) }
-        );
+        Devices = new InputDevices(kb, controllers.ConvertAll(c => new IGameControllerXboxBridge(c)));
     }
 }

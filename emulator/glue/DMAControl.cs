@@ -3,40 +3,19 @@ using emulator.memory;
 
 namespace emulator.glue;
 
-public class DMARegister
+public class DMAControl(OAM oam, MMU mmu, DMARegister dMARegister)
 {
-    public const int DMADuration = 160;
-
-    public int TicksLeft;
-    public ushort BaseAddr;
-    public byte Register
-    {
-        get => (byte)(BaseAddr >> 8);
-
-        set
-        {
-            TicksLeft = DMADuration;
-            BaseAddr = (ushort)(value << 8);
-        }
-    }
-}
-
-public class DMAControl(OAM OAM, MMU MMU, DMARegister dMARegister)
-{
-    public OAM OAM { get; } = OAM;
-    public MMU MMU { get; } = MMU;
-
+    public OAM OAM { get; } = oam;
+    public MMU MMU { get; } = mmu;
     public DMARegister Register { get; } = dMARegister;
+
     public void DMA()
     {
-        if (Register.TicksLeft != 0)
+        if (Register.TicksLeft > 0)
         {
-            //DMA values greater than or equal to A000 always go to the external RAM
-            var r = Register.BaseAddr < 0xa000
-            ? MMU[(ushort)(Register.BaseAddr + (DMARegister.DMADuration - Register.TicksLeft))]
-            : MMU.ExternalBusRAM((ushort)(Register.BaseAddr + (DMARegister.DMADuration - Register.TicksLeft)));
-
-            OAM[OAM.Start + (DMARegister.DMADuration - Register.TicksLeft)] = r;
+            ushort address = (ushort)(Register.BaseAddr + (DMARegister.DMADuration - Register.TicksLeft));
+            byte value = Register.BaseAddr < 0xa000 ? MMU[address] : MMU.ExternalBusRAM(address);
+            OAM[OAM.Start + (DMARegister.DMADuration - Register.TicksLeft)] = value;
             Register.TicksLeft--;
         }
     }
