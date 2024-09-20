@@ -1,8 +1,6 @@
-﻿
-using NUnit.Framework;
+﻿using ImageMagick;
 
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using NUnit.Framework;
 
 namespace Tests;
 
@@ -15,7 +13,7 @@ internal class GraphicalOutputTest
     {
         var render = new TestRenderDevice();
 
-        var expectedImage = Image.Load(imagePath);
+        using var expectedImage = new MagickImage(imagePath);
 
         var core = TestHelpers.NewBootCore(render);
 
@@ -24,21 +22,35 @@ internal class GraphicalOutputTest
         int FramesDrawn = 0;
         render.FramePushed += async (sender, e) =>
         {
-            var img = Image.LoadPixelData<L8>(render.Image, 160, 144);
-            await img.SaveAsBmpAsync(Path.Combine(outputDir.FullName, $"output{FramesDrawn}.bmp"));
+            // Read image that has no predefined dimensions.
+            var settings = new MagickReadSettings
+            {
+                Width = 160,
+                Height = 144,
+                Format = MagickFormat.Gray
+            };
+            using var img = new MagickImage(render.Image, settings);
+
+            await img.WriteAsync(Path.Combine(outputDir.FullName, $"output{FramesDrawn}.bmp"), MagickFormat.Bmp);
             FramesDrawn++;
         };
 
         while (core.CPU.PC != 0x100)
             core.Step();
 
-        var outputImage = Image.LoadPixelData<L8>(render.Image, 160, 144);
+        var settings = new MagickReadSettings
+        {
+            Width = 160,
+            Height = 144,
+            Format = MagickFormat.Gray
+        };
+        using var outputImage = new MagickImage(render.Image, settings);
 
         Console.WriteLine($"Wrote debug image for bootrom to:{outputDir.FullName}");
-        outputImage.SaveAsBmp(Path.Combine(outputDir.FullName, "outputBootROM.bmp"));
+        outputImage.Write(Path.Combine(outputDir.FullName, "outputBootROM.bmp"), MagickFormat.Bmp);
 
         //For some reason we are missing the (R) part of the image on the righthand side here.
-        Assert.That(TestHelpers.AreEqual((Image<L8>)expectedImage, outputImage), Is.True);
+        Assert.That(ImageComparer.AreImagesEqual(expectedImage, outputImage), Is.True);
     }
 
     [TestCase(@"rom\blargg\cpu_instrs\cpu_instrs.gb", @"..\..\..\..\Tests\rom\blargg\cpu_instrs\expected.png", "outputBlargCPUTest.bmp", 4000)]
@@ -79,7 +91,7 @@ internal class GraphicalOutputTest
         var render = new TestRenderDevice();
 
         var rom = File.ReadAllBytes(romPath);
-        var expectedImage = Image.Load(imagePath);
+        var expectedImage = new MagickImage(imagePath);
 
         var core = TestHelpers.NewCore(rom, Path.GetFileNameWithoutExtension(romPath), render);
 
@@ -90,10 +102,16 @@ internal class GraphicalOutputTest
             core.Step();
         core.Dispose();
 
-        var outputImage = Image.LoadPixelData<L8>(render.Image, 160, 144);
+        var settings = new MagickReadSettings
+        {
+            Width = 160,
+            Height = 144,
+            Format = MagickFormat.Gray
+        };
+        using var outputImage = new MagickImage(render.Image, settings);
 
-        outputImage.SaveAsBmp(outputFile);
+        outputImage.Write(outputFile, MagickFormat.Bmp);
 
-        Assert.That(TestHelpers.AreEqual((Image<L8>)expectedImage, outputImage), Is.True);
+        Assert.That(ImageComparer.AreImagesEqual(expectedImage, outputImage), Is.True);
     }
 }

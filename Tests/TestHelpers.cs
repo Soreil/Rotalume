@@ -2,10 +2,9 @@
 using emulator.graphics;
 using emulator.input;
 
-using Microsoft.Extensions.Logging.Abstractions;
+using ImageMagick;
 
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Tests;
 
@@ -53,21 +52,13 @@ public static class TestHelpers
 
     public static void StepOneCPUInstruction(Core c) =>
         c.Step();//while (c.CPU.TicksWeAreWaitingFor != 1)//{//    c.Step();//}
+}
 
-    public static bool AreEqual(Image<L8> expectedImage, Image<L8> outputImage)
+public static class ImageComparer
+{
+    public static bool AreImagesEqual(MagickImage image1, MagickImage image2)
     {
-        var pixelArray = new L8[expectedImage.Width * expectedImage.Height];
-        expectedImage.CopyPixelDataTo(pixelArray);
-
-        var pixelArray2 = new L8[outputImage.Width * outputImage.Height];
-        outputImage.CopyPixelDataTo(pixelArray2);
-
-        for (int i = 0; i < pixelArray2.Length; i++)
-        {
-            if (pixelArray[i] != pixelArray2[i])
-                return false;
-        }
-
-        return true;
+        var error = image1.Compare(image2, ErrorMetric.Absolute, Channels.All);
+        return error == 0;
     }
 }
