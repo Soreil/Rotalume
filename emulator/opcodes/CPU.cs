@@ -551,6 +551,7 @@ public partial class CPU
         CycleElapsed();
         return Memory[PC];
     }
+
     internal void DoNextOP()
     {
         if (Halted != HaltState.off)
@@ -574,11 +575,8 @@ public partial class CPU
         }
     }
 
-    private long OurCycles;
-
     private void CycleElapsed()
     {
-        OurCycles++;
         Cycle();
     }
 

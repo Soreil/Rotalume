@@ -53,6 +53,7 @@ public class Model(GameboyScreen gameboyScreen,
         {
             try
             {
+                if (CancelGameboySource.Token.IsCancellationRequested) return false;
                 return System.Windows.Application.Current.Dispatcher.Invoke(fpsCheckCb,
                     System.Windows.Threading.DispatcherPriority.Render, CancelGameboySource.Token);
             }
@@ -64,6 +65,7 @@ public class Model(GameboyScreen gameboyScreen,
 
         void FramePushed(object? o, EventArgs e)
         {
+            if (CancelGameboySource.IsCancellationRequested) return;
             if (o is null) return;
             var pixels = (FrameSink)o;
             if (pixels is null) return;
@@ -99,16 +101,30 @@ public class Model(GameboyScreen gameboyScreen,
         using var player = new Player(gameboy.Samples);
         player.Play();
 
-        while (!CancelGameboySource.IsCancellationRequested)
+        var timer = new System.Timers.Timer(TimeSpan.FromMilliseconds(100));
+
+        bool shouldStop = false;
+        bool shouldPause = false;
+
+        timer.Elapsed += (o, e) =>
         {
-            gameboy.Step();
-            if (Paused)
+            if (CancelGameboySource.IsCancellationRequested)
             {
-                while (Paused)
-                {
-                    Thread.Sleep(10);
-                }
+                timer.Stop();
+                shouldStop = true;
+                return;
             }
+            else shouldPause = Paused;
+        };
+        timer.Start();
+
+        while (!shouldStop)
+        {
+            if (shouldPause)
+            {
+                Thread.Sleep(10);
+            }
+            gameboy.Step();
         }
         player.Stop();
     }

@@ -49,7 +49,6 @@ internal class GraphicalOutputTest
         Console.WriteLine($"Wrote debug image for bootrom to:{outputDir.FullName}");
         outputImage.Write(Path.Combine(outputDir.FullName, "outputBootROM.bmp"), MagickFormat.Bmp);
 
-        //For some reason we are missing the (R) part of the image on the righthand side here.
         Assert.That(ImageComparer.AreImagesEqual(expectedImage, outputImage), Is.True);
     }
 

@@ -117,18 +117,9 @@ public class Core : IDisposable
             InterruptRegisters.SetStateWithoutBootrom();
         }
 
-        CPU.Cycle = () =>
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                Timers.Tick();
-                PPU.Tick();
-                APU.Tick();
-                DMA.DMA();
-                MasterClock.Tick();
-            }
-            Samples.Sample();
-        };
+        var cycler = new Cycler(Timers, PPU, APU, DMA, MasterClock, Samples);
+
+        CPU.Cycle = cycler.Cycle;
     }
 
     public void Step() => CPU.Step();
