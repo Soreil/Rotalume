@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<OutputType>Library</OutputType>
-		<TargetFrameworks>net9.0</TargetFrameworks>
+		<TargetFrameworks>net10.0</TargetFrameworks>
 		<AssemblyName>emulator</AssemblyName>
 		<RootNamespace>emulator</RootNamespace>
 		<Nullable>enable</Nullable>

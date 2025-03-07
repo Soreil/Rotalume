@@ -53,8 +53,8 @@ public class Model(GameboyScreen gameboyScreen,
         {
             try
             {
-                if (CancelGameboySource.Token.IsCancellationRequested) return false;
-                return System.Windows.Application.Current.Dispatcher.Invoke(fpsCheckCb,
+                return !CancelGameboySource.Token.IsCancellationRequested
+&& System.Windows.Application.Current.Dispatcher.Invoke(fpsCheckCb,
                     System.Windows.Threading.DispatcherPriority.Render, CancelGameboySource.Token);
             }
             catch (TaskCanceledException)
@@ -65,79 +65,66 @@ public class Model(GameboyScreen gameboyScreen,
 
         void FramePushed(object? o, EventArgs e)
         {
-            if (CancelGameboySource.IsCancellationRequested) return;
-            if (o is null) return;
-            var pixels = (FrameSink)o;
-            if (pixels is null) return;
-            var frame = pixels.GetFrame();
-
-
-            var draw = new Action(() => GameboyScreen.Fs_FramePushed(frame));
-
-            try
+            if (CancelGameboySource.IsCancellationRequested)
             {
-                System.Windows.Application.Current.Dispatcher.Invoke(draw,
-                  System.Windows.Threading.DispatcherPriority.Render, CancelGameboySource.Token);
+                shouldStop = true;
+                return;
             }
-            catch (TaskCanceledException)
+            while (Paused)
             {
+                Task.Delay(10).Wait();
+            }
 
+            if (o is FrameSink pixels)
+            {
+                var frame = pixels.GetFrame();
+                var draw = new Action(() => GameboyScreen.Fs_FramePushed(frame));
+
+                try
+                {
+                    System.Windows.Application.Current.Dispatcher.Invoke(draw,
+                      System.Windows.Threading.DispatcherPriority.Render, CancelGameboySource.Token);
+                }
+                catch (TaskCanceledException)
+                {
+                }
             }
         }
 
-
         var fs = new FrameSink(FPSLimiterEnabled, Logger);
-
         fs.FramePushed += FramePushed;
 
         using var gameboy = new Core(
             File.ReadAllBytes(gameRomPath),
-      bootrom,
-      Path.GetFileNameWithoutExtension(gameRomPath),
-      new Keypad(Input.Devices),
-      fs
-      );
+            bootrom,
+            Path.GetFileNameWithoutExtension(gameRomPath),
+            new Keypad(Input.Devices),
+            fs
+        );
 
         using var player = new Player(gameboy.Samples);
         player.Play();
 
-        var timer = new System.Timers.Timer(TimeSpan.FromMilliseconds(100));
-
-        bool shouldStop = false;
-        bool shouldPause = false;
-
-        timer.Elapsed += (o, e) =>
-        {
-            if (CancelGameboySource.IsCancellationRequested)
-            {
-                timer.Stop();
-                shouldStop = true;
-                return;
-            }
-            else shouldPause = Paused;
-        };
-        timer.Start();
 
         while (!shouldStop)
         {
-            if (shouldPause)
-            {
-                Thread.Sleep(10);
-            }
-            gameboy.Step();
+            for (int i = 0; i < 4000000; i++)
+                gameboy.Step();
         }
         player.Stop();
     }
 
     private Task? GameTask;
-
     private CancellationTokenSource CancelGameboySource = new();
+    private bool shouldStop;
     private bool disposedValue;
 
     public void SpinUpNewGameboy(string path)
     {
         ShutdownGameboy();
         CancelGameboySource = new();
+
+        shouldStop = false;
 
         var br = BootRomEnabled;
 
@@ -165,6 +152,7 @@ public class Model(GameboyScreen gameboyScreen,
             if (disposing)
             {
                 ShutdownGameboy();
+                CancelGameboySource.Dispose();
             }
 
             disposedValue = true;

@@ -44,7 +44,7 @@ public class PPU
                 Writer.Draw(); //If there is a partially written frame when we delete the old renderer the next
                                //instantiation of renderer will overwrite the end of the buffer because LY starts at 0 despite
                                //there already being data written to the output buffer
-                
+
                 Writer.Pause(); //We are not currently drawing a frame so it would be pointless to measure the duration. 
 
                 Renderer = null; //We want to destroy the old renderer so it can't keep running after requested to turn off
@@ -125,6 +125,7 @@ public class PPU
         _ => throw new IndexOutOfRangeException()
     };
 
+    //These variables should be the owners of their own state
     public bool LCDEnable => LCDC.GetBit(7);
     public ushort TileMapDisplaySelect => (ushort)(LCDC.GetBit(6) ? 0x9C00 : 0x9800);
     public bool WindowDisplayEnable => LCDC.GetBit(5);
