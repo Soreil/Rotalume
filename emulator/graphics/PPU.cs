@@ -1,4 +1,5 @@
 ﻿
+using emulator.extensions;
 using emulator.opcodes;
 
 using Microsoft.Extensions.Logging;

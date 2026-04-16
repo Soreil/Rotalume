@@ -1,4 +1,6 @@
-﻿namespace emulator.sound;
+﻿using emulator.extensions;
+
+namespace emulator.sound;
 
 internal class SquareChannel : Channel
 {

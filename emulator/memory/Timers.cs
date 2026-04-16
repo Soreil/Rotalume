@@ -1,4 +1,5 @@
-﻿using emulator.opcodes;
+﻿using emulator.extensions;
+using emulator.opcodes;
 
 namespace emulator.memory;
 //Timer system handles all Gekkio timer tests except for tima_write_reloading and tma_write_reloading

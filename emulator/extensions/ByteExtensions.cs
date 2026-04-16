@@ -1,4 +1,4 @@
-﻿namespace emulator;
+﻿namespace emulator.extensions;
 
 // Half Carry extensions are only used in the implementation of opcodes.
 public static class ByteExtensions

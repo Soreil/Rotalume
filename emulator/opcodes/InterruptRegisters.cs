@@ -1,4 +1,5 @@
-﻿using emulator.input;
+﻿using emulator.extensions;
+using emulator.input;
 
 namespace emulator.opcodes;
 public enum Interrupt

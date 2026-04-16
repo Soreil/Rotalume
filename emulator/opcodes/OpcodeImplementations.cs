@@ -1,4 +1,5 @@
 ﻿
+using emulator.extensions;
 using emulator.registers;
 
 namespace emulator.opcodes;

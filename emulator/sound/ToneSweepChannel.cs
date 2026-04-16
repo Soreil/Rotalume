@@ -1,4 +1,6 @@
 ﻿
+using emulator.extensions;
+
 namespace emulator.sound;
 
 internal class ToneSweepChannel : SquareChannel

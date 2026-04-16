@@ -1,4 +1,6 @@
-﻿using System.IO.MemoryMappedFiles;
+﻿using emulator.extensions;
+
+using System.IO.MemoryMappedFiles;
 
 namespace emulator.memory.mappers;
 internal class MBC5WithRumble : MBC5

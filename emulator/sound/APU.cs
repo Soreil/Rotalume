@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using emulator.extensions;
+
+using Microsoft.Extensions.Logging;
 
 namespace emulator.sound;
 

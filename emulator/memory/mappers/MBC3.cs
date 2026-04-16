@@ -1,4 +1,5 @@
-﻿using emulator.opcodes;
+﻿using emulator.extensions;
+using emulator.opcodes;
 
 using System.IO.MemoryMappedFiles;
 

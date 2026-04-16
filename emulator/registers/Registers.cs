@@ -1,4 +1,6 @@
-﻿using System.Runtime.InteropServices;
+﻿using emulator.extensions;
+
+using System.Runtime.InteropServices;
 
 namespace emulator.registers;
 

@@ -1,4 +1,6 @@
-﻿namespace emulator.input;
+﻿using emulator.extensions;
+
+namespace emulator.input;
 public class Keypad
 {
     //0x3 sets the top selection bits for buttons and dpad
