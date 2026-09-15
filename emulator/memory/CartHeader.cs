@@ -181,6 +181,6 @@ internal record CartHeader
     private static string SanitizeFilename(string title)
     {
         var invalids = new HashSet<char>(Path.GetInvalidFileNameChars());
-        return new string(title.Where(x => !invalids.Contains(x)).ToArray());
+        return new string([.. title.Where(x => !invalids.Contains(x))]);
     }
 }

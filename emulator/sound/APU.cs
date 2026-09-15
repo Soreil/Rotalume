@@ -454,7 +454,7 @@ public class APU(ILogger<APU> logger)
     }
 
     private static bool UnwriteableDuringPowerOff(Address index) => index is
-                             (not Address.NR52
+                             (not (Address.NR52
                               or Address.NR11
                               or Address.NR21
                               or Address.NR31
@@ -474,5 +474,5 @@ public class APU(ILogger<APU> logger)
                               or Address.Wave12
                               or Address.Wave13
                               or Address.Wave14
-                              or Address.Wave15);
+                              or Address.Wave15));
 }

@@ -1,4 +1,6 @@
-﻿namespace emulator.graphics;
+﻿using emulator.extensions;
+
+namespace emulator.graphics;
 
 public class PixelFetcher(PPU p, VRAM vram, OAM oam)
 {
@@ -120,7 +122,7 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
             var pix = BGFIFO.Pop();
             //Do we need to pop in order to do this?
             //Do we need pixels in the fifo to do this?
-            return ppu.BackgroundColor(ppu.BGDisplayEnable ? pix.Color : 0);
+            return Ppu.BackgroundColor(Ppu.BGDisplayEnable ? pix.Color : 0);
         }
         else
         {
@@ -132,23 +134,23 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
     {
         var bp = BGFIFO.Pop();
         var sp = SpriteFIFO.Pop();
-        if (sp.Color != 0 && ppu.OBJDisplayEnable)
+        if (sp.Color != 0 && Ppu.OBJDisplayEnable)
         {
             //obj to bg priority bit is set to true so the sprite pixel
             //will be behind bg color 1,2,3
             return sp.Priority && bp.Color != 0
-                ? ppu.BackgroundColor(ppu.BGDisplayEnable ? bp.Color : 0)
+                ? Ppu.BackgroundColor(Ppu.BGDisplayEnable ? bp.Color : 0)
                 : sp.Palette switch
                 {
-                    0 => ppu.SpritePalette0(sp.Color),
-                    1 => ppu.SpritePalette1(sp.Color),
+                    0 => Ppu.SpritePalette0(sp.Color),
+                    1 => Ppu.SpritePalette1(sp.Color),
                     _ => throw new IllegalSpritePalette()
                 };
 
         }
         else
         {
-            return ppu.BackgroundColor(ppu.BGDisplayEnable ? bp.Color : 0);
+            return Ppu.BackgroundColor(Ppu.BGDisplayEnable ? bp.Color : 0);
         }
     }
 
@@ -165,10 +167,10 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
         var sprite = FirstMatchingSprite();
 
         //16 pixel offset before lines can be offscreen taken out
-        var y = ppu.LY - (sprite.Y - graphics.GraphicConstants.DoubleSpriteHeight);
+        var y = Ppu.LY - (sprite.Y - graphics.GraphicConstants.DoubleSpriteHeight);
         if (sprite.YFlipped)
         {
-            y = ppu.SpriteHeight == 8 ? 7 - y : 15 - y;
+            y = Ppu.SpriteHeight == 8 ? 7 - y : 15 - y;
         }
 
         if (y < 0)
@@ -176,7 +178,7 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
             throw new SpriteDomainError("Illegal Y position in sprite");
         }
 
-        var ID = ppu.SpriteHeight == 8 ? sprite.ID : sprite.ID & 0xfe;
+        var ID = Ppu.SpriteHeight == 8 ? sprite.ID : sprite.ID & 0xfe;
         var addr = 0x8000 + ID * graphics.GraphicConstants.BitsPerSpriteTile + (2 * y);
         var low = VRAM[addr];
         var high = VRAM[addr + 1];
@@ -185,7 +187,7 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
     }
 
     private bool CanRenderASprite() => BGFIFO.Count != 0 &&
-        ppu.OBJDisplayEnable && SpriteCount - SpritesFinished != 0
+        Ppu.OBJDisplayEnable && SpriteCount - SpritesFinished != 0
         && ContainsSprite();
 
     private int PixelsPopped;
@@ -199,12 +201,12 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
         PixelsPopped++;
         scanlineX++;
 
-        if (PixelsPopped > (ppu.SCX & 7))
+        if (PixelsPopped > (Ppu.SCX & 7))
         {
             LineShadeBuffer[PixelsSentToLCD++] = (Shade)pix;
         }
 
-        bool windowStart = PixelsSentToLCD == ppu.WX - 7 && ppu.LY >= ppu.WY && ppu.WindowDisplayEnable;
+        bool windowStart = PixelsSentToLCD == Ppu.WX - 7 && Ppu.LY >= Ppu.WY && Ppu.WindowDisplayEnable;
         if (windowStart)
         {
             FetcherStep = 0;
@@ -214,13 +216,13 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
 
     public void GetSprites()
     {
-        SpriteCount = OAM.SpritesOnLine(SpriteAttributes, ppu.LY, ppu.SpriteHeight);
+        SpriteCount = OAM.SpritesOnLine(SpriteAttributes, Ppu.LY, Ppu.SpriteHeight);
         SpritesFinished = 0;
     }
 
     private bool ContainsSprite()
     {
-        byte wanted = (byte)(scanlineX + 8 - (ppu.SCX & 7));
+        byte wanted = (byte)(scanlineX + 8 - (Ppu.SCX & 7));
         for (int i = SpritesFinished; i < SpriteCount; i++)
         {
             if (SpriteAttributes[i].X == wanted)
@@ -233,7 +235,7 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
 
     private SpriteAttributes FirstMatchingSprite()
     {
-        var wanted = scanlineX + 8 - (ppu.SCX & 7);
+        var wanted = scanlineX + 8 - (Ppu.SCX & 7);
         for (int i = SpritesFinished; i < SpriteCount; i++)
         {
             if (SpriteAttributes[i].X == wanted)
@@ -250,47 +252,47 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
 
     private int GetAdress()
     {
-        var tiledatamap = ppu.BGAndWindowTileDataSelect;
+        var tiledatamap = Ppu.BGAndWindowTileDataSelect;
 
         return inWindow
             ? tiledatamap == 0x8000
                 ? tiledatamap + (tileIndex * 16) + (((WindowLY.Count - 1) & 7) * 2)
                 : 0x9000 + (((sbyte)tileIndex) * 16) + (((WindowLY.Count - 1) & 7) * 2)
             : tiledatamap == 0x8000
-                ? tiledatamap + (tileIndex * 16) + (((ppu.LY + ppu.SCY) & 0xff & 7) * 2)
-                : 0x9000 + (((sbyte)tileIndex) * 16) + (((ppu.LY + ppu.SCY) & 0xff & 7) * 2);
+                ? tiledatamap + (tileIndex * 16) + (((Ppu.LY + Ppu.SCY) & 0xff & 7) * 2)
+                : 0x9000 + (((sbyte)tileIndex) * 16) + (((Ppu.LY + Ppu.SCY) & 0xff & 7) * 2);
     }
 
     private bool inWindow;
 
-    public PPU ppu { get; } = p;
+    public PPU Ppu { get; } = p;
     public VRAM VRAM { get; } = vram;
     public OAM OAM { get; } = oam;
 
     private byte FetchTileID()
     {
         int tilemap;
-        inWindow = (scanlineX + BGFIFO.Count) >= (ppu.WX - 7) && ppu.LY >= ppu.WY && ppu.WindowDisplayEnable;
+        inWindow = (scanlineX + BGFIFO.Count) >= (Ppu.WX - 7) && Ppu.LY >= Ppu.WY && Ppu.WindowDisplayEnable;
         if (inWindow)
         {
-            _ = WindowLY.Add(ppu.LY);
-            tilemap = ppu.TileMapDisplaySelect;
+            _ = WindowLY.Add(Ppu.LY);
+            tilemap = Ppu.TileMapDisplaySelect;
         }
         else
         {
-            tilemap = ppu.BGTileMapDisplaySelect;
+            tilemap = Ppu.BGTileMapDisplaySelect;
         }
 
-        var windowStartX = ppu.WX - 7;
+        var windowStartX = Ppu.WX - 7;
         var windowStartY = WindowLY.Count - 1;
 
         //TODO: handle tick cost of this condition
         windowStartX = int.Clamp(windowStartX, 0, 256);
 
         var tileX = inWindow ? ((scanlineX + BGFIFO.Count) / 8) - (windowStartX / 8) :
-                               ((ppu.SCX / 8) + ((scanlineX + BGFIFO.Count) / 8)) & 0x1f;
+                               ((Ppu.SCX / 8) + ((scanlineX + BGFIFO.Count) / 8)) & 0x1f;
         var tileY = inWindow ? windowStartY :
-                               (ppu.LY + ppu.SCY) & 0xff;
+                               (Ppu.LY + Ppu.SCY) & 0xff;
 
         var tileIndex = VRAM[tilemap + tileX + ((tileY / 8) * 32)];
         return tileIndex;
