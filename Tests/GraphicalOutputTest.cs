@@ -2,6 +2,8 @@
 
 using NUnit.Framework;
 
+using System.Diagnostics;
+
 namespace Tests;
 
 internal class GraphicalOutputTest
@@ -52,12 +54,6 @@ internal class GraphicalOutputTest
         Assert.That(ImageComparer.AreImagesEqual(expectedImage, outputImage), Is.True);
     }
 
-    [TestCase(@"rom\blargg\cpu_instrs\cpu_instrs.gb", @"..\..\..\..\Tests\rom\blargg\cpu_instrs\expected.png", "outputBlargCPUTest.bmp", 4000)]
-    [TestCase(@"rom\blargg\instr_timing\instr_timing.gb", @"..\..\..\..\Tests\rom\blargg\instr_timing\expected.png", "outputINSTTiming.bmp", 100)]
-    [TestCase(@"rom\blargg\mem_timing\mem_timing.gb", @"..\..\..\..\Tests\rom\blargg\mem_timing\expected.png", "outputMEMTiming.bmp", 100)]
-    [TestCase(@"rom\blargg\mem_timing-2\mem_timing.gb", @"..\..\..\..\Tests\rom\blargg\mem_timing-2\expected.png", "outputMEMTiming2.bmp", 200)]
-    [TestCase(@"rom\blargg\halt_bug\halt_bug.gb", @"..\..\..\..\Tests\rom\blargg\halt_bug\expected.png", "outputHaltBug.bmp", 300)]
-
     [TestCase(@"rom\dmg-acid2\dmg-acid2.gb", @"..\..\..\..\Tests\rom\dmg-acid2\expected.png", "outputDMG-ACID2.bmp", 10)]
 
     [TestCase(@"rom\mooneye-test-suite\acceptance\oam_dma\basic.gb", @"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\oam_dma\expected.png", "outputBasicOAM.bmp", 10)]
@@ -85,7 +81,7 @@ internal class GraphicalOutputTest
     [TestCase(@"rom\mooneye-test-suite\acceptance\timer\tma_write_reloading.gb", @"rom\mooneye-test-suite\acceptance\timer\tma_write_reloading.png", "tma_write_reloading.bmp", 100)]
 
 
-    public void TestFrameMatchesExpectedFrame(string romPath, string imagePath, string outputFile, int frameToCheck)
+    public async Task TestFrameMatchesExpectedFrame(string romPath, string imagePath, string outputFile, int frameToCheck)
     {
         var render = new TestRenderDevice();
 
@@ -95,22 +91,53 @@ internal class GraphicalOutputTest
         var core = TestHelpers.NewCore(rom, Path.GetFileNameWithoutExtension(romPath), render);
 
         int FramesDrawn = 0;
-        render.FramePushed += (sender, e) => FramesDrawn++;
+        render.FramePushed += (sender, e) =>
+        {
+            //check if we can return early
+            if (FramesDrawn % 10 == 0)
+            {
+                var settings = new MagickReadSettings
+                {
+                    Width = 160,
+                    Height = 144,
+                    Format = MagickFormat.Gray
+                };
+                using var outputImage = new MagickImage(render.Image, settings);
+
+                if (ImageComparer.AreImagesEqual(expectedImage, outputImage))
+                {
+                    outputImage.Write(outputFile, MagickFormat.Bmp);
+                    Assert.Pass($"Images match at frame {FramesDrawn}. Wrote debug image to {outputFile}");
+                }
+                else if (FramesDrawn == frameToCheck)
+                {
+                    outputImage.Write(outputFile, MagickFormat.Bmp);
+                    Assert.Fail($"Images did not match after {frameToCheck} frames. Wrote debug image to {outputFile}");
+                }
+            }
+            FramesDrawn++;
+        };
 
         while (FramesDrawn != frameToCheck)
             core.Step();
         core.Dispose();
 
-        var settings = new MagickReadSettings
+        Assert.Fail("Should never reach this point");
+    }
+
+    [Test]
+    public async Task TestBlarggFrames()
+    {
+        var files = Directory.EnumerateFiles("rom\\blargg", "*.gb",
+            new EnumerationOptions { RecurseSubdirectories = true }).ToList();
+        using var scope = Assert.EnterMultipleScope();
+        foreach (var romPath in files)
         {
-            Width = 160,
-            Height = 144,
-            Format = MagickFormat.Gray
-        };
-        using var outputImage = new MagickImage(render.Image, settings);
-
-        outputImage.Write(outputFile, MagickFormat.Bmp);
-
-        Assert.That(ImageComparer.AreImagesEqual(expectedImage, outputImage), Is.True);
+            var imagePath = Path.Combine(Path.GetDirectoryName(romPath)!, Path.GetFileNameWithoutExtension(romPath) + ".png");
+            var outputFile = Path.Combine(Path.GetDirectoryName(romPath)!, Path.GetFileNameWithoutExtension(romPath) + "_output.bmp");
+            var (frame, output, success) = GraphicalOutputTestHelpers.FrameMatchesExpectedFrame(romPath, imagePath, outputFile, 1000);
+            if (success) Debug.WriteLine($"Tested {romPath}. Images match at frame {frame}. Wrote debug image to {output}");
+            else Assert.Fail($"Tested {romPath}. Images did not match after {frame} frames. Wrote debug image to {output}");
+        }
     }
 }
