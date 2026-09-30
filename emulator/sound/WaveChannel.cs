@@ -10,7 +10,11 @@ internal class WaveChannel : Channel
     public byte NR30
     {
         get => (byte)((Convert.ToByte(ChannelOff) << 7) | 0x7f);
-        set => ChannelOff = value.GetBit(7);
+        set
+        {
+            ChannelOff = value.GetBit(7);
+            if (!DACOn()) ChannelEnabled = false;
+        }
     }
 
     public byte NR31

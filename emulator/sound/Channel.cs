@@ -26,7 +26,7 @@ public abstract class Channel
     public abstract bool DACOn();
     protected virtual void Trigger()
     {
-        ChannelEnabled = true;
+        ChannelEnabled = DACOn();
         if (LengthTimer == 0) LengthTimer = SoundLengthMAX;
         //Frequency timer is reloaded with period.
         //Volume envelope timer is reloaded with period.

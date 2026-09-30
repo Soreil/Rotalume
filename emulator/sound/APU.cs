@@ -106,12 +106,12 @@ public class APU(ILogger<APU> logger)
     private void TurnOff()
     {
         ToneSweep.NR10 = 0;
-        //ToneSweep.NR11 = 0;
+        ToneSweep.ResetDuty();
         ToneSweep.NR12 = 0;
         ToneSweep.NR13 = 0;
         ToneSweep.NR14 = 0;
 
-        //Tone.NR21 = 0;
+        Tone.ResetDuty();
         Tone.NR22 = 0;
         Tone.NR23 = 0;
         Tone.NR24 = 0;
@@ -399,6 +399,8 @@ public class APU(ILogger<APU> logger)
             //We want to allow writes to the length counters
             //As well as the wave table, even when the APU is off
             if (MasterSoundDisable && UnwriteableDuringPowerOff(index)) return;
+            //On DMG, only length bits remain writable in the pulse duty/length registers.
+            if (MasterSoundDisable && (index is Address.NR11 or Address.NR21)) value &= 0x3f;
 
             //Logger.LogInformation($@"Time:{DateTime.Now:ss.ffff} 		CYC:{SoundClock}			 addr:{index}		{value}");
 

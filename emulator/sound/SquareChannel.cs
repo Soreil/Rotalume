@@ -8,6 +8,8 @@ internal class SquareChannel : Channel
 
 
     private WavePatternDuty wavePatternDuty;
+    internal void ResetDuty() => wavePatternDuty = 0;
+
     public byte NRs1
     {
         get => (byte)(((byte)wavePatternDuty << 6) | 0x3f);
