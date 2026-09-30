@@ -45,5 +45,10 @@ Host.CreateDefaultBuilder(args)
         KeyboardViewModelBridge.Connect(input, mainWindow);
 
         mainWindow.Show();
+
+        if (e.Args.Length > 0)
+        {
+            model.ROM = e.Args[0];
+        }
     }
 }
