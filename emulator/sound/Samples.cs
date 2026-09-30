@@ -28,25 +28,26 @@ public class Samples(MasterClock masterClock, APU apu)
         }
     }
 
-    public int GetSamples(short[] buffer, int offset, int sampleCount, int sampleRate)
+    //public int GetSamples(short[] buffer, int offset, int sampleCount, int sampleRate)
+    public int GetSamples(Span<short> buffer, int sampleRate)
     {
         //For now we will just give it back a bunch of zeroes so it doesn't die on us
         if (Buffer.Count == 0)
         {
-            for (int i = 0; i < sampleCount; i++)
+            for (int i = 0; i < buffer.Length; i++)
             {
-                buffer[offset + i] = 0;
+                buffer[i] = 0;
             }
-            return sampleCount;
+            return buffer.Length;
         }
 
         //We are starving
-        if (Buffer.Count < sampleCount)
+        if (Buffer.Count < buffer.Length)
         {
             sampleRatePerformanceScaler *= 0.9999;
         }
         //We have way too many samples
-        else if (Buffer.Count > sampleCount * 3)
+        else if (Buffer.Count > buffer.Length * 3)
         {
             sampleRatePerformanceScaler *= 1.0001;
         }
@@ -62,7 +63,7 @@ public class Samples(MasterClock masterClock, APU apu)
         //need to be put in to the output buffer
         var SampleRatio = SamplesPerSecond / (double)sampleRate * sampleRatePerformanceScaler;
         //SamplesNeeded is how many samples we are actually being asked to deliver
-        var SamplesNeeded = sampleCount * SampleRatio;
+        var SamplesNeeded = buffer.Length * SampleRatio;
 
         var samples = CollectionsMarshal.AsSpan(Buffer);
 
@@ -74,7 +75,7 @@ public class Samples(MasterClock masterClock, APU apu)
 
         for (int i = 0; i < got.Length; i++)
         {
-            buffer[offset + i] = got[i];
+            buffer[i] = got[i];
         }
 
         Buffer.RemoveRange(0, (int)samplesWeWillConsume);

@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using System.Windows.Input;
 
 using WPFFrontend.Glue;
+
 using emulator.input;
 
 namespace WPFFrontend.Platform;
@@ -14,17 +15,16 @@ public class Input : ObservableObject
 {
     public readonly InputDevices Devices;
 
+
     public int SelectedController
     {
         get => Devices.SelectedController;
-        set
-        {
-            if (Devices.SelectedController != value)
-            {
-                Devices.SelectedController = value;
-                OnPropertyChanged(nameof(SelectedController));
-            }
-        }
+        set => SetProperty(
+            Devices.SelectedController,
+            value,
+            Devices,
+            static (devices, selected) => devices.SelectedController = selected
+            );
     }
 
     private event KeyEventHandler? KeyDown;

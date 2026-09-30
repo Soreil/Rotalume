@@ -54,8 +54,7 @@ public partial class GameboyScreen : ObservableObject
     }
 
     [ObservableProperty]
-    private bool useInterFrameBlending;
-
+    public partial bool UseInterFrameBlending { get; set; }
     public FileService FileService { get; }
     public ILogger<GameboyScreen> Logger { get; }
 

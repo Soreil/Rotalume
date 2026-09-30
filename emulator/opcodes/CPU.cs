@@ -4,6 +4,7 @@ using emulator.registers;
 using Microsoft.Extensions.Logging;
 
 namespace emulator.opcodes;
+
 public partial class CPU
 {
     private readonly Action[] StdOps;
@@ -11,7 +12,8 @@ public partial class CPU
     private readonly InterruptRegisters ISR;
     public readonly Registers Registers;
     private readonly MMU Memory;
-    public ushort PC;
+
+    public ushort PC { get; private set; }
     private readonly ILogger Logger;
 
     private HaltState Halted = HaltState.off;
@@ -563,14 +565,14 @@ public partial class CPU
             }
         }
 
-        var op = Halted == HaltState.haltbug ? ReadHaltBug() : ReadInput();
+        var op = Halted == HaltState.haltbug ? ReadHaltBug() : ReadDatabus();
         if (op != 0xcb)
         {
             Op((Opcode)op)();
         }
         else
         {
-            var CBop = ReadInput(); //Because of the CB prefix we encountered in the previous case we already skipped the extra byte of a cb instruction here
+            var CBop = ReadDatabus(); //Because of the CB prefix we encountered in the previous case we already skipped the extra byte of a cb instruction here
             Op((CBOpcode)CBop)();
         }
     }

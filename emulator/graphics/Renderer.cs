@@ -75,7 +75,7 @@ public class Renderer
 
             if (PPU.LY == PPU.LYC) PPU.LYCInterrupt = true;
 
-            if (PPU.LY == 154)
+            if (PPU.LY == GraphicConstants.ScreenHeight + 10)
             {
                 PPU.LY = 0;
                 fetcher.FrameFinished();
@@ -123,17 +123,17 @@ public class Renderer
         Stage3TickCount++;
         TimeUntilWhichToPause++;
 
-        if (fetcher.PixelsSentToLCD == graphics.GraphicConstants.ScreenWidth)
+        if (fetcher.PixelsSentToLCD == GraphicConstants.ScreenWidth)
             ResetLineSpecificState();
     }
-    private void VBlank() => TimeUntilWhichToPause += graphics.GraphicConstants.ScanlineDuration;
+    private void VBlank() => TimeUntilWhichToPause += GraphicConstants.ScanlineDuration;
     private void OAMSearch()
     {
         if (PPU.Enable_OAM_Interrupt)
             PPU.OnSTATInterrupt();
 
         fetcher.GetSprites();
-        TimeUntilWhichToPause += graphics.GraphicConstants.OAMSearchDuration;
+        TimeUntilWhichToPause += GraphicConstants.OAMSearchDuration;
         ModeChangeRequested = true;
         ModeChangeRequest = Mode.Transfer;
     }
@@ -143,10 +143,10 @@ public class Renderer
         if (PPU.Enable_HBlankInterrupt)
             PPU.OnSTATInterrupt();
 
-        TimeUntilWhichToPause += graphics.GraphicConstants.ScanLineRemainderAfterOAMSearch - TotalTimeSpentInStage3;
+        TimeUntilWhichToPause += GraphicConstants.ScanLineRemainderAfterOAMSearch - TotalTimeSpentInStage3;
 
         ModeChangeRequested = true;
-        ModeChangeRequest = PPU.LY == 143 ? Mode.VBlank : Mode.OAMSearch;
+        ModeChangeRequest = PPU.LY == (GraphicConstants.ScreenHeight - 1) ? Mode.VBlank : Mode.OAMSearch;
         return;
     }
 
@@ -155,7 +155,7 @@ public class Renderer
         ModeChangeRequested = true;
         ModeChangeRequest = Mode.HBlank;
 
-        Span<byte> output = stackalloc byte[graphics.GraphicConstants.ScreenWidth];
+        Span<byte> output = stackalloc byte[GraphicConstants.ScreenWidth];
 
         for (int i = 0; i < output.Length; i++)
         {

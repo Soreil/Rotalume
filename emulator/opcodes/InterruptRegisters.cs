@@ -2,15 +2,6 @@
 using emulator.input;
 
 namespace emulator.opcodes;
-public enum Interrupt
-{
-    VBlank,
-    STAT,
-    Timer,
-    Serial,
-    Joypad,
-    None
-}
 
 public class InterruptRegisters
 {

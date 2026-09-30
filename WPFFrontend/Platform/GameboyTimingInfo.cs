@@ -41,5 +41,5 @@ public partial class GameboyTimingInfo : ObservableObject
     }
 
     [ObservableProperty]
-    public string? performanceDisplayText;
+    public partial string? PerformanceDisplayText { get; set; }
 }

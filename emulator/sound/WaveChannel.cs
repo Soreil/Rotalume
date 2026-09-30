@@ -58,7 +58,7 @@ internal class WaveChannel : Channel
 
     public WaveChannel() =>
         //Initial values on the dmg
-        table = new byte[32] {
+        table = [
             0x8, 0x4, 0x4, 0x0,
             0x4, 0x3, 0xA, 0xA,
             0x2, 0xD, 0x7, 0x8,
@@ -66,7 +66,7 @@ internal class WaveChannel : Channel
             0x6, 0x0, 0x5, 0x9,
             0x5, 0x9, 0xB, 0x0,
             0x3, 0x4, 0xB, 0x8,
-            0x2, 0xE, 0xD, 0xA};
+            0x2, 0xE, 0xD, 0xA];
 
 
     private byte sample;
@@ -81,9 +81,9 @@ internal class WaveChannel : Channel
     public override byte Sample() => OutputLevel switch
     {
         WaveOutputLevel.Mute => 0,
-        WaveOutputLevel.half => (byte)(sample >> 1),
-        WaveOutputLevel.quarter => (byte)(sample >> 2),
-        WaveOutputLevel.full => sample,
+        WaveOutputLevel.Half => (byte)(sample >> 1),
+        WaveOutputLevel.Quarter => (byte)(sample >> 2),
+        WaveOutputLevel.Full => sample,
         _ => throw new NotSupportedException()
     };
     public override bool DACOn() => NR30.GetBit(7);

@@ -1,4 +1,5 @@
 ﻿namespace emulator.opcodes;
+
 public enum Opcode : byte
 {
     NOP = 0x00,

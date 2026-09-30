@@ -1,6 +1,6 @@
 ﻿namespace WAV;
 
-public enum FormatType : ushort
+internal enum FormatType : ushort
 {
     PCM = 1,
     IEEE_Float = 3,

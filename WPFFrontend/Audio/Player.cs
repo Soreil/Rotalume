@@ -7,12 +7,12 @@ namespace WPFFrontend.Audio;
 public class Player : IDisposable
 {
     private readonly Provider provider;
-    private readonly WasapiOut waveOut;
+    private readonly WasapiPlayer waveOut;
     private bool disposedValue;
 
     public Player(Samples samples)
     {
-        waveOut = new WasapiOut(NAudio.CoreAudioApi.AudioClientShareMode.Shared, 100);
+        waveOut = new WasapiPlayerBuilder().WithSharedMode().WithLatency(100).Build();
 
         provider = new Provider(44100, samples);
 

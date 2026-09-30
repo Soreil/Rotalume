@@ -85,12 +85,11 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
     {
         if (SpriteFIFO.Count <= 8)
         {
-            for (var i = graphics.GraphicConstants.SpriteWidth; i > 0; i--)
+            for (var i = GraphicConstants.SpriteWidth; i > 0; i--)
             {
-                var paletteIndex = Convert.ToByte(low.GetBit(i - 1));
-                paletteIndex |= (byte)(Convert.ToByte(high.GetBit(i - 1)) << 1);
+                var paletteIndex =(byte)(Convert.ToByte(low.GetBit(i - 1)) | (byte)(Convert.ToByte(high.GetBit(i - 1)) << 1));
 
-                var pos = sprite.XFlipped ? (i - 1) : graphics.GraphicConstants.SpriteWidth - i;
+                var pos = sprite.XFlipped ? (i - 1) : GraphicConstants.SpriteWidth - i;
                 var existingSpritePixel = SpriteFIFO.At(pos);
                 var candidate = new FIFOSpritePixel(sprite.Palette, paletteIndex, sprite.SpriteToBackgroundPriority);
 
@@ -102,9 +101,11 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
         }
     }
 
-    private static bool ShouldReplace(FIFOSpritePixel existingSpritePixel, FIFOSpritePixel candidate) => (candidate.Color != 0 && existingSpritePixel.Color == 0) || (candidate.Priority && !existingSpritePixel.Priority);
+    private static bool ShouldReplace(FIFOSpritePixel existingSpritePixel, FIFOSpritePixel candidate) =>
+        (candidate.Color != 0 && existingSpritePixel.Color == 0) ||
+        (candidate.Priority && !existingSpritePixel.Priority);
 
-    public Shade? RenderPixel()
+    public Shade? TryRenderPixel()
     {
         //Sprites are enabled and there is a sprite starting on the current X position
         //We can't start the sprite fetching yet if the background fifo is empty
@@ -159,7 +160,7 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
     private void PushSpriteRowToPixelFetcher()
     {
         //Fill the fifo lower half with transparant pixels
-        for (int i = SpriteFIFO.Count; i < graphics.GraphicConstants.SpriteWidth; i = SpriteFIFO.Count)
+        for (int i = SpriteFIFO.Count; i < GraphicConstants.SpriteWidth; i = SpriteFIFO.Count)
         {
             SpriteFIFO.Push(new FIFOSpritePixel(0, 0, false));
         }
@@ -167,7 +168,7 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
         var sprite = FirstMatchingSprite();
 
         //16 pixel offset before lines can be offscreen taken out
-        var y = Ppu.LY - (sprite.Y - graphics.GraphicConstants.DoubleSpriteHeight);
+        var y = Ppu.LY - (sprite.Y - GraphicConstants.DoubleSpriteHeight);
         if (sprite.YFlipped)
         {
             y = Ppu.SpriteHeight == 8 ? 7 - y : 15 - y;
@@ -178,8 +179,14 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
             throw new SpriteDomainError("Illegal Y position in sprite");
         }
 
+        //0xfe is 11111110 in binary. This means that we are masking the least significant bit of the sprite ID.
+        //The reason for this is that when the sprite height is 16 pixels,
+        //each sprite occupies two consecutive tiles in memory.
+        //The first tile has an even ID, and the second tile has an odd ID. By masking the least significant bit,
+        //we ensure that we always fetch the correct tile for the sprite,
+        //regardless of whether it is the first or second tile.
         var ID = Ppu.SpriteHeight == 8 ? sprite.ID : sprite.ID & 0xfe;
-        var addr = 0x8000 + ID * graphics.GraphicConstants.BitsPerSpriteTile + (2 * y);
+        var addr = VRAM.Start + ID * GraphicConstants.BitsPerSpriteTile + (2 * y);
         var low = VRAM[addr];
         var high = VRAM[addr + 1];
         PushSpriteRow(low, high, sprite);
@@ -192,10 +199,10 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
 
     private int PixelsPopped;
     public int PixelsSentToLCD;
-    public readonly Shade[] LineShadeBuffer = new Shade[graphics.GraphicConstants.ScreenWidth];
+    public readonly Shade[] LineShadeBuffer = new Shade[GraphicConstants.ScreenWidth];
     internal void AttemptToPushAPixel()
     {
-        var pix = RenderPixel();
+        var pix = TryRenderPixel();
         if (pix is null) return;
 
         PixelsPopped++;
@@ -203,7 +210,7 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
 
         if (PixelsPopped > (Ppu.SCX & 7))
         {
-            LineShadeBuffer[PixelsSentToLCD++] = (Shade)pix;
+            LineShadeBuffer[PixelsSentToLCD++] = pix.Value;
         }
 
         bool windowStart = PixelsSentToLCD == Ppu.WX - 7 && Ppu.LY >= Ppu.WY && Ppu.WindowDisplayEnable;
@@ -223,19 +230,17 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
     private bool ContainsSprite()
     {
         byte wanted = (byte)(scanlineX + 8 - (Ppu.SCX & 7));
-        for (int i = SpritesFinished; i < SpriteCount; i++)
-        {
-            if (SpriteAttributes[i].X == wanted)
-            {
-                return true;
-            }
-        }
-        return false;
+
+        return SpriteAttributes
+            .Skip(SpritesFinished)
+            .Take(SpriteCount - SpritesFinished)
+            .Any(s => s.X == wanted);
     }
 
     private SpriteAttributes FirstMatchingSprite()
     {
         var wanted = scanlineX + 8 - (Ppu.SCX & 7);
+
         for (int i = SpritesFinished; i < SpriteCount; i++)
         {
             if (SpriteAttributes[i].X == wanted)
@@ -255,12 +260,12 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
         var tiledatamap = Ppu.BGAndWindowTileDataSelect;
 
         return inWindow
-            ? tiledatamap == 0x8000
+            ? tiledatamap == VRAM.TileBlock0Start
                 ? tiledatamap + (tileIndex * 16) + (((WindowLY.Count - 1) & 7) * 2)
-                : 0x9000 + (((sbyte)tileIndex) * 16) + (((WindowLY.Count - 1) & 7) * 2)
-            : tiledatamap == 0x8000
+                : VRAM.TileBlock2Start + (((sbyte)tileIndex) * 16) + (((WindowLY.Count - 1) & 7) * 2)
+            : tiledatamap == VRAM.TileBlock0Start
                 ? tiledatamap + (tileIndex * 16) + (((Ppu.LY + Ppu.SCY) & 0xff & 7) * 2)
-                : 0x9000 + (((sbyte)tileIndex) * 16) + (((Ppu.LY + Ppu.SCY) & 0xff & 7) * 2);
+                : VRAM.TileBlock2Start + (((sbyte)tileIndex) * 16) + (((Ppu.LY + Ppu.SCY) & 0xff & 7) * 2);
     }
 
     private bool inWindow;

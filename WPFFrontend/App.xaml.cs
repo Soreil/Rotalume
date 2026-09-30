@@ -12,9 +12,6 @@ using WPFFrontend.Views;
 
 namespace WPFFrontend;
 
-/// <summary>
-/// Interaction logic for App.xaml
-/// </summary>
 public partial class App : Application
 {
     private static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -28,7 +25,6 @@ Host.CreateDefaultBuilder(args)
     AddSingleton<Model>().
     AddSingleton<FileService>().
     AddSingleton<ControllerIDConverter>()
-
     );
 
     private readonly IHost host;

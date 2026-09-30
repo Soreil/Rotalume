@@ -2,13 +2,11 @@
 
 public class OAM
 {
-    private readonly SpriteAttributes[] sprites;
+    private readonly SpriteAttributes[] sprites = new SpriteAttributes[Size / 4];
 
     public const int Start = 0xFE00;
     public const int Size = 0xa0;
     public bool Locked;
-
-    public OAM() => sprites = new SpriteAttributes[Size / 4];
 
     public byte this[int n]
     {
@@ -26,10 +24,10 @@ public class OAM
 
             sprites[(n - Start) / 4] = ((n - Start) % 4) switch
             {
-                0 => new(value, old.X, old.ID, old.Flags),
-                1 => new(old.Y, value, old.ID, old.Flags),
-                2 => new(old.Y, old.X, value, old.Flags),
-                3 => new(old.Y, old.X, old.ID, value),
+                0 => old with { Y = value },
+                1 => old with { X = value },
+                2 => old with { ID = value },
+                3 => old with { Flags = value },
                 _ => throw new NotImplementedException(),
             };
         }
@@ -37,32 +35,32 @@ public class OAM
 
     private const int maxSpritesOnLine = 10;
 
-    private static bool OnLine(SpriteAttributes s, int line, int spriteHeight) => (s.Y + spriteHeight) > GraphicConstants.DoubleSpriteHeight &&
-s.Y < GraphicConstants.ScreenWidth &&
-s.X != 0 &&
-s.X < GraphicConstants.ScreenWidth + GraphicConstants.SpriteWidth &&
-line >= s.Y - GraphicConstants.DoubleSpriteHeight &&
-line < s.Y - GraphicConstants.DoubleSpriteHeight + spriteHeight;
+    //Check if the sprite is on the current line. The sprite's Y position is offset by 16,
+    //so we need to subtract that from the line number to get the actual Y position of the sprite.
+    //The sprite's X position is also offset by 8,
+    //so we need to subtract that from the line number to get the actual X position of the sprite.
+    private static bool OnLine(SpriteAttributes s, int line, int spriteHeight) =>
+        (s.Y + spriteHeight) > GraphicConstants.DoubleSpriteHeight &&
+        s.Y < GraphicConstants.ScreenWidth &&
+        s.X != 0 &&
+        s.X < GraphicConstants.ScreenWidth + GraphicConstants.SpriteWidth &&
+        line >= s.Y - GraphicConstants.DoubleSpriteHeight &&
+        line < s.Y - GraphicConstants.DoubleSpriteHeight + spriteHeight;
 
     //Sprites are accessed sequentially. The only check if the sprite overlaps the current line's Y position
     //Only 10 sprites can be used per line
     public int SpritesOnLine(Span<SpriteAttributes> buffer, int line, int spriteHeight)
     {
-        int spriteCount = 0;
-        foreach (var s in sprites)
-        {
-            if (OnLine(s, line, spriteHeight))
-            {
-                buffer[spriteCount++] = s;
-                if (spriteCount == maxSpritesOnLine)
-                {
-                    break;
-                }
-            }
-        }
-        var selected = buffer[..spriteCount];
-        selected.Sort();
-        return spriteCount;
+        var data = sprites
+            .Where(s => OnLine(s, line, spriteHeight))
+            .Take(maxSpritesOnLine)
+            .ToArray();
+
+        Array.Sort(data);
+
+        data.CopyTo(buffer);
+
+        return data.Length;
     }
 
     //TODO: actual proper corruption algorithm

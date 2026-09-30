@@ -3,6 +3,7 @@ using emulator.extensions;
 using emulator.registers;
 
 namespace emulator.opcodes;
+
 public partial class CPU
 {
     public void EnableInterruptsDelayed() => ISR.InterruptEnableScheduled = true;
@@ -12,6 +13,16 @@ public partial class CPU
 ? HaltState.NormalIME1
 : (ISR.Request & ISR.Enable & 0x1f) == 0 ? HaltState.normalIME0 : HaltState.haltbug;
 
+
+    //IDU ops are executed on the same clock cycle as Addr/Data/ALU/Misc ops.
+    //Ideally we want to only increase the "M cycle" count when we have scheduled all the different ops and bus
+    //accesses for the current instruction.
+    private void ScheduleIDUIncrement()
+    {
+        PC++;
+        //TODO: only elapse a cycle when we can guarantee all work for the cycle is completed.
+        CycleElapsed();
+    }
 
     //Wrapper to allow easier handling of (HL) usage
     public byte GetRegister(Register r) => r == Register.HL ? ReadMemoryAtHL() : Registers.Get(r);
@@ -54,24 +65,22 @@ public partial class CPU
         CycleElapsed();
     }
 
-    //ReadInput reads the next byte at the instruction pointer and advances. This incurs a read hit.
-    private byte ReadInput()
+    //ReadDatabus reads the next byte at the instruction pointer and advances. This incurs a read hit.
+    private byte ReadDatabus()
     {
-        CycleElapsed();
-        return Memory[PC++];
-
+        var read = Memory[PC];
+        ScheduleIDUIncrement();
+        return read;
     }
     private ushort ReadWide()
     {
         //TODO: is this actually more performant?
-        Span<byte> buf = stackalloc byte[2];
-        buf[0] = ReadInput();
-        buf[1] = ReadInput();
+        Span<byte> buf = [ReadDatabus(), ReadDatabus()];
         return BitConverter.ToUInt16(buf);
     }
-    private byte FetchD8() => ReadInput();
+    private byte FetchD8() => ReadDatabus();
 
-    private sbyte FetchR8() => (sbyte)ReadInput();
+    private sbyte FetchR8() => (sbyte)ReadDatabus();
 
     private ushort ReadWide(ushort at)
     {

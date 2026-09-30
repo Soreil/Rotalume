@@ -35,7 +35,7 @@ public class WAVFile<T> where T : unmanaged
     private byte[] SerializeHeader()
     {
         byte[] header = new byte[44];
-
+        
         Buffer.BlockCopy(RiffTag, 0, header, 0, 4);
         _ = BitConverter.TryWriteBytes(header.AsSpan(4, 4), 36 + SubChunk2Size);
         Buffer.BlockCopy(WaveTag, 0, header, 8, 4);

@@ -1,9 +1,9 @@
-﻿namespace emulator;
+﻿namespace emulator.sound;
 
-enum WaveOutputLevel : byte
+internal enum WaveOutputLevel : byte
 {
     Mute = 0,
-    full = 1,
-    half = 2,
-    quarter = 3,
+    Full = 1,
+    Half = 2,
+    Quarter = 3,
 }
