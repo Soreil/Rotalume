@@ -134,6 +134,10 @@ public class PPU
         Clock < Renderer.TimeUntilWhichToPause &&
         Clock >= Renderer.TimeUntilWhichToPause - GraphicConstants.OAMSearchDuration + 4;
 
+    // Each machine cycle scans two sprites, i.e. one eight-byte OAM row.
+    internal int OAMScanRow => Renderer is null ? -1 :
+        (int)((Clock - Renderer.TimeUntilWhichToPause + GraphicConstants.OAMSearchDuration) / 4);
+
     public ushort TileMapDisplaySelect => (ushort)(LCDC.GetBit(6) ? VRAM.TileMap1Start : VRAM.TileMap0Start);
     public bool WindowDisplayEnable => LCDC.GetBit(5);
     public ushort BGAndWindowTileDataSelect => (ushort)(LCDC.GetBit(4) ? VRAM.TileBlock0Start : VRAM.TileBlock2Start);

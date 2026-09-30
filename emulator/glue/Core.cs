@@ -88,7 +88,7 @@ public class Core : IDisposable
             // Both memory accesses and address-only INC/DEC events require an active,
             // corruptible OAM scan row. Merely enabling the LCD is not sufficient.
             if (PPU.CanCorruptOAM)
-                OAM.Corrupt(o, e);
+                OAM.Corrupt(PPU.OAMScanRow, e.Kind);
         };
 
         //We have to replicate the state of the system post boot without running the bootrom

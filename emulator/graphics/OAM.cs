@@ -1,4 +1,6 @@
-﻿namespace emulator.graphics;
+﻿using emulator.opcodes;
+
+namespace emulator.graphics;
 
 public class OAM
 {
@@ -63,12 +65,47 @@ public class OAM
         return data.Length;
     }
 
-    //TODO: actual proper corruption algorithm
-    internal void Corrupt(object? sender, EventArgs e)
+    internal void Corrupt(int scanRow, OAMCorruptionKind kind)
     {
-        for (int i = 0; i < Size; i++)
+        // The CPU address/data do not select the affected row. The PPU's scan does.
+        if (scanRow is <= 0 or >= (Size / 8)) return;
+        int row = Start + scanRow * 8;
+
+        // A simultaneous read and IDU operation can also affect the two preceding rows.
+        // The first four rows and the last row are exempt from this extra corruption.
+        if (kind == OAMCorruptionKind.ReadAndIncrement && scanRow >= 4 && scanRow < 19)
         {
-            this[i + Start] = (byte)i;
+            var a = ReadWord(row - 16);
+            var b = ReadWord(row - 8);
+            var c = ReadWord(row);
+            var d = ReadWord(row - 4);
+            WriteWord(row - 8, (ushort)((b & (a | c | d)) | (a & c & d)));
+            CopyRow(row - 8, row - 16);
+            CopyRow(row - 8, row);
         }
+
+        var current = ReadWord(row);
+        var previous = ReadWord(row - 8);
+        var previousThird = ReadWord(row - 4);
+        var first = kind is OAMCorruptionKind.Read or OAMCorruptionKind.ReadAndIncrement
+            ? previous | (current & previousThird)
+            : ((current ^ previousThird) & (previous ^ previousThird)) ^ previousThird;
+        WriteWord(row, (ushort)first);
+        for (int i = 2; i < 8; i++)
+            this[row + i] = this[row - 8 + i];
+    }
+
+    private ushort ReadWord(int address) => (ushort)(this[address] | (this[address + 1] << 8));
+
+    private void WriteWord(int address, ushort value)
+    {
+        this[address] = (byte)value;
+        this[address + 1] = (byte)(value >> 8);
+    }
+
+    private void CopyRow(int source, int destination)
+    {
+        for (int i = 0; i < 8; i++)
+            this[destination + i] = this[source + i];
     }
 }

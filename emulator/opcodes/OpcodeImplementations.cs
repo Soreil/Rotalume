@@ -30,7 +30,7 @@ public partial class CPU
     //Reading memory takes a cycle overhead unlike reading registers
     private byte ReadMemoryAtHL()
     {
-        var read = Memory.Read(Registers.HL);
+        var read = Read(Registers.HL);
         CycleElapsed();
         return read;
     }
@@ -40,35 +40,37 @@ public partial class CPU
         //Writing memory takes a cycle overhead unlike reading registers
         if (r == Register.HL)
         {
-            Memory.Write(Registers.HL, b);
-            CycleElapsed();
+            Write(Registers.HL, b);
         }
         else Registers.Set(r, b);
     }
 
     private ushort Pop()
     {
-        var popped = ReadWide(Registers.SP);
-        Registers.SP += 2;
-
-        return popped;
+        var low = Read(Registers.SP, OAMCorruptionKind.ReadAndIncrement);
+        Registers.SP++;
+        CycleElapsed();
+        // The second stack read does not cause an additional IDU corruption.
+        var high = Read(Registers.SP);
+        Registers.SP++;
+        CycleElapsed();
+        return (ushort)(low | (high << 8));
     }
     private void Push(ushort s)
     {
-        if ((Registers.SP >> 8) == 0xfe) CorruptOAMAcess();
-
-        Registers.SP--;
-        Memory[Registers.SP] = (byte)(s >> 8);
+        CorruptOAM(Registers.SP, OAMCorruptionKind.Address);
         CycleElapsed();
         Registers.SP--;
-        Memory[Registers.SP] = (byte)s;
-        CycleElapsed();
+        // Write + IDU on the same cycle has the ordinary write pattern.
+        Write(Registers.SP, (byte)(s >> 8));
+        Registers.SP--;
+        Write(Registers.SP, (byte)s);
     }
 
     //ReadDatabus reads the next byte at the instruction pointer and advances. This incurs a read hit.
     private byte ReadDatabus()
     {
-        var read = Memory[PC];
+        var read = Read(PC, OAMCorruptionKind.ReadAndIncrement);
         ScheduleIDUIncrement();
         return read;
     }
@@ -84,9 +86,9 @@ public partial class CPU
 
     private ushort ReadWide(ushort at)
     {
-        var tophalf = Memory[at];
+        var tophalf = Read(at);
         CycleElapsed();
-        var bottomHalf = Memory[(ushort)(at + 1)];
+        var bottomHalf = Read((ushort)(at + 1));
         CycleElapsed();
 
         return (ushort)((bottomHalf << 8) | tophalf);
@@ -100,13 +102,12 @@ public partial class CPU
     }
     private void Write(ushort at, ushort arg)
     {
-        Memory[at] = (byte)arg;
-        CycleElapsed();
-        Memory[(ushort)(at + 1)] = (byte)(arg >> 8);
-        CycleElapsed();
+        Write(at, (byte)arg);
+        Write((ushort)(at + 1), (byte)(arg >> 8));
     }
     private void Write(ushort at, byte arg)
     {
+        CorruptOAM(at, OAMCorruptionKind.Write);
         Memory[at] = arg;
         CycleElapsed();
     }
@@ -125,7 +126,6 @@ public partial class CPU
         var value = Registers.A;
         Write(address, value);
         Registers.Set(WideRegister.HL, (ushort)(address + 1));
-        if (address >> 8 == 0xfe) CorruptOAMAddress();
     }
 
     public void LDD()
@@ -134,7 +134,6 @@ public partial class CPU
         var value = Registers.A;
         Write(address, value);
         Registers.Set(WideRegister.HL, (ushort)(address - 1));
-        if (address >> 8 == 0xfe) CorruptOAMAddress();
     }
 
     public Action LD(WideRegister p0) => () =>
@@ -165,8 +164,15 @@ public partial class CPU
 
     public event EventHandler<OAMCorruptionEventArgs>? OAMCorruption;
 
-    private void CorruptOAMAcess() => OAMCorruption?.Invoke(this, new OAMCorruptionEventArgs { IsOAMReadOrWrite = true });
-    private void CorruptOAMAddress() => OAMCorruption?.Invoke(this, new OAMCorruptionEventArgs { IsOAMReadOrWrite = false });
+    private void CorruptOAM(ushort address, OAMCorruptionKind kind)
+    {
+        // The address bus decodes the full FE page, including unusable OAM addresses.
+        if ((address >> 8) == 0xfe)
+            OAMCorruption?.Invoke(this, new OAMCorruptionEventArgs { Kind = kind });
+    }
+
+    private void CorruptOAMAddress() =>
+        OAMCorruption?.Invoke(this, new OAMCorruptionEventArgs { Kind = OAMCorruptionKind.Address });
 
 
     public Action INC(Register p0) => () =>
@@ -202,7 +208,11 @@ public partial class CPU
         Registers.A = Read(ReadWide());
         CycleElapsed();
     }
-    private byte Read(ushort v) => Memory[v];
+    private byte Read(ushort v, OAMCorruptionKind kind = OAMCorruptionKind.Read)
+    {
+        CorruptOAM(v, kind);
+        return Memory[v];
+    }
 
     public void RLCA()
     {
@@ -248,9 +258,8 @@ public partial class CPU
     public void LDA_HLI()
     {
         var addr = Registers.HL;
-        var value = Read(addr);
+        var value = Read(addr, OAMCorruptionKind.ReadAndIncrement);
         Registers.A = value;
-        if (Registers.HL >> 8 == 0xfe) CorruptOAMAddress();
         Registers.HL++;
         CycleElapsed();
 
@@ -258,9 +267,8 @@ public partial class CPU
     public void LDA_HLD()
     {
         var addr = Registers.HL;
-        var value = Read(addr);
+        var value = Read(addr, OAMCorruptionKind.ReadAndIncrement);
         Registers.A = value;
-        if (Registers.HL >> 8 == 0xfe) CorruptOAMAddress();
         Registers.HL--;
         CycleElapsed();
     }
@@ -573,13 +581,7 @@ public partial class CPU
     };
     public Action POP(WideRegister p0) => () =>
     {
-        if ((Registers.SP >> 8) == 0xfe && p0 != WideRegister.AF) CorruptOAMAcess();
-        var wide = ReadWide(Registers.SP);
-        Registers.Set(p0, wide);
-        Registers.SP++;
-        if ((Registers.SP >> 8) == 0xfe && p0 != WideRegister.AF) CorruptOAMAcess();
-        //We should really make this a bit cleaner than it is currently
-        Registers.SP++;
+        Registers.Set(p0, Pop());
     };
     public Action JP_A16(Flag p0) => () =>
     {
@@ -626,7 +628,6 @@ public partial class CPU
 
     public Action PUSH(WideRegister p0) => () =>
     {
-        CycleElapsed();
         var reg = Registers.Get(p0);
 
         Push(reg);
@@ -650,7 +651,6 @@ public partial class CPU
 
     public void Call(ushort addr)
     {
-        CycleElapsed();
         Push(PC);
         PC = addr;
     }
