@@ -25,12 +25,12 @@ internal class SoundTests
 
         var samplesWanted = emulator.sound.Samples.SampleRate * duration;
 
-        while (core.Samples.Buffer.Count < samplesWanted)
+        while (core.Samples.APUBuffer.Count < samplesWanted)
         {
             core.Step();
         }
 
-        var span = new ReadOnlySpan<short>(core.Samples.Buffer.ToArray());
+        var span = new ReadOnlySpan<short>(core.Samples.APUBuffer.ToArray());
         var wav = new WAV.WAVFile<short>(span, 2, emulator.sound.Samples.SampleRate, 16);
 
         using var file = File.Open(fn + ".wav", FileMode.Create, FileAccess.Write);
@@ -56,12 +56,12 @@ internal class SoundTests
         }
 
 
-        var SampleCount = core.Samples.Buffer.Count;
-        var SamplesWithSound = core.Samples.Buffer.Any(x => x != 0);
+        var SampleCount = core.Samples.APUBuffer.Count;
+        var SamplesWithSound = core.Samples.APUBuffer.Any(x => x != 0);
 
         Assert.That(SamplesWithSound, Is.True);
 
-        var span = new ReadOnlySpan<short>(core.Samples.Buffer.ToArray());
+        var span = new ReadOnlySpan<short>(core.Samples.APUBuffer.ToArray());
         var wav = new WAV.WAVFile<short>(span, 2, emulator.sound.Samples.SampleRate, 16);
 
         using var file = File.Open("bootromSound.wav", FileMode.Create, FileAccess.Write);

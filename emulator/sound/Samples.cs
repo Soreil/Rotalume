@@ -11,7 +11,7 @@ public class Samples(MasterClock masterClock, APU apu)
 
     public static int SampleRate => SamplesPerSecond;
 
-    public List<short> Buffer = [];
+    public List<short> APUBuffer = [];
 
     public const int SamplePeriod = 64;
     private const int SamplesPerSecond = CPUTimingConstants.Frequency / SamplePeriod;
@@ -23,31 +23,31 @@ public class Samples(MasterClock masterClock, APU apu)
         if (MasterClock.Now() % SamplePeriod == 0)
         {
             (var left, var right) = apu.Sample();
-            Buffer.Add(left);
-            Buffer.Add(right);
+            APUBuffer.Add(left);
+            APUBuffer.Add(right);
         }
     }
 
     //public int GetSamples(short[] buffer, int offset, int sampleCount, int sampleRate)
-    public int GetSamples(Span<short> buffer, int sampleRate)
+    public int GetSamples(Span<short> cardBuffer, int sampleRate)
     {
         //For now we will just give it back a bunch of zeroes so it doesn't die on us
-        if (Buffer.Count == 0)
+        if (APUBuffer.Count == 0)
         {
-            for (int i = 0; i < buffer.Length; i++)
+            for (int i = 0; i < cardBuffer.Length; i++)
             {
-                buffer[i] = 0;
+                cardBuffer[i] = 0;
             }
-            return buffer.Length;
+            return cardBuffer.Length;
         }
 
         //We are starving
-        if (Buffer.Count < buffer.Length)
+        if (APUBuffer.Count < cardBuffer.Length)
         {
             sampleRatePerformanceScaler *= 0.9999;
         }
         //We have way too many samples
-        else if (Buffer.Count > buffer.Length * 3)
+        else if (APUBuffer.Count > cardBuffer.Length * 3)
         {
             sampleRatePerformanceScaler *= 1.0001;
         }
@@ -63,9 +63,9 @@ public class Samples(MasterClock masterClock, APU apu)
         //need to be put in to the output buffer
         var SampleRatio = SamplesPerSecond / (double)sampleRate * sampleRatePerformanceScaler;
         //SamplesNeeded is how many samples we are actually being asked to deliver
-        var SamplesNeeded = buffer.Length * SampleRatio;
+        var SamplesNeeded = cardBuffer.Length * SampleRatio;
 
-        var samples = CollectionsMarshal.AsSpan(Buffer);
+        var samples = CollectionsMarshal.AsSpan(APUBuffer);
 
         var samplesWeWillConsume = Math.Min(SamplesNeeded, samples.Length);
 
@@ -73,17 +73,14 @@ public class Samples(MasterClock masterClock, APU apu)
 
         var got = Map(samples, outputSampleCount, SampleRatio);
 
-        for (int i = 0; i < got.Length; i++)
-        {
-            buffer[i] = got[i];
-        }
-
-        Buffer.RemoveRange(0, (int)samplesWeWillConsume);
+        got.CopyTo(cardBuffer);
+        
+        APUBuffer.RemoveRange(0, (int)samplesWeWillConsume);
 
         return got.Length;
     }
 
-    private static short[] Map(Span<short> buffer, int outputSampleCount, double sampleRatio)
+    private static Span<short> Map(ReadOnlySpan<short> buffer, int outputSampleCount, double sampleRatio)
     {
         var output = new short[outputSampleCount];
 
