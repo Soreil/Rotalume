@@ -85,17 +85,10 @@ public class Core : IDisposable
 
         CPU.OAMCorruption += (o, e) =>
         {
-            if (PPU.LCDEnable)
-            {
-                //We want to corrupt in cases of memory reads or writes to the OAM area while
-                //the PPU is in OAM search
-                if (e.IsOAMReadOrWrite && PPU.Mode == Mode.OAMSearch)
-                    OAM.Corrupt(o, e);
-                //We also want to corrupt in case we are incrementing or decrementing a wide register
-                //which happens to be in the OAM range
-                else if (!e.IsOAMReadOrWrite)
-                    OAM.Corrupt(o, e);
-            }
+            // Both memory accesses and address-only INC/DEC events require an active,
+            // corruptible OAM scan row. Merely enabling the LCD is not sufficient.
+            if (PPU.CanCorruptOAM)
+                OAM.Corrupt(o, e);
         };
 
         //We have to replicate the state of the system post boot without running the bootrom

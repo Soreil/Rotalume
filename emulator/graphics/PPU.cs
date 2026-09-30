@@ -128,6 +128,12 @@ public class PPU
 
     //These variables should be the owners of their own state
     public bool LCDEnable => LCDC.GetBit(7);
+    // OAM's first 8-byte row (the first four dots of mode 2) cannot be corrupted.
+    internal bool CanCorruptOAM => LCDEnable && Mode == Mode.OAMSearch &&
+        Renderer is not null &&
+        Clock < Renderer.TimeUntilWhichToPause &&
+        Clock >= Renderer.TimeUntilWhichToPause - GraphicConstants.OAMSearchDuration + 4;
+
     public ushort TileMapDisplaySelect => (ushort)(LCDC.GetBit(6) ? VRAM.TileMap1Start : VRAM.TileMap0Start);
     public bool WindowDisplayEnable => LCDC.GetBit(5);
     public ushort BGAndWindowTileDataSelect => (ushort)(LCDC.GetBit(4) ? VRAM.TileBlock0Start : VRAM.TileBlock2Start);
