@@ -16,7 +16,11 @@ public class NoiseChannel : Channel
     public byte NR42
     {
         get => envelope.Register;
-        set => envelope.Register = value;
+        set
+        {
+            envelope.Register = value;
+            if (!DACOn()) ChannelEnabled = false;
+        }
     }
 
 
@@ -44,13 +48,7 @@ public class NoiseChannel : Channel
     {
         get => (byte)((Convert.ToByte(UseLength) << 6) | 0xbf);
 
-        set
-        {
-            UseLength = value.GetBit(6);
-
-            if (value.GetBit(7)) base.Trigger();
-            else ChannelEnabled = false;
-        }
+        set => SetLengthControl(value);
     }
 
     protected override int SoundLengthMAX => 64;

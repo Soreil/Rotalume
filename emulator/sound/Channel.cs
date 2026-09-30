@@ -4,10 +4,30 @@ public abstract class Channel
 {
     public void TickLength()
     {
-        if (!UseLength || !ChannelEnabled) return;
+        if (!UseLength || LengthTimer == 0) return;
 
         LengthTimer--;
         if (LengthTimer == 0) ChannelEnabled = false;
+    }
+
+    internal bool NextStepClocksLength { get; set; } = true;
+
+    internal void PowerOff()
+    {
+        ChannelEnabled = false;
+        UseLength = false;
+    }
+
+    protected void SetLengthControl(byte value)
+    {
+        bool wasEnabled = UseLength;
+        UseLength = (value & 0x40) != 0;
+        if (!wasEnabled && UseLength && !NextStepClocksLength) TickLength();
+        if ((value & 0x80) == 0) return;
+
+        bool reloadLength = LengthTimer == 0;
+        Trigger();
+        if (reloadLength && UseLength && !NextStepClocksLength) TickLength();
     }
 
     protected int LengthTimer { get; set; }

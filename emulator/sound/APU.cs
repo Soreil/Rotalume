@@ -105,6 +105,10 @@ public class APU(ILogger<APU> logger)
 
     private void TurnOff()
     {
+        ToneSweep.PowerOff();
+        Tone.PowerOff();
+        Wave.PowerOff();
+        Noise.PowerOff();
         ToneSweep.NR10 = 0;
         ToneSweep.ResetDuty();
         ToneSweep.NR12 = 0;
@@ -137,6 +141,8 @@ public class APU(ILogger<APU> logger)
     {
         if (MasterSoundDisable == false) return;
         MasterSoundDisable = false;
+        FrameSequencerState = 0;
+        UpdateLengthClockPhase();
     }
 
     private int SoundClock;
@@ -153,12 +159,22 @@ public class APU(ILogger<APU> logger)
 
     private int FrameSequencerState;
 
+    private void UpdateLengthClockPhase()
+    {
+        bool nextClocksLength = (FrameSequencerState & 1) == 0;
+        ToneSweep.NextStepClocksLength = nextClocksLength;
+        Tone.NextStepClocksLength = nextClocksLength;
+        Wave.NextStepClocksLength = nextClocksLength;
+        Noise.NextStepClocksLength = nextClocksLength;
+    }
+
     //The Frame Sequencer state machine cycles through 8 states which
     //can clock audio channel length counters
     //the source for the frame sequencer clock derives from the
     //div register in the timer subsystem.
     public void FrameSequencerClock(object? o, EventArgs e)
     {
+        if (MasterSoundDisable) return;
         switch (FrameSequencerState)
         {
             case 0:
@@ -221,6 +237,7 @@ public class APU(ILogger<APU> logger)
             default:
             throw new Exception("Illegal Frameclock step");
         }
+        UpdateLengthClockPhase();
     }
 
     //In the current design a tick is executed every T cycle,
@@ -244,13 +261,7 @@ public class APU(ILogger<APU> logger)
                 Tone.Clock();
             }
         }
-        if (Wave.IsOn())
-        {
-            if (SoundClock % ((2048 - Wave.Frequency) * 2) == 0)
-            {
-                Wave.Clock();
-            }
-        }
+        Wave.Clock();
         if (Noise.IsOn())
         {
             Noise.Clock();

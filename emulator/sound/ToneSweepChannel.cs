@@ -8,6 +8,7 @@ internal class ToneSweepChannel : SquareChannel
     private bool sweepEnabled;
     private ushort shadowFrequency;
     private int sweepTimer;
+    private bool negateUsed;
 
     //https://nightshade256.github.io/2021/03/27/gb-sound-emulation.html
     public void TickSweep()
@@ -43,6 +44,7 @@ internal class ToneSweepChannel : SquareChannel
         shadowFrequency = Frequency;
         sweepTimer = SweepPeriod == 0 ? 8 : SweepPeriod;
         sweepEnabled = SweepPeriod != 0 || SweepShift != 0;
+        negateUsed = false;
 
         //If the sweep shift is non - zero, frequency calculation and the overflow check are performed immediately.
         if (SweepShift != 0)
@@ -54,7 +56,8 @@ internal class ToneSweepChannel : SquareChannel
     private ushort CalculateSweepFrequency()
     {
         var newFreq = shadowFrequency >> SweepShift;
-        newFreq = !SweepIncreasing ? shadowFrequency - newFreq : shadowFrequency + newFreq;
+        newFreq = SweepNegate ? shadowFrequency - newFreq : shadowFrequency + newFreq;
+        if (SweepNegate) negateUsed = true;
 
         //Overflow check
         if (newFreq > 2047) ChannelEnabled = false;
@@ -63,17 +66,18 @@ internal class ToneSweepChannel : SquareChannel
     }
 
     private int SweepPeriod;
-    private bool SweepIncreasing;
+    private bool SweepNegate;
     private int SweepShift;
 
     public byte NR10
     {
-        get => (byte)(0x80 | (SweepPeriod << 4) | (Convert.ToByte(SweepIncreasing) << 3) | SweepShift);
+        get => (byte)(0x80 | (SweepPeriod << 4) | (Convert.ToByte(SweepNegate) << 3) | SweepShift);
 
         set
         {
+            if (SweepNegate && !value.GetBit(3) && negateUsed) ChannelEnabled = false;
             SweepPeriod = (value >> 4) & 0x7;
-            SweepIncreasing = value.GetBit(3);
+            SweepNegate = value.GetBit(3);
             SweepShift = value & 0x7;
         }
     }
@@ -106,7 +110,7 @@ internal class ToneSweepChannel : SquareChannel
     protected override void Trigger()
     {
         //Square 1's sweep does several things (see frequency sweep).
-        TriggerSweep();
         base.Trigger();
+        TriggerSweep();
     }
 }

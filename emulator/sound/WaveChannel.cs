@@ -39,11 +39,8 @@ internal class WaveChannel : Channel
         get => (byte)((Convert.ToByte(UseLength) << 6) | 0xbf);
         set
         {
-            UseLength = value.GetBit(6);
             Frequency = (ushort)((Frequency & 0xF8FF) | ((value & 0x07) << 8));
-
-            if (value.GetBit(7)) base.Trigger();
-            else ChannelEnabled = false;
+            SetLengthControl(value);
         }
     }
 
@@ -51,12 +48,19 @@ internal class WaveChannel : Channel
 
 
     private int PositionCounter;
+    private int frequencyTimer;
+    private int accessWindow;
+    private int fetchedByteIndex;
 
     public override void Clock()
     {
-        PositionCounter++;
-        PositionCounter %= 32;
-
+        if (accessWindow > 0) accessWindow--;
+        if (!ChannelEnabled) return;
+        if (--frequencyTimer > 0) return;
+        frequencyTimer = (2048 - Frequency) * 2;
+        PositionCounter = (PositionCounter + 1) & 31;
+        fetchedByteIndex = PositionCounter / 2;
+        accessWindow = 2;
         ReadSampleFromTable();
     }
 
@@ -78,8 +82,19 @@ internal class WaveChannel : Channel
 
     protected override void Trigger()
     {
+        //DMG retriggering during the next RAM fetch corrupts the first four bytes.
+        if (ChannelEnabled && frequencyTimer == 2)
+        {
+            int nextByte = ((PositionCounter + 1) & 31) / 2;
+            if (nextByte < 4)
+                Array.Copy(table, nextByte * 2, table, 0, 2);
+            else
+                Array.Copy(table, (nextByte & ~3) * 2, table, 0, 8);
+        }
         base.Trigger();
         PositionCounter = 0;
+        frequencyTimer = (2048 - Frequency) * 2 + 6;
+        accessWindow = 0;
     }
 
     public override byte Sample() => OutputLevel switch
@@ -96,19 +111,14 @@ internal class WaveChannel : Channel
     {
         get
         {
-            if (ChannelEnabled)
-            {
-                var isOdd = PositionCounter % 2 == 1;
-                var topHalf = isOdd ? table[(PositionCounter / 2) + 1] : table[PositionCounter / 2];
-                var bottomHalf = isOdd ? table[PositionCounter / 2] : table[(PositionCounter / 2) + 1];
-
-                return (byte)((topHalf << 4) | bottomHalf);
-            }
-            //if (ChannelEnabled) return 0xff;
-            else return (byte)(table[n * 2] << 4 | table[n * 2 + 1]);
+            if (ChannelEnabled && accessWindow == 0) return 0xff;
+            if (ChannelEnabled) n = fetchedByteIndex;
+            return (byte)(table[n * 2] << 4 | table[n * 2 + 1]);
         }
         set
         {
+            if (ChannelEnabled && accessWindow == 0) return;
+            if (ChannelEnabled) n = fetchedByteIndex;
             table[n * 2] = (byte)(value >> 4);
             table[n * 2 + 1] = (byte)(value & 0x0f);
         }

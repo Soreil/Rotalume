@@ -25,7 +25,11 @@ internal class SquareChannel : Channel
     public byte NRs2
     {
         get => envelope.Register;
-        set => envelope.Register = value;
+        set
+        {
+            envelope.Register = value;
+            if (!DACOn()) ChannelEnabled = false;
+        }
     }
 
     protected override void Trigger()
@@ -43,10 +47,8 @@ internal class SquareChannel : Channel
         get => (byte)((Convert.ToByte(UseLength) << 6) | 0xbf);
         set
         {
-            UseLength = value.GetBit(6);
             Frequency = (ushort)((Frequency & 0xF8FF) | ((value & 0x07) << 8));
-            if (value.GetBit(7)) Trigger();
-            else ChannelEnabled = false;
+            SetLengthControl(value);
         }
     }
 
