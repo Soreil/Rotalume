@@ -21,7 +21,7 @@
 
     <!--AllowDrop="True" Drop="LoadROM" -->
     <StackPanel>
-        <Menu>
+        <Menu x:Name="MainMenu">
             <MenuItem Header="_File">
                 <MenuItem Header="_Open" InputGestureText="Ctrl+O" Command="{Binding LoadROMPopUpCommand}"/>
                 <MenuItem Header="_Stop" Command="{Binding StopCommand}"/>

@@ -39,16 +39,18 @@ Host.CreateDefaultBuilder(args)
         var vm = host.Services.GetRequiredService<GameBoyViewModel>();
         var model = host.Services.GetRequiredService<Model>();
 
-        var mainWindow = new Screen(model) { DataContext = vm };
+        var hideMenu = e.Args.Contains("--no-menu");
+        var romPath = e.Args.FirstOrDefault(arg => arg != "--no-menu");
+        var mainWindow = new Screen(model, hideMenu) { DataContext = vm };
 
         var input = host.Services.GetRequiredService<Input>();
         KeyboardViewModelBridge.Connect(input, mainWindow);
 
         mainWindow.Show();
 
-        if (e.Args.Length > 0)
+        if (romPath is not null)
         {
-            model.ROM = e.Args[0];
+            model.ROM = romPath;
         }
     }
 }

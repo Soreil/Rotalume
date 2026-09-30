@@ -11,10 +11,14 @@ namespace WPFFrontend.Views;
 public partial class Screen : Window
 {
     private readonly Model model;
-    public Screen(Model model)
+    public Screen(Model model, bool hideMenu = false)
     {
         InitializeComponent();
         this.model = model;
+        if (hideMenu)
+        {
+            MainMenu.Visibility = Visibility.Collapsed;
+        }
     }
 
     protected override void OnClosing(CancelEventArgs e)

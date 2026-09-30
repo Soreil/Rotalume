@@ -347,3 +347,4 @@ healthchecksdb
 *.diagsession
 /Tests/rom/DMG_ROM_BOOT.bin
 /Tests/rom/dmg_rom.bin
+/WPFFrontend/Properties/launchSettings.json
