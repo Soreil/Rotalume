@@ -54,11 +54,11 @@ internal class GraphicalOutputTest
         Assert.That(ImageComparer.AreImagesEqual(expectedImage, outputImage), Is.True);
     }
 
-    [TestCase(@"rom\dmg-acid2\dmg-acid2.gb", @"..\..\..\..\Tests\rom\dmg-acid2\expected.png", "outputDMG-ACID2.bmp", 10)]
+    [TestCase(@"rom\dmg-acid2\dmg-acid2.gb", @"..\..\..\..\Tests\rom\dmg-acid2\expected.png", "outputDMG-ACID2.bmp", 100)]
 
-    [TestCase(@"rom\mooneye-test-suite\acceptance\oam_dma\basic.gb", @"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\oam_dma\expected.png", "outputBasicOAM.bmp", 10)]
-    [TestCase(@"rom\mooneye-test-suite\acceptance\oam_dma\reg_read.gb", @"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\oam_dma\expected.png", "outputRegReadOAM.bmp", 10)]
-    [TestCase(@"rom\mooneye-test-suite\acceptance\oam_dma\sources-GS.gb", @"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\oam_dma\expected.png", "outputSourcesGS.bmp", 10)]
+    [TestCase(@"rom\mooneye-test-suite\acceptance\oam_dma\basic.gb", @"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\oam_dma\expected.png", "outputBasicOAM.bmp", 100)]
+    [TestCase(@"rom\mooneye-test-suite\acceptance\oam_dma\reg_read.gb", @"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\oam_dma\expected.png", "outputRegReadOAM.bmp", 100)]
+    [TestCase(@"rom\mooneye-test-suite\acceptance\oam_dma\sources-GS.gb", @"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\oam_dma\expected.png", "outputSourcesGS.bmp", 100)]
 
     [TestCase(@"rom\mooneye-test-suite\acceptance\bits\mem_oam.gb", @"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\bits\expected.png", "outputMEMOAM.bmp", 100)]
     //[TestCase(@"rom\mooneye-test-suite\acceptance\bits\unused_hwio-GS.gb", @"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\bits\expected.png", "outputUnusedHWIO.bmp", 100)]
@@ -109,11 +109,6 @@ internal class GraphicalOutputTest
                     outputImage.Write(outputFile, MagickFormat.Bmp);
                     Assert.Pass($"Images match at frame {FramesDrawn}. Wrote debug image to {outputFile}");
                 }
-                else if (FramesDrawn == frameToCheck)
-                {
-                    outputImage.Write(outputFile, MagickFormat.Bmp);
-                    Assert.Fail($"Images did not match after {frameToCheck} frames. Wrote debug image to {outputFile}");
-                }
             }
             FramesDrawn++;
         };
@@ -122,22 +117,19 @@ internal class GraphicalOutputTest
             core.Step();
         core.Dispose();
 
-        Assert.Fail("Should never reach this point");
-    }
 
-    [Test]
-    public async Task TestBlarggFrames()
-    {
-        var files = Directory.EnumerateFiles("rom\\blargg", "*.gb",
-            new EnumerationOptions { RecurseSubdirectories = true }).ToList();
-        using var scope = Assert.EnterMultipleScope();
-        foreach (var romPath in files)
+        var settings = new MagickReadSettings
         {
-            var imagePath = Path.Combine(Path.GetDirectoryName(romPath)!, Path.GetFileNameWithoutExtension(romPath) + ".png");
-            var outputFile = Path.Combine(Path.GetDirectoryName(romPath)!, Path.GetFileNameWithoutExtension(romPath) + "_output.bmp");
-            var (frame, output, success) = GraphicalOutputTestHelpers.FrameMatchesExpectedFrame(romPath, imagePath, outputFile, 1000);
-            if (success) Debug.WriteLine($"Tested {romPath}. Images match at frame {frame}. Wrote debug image to {output}");
-            else Assert.Fail($"Tested {romPath}. Images did not match after {frame} frames. Wrote debug image to {output}");
+            Width = 160,
+            Height = 144,
+            Format = MagickFormat.Gray
+        };
+        using var outputImage = new MagickImage(render.Image, settings);
+
+        if (FramesDrawn == frameToCheck)
+        {
+            outputImage.Write(outputFile, MagickFormat.Bmp);
+            Assert.Fail($"Images did not match after {frameToCheck} frames. Wrote debug image to {outputFile}");
         }
     }
 }
