@@ -20,9 +20,10 @@ public class Cycler(Timers timers, PPU ppu, APU apu, DMAControl dma, MasterClock
             Timers.Tick();
             Ppu.Tick();
             Apu.Tick();
-            Dma.DMA();
             MasterClock.Tick();
         }
+        // OAM DMA copies one byte per machine cycle (four clock ticks).
+        Dma.DMA();
         Samples.Sample();
     }
 }

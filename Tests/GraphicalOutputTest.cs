@@ -22,7 +22,7 @@ internal class GraphicalOutputTest
         var outputDir = Directory.CreateDirectory(nameof(NintendoLogoShowsUpInTheCenterAtTheEndOfBooting));
 
         int FramesDrawn = 0;
-        render.FramePushed += async (sender, e) =>
+        render.FramePushed += (sender, e) =>
         {
             // Read image that has no predefined dimensions.
             var settings = new MagickReadSettings
@@ -33,7 +33,7 @@ internal class GraphicalOutputTest
             };
             using var img = new MagickImage(render.Image, settings);
 
-            await img.WriteAsync(Path.Combine(outputDir.FullName, $"output{FramesDrawn}.bmp"), MagickFormat.Bmp);
+            img.Write(Path.Combine(outputDir.FullName, $"output{FramesDrawn}.bmp"), MagickFormat.Bmp);
             FramesDrawn++;
         };
 

@@ -14,7 +14,7 @@ public class DMAControl(OAM oam, MMU mmu, DMARegister dMARegister)
         if (Register.TicksLeft > 0)
         {
             ushort address = (ushort)(Register.BaseAddr + (DMARegister.DMADuration - Register.TicksLeft));
-            byte value = Register.BaseAddr < 0xa000 ? MMU[address] : MMU.ExternalBusRAM(address);
+            byte value = MMU.ReadForDMA(address);
             OAM[OAM.Start + (DMARegister.DMADuration - Register.TicksLeft)] = value;
             Register.TicksLeft--;
         }

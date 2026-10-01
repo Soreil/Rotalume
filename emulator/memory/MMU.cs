@@ -17,7 +17,22 @@ public sealed class MMU
     private readonly UnusableMEM UnusableMEM;
     public byte this[ushort at]
     {
-        get => BootRom.Active && at < 0x100
+        get => IsBlockedByDMA(at) ? (byte)0xff : ReadMapped(at);
+
+        set
+        {
+            if (IsBlockedByDMA(at))
+                return;
+
+            WriteMapped(at, value);
+        }
+    }
+
+    // DMA leaves VRAM and I/O/HRAM accessible to the CPU.
+    private bool IsBlockedByDMA(ushort at) =>
+        DMA.TicksLeft > 0 && (at < 0x8000 || at is >= 0xa000 and < 0xff00);
+
+    private byte ReadMapped(ushort at) => BootRom.Active && at < 0x100
                 ? BootRom[at]
                 : at switch
                 {
@@ -53,7 +68,7 @@ public sealed class MMU
                     _ => (byte)0xff
                 };
 
-        set
+    private void WriteMapped(ushort at, byte value)
         {
             switch (at)
             {
@@ -136,7 +151,6 @@ public sealed class MMU
                 break;
             }
         }
-    }
 
     private readonly BootRom BootRom;
     private readonly InterruptRegisters InterruptRegisters;
@@ -186,5 +200,7 @@ public sealed class MMU
     public void Write(ushort at, byte arg) => this[at] = arg;
     public byte Read(ushort at) => this[at];
 
-    public byte ExternalBusRAM(ushort at) => at < 0xfe00 ? this[at] : WRAM[at];
+    // The DMA engine is not subject to the CPU's DMA bus restriction.
+    internal byte ReadForDMA(ushort at) => at < 0xfe00 ? ReadMapped(at) : WRAM[at];
+    public byte ExternalBusRAM(ushort at) => ReadForDMA(at);
 }
