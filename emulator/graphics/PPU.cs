@@ -23,16 +23,42 @@ public class PPU
     private readonly VRAM VRAM;
     private readonly ILogger<PPU> logger;
 
+    private bool LCDEnable { get; set; }
+    private bool WindowTileMapSelect { get; set; }
+    public ushort TileMapDisplaySelect => (ushort)(WindowTileMapSelect ? VRAM.TileMap1Start : VRAM.TileMap0Start);
+    public bool WindowDisplayEnable { get; private set; }
+    private bool BGAndWindowTileDataSelectFlag { get; set; }
+    public ushort BGAndWindowTileDataSelect => (ushort)(BGAndWindowTileDataSelectFlag ? VRAM.TileBlock0Start : VRAM.TileBlock2Start);
+    private bool BGTileMapDisplaySelectFlag { get; set; }
+    public ushort BGTileMapDisplaySelect => (ushort)(BGTileMapDisplaySelectFlag ? VRAM.TileMap1Start : VRAM.TileMap0Start);
+    private bool DoubleHeightSprites { get; set; }
+    public int SpriteHeight => DoubleHeightSprites ? 16 : 8;
+    public bool OBJDisplayEnable { get; private set; }
+    public bool BGDisplayEnable { get; private set; }
+
 
     //FF40 - FF4B, PPU control registers
     //FF40 
-    private byte _LCDC;
     private byte LCDC
     {
-        get => _LCDC;
+        get => (byte)(Convert.ToByte(LCDEnable) << 7 |
+            Convert.ToByte(WindowTileMapSelect) << 6 |
+            Convert.ToByte(WindowDisplayEnable) << 5 |
+            Convert.ToByte(BGAndWindowTileDataSelectFlag) << 4 |
+            Convert.ToByte(BGTileMapDisplaySelectFlag) << 3 |
+            Convert.ToByte(DoubleHeightSprites) << 2 |
+            Convert.ToByte(OBJDisplayEnable) << 1 |
+            Convert.ToByte(BGDisplayEnable));
         set
         {
-            _LCDC = value;
+            LCDEnable = value.GetBit(7);
+            WindowTileMapSelect = value.GetBit(6);
+            WindowDisplayEnable = value.GetBit(5);
+            BGAndWindowTileDataSelectFlag = value.GetBit(4);
+            BGTileMapDisplaySelectFlag = value.GetBit(3);
+            DoubleHeightSprites = value.GetBit(2);
+            OBJDisplayEnable = value.GetBit(1);
+            BGDisplayEnable = value.GetBit(0);
             if (ScreenJustTurnedOn)
             {
                 logger.LogInformation("Turning on PPU");
@@ -73,13 +99,12 @@ public class PPU
         OBP1 = 0xff;
     }
 
-    private byte _stat = 0x80;
     //FF41      
     private byte STAT
     {
-        get => _stat;
-        set => _stat = (byte)((value & 0x7f) | 0x80);
-    }
+        get;
+        set => field = (byte)((value & 0x7f) | 0x80);
+    } = 0x80;
 
     private bool Enable_LYC_Compare => STAT.GetBit(6);
     public bool Enable_OAM_Interrupt => STAT.GetBit(5);
@@ -126,8 +151,6 @@ public class PPU
         _ => throw new IndexOutOfRangeException()
     };
 
-    //These variables should be the owners of their own state
-    public bool LCDEnable => LCDC.GetBit(7);
     // OAM's first 8-byte row (the first four dots of mode 2) cannot be corrupted.
     internal bool CanCorruptOAM => LCDEnable && Mode == Mode.OAMSearch &&
         Renderer is not null &&
@@ -137,14 +160,6 @@ public class PPU
     // Each machine cycle scans two sprites, i.e. one eight-byte OAM row.
     internal int OAMScanRow => Renderer is null ? -1 :
         (int)((Clock - Renderer.TimeUntilWhichToPause + GraphicConstants.OAMSearchDuration) / 4);
-
-    public ushort TileMapDisplaySelect => (ushort)(LCDC.GetBit(6) ? VRAM.TileMap1Start : VRAM.TileMap0Start);
-    public bool WindowDisplayEnable => LCDC.GetBit(5);
-    public ushort BGAndWindowTileDataSelect => (ushort)(LCDC.GetBit(4) ? VRAM.TileBlock0Start : VRAM.TileBlock2Start);
-    public ushort BGTileMapDisplaySelect => (ushort)(LCDC.GetBit(3) ? VRAM.TileMap1Start : VRAM.TileMap0Start);
-    public int SpriteHeight => LCDC.GetBit(2) ? 16 : 8;
-    public bool OBJDisplayEnable => LCDC.GetBit(1);
-    public bool BGDisplayEnable => LCDC.GetBit(0);
 
     public Mode Mode
     {
