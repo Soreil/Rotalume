@@ -2,8 +2,16 @@
 
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
-		<TargetFramework>net11.0-windows</TargetFramework>
-		<UseWPF>true</UseWPF>
+		<TargetFramework>net11.0-windows10.0.19041.0</TargetFramework>
+		<TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+		<UseWinUI>true</UseWinUI>
+		<WindowsPackageType>None</WindowsPackageType>
+		<WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+		<Platforms>x64</Platforms>
+		<PlatformTarget>x64</PlatformTarget>
+		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+		<ApplicationManifest>app.manifest</ApplicationManifest>
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 		<AssemblyName>WPFFrontend</AssemblyName>
 		<RootNamespace>WPFFrontend</RootNamespace>
 		<Nullable>enable</Nullable>
@@ -27,6 +35,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="2.5.1" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
 		<PackageReference Include="NAudio" Version="3.1.1-preview.1" />
 	</ItemGroup>
@@ -34,17 +43,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\emulator\emulator.csproj" />
 		<ProjectReference Include="..\Xinput\J2i.Net.XInputWrapper.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<ApplicationDefinition Update="App.xaml">
-			<XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
-			<Generator>MSBuild:Compile</Generator>
-		</ApplicationDefinition>
-	</ItemGroup>
-
-	<ItemGroup>
-		<Page Include="App.xaml" />
+		<Content Include="..\emulator\bootrom\DMG_ROM_BOOT.bin" Link="bootrom\DMG_ROM_BOOT.bin" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
 	</ItemGroup>
 
 </Project>

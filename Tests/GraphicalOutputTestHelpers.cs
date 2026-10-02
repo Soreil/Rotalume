@@ -90,7 +90,8 @@ namespace Tests
             {
                 for (int x = 0; x < image.Width; x++)
                 {
-                    var color = pixels.GetPixel(x, y).ToColor();
+                    var color = pixels.GetPixel(x, y).ToColor()
+                        ?? throw new InvalidDataException($"No color at pixel ({x}, {y}).");
                     var gray = mapping[color];
                     pixels.SetPixel(x, y, [gray, gray, gray, color.A]);
                 }

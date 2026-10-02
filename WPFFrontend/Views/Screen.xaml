@@ -1,68 +1,34 @@
 ﻿<Window x:Class="WPFFrontend.Views.Screen"
-        xmlns:local="clr-namespace:WPFFrontend.Views"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:VM="clr-namespace:WPFFrontend.ViewModels"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" d:DataContext="{d:DesignInstance Type=VM:GameBoyViewModel}"
-        mc:Ignorable="d"
-        Title="Rotalume" SizeToContent="WidthAndHeight"
-        >
-    <Window.Resources>
-        <local:ControllerIDConverter x:Key="controllerIDConverter" />
-
-    </Window.Resources>
-
-    <Window.InputBindings>
-        <KeyBinding Key="S" Command="{Binding Screen.ScreenShotCommand}"/>
-        <KeyBinding Key="D" Command="{Binding Screen.DebugScreenShotCommand}"/>
-        <KeyBinding Key="P" Command="{Binding TogglePauseCommand}"/>
-    </Window.InputBindings>
-
-    <!--AllowDrop="True" Drop="LoadROM" -->
-    <StackPanel>
-        <Menu x:Name="MainMenu">
-            <MenuItem Header="_File">
-                <MenuItem Header="_Open" InputGestureText="Ctrl+O" Command="{Binding LoadROMPopUpCommand}"/>
-                <MenuItem Header="_Stop" Command="{Binding StopCommand}"/>
-            </MenuItem>
-
-            <MenuItem Header="_Options">
-                <MenuItem Name="FPSLimitEnable" Header="_Limit FPS" IsCheckable="True" IsChecked="{Binding  FpsLockEnabled}"/>
-                <MenuItem Name="BootRomEnable" Header="_Use Bootrom" IsCheckable="True" IsChecked="{Binding BootRomEnabled}"/>
-                <MenuItem Name="FPSDisplayEnable" Header="_Show Performance Metrics" IsCheckable="True"/>
-                <MenuItem Name="FrameBlendingEnable" Header="_Use Frame Blending" IsCheckable="True" IsChecked="{Binding Screen.UseInterFrameBlending}"/>
-            </MenuItem>
-
-            <MenuItem Header="_Controller">
-                <MenuItem>
-                    <MenuItem.Header>
-                        <StackPanel>
-                            <RadioButton GroupName="Controller" Content="1" IsChecked="{Binding Input.SelectedController, Converter={StaticResource ResourceKey=controllerIDConverter}, ConverterParameter=1}" />
-                            <RadioButton GroupName="Controller" Content="2" IsChecked="{Binding Input.SelectedController, Converter={StaticResource ResourceKey=controllerIDConverter}, ConverterParameter=2}" />
-                            <RadioButton GroupName="Controller" Content="3" IsChecked="{Binding Input.SelectedController, Converter={StaticResource ResourceKey=controllerIDConverter}, ConverterParameter=3}" />
-                            <RadioButton GroupName="Controller" Content="4" IsChecked="{Binding Input.SelectedController, Converter={StaticResource ResourceKey=controllerIDConverter}, ConverterParameter=4}" />
-                        </StackPanel>
-                    </MenuItem.Header>
-                </MenuItem>
-            </MenuItem>
-        </Menu>
-
-        <Label Name="FPS" Content="{Binding Performance.PerformanceDisplayText, UpdateSourceTrigger=PropertyChanged}" Padding="0,0,0,4">
-            <Label.Style>
-                <Style TargetType="Label">
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsChecked,ElementName=FPSDisplayEnable}" Value="True">
-                            <Setter Property="Visibility" Value="Visible"/>
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding IsChecked,ElementName=FPSDisplayEnable}" Value="False">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </Label.Style>
-        </Label>
-
-        <Image Name="Display" Height="576" Width="640" Source="{Binding DisplayFrame, UpdateSourceTrigger=PropertyChanged}" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+        Title="Rotalume">
+    <StackPanel x:Name="RootPanel" Width="640" IsTabStop="True"
+                Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <MenuBar x:Name="MainMenu">
+            <MenuBarItem Title="File" AccessKey="F">
+                <MenuFlyoutItem Text="Open" Command="{x:Bind ViewModel.LoadROMPopUpCommand}">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Key="O" Modifiers="Control" />
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Stop" Command="{x:Bind ViewModel.StopCommand}" />
+            </MenuBarItem>
+            <MenuBarItem Title="Options" AccessKey="O">
+                <ToggleMenuFlyoutItem Text="Limit FPS" IsChecked="{x:Bind ViewModel.FpsLockEnabled, Mode=TwoWay}" />
+                <ToggleMenuFlyoutItem Text="Use Bootrom" IsChecked="{x:Bind ViewModel.BootRomEnabled, Mode=TwoWay}" />
+                <ToggleMenuFlyoutItem x:Name="FPSDisplayEnable" Text="Show Performance Metrics" Click="Metrics_Click" />
+                <ToggleMenuFlyoutItem Text="Use Frame Blending" IsChecked="{x:Bind ViewModel.Screen.UseInterFrameBlending, Mode=TwoWay}" />
+            </MenuBarItem>
+            <MenuBarItem Title="Controller" AccessKey="C">
+                <RadioMenuFlyoutItem Text="1" Tag="1" GroupName="Controller" Click="Controller_Click" IsChecked="{x:Bind IsControllerSelected(ViewModel.Input.SelectedController, 1), Mode=OneWay}" />
+                <RadioMenuFlyoutItem Text="2" Tag="2" GroupName="Controller" Click="Controller_Click" IsChecked="{x:Bind IsControllerSelected(ViewModel.Input.SelectedController, 2), Mode=OneWay}" />
+                <RadioMenuFlyoutItem Text="3" Tag="3" GroupName="Controller" Click="Controller_Click" IsChecked="{x:Bind IsControllerSelected(ViewModel.Input.SelectedController, 3), Mode=OneWay}" />
+                <RadioMenuFlyoutItem Text="4" Tag="4" GroupName="Controller" Click="Controller_Click" IsChecked="{x:Bind IsControllerSelected(ViewModel.Input.SelectedController, 4), Mode=OneWay}" />
+            </MenuBarItem>
+        </MenuBar>
+        <TextBlock x:Name="FPS" Text="{x:Bind ViewModel.Performance.PerformanceDisplayText, Mode=OneWay}"
+                   Foreground="{ThemeResource TextFillColorPrimaryBrush}" Padding="0,0,0,4" Visibility="Collapsed" />
+        <Image x:Name="Display" Height="576" Width="640" Source="{x:Bind ViewModel.DisplayFrame}" Stretch="None"
+               AutomationProperties.Name="Game Boy display" />
     </StackPanel>
 </Window>

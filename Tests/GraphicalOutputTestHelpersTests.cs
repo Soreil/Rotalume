@@ -106,7 +106,8 @@ internal class GraphicalOutputTestHelpersTests
         using var pixels = image.GetPixels();
         for (int x = 0; x < expected.Length; x++)
         {
-            var color = pixels.GetPixel(x, 0).ToColor();
+            var color = pixels.GetPixel(x, 0).ToColor()
+                ?? throw new InvalidDataException($"No color at pixel ({x}, 0).");
             Assert.That(color.R, Is.EqualTo(expected[x]), $"Red at pixel {x}");
             Assert.That(color.G, Is.EqualTo(expected[x]), $"Green at pixel {x}");
             Assert.That(color.B, Is.EqualTo(expected[x]), $"Blue at pixel {x}");

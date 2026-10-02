@@ -2,12 +2,12 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-using System.Windows.Input;
-using System.Windows.Media.Imaging;
+using Microsoft.UI.Xaml.Media.Imaging;
+
+using Windows.Storage.Pickers;
 
 using WPFFrontend.Models;
 using WPFFrontend.Platform;
-using WPFFrontend.Views;
 
 namespace WPFFrontend.ViewModels;
 
@@ -16,47 +16,47 @@ public partial class GameBoyViewModel : ObservableObject, IDisposable
     public GameboyTimingInfo Performance { get; }
     public GameboyScreen Screen { get; }
 
-    public ICommand StopCommand { get; }
-    public ControllerIDConverter ControllerIDConverter { get; }
+    public IRelayCommand StopCommand { get; }
+    public nint WindowHandle { get; set; }
     private Model Model { get; }
     public Input Input { get; }
 
     public GameBoyViewModel(GameboyScreen gameboyScreen,
         GameboyTimingInfo performance,
-        ControllerIDConverter controllerIDConverter,
         Model model,
         Input input)
     {
         Screen = gameboyScreen;
         Performance = performance;
         StopCommand = new RelayCommand(model.ShutdownGameboy);
-        ControllerIDConverter = controllerIDConverter;
         Model = model;
         Input = input;
         Screen.FrameDrawn += Display_FrameDrawn;
+        DisplayFrame = Screen.Output;
     }
 
-    [ObservableProperty]
-    private BitmapSource? displayFrame;
+    public WriteableBitmap DisplayFrame { get; }
 
     [RelayCommand]
     private void TogglePause() => Model.Paused = !Model.Paused;
 
     [RelayCommand]
-    public void LoadROMPopUp()
+    public async Task LoadROMPopUpAsync()
     {
-        var ofd = new Microsoft.Win32.OpenFileDialog() { DefaultExt = ".gb", Filter = "ROM Files (*.gb;*.gbc)|*.gb;*.gbc" };
-        var result = ofd.ShowDialog();
-        if (result == true)
+        var picker = new FileOpenPicker();
+        picker.FileTypeFilter.Add(".gb");
+        picker.FileTypeFilter.Add(".gbc");
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, WindowHandle);
+        var file = await picker.PickSingleFileAsync();
+        if (file is not null)
         {
-            Model.ROM = ofd.FileName;
+            Model.ROM = file.Path;
         }
     }
 
     private void Display_FrameDrawn(object? sender, EventArgs e)
     {
         Performance.Update();
-        DisplayFrame = Screen.output;
     }
 
     public bool BootRomEnabled

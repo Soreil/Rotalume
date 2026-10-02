@@ -1,12 +1,14 @@
 ﻿using emulator.input;
 
-using System.Windows.Input;
+using Microsoft.UI.Xaml.Input;
+
+using Windows.System;
 
 namespace WPFFrontend.Glue;
 
 public class KeyBoardWithInterruptHandler
 {
-    private readonly Dictionary<Key, Action<bool>> keyActions;
+    private readonly Dictionary<VirtualKey, Action<bool>> keyActions;
 
     public event EventHandler<EventArgs>? KeyWentDown;
 
@@ -19,7 +21,7 @@ public class KeyBoardWithInterruptHandler
     public bool DpadUp { get; internal set; }
     public bool Start { get; internal set; }
 
-    public KeyBoardWithInterruptHandler(Dictionary<Key, JoypadKey> mappedKeys)
+    public KeyBoardWithInterruptHandler(Dictionary<VirtualKey, JoypadKey> mappedKeys)
     {
         keyActions = [];
         foreach (var (key, value) in mappedKeys)
@@ -39,7 +41,7 @@ public class KeyBoardWithInterruptHandler
         }
     }
 
-    public void Down(object? sender, KeyEventArgs e)
+    public void Down(object _, KeyRoutedEventArgs e)
     {
         if (keyActions.TryGetValue(e.Key, out var KeyDown))
         {
@@ -48,7 +50,7 @@ public class KeyBoardWithInterruptHandler
         }
     }
 
-    public void Up(object? sender, KeyEventArgs e)
+    public void Up(object _, KeyRoutedEventArgs e)
     {
         if (keyActions.TryGetValue(e.Key, out var KeyUp))
         {
@@ -57,4 +59,10 @@ public class KeyBoardWithInterruptHandler
     }
 
     protected virtual void OnAnyKeyDown(EventArgs e) => KeyWentDown?.Invoke(this, e);
+
+    public void ReleaseKeys()
+    {
+        foreach (var action in keyActions.Values)
+            action(false);
+    }
 }

@@ -5,6 +5,7 @@ using emulator.graphics;
 using emulator.input;
 
 using Microsoft.Extensions.Logging;
+using Microsoft.UI.Dispatching;
 
 using System.IO;
 
@@ -15,9 +16,13 @@ using WPFFrontend.Services;
 namespace WPFFrontend.Models;
 
 public class Model(GameboyScreen gameboyScreen,
-    Input input, FileService fileService, ILogger<FrameSink> logger) : ObservableObject, IDisposable
+    Input input, FileService fileService, ILogger<FrameSink> logger,
+    DispatcherQueue dispatcherQueue) : ObservableObject, IDisposable
 {
-    public bool Paused { get; set; }
+    private volatile bool paused;
+    private volatile bool fpsLockEnabled;
+
+    public bool Paused { get => paused; set => paused = value; }
 
     public string? ROM
     {
@@ -34,7 +39,7 @@ public class Model(GameboyScreen gameboyScreen,
         }
     }
 
-    public bool FpsLockEnabled { get; set; }
+    public bool FpsLockEnabled { get => fpsLockEnabled; set => fpsLockEnabled = value; }
     public bool BootRomEnabled;
 
     public GameboyScreen GameboyScreen { get; } = gameboyScreen;
@@ -43,51 +48,43 @@ public class Model(GameboyScreen gameboyScreen,
     public ILogger<FrameSink> Logger { get; } = logger;
     public Player? Player { get; set; }
 
-    private void Gameboy(string gameRomPath, bool bootromEnabled)
+    private void Gameboy(string gameRomPath, bool bootromEnabled, CancellationToken cancellationToken)
     {
-        var fpsCheckCb = new Func<bool>(() => FpsLockEnabled);
+        var bootrom = bootromEnabled ? File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "bootrom", "DMG_ROM_BOOT.bin")) : null;
 
-        var bootrom = bootromEnabled ? File.ReadAllBytes(@"..\..\..\..\emulator\bootrom\DMG_ROM_BOOT.bin") : null;
-
-        bool FPSLimiterEnabled()
-        {
-            try
-            {
-                return !CancelGameboySource.Token.IsCancellationRequested
-&& System.Windows.Application.Current.Dispatcher.Invoke(fpsCheckCb,
-                    System.Windows.Threading.DispatcherPriority.Render, CancelGameboySource.Token);
-            }
-            catch (TaskCanceledException)
-            {
-                return false;
-            }
-        }
+        bool FPSLimiterEnabled() => !cancellationToken.IsCancellationRequested && FpsLockEnabled;
 
         void FramePushed(object? o, EventArgs e)
         {
-            if (CancelGameboySource.IsCancellationRequested)
-            {
-                shouldStop = true;
-                return;
-            }
+            cancellationToken.ThrowIfCancellationRequested();
             while (Paused)
             {
-                Task.Delay(10).Wait();
+                cancellationToken.ThrowIfCancellationRequested();
+                _ = cancellationToken.WaitHandle.WaitOne(10);
             }
 
             if (o is FrameSink pixels)
             {
                 var frame = pixels.GetFrame();
-                var draw = new Action(() => GameboyScreen.Fs_FramePushed(frame));
-
-                try
+                var drawn = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                if (!dispatcherQueue.TryEnqueue(() =>
                 {
-                    System.Windows.Application.Current.Dispatcher.Invoke(draw,
-                      System.Windows.Threading.DispatcherPriority.Render, CancelGameboySource.Token);
-                }
-                catch (TaskCanceledException)
+                    try
+                    {
+                        if (!cancellationToken.IsCancellationRequested)
+                            GameboyScreen.Fs_FramePushed(frame);
+                        _ = drawn.TrySetResult();
+                    }
+                    catch (Exception ex)
+                    {
+                        _ = drawn.TrySetException(ex);
+                    }
+                }))
                 {
+                    throw new OperationCanceledException("UI dispatcher is shutting down.", cancellationToken);
                 }
+                //Bound the queue to one frame. Cancellation releases the worker even if the UI is closing.
+                drawn.Task.Wait(cancellationToken);
             }
         }
 
@@ -106,25 +103,23 @@ public class Model(GameboyScreen gameboyScreen,
         player.Play();
 
 
-        while (!shouldStop)
+        while (!cancellationToken.IsCancellationRequested)
         {
-            for (int i = 0; i < 4000000; i++)
-                gameboy.Step();
+            gameboy.Step();
         }
         player.Stop();
     }
 
     private Task? GameTask;
     private CancellationTokenSource CancelGameboySource = new();
-    private bool shouldStop;
     private bool disposedValue;
 
     public void SpinUpNewGameboy(string path)
     {
         ShutdownGameboy();
+        CancelGameboySource.Dispose();
         CancelGameboySource = new();
-
-        shouldStop = false;
+        var cancellationToken = CancelGameboySource.Token;
 
         var br = BootRomEnabled;
 
@@ -132,7 +127,14 @@ public class Model(GameboyScreen gameboyScreen,
         {
             Thread.CurrentThread.IsBackground = true;
             Thread.CurrentThread.Name = "Gaming";
-            Gameboy(path, br);
+            try
+            {
+                Gameboy(path, br, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                //Expected when stopping, replacing a ROM, or closing the window.
+            }
         });
     }
 
@@ -141,7 +143,8 @@ public class Model(GameboyScreen gameboyScreen,
         if (GameTask is not null)
         {
             CancelGameboySource.Cancel();
-            GameTask?.Wait();
+            GameTask.Wait();
+            GameTask = null;
         }
     }
 

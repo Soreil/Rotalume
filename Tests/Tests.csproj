@@ -34,6 +34,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\emulator\emulator.csproj" />
 		<ProjectReference Include="..\WAV\WAV.csproj" />
+		<Compile Include="..\WPFFrontend\Platform\FramePixels.cs" Link="Frontend\FramePixels.cs" />
 	</ItemGroup>
 
 </Project>

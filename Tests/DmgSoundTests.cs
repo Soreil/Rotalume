@@ -38,7 +38,7 @@ internal class DmgSoundTests
         {
             byte value = core.Memory[(ushort)address];
             if (value == 0) break;
-            text.Append((char)value);
+            _ = text.Append((char)value);
         }
         Assert.That(core.Memory[0xa001], Is.EqualTo(0xde), "Missing blargg result signature.");
         Assert.That(core.Memory[0xa002], Is.EqualTo(0xb0), "Missing blargg result signature.");

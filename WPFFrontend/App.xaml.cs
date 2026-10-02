@@ -1,9 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.UI.Dispatching;
+using Microsoft.UI.Xaml;
 
-using System.Windows;
-
-using WPFFrontend.Glue;
 using WPFFrontend.Models;
 using WPFFrontend.Platform;
 using WPFFrontend.Services;
@@ -14,39 +13,44 @@ namespace WPFFrontend;
 
 public partial class App : Application
 {
-    private static IHostBuilder CreateHostBuilder(string[] args) =>
+    private static IHostBuilder CreateHostBuilder(string[] args, DispatcherQueue dispatcherQueue) =>
 Host.CreateDefaultBuilder(args)
     .ConfigureServices((_, services) =>
         services.
+    AddSingleton(dispatcherQueue).
     AddSingleton<GameBoyViewModel>().
     AddSingleton<GameboyScreen>().
     AddSingleton<GameboyTimingInfo>().
     AddSingleton<Input>().
     AddSingleton<Model>().
-    AddSingleton<FileService>().
-    AddSingleton<ControllerIDConverter>()
+    AddSingleton<FileService>()
     );
 
-    private readonly IHost host;
+    private IHost? host;
+    private Screen? mainWindow;
+
     public App()
     {
-        var hostBuilder = CreateHostBuilder([]);
-
-        host = hostBuilder.Start();
+        InitializeComponent();
     }
-    private void OnStartup(object sender, StartupEventArgs e)
+
+    protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
+        var commandLine = Environment.GetCommandLineArgs().Skip(1).ToArray();
+        host = CreateHostBuilder([], DispatcherQueue.GetForCurrentThread()).Start();
         var vm = host.Services.GetRequiredService<GameBoyViewModel>();
         var model = host.Services.GetRequiredService<Model>();
-
-        var hideMenu = e.Args.Contains("--no-menu");
-        var romPath = e.Args.FirstOrDefault(arg => arg != "--no-menu");
-        var mainWindow = new Screen(model, hideMenu) { DataContext = vm };
-
+        var hideMenu = commandLine.Contains("--no-menu");
+        var romPath = commandLine.FirstOrDefault(arg => arg != "--no-menu");
         var input = host.Services.GetRequiredService<Input>();
-        KeyboardViewModelBridge.Connect(input, mainWindow);
-
-        mainWindow.Show();
+        mainWindow = new Screen(vm, input, hideMenu);
+        mainWindow.Closed += (_, _) =>
+        {
+            host.Dispose();
+            host = null;
+            mainWindow = null;
+        };
+        mainWindow.Activate();
 
         if (romPath is not null)
         {
