@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net11.0</TargetFrameworks>
+    <OutputType>Exe</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.16.0-preview.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\emulator\emulator.csproj" />
+    <Reference Include="emulator.PreviousCommit">
+      <HintPath>..\.vs\performance-baseline\b65d812\source\emulator\bin\Release\net11.0\emulator.PreviousCommit.dll</HintPath>
+      <Aliases>PreviousEmulator</Aliases>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+</Project>
