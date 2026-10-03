@@ -3,7 +3,6 @@ extern alias PreviousEmulator;
 using BenchmarkDotNet.Attributes;
 
 using emulator.glue;
-using emulator.graphics;
 using emulator.input;
 
 using PreviousCore = PreviousEmulator::emulator.glue.Core;
@@ -13,7 +12,7 @@ using PreviousKeypad = PreviousEmulator::emulator.input.Keypad;
 namespace BenchmarkSuite1;
 
 [SimpleJob(launchCount: 2, warmupCount: 4, iterationCount: 12, invocationCount: 1)]
-public class EmulatorRevisionBenchmarks
+public partial class EmulatorRevisionBenchmarks
 {
     private const long FrameTicks = 70224;
     private const long WorkTicks = 120 * FrameTicks;
@@ -116,50 +115,6 @@ public class EmulatorRevisionBenchmarks
         finally
         {
             previous.Dispose();
-        }
-    }
-
-    private sealed class CountingFrameSink : IFrameSink, PreviousEmulator::emulator.graphics.IFrameSink
-    {
-        public int Frames;
-        public bool Paused { get; private set; }
-
-        public event EventHandler? FramePushed;
-        public void Draw()
-        {
-            Frames++;
-            FramePushed?.Invoke(this, EventArgs.Empty);
-        }
-
-        public void Write(ReadOnlySpan<byte> buffer)
-        {
-        }
-
-        public void Pause() => Paused = true;
-        public void Resume() => Paused = false;
-    }
-
-    private sealed class QuietController : IGameController, PreviousEmulator::emulator.input.IGameController
-    {
-        public bool IsBPressed => false;
-        public bool IsSelectPressed => false;
-        public bool IsAPressed => false;
-        public bool IsDPadDownPressed => false;
-        public bool IsDPadLeftPressed => false;
-        public bool IsDPadRightPressed => false;
-        public bool IsDPadUpPressed => false;
-        public bool IsStartPressed => false;
-
-        public void AddEventHandler(EventHandler<EventArgs> e)
-        {
-        }
-
-        public void RemoveEventHandler(EventHandler<EventArgs> e)
-        {
-        }
-
-        public void Vibrate(double leftMotor, double rightMotor)
-        {
         }
     }
 }
