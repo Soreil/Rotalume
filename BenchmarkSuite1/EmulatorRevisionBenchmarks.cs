@@ -26,6 +26,9 @@ public partial class EmulatorRevisionBenchmarks
     [Params(false, true)]
     public bool GraphicsEnabled { get; set; }
 
+    [Params(false, true)]
+    public bool AudioEnabled { get; set; }
+
     [GlobalSetup]
     public void LoadRom()
     {
@@ -51,6 +54,7 @@ public partial class EmulatorRevisionBenchmarks
             current.Step();
         if (!GraphicsEnabled)
             current.Memory[0xff40] = 0;
+        current.Memory[0xff26] = AudioEnabled ? (byte)0x80 : (byte)0;
         current.Samples.APUBuffer.Clear();
         currentSink.Frames = 0;
         currentEnd = current.Time() + WorkTicks;
@@ -71,6 +75,8 @@ public partial class EmulatorRevisionBenchmarks
         {
             if (((current.Memory[0xff40] & 0x80) != 0) != GraphicsEnabled)
                 throw new InvalidOperationException("ROM changed LCD enable during the measured interval.");
+            if (((current.Memory[0xff26] & 0x80) != 0) != AudioEnabled)
+                throw new InvalidOperationException("ROM changed APU enable during the measured interval.");
             if (GraphicsEnabled && currentSink.Frames < 119)
                 throw new InvalidOperationException("The graphics workload did not produce the expected frames.");
         }
@@ -89,6 +95,7 @@ public partial class EmulatorRevisionBenchmarks
             previous.Step();
         if (!GraphicsEnabled)
             previous.Memory[0xff40] = 0;
+        previous.Memory[0xff26] = AudioEnabled ? (byte)0x80 : (byte)0;
         previous.Samples.APUBuffer.Clear();
         previousSink.Frames = 0;
         previousEnd = previous.Time() + WorkTicks;
@@ -109,6 +116,8 @@ public partial class EmulatorRevisionBenchmarks
         {
             if (((previous.Memory[0xff40] & 0x80) != 0) != GraphicsEnabled)
                 throw new InvalidOperationException("ROM changed LCD enable during the measured interval.");
+            if (((previous.Memory[0xff26] & 0x80) != 0) != AudioEnabled)
+                throw new InvalidOperationException("ROM changed APU enable during the measured interval.");
             if (GraphicsEnabled && previousSink.Frames < 119)
                 throw new InvalidOperationException("The graphics workload did not produce the expected frames.");
         }
