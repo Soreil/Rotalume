@@ -17,12 +17,18 @@ public class FIFO<T>
 
     public void Push(T p) => buffer[(position + Count++) & mask] = p;
 
+    public void Push8(ReadOnlySpan<T> p)
+    {
+        System.Diagnostics.Debug.Assert(p.Length == 8);
+        p.CopyTo(buffer.AsSpan((position + Count) & mask));
+        Count += 8;
+    }
+
     public T Pop()
     {
         Count--;
         return buffer[position++ & mask];
     }
-    public void Replace(int at, T p) => buffer[(position + at) & mask] = p;
 
-    public T At(int at) => buffer[(position + at) & mask];
+    public ref T At(int at) => ref buffer[(position + at) & mask];
 }

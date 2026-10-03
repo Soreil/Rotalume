@@ -87,15 +87,15 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
         {
             for (var i = GraphicConstants.SpriteWidth; i > 0; i--)
             {
-                var paletteIndex =(byte)(Convert.ToByte(low.GetBit(i - 1)) | (byte)(Convert.ToByte(high.GetBit(i - 1)) << 1));
+                var paletteIndex = (byte)(Convert.ToByte(low.GetBit(i - 1)) | (byte)(Convert.ToByte(high.GetBit(i - 1)) << 1));
 
                 var pos = sprite.XFlipped ? (i - 1) : GraphicConstants.SpriteWidth - i;
-                var existingSpritePixel = SpriteFIFO.At(pos);
+                ref var existingSpritePixel = ref SpriteFIFO.At(pos);
                 var candidate = new FIFOSpritePixel(sprite.Palette, paletteIndex, sprite.SpriteToBackgroundPriority);
 
                 if (ShouldReplace(existingSpritePixel, candidate))
                 {
-                    SpriteFIFO.Replace(pos, candidate);
+                    existingSpritePixel = candidate;
                 }
             }
         }
@@ -109,9 +109,10 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
     {
         //Sprites are enabled and there is a sprite starting on the current X position
         //We can't start the sprite fetching yet if the background fifo is empty
-        if (CanRenderASprite())
+        var sprite = CanRenderASprite();
+        if (sprite is SpriteAttributes sa)
         {
-            PushSpriteRowToPixelFetcher();
+            PushSpriteRowToPixelFetcher(sa);
         }
 
         if (FIFOsNotEmpty())
@@ -157,7 +158,7 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
 
     private bool FIFOsNotEmpty() => BGFIFO.Count != 0 && SpriteFIFO.Count != 0;
 
-    private void PushSpriteRowToPixelFetcher()
+    private void PushSpriteRowToPixelFetcher(SpriteAttributes sprite)
     {
         //Fill the fifo lower half with transparant pixels
         for (int i = SpriteFIFO.Count; i < GraphicConstants.SpriteWidth; i = SpriteFIFO.Count)
@@ -165,7 +166,6 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
             SpriteFIFO.Push(new FIFOSpritePixel(0, 0, false));
         }
 
-        var sprite = FirstMatchingSprite();
 
         //16 pixel offset before lines can be offscreen taken out
         var y = Ppu.LY - (sprite.Y - GraphicConstants.DoubleSpriteHeight);
@@ -193,9 +193,12 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
         SpritesFinished++;
     }
 
-    private bool CanRenderASprite() => BGFIFO.Count != 0 &&
-        Ppu.OBJDisplayEnable && SpriteCount - SpritesFinished != 0
-        && ContainsSprite();
+    private SpriteAttributes? CanRenderASprite()
+    {
+        var states = BGFIFO.Count != 0 &&
+        Ppu.OBJDisplayEnable && SpriteCount - SpritesFinished != 0;
+        return !states ? null : FirstMatchingSprite();
+    }
 
     private int PixelsPopped;
     public int PixelsSentToLCD;
@@ -227,17 +230,7 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
         SpritesFinished = 0;
     }
 
-    private bool ContainsSprite()
-    {
-        byte wanted = (byte)(scanlineX + 8 - (Ppu.SCX & 7));
-
-        return SpriteAttributes
-            .Skip(SpritesFinished)
-            .Take(SpriteCount - SpritesFinished)
-            .Any(s => s.X == wanted);
-    }
-
-    private SpriteAttributes FirstMatchingSprite()
+    private SpriteAttributes? FirstMatchingSprite()
     {
         var wanted = scanlineX + 8 - (Ppu.SCX & 7);
 
@@ -248,7 +241,7 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
                 return SpriteAttributes[i];
             }
         }
-        throw new NoMatchingSprites("Illegal call");
+        return null;
     }
 
     private byte FetchHigh() => VRAM[GetAdress() + 1];
@@ -307,6 +300,7 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
     {
         if (BGFIFO.Count <= 8)
         {
+            var buffer = new FIFOPixel[GraphicConstants.SpriteWidth];
             for (var i = GraphicConstants.SpriteWidth; i > 0; i--)
             {
                 var pixel = new FIFOPixel((tileDataHigh.GetBit(i - 1), tileDataLow.GetBit(i - 1)) switch
@@ -316,8 +310,11 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
                     (true, false) => 2,
                     (true, true) => 3,
                 });
-                BGFIFO.Push(pixel);
+
+                buffer[8 - i] = pixel;
             }
+
+            BGFIFO.Push8(buffer);
 
             return true;
         }
