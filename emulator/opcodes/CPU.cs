@@ -1,4 +1,5 @@
-﻿using emulator.memory;
+﻿using emulator.glue;
+using emulator.memory;
 using emulator.registers;
 
 using Microsoft.Extensions.Logging;
@@ -10,8 +11,9 @@ public partial class CPU
     private readonly Action[] StdOps;
     private readonly Action[] CbOps;
     private readonly InterruptRegisters ISR;
-    public readonly Registers Registers;
+    public Registers Registers { get; }
     private readonly MMU Memory;
+    public Cycler Cycler { get; }
 
     public ushort PC { get; private set; }
     private readonly ILogger Logger;
@@ -22,10 +24,13 @@ public partial class CPU
 
     public Action Op(CBOpcode op) => CbOps[(int)op];
 
-    public CPU(MMU mMU, InterruptRegisters interruptRegisters, ILogger<CPU> logger)
+    public CPU(MMU mMU, InterruptRegisters interruptRegisters, Registers registers, Cycler cycler, ushort? pC, ILogger<CPU> logger)
     {
         Memory = mMU;
         ISR = interruptRegisters;
+        Registers = registers;
+        Cycler = cycler;
+        PC = pC ?? 0x0;
         Logger = logger;
 
         StdOps = new Action[0x100];
@@ -543,8 +548,6 @@ public partial class CPU
         CbOps[(int)CBOpcode.SET_7_L] = SET(7, Register.L);
         CbOps[(int)CBOpcode.SET_7_AT_HL] = SET(7, Register.HL);
         CbOps[(int)CBOpcode.SET_7_A] = SET(7, Register.A);
-
-        Registers = new Registers();
     }
 
     private byte ReadHaltBug()
@@ -554,7 +557,7 @@ public partial class CPU
         return Memory[PC];
     }
 
-    internal void DoNextOP()
+    private void DoNextOP()
     {
         if (Halted != HaltState.off)
         {
@@ -579,10 +582,8 @@ public partial class CPU
 
     private void CycleElapsed()
     {
-        Cycle();
+        Cycler.Cycle();
     }
-
-    public Action Cycle = () => { };
 
     internal void Step()
     {
