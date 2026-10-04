@@ -7,7 +7,6 @@ using emulator.sound;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 namespace emulator.glue;
 
@@ -37,7 +36,7 @@ public class Core : IDisposable
         AddSingleton<OAM>().
         AddSingleton<VRAM>().
         AddSingleton<PPU>().
-        AddSingleton<CPUFactory>().
+        AddSingleton<CPU>().
         AddSingleton<DMARegister>().
         AddSingleton<DMAControl>().
         AddSingleton<MasterClock>().
@@ -72,7 +71,7 @@ public class Core : IDisposable
 
         Memory = host.Services.GetRequiredService<MMU>();
 
-        var cpuFactory = host.Services.GetRequiredService<CPUFactory>();
+        CPU = host.Services.GetRequiredService<CPU>();
 
         var DMA = host.Services.GetRequiredService<DMAControl>();
 
@@ -84,15 +83,19 @@ public class Core : IDisposable
 
         Samples = host.Services.GetRequiredService<Samples>();
 
-        var cycler = new Cycler(Timers, PPU, APU, DMA, MasterClock, Samples);
-
-
+        CPU.OAMCorruption += (o, e) =>
+        {
+            // Both memory accesses and address-only INC/DEC events require an active,
+            // corruptible OAM scan row. Merely enabling the LCD is not sufficient.
+            if (PPU.CanCorruptOAM)
+                OAM.Corrupt(PPU.OAMScanRow, e.Kind);
+        };
 
         //We have to replicate the state of the system post boot without running the bootrom
         if (bootROM == null)
         {
             //registers
-            cpuFactory.SetStateWithoutBootrom();
+            CPU.SetStateWithoutBootrom();
 
             //timers
             Timers.SetStateWithoutBootrom();
@@ -107,17 +110,10 @@ public class Core : IDisposable
             InterruptRegisters.SetStateWithoutBootrom();
         }
 
-        CPU = cpuFactory.CreateCPU(Memory, InterruptRegisters, cycler, host.Services.GetRequiredService<ILogger<CPU>>());
+        var cycler = new Cycler(Timers, PPU, APU, DMA, MasterClock, Samples);
 
-        CPU.OAMCorruption += (o, e) =>
-        {
-            // Both memory accesses and address-only INC/DEC events require an active,
-            // corruptible OAM scan row. Merely enabling the LCD is not sufficient.
-            if (PPU.CanCorruptOAM)
-                OAM.Corrupt(PPU.OAMScanRow, e.Kind);
-        };
+        CPU.Cycle = cycler.Cycle;
     }
-
 
     public void Step() => CPU.Step();
 
