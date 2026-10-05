@@ -10,7 +10,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace emulator.glue;
-
 public class Core : IDisposable
 {
     public readonly CPU CPU;

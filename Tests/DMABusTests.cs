@@ -39,9 +39,9 @@ internal class DMABusTests
         core.Memory[0x0000] = 0; // Must not disable cartridge RAM during DMA.
 
         for (int i = 0; i < 159; i++)
-            core.CPU.Cycle();
+            core.CPU.Cycler.Cycle();
         Assert.That(core.Memory[0xc000], Is.EqualTo(0xff), "DMA must last all 160 cycles.");
-        core.CPU.Cycle();
+        core.CPU.Cycler.Cycle();
         foreach (var address in romAddresses.Concat(ramAddresses))
             Assert.That(core.Memory[address], Is.EqualTo(0x55), $"After DMA: {address:X4}");
     }
@@ -77,7 +77,7 @@ internal class DMABusTests
             }
             core.Memory[0xff46] = (byte)(source >> 8);
             for (int i = 0; i < 160; i++)
-                core.CPU.Cycle();
+                core.CPU.Cycler.Cycle();
             for (int i = 0; i < expected.Length; i++)
                 Assert.That(core.Memory[(ushort)(0xfe00 + i)], Is.EqualTo(expected[i]), $"Source {source:X4}, byte {i:X2}");
         }
