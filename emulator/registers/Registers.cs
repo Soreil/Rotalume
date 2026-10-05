@@ -1,16 +1,7 @@
 ﻿using emulator.extensions;
 
-using System.Runtime.InteropServices;
-
 namespace emulator.registers;
 
-[StructLayout(LayoutKind.Explicit)]
-public struct UnionRegister
-{
-    [FieldOffset(0)] public ushort Wide;
-    [FieldOffset(0)] public byte Low;
-    [FieldOffset(1)] public byte High;
-}
 public class Registers
 {
     public ushort AF
