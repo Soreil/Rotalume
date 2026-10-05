@@ -482,6 +482,7 @@ public class APU(ILogger<APU> logger)
 
     internal APUState SerializeState()
     {
+        //TODO: Serialize renderer state
         return new APUState
         {
             Noise = Noise.GetState(),

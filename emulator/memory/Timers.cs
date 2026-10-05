@@ -2,9 +2,35 @@
 using emulator.opcodes;
 
 namespace emulator.memory;
-//Timer system handles all Gekkio timer tests except for tima_write_reloading and tma_write_reloading
+
+public class TimerState
+{
+    public required ushort InternalCounter { get; init; }
+    public required bool FallingEdgePrevious { get; init; }
+    public required bool FallingEdgeAPUTriggerPrevious { get; init; }
+    public required bool TACEnable { get; init; }
+    public required int TACSelectedBit { get; init; }
+    public required byte TMA { get; init; }
+    public required byte TIMA { get; init; }
+    public required uint DelayTicks { get; init; }
+    public required uint IgnoreTIMAWriteTicks { get; init; }
+}
+
 public class Timers
 {
+    public TimerState SerializeState() => new()
+    {
+        InternalCounter = InternalCounter,
+        FallingEdgePrevious = fallingEdgePrevious,
+        FallingEdgeAPUTriggerPrevious = fallingEdgeAPUTriggerPrevious,
+        TACEnable = TACEnable,
+        TACSelectedBit = TACSelectedBit,
+        TMA = TMA,
+        TIMA = TIMA,
+        DelayTicks = DelayTicks,
+        IgnoreTIMAWriteTicks = IgnoreTIMAWriteTicks
+    };
+
     public ushort InternalCounter;
 
     //The previous value has a NOT gate in front of it so we want to set it to true initally
@@ -146,29 +172,28 @@ public class Timers
         _ => throw new NotImplementedException(),
     };
 
-    private byte tma;
     private byte TMA
     {
-        get => tma;
+        get;
         set
         {
             if (IgnoreTIMAWriteTicks != 0)
             {
-                tima = value;
+                _tima = value;
             }
-            tma = value;
+            field = value;
         }
     }
 
-    private byte tima;
+    private byte _tima;
     private byte TIMA
     {
-        get => tima;
+        get => _tima;
         set
         {
             if (IgnoreTIMAWriteTicks != 0) return;
 
-            tima = value;
+            _tima = value;
             //When writing a value to TIMA in case [A] it prevents the interrupt handling and reload from TMA
             DelayTicks = 0;
         }

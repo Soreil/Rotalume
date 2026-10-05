@@ -1,6 +1,13 @@
 ﻿using emulator.extensions;
 
 namespace emulator.input;
+
+public class KeypadState
+{
+    public required byte KeypadFlags { get; init; }
+    public required bool Rumbling { get; init; }
+}
+
 public class Keypad
 {
     //0x3 sets the top selection bits for buttons and dpad
@@ -86,8 +93,12 @@ public class Keypad
         Rumbling = !Rumbling;
     }
 
-    internal object SerializeState()
+    internal KeypadState SerializeState()
     {
-        throw new NotImplementedException();
+        return new KeypadState
+        {
+            KeypadFlags = keypadFlags,
+            Rumbling = Rumbling
+        };
     }
 }

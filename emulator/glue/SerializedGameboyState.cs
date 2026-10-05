@@ -1,4 +1,5 @@
-﻿using emulator.memory;
+﻿using emulator.graphics;
+using emulator.memory;
 using emulator.opcodes;
 using emulator.sound;
 
@@ -10,4 +11,6 @@ public class SerializedGameboyState
     public required MMUState Memory { get; init; }
     public required APUState APU { get; init; }
     public required long MasterClock { get; init; }
+    public required PPUState PPU { get; init; }
+    public required TimerState Timers { get; init; }
 }

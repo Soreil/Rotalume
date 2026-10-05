@@ -1,5 +1,10 @@
 ﻿namespace emulator.graphics;
 
+
+public class HRAMState
+{
+    public required byte[] Mem { get; init; }
+}
 public class HRAM
 {
     private readonly byte[] mem;
@@ -20,9 +25,12 @@ public class HRAM
         set => mem[n - Start] = value;
     }
 
-    internal object SerializeState()
+    internal HRAMState SerializeState()
     {
-        throw new NotImplementedException();
+        return new HRAMState
+        {
+            Mem = (byte[])mem.Clone()
+        };
     }
 }
 

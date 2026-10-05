@@ -1,5 +1,10 @@
 ﻿namespace emulator.graphics;
 
+public class UnusableMEMState
+{
+    public required byte[] Mem { get; init; }
+}
+
 public class UnusableMEM
 {
     private readonly byte[] mem;
@@ -20,9 +25,12 @@ public class UnusableMEM
         set => mem[n - Start] = value;
     }
 
-    internal object SerializeState()
+    internal UnusableMEMState SerializeState()
     {
-        throw new NotImplementedException();
+        return new UnusableMEMState
+        {
+            Mem = (byte[])mem.Clone()
+        };
     }
 }
 

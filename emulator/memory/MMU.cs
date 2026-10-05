@@ -8,20 +8,37 @@ namespace emulator.memory;
 
 public class MMUState
 {
-    public required object BootRom { get; init; }
+    public required BootRomState BootRom { get; init; }
     //public required object Card { get; init; }
-    public required object VRAM { get; init; }
-    public required object WRAM { get; init; }
-    public required object OAM { get; init; }
-    public required object APU { get; init; }
-    public required object HRAM { get; init; }
-    public required object UnusableMEM { get; init; }
-    public required object Keypad { get; init; }
-    public required object DMA { get; init; }
+    public required VRAMState VRAM { get; init; }
+    public required WRAMState WRAM { get; init; }
+    public required OAMState OAM { get; init; }
+    public required HRAMState HRAM { get; init; }
+    public required UnusableMEMState UnusableMEM { get; init; }
+    public required KeypadState Keypad { get; init; }
+    public required DMARegisterState DMA { get; init; }
 }
 
 public sealed class MMU
 {
+    internal MMUState SerializeState()
+    {
+        var state = new MMUState
+        {
+            BootRom = BootRom.SerializeState(),
+            //Card = Card.SerializeState(),
+            VRAM = VRAM.SerializeState(),
+            WRAM = WRAM.SerializeState(),
+            OAM = OAM.SerializeState(),
+            HRAM = HRAM.SerializeState(),
+            UnusableMEM = UnusableMEM.SerializeState(),
+            Keypad = Keypad.SerializeState(),
+            DMA = DMA.SerializeState()
+        };
+
+        return state;
+    }
+
     private readonly MBC Card;
     private readonly VRAM VRAM;
     private readonly WRAM WRAM;
@@ -30,6 +47,14 @@ public sealed class MMU
 
     private readonly HRAM HRAM;
     private readonly UnusableMEM UnusableMEM;
+    private readonly BootRom BootRom;
+    private readonly InterruptRegisters InterruptRegisters;
+    private readonly Keypad Keypad;
+    private readonly Serial Serial;
+    private readonly Timers Timers;
+    private readonly PPU PPU;
+    private readonly DMARegister DMA;
+
     public byte this[ushort at]
     {
         get => IsBlockedByDMA(at) ? (byte)0xff : ReadMapped(at);
@@ -167,14 +192,6 @@ public sealed class MMU
         }
     }
 
-    private readonly BootRom BootRom;
-    private readonly InterruptRegisters InterruptRegisters;
-    private readonly Keypad Keypad;
-    private readonly Serial Serial;
-    private readonly Timers Timers;
-    private readonly PPU PPU;
-    private readonly DMARegister DMA;
-
     public MMU(
         BootRom boot,
         MBC card,
@@ -218,23 +235,4 @@ public sealed class MMU
     // The DMA engine is not subject to the CPU's DMA bus restriction.
     internal byte ReadForDMA(ushort at) => at < 0xfe00 ? ReadMapped(at) : WRAM[at];
     public byte ExternalBusRAM(ushort at) => ReadForDMA(at);
-
-    internal MMUState SerializeState()
-    {
-        var state = new MMUState
-        {
-            BootRom = BootRom.SerializeState(),
-            //Card = Card.SerializeState(),
-            VRAM = VRAM.SerializeState(),
-            WRAM = WRAM.SerializeState(),
-            OAM = OAM.SerializeState(),
-            APU = APU.SerializeState(),
-            HRAM = HRAM.SerializeState(),
-            UnusableMEM = UnusableMEM.SerializeState(),
-            Keypad = Keypad.SerializeState(),
-            DMA = DMA.SerializeState()
-        };
-
-        return state;
-    }
 }

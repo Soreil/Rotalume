@@ -1,5 +1,11 @@
 ﻿namespace emulator.glue;
 
+public class DMARegisterState
+{
+    public int TicksLeft;
+    public ushort BaseAddr;
+}
+
 public class DMARegister
 {
     public const int DMADuration = 160;
@@ -17,8 +23,12 @@ public class DMARegister
         }
     }
 
-    internal object SerializeState()
+    internal DMARegisterState SerializeState()
     {
-        throw new NotImplementedException();
+        return new DMARegisterState
+        {
+            TicksLeft = TicksLeft,
+            BaseAddr = BaseAddr
+        };
     }
 }

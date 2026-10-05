@@ -10,11 +10,16 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace emulator.glue;
+
 public class Core : IDisposable
 {
     public readonly CPU CPU;
 
     private readonly APU APU;
+
+    public PPU PPU { get; }
+    public Timers Timers { get; }
+
     private readonly MasterClock MasterClock;
     private readonly MBC MBC;
 
@@ -65,9 +70,9 @@ public class Core : IDisposable
         var InterruptRegisters = host.Services.GetRequiredService<InterruptRegisters>();
 
         APU = host.Services.GetRequiredService<APU>();
-        var PPU = host.Services.GetRequiredService<PPU>();
+        PPU = host.Services.GetRequiredService<PPU>();
 
-        var Timers = host.Services.GetRequiredService<Timers>();
+        Timers = host.Services.GetRequiredService<Timers>();
 
         Memory = host.Services.GetRequiredService<MMU>();
 
@@ -124,6 +129,8 @@ public class Core : IDisposable
             Memory = Memory.SerializeState(),
             APU = APU.SerializeState(),
             MasterClock = MasterClock.SerializeState(),
+            PPU = PPU.SerializeState(),
+            Timers = Timers.SerializeState(),
         };
     }
 

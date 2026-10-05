@@ -5,6 +5,40 @@ using emulator.opcodes;
 using Microsoft.Extensions.Logging;
 
 namespace emulator.graphics;
+
+
+public class PPUState
+{
+    public required long Clock { get; init; }
+
+    //These flags are what LCDC register bits are set to, not the actual LCDC register value
+    public required bool LCDEnable { get; init; }
+    public required bool WindowTileMapSelect { get; init; }
+    public required bool WindowDisplayEnable { get; init; }
+    public required bool BGAndWindowTileDataSelectFlag { get; init; }
+    public required bool BGTileMapDisplaySelectFlag { get; init; }
+    public required bool DoubleHeightSprites { get; init; }
+    public required bool OBJDisplayEnable { get; init; }
+    public required bool BGDisplayEnable { get; init; }
+
+    //Not going to bother unpacking that STAT register, these are just interrupt flags
+    public required byte STAT { get; init; }
+
+    public required byte SCY { get; init; } //FF42
+    public required byte SCX { get; init; } //FF43
+            
+    public required byte LY { get; init; } //FF44
+    public required byte LYC { get; init; } //FF45
+
+    public required byte BGP { get; init; } //FF47
+    public required byte OBP0 { get; init; } //FF48
+    public required byte OBP1 { get; init; } //FF49
+
+    public required byte WY { get; init; } //FF4A
+    public required byte WX { get; init; } //FF4B
+
+}
+
 public class PPU
 {
     private long Clock;
@@ -201,6 +235,31 @@ public class PPU
         }
     }
 
+    internal PPUState SerializeState()
+    {
+        return new PPUState
+        {
+            Clock = Clock,
+            LCDEnable = LCDEnable,
+            WindowTileMapSelect = WindowTileMapSelect,
+            WindowDisplayEnable = WindowDisplayEnable,
+            BGAndWindowTileDataSelectFlag = BGAndWindowTileDataSelectFlag,
+            BGTileMapDisplaySelectFlag = BGTileMapDisplaySelectFlag,
+            DoubleHeightSprites = DoubleHeightSprites,
+            OBJDisplayEnable = OBJDisplayEnable,
+            BGDisplayEnable = BGDisplayEnable,
+            STAT = STAT,
+            SCY = SCY,
+            SCX = SCX,
+            LY = LY,
+            LYC = LYC,
+            WY = WY,
+            WX = WX,
+            BGP = BGP,
+            OBP0 = OBP0,
+            OBP1 = OBP1
+        };
+    }
 
     //We could have more calls to SetLCDC for other bits in the LCDC register.
     //The LCDCEnable flag is only interesting at the moment it flips and the renderer null check should mean a recent flip
