@@ -54,6 +54,41 @@ internal class GraphicalOutputTest
         Assert.That(ImageComparer.AreImagesEqual(expectedImage, outputImage), Is.True);
     }
 
+    [Test]
+    [Category("RequiresBootROM")]
+    public void BootromStateMatchesExpected()
+    {
+        var render = new TestRenderDevice();
+
+        var core = TestHelpers.NewBootCore(render);
+
+        int FramesDrawn = 0;
+        render.FramePushed += (sender, e) =>
+        {
+            // Read image that has no predefined dimensions.
+            var settings = new MagickReadSettings
+            {
+                Width = 160,
+                Height = 144,
+                Format = MagickFormat.Gray
+            };
+
+            FramesDrawn++;
+        };
+
+        while (core.CPU.PC != 0x100)
+            core.Step();
+
+        var state = core.SerializeState();
+        Assert.That(state.CPU.PC, Is.EqualTo(0x100));
+        Assert.That(state.CPU.Registers.AF & 0xfff0, Is.EqualTo(0x01b0));
+        Assert.That(state.CPU.Registers.BC, Is.EqualTo(0x0013));
+        Assert.That(state.CPU.Registers.DE, Is.EqualTo(0x00d8));
+        Assert.That(state.CPU.Registers.HL, Is.EqualTo(0x014d));
+        Assert.That(state.CPU.Registers.SP, Is.EqualTo(0xfffe));
+
+    }
+
     [TestCase(@"rom\dmg-acid2\dmg-acid2.gb", @"..\..\..\..\Tests\rom\dmg-acid2\expected.png", "outputDMG-ACID2.bmp", 100)]
 
     [TestCase(@"rom\mooneye-test-suite\acceptance\oam_dma\basic.gb", @"..\..\..\..\Tests\rom\mooneye-test-suite\acceptance\oam_dma\expected.png", "outputBasicOAM.bmp", 100)]
