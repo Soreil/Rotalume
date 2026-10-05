@@ -11,6 +11,11 @@
                         <KeyboardAccelerator Key="O" Modifiers="Control" />
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Save" Command="{x:Bind ViewModel.SaveGameboyStateCommand}">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Key="S" Modifiers="Control" />
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
                 <MenuFlyoutItem Text="Stop" Command="{x:Bind ViewModel.StopCommand}" />
             </MenuBarItem>
             <MenuBarItem Title="Options" AccessKey="O">

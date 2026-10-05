@@ -15,14 +15,17 @@ using WPFFrontend.Services;
 
 namespace WPFFrontend.Models;
 
-public class Model(GameboyScreen gameboyScreen,
+public partial class Model(GameboyScreen gameboyScreen,
     Input input, FileService fileService, ILogger<FrameSink> logger,
     DispatcherQueue dispatcherQueue) : ObservableObject, IDisposable
 {
     private volatile bool paused;
+    private volatile bool serializationRequested;
     private volatile bool fpsLockEnabled;
 
     public bool Paused { get => paused; set => paused = value; }
+
+    public bool SerializationRequested { get => serializationRequested; set => serializationRequested = value; }
 
     public string? ROM
     {
@@ -47,6 +50,7 @@ public class Model(GameboyScreen gameboyScreen,
     public FileService FileService { get; } = fileService;
     public ILogger<FrameSink> Logger { get; } = logger;
     public Player? Player { get; set; }
+    public SerializedGameboyState? MostRecentState { get; set; }
 
     private void Gameboy(string gameRomPath, bool bootromEnabled, CancellationToken cancellationToken)
     {
@@ -105,6 +109,11 @@ public class Model(GameboyScreen gameboyScreen,
 
         while (!cancellationToken.IsCancellationRequested)
         {
+            if (SerializationRequested)
+            {
+                this.MostRecentState = gameboy.SerializeState();
+                SerializationRequested = false;
+            }
             gameboy.Step();
         }
         player.Stop();
@@ -166,5 +175,20 @@ public class Model(GameboyScreen gameboyScreen,
     {
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
+    }
+
+    internal async Task<SerializedGameboyState?> SaveGameboyStateAsync(CancellationToken ct)
+    {
+        MostRecentState = null;
+        SerializationRequested = true;
+
+        var cts = CancellationTokenSource.CreateLinkedTokenSource(ct, new CancellationTokenSource(500).Token);
+
+
+        while (SerializationRequested && !cts.Token.IsCancellationRequested)
+        {
+            await Task.Delay(10, cts.Token);
+        }
+        return MostRecentState;
     }
 }

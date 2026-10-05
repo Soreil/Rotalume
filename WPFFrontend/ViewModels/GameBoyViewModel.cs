@@ -2,7 +2,11 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using emulator.glue;
+
 using Microsoft.UI.Xaml.Media.Imaging;
+
+using System.Text.Json;
 
 using Windows.Storage.Pickers;
 
@@ -11,7 +15,7 @@ using WPFFrontend.Platform;
 
 namespace WPFFrontend.ViewModels;
 
-public partial class GameBoyViewModel : ObservableObject, IDisposable
+public sealed partial class GameBoyViewModel : ObservableObject, IDisposable
 {
     public GameboyTimingInfo Performance { get; }
     public GameboyScreen Screen { get; }
@@ -51,6 +55,27 @@ public partial class GameBoyViewModel : ObservableObject, IDisposable
         if (file is not null)
         {
             Model.ROM = file.Path;
+        }
+    }
+    [RelayCommand]
+    public async Task SaveGameboyStateAsync(CancellationToken ct)
+    {
+        SerializedGameboyState? state = await Model.SaveGameboyStateAsync(ct);
+        var picker = new FileSavePicker();
+        var list = new List<string>() { ".gbs" };
+        picker.FileTypeChoices.Add("Gameboy State", list);
+        picker.SuggestedFileName = "gameboy-state";
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, WindowHandle);
+        var file = await picker.PickSaveFileAsync();
+        if (file is not null)
+        {
+            JsonSerializerOptions options = new()
+            {
+                WriteIndented = true,
+            };
+
+
+            await JsonSerializer.SerializeAsync(await file.OpenStreamForWriteAsync(), state, options, ct);
         }
     }
 
