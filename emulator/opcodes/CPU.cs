@@ -20,6 +20,17 @@ public partial class CPU
 
     private HaltState Halted = HaltState.off;
 
+    internal CPUState SerializeState()
+    {
+        return new CPUState
+        {
+            PC = PC,
+            Registers = Registers.GetState(),
+            Halted = Halted,
+        };
+    }
+
+
     public Action Op(Opcode op) => StdOps[(int)op];
 
     public Action Op(CBOpcode op) => CbOps[(int)op];

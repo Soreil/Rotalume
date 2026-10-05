@@ -1,7 +1,17 @@
 ﻿namespace emulator.sound;
 
+public class ToneChannelState
+{
+    public required SquareChannelState SquareChannel { get; init; }
+}
+
 internal class ToneChannel : SquareChannel
 {
+    public ToneChannelState GetToneChannelState() => new()
+    {
+        SquareChannel = GetState()
+    };
+
     public byte NR21
     {
         get => NRs1;

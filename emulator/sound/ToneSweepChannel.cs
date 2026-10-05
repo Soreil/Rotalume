@@ -3,8 +3,32 @@ using emulator.extensions;
 
 namespace emulator.sound;
 
+public class ToneSweepChannelState
+{
+    public required SquareChannelState SquareChannel { get; init; }
+    public required bool SweepEnabled { get; init; }
+    public required ushort ShadowFrequency { get; init; }
+    public required int SweepTimer { get; init; }
+    public required bool NegateUsed { get; init; }
+    public required int SweepPeriod { get; init; }
+    public required bool SweepNegate { get; init; }
+    public required int SweepShift { get; init; }
+}
+
 internal class ToneSweepChannel : SquareChannel
 {
+    public ToneSweepChannelState GetToneSweepChannelState() => new()
+    {
+        SquareChannel = GetState(),
+        SweepEnabled = sweepEnabled,
+        ShadowFrequency = shadowFrequency,
+        SweepTimer = sweepTimer,
+        NegateUsed = negateUsed,
+        SweepPeriod = SweepPeriod,
+        SweepNegate = SweepNegate,
+        SweepShift = SweepShift
+    };
+
     private bool sweepEnabled;
     private ushort shadowFrequency;
     private int sweepTimer;

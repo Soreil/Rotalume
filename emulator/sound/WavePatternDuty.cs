@@ -1,6 +1,6 @@
 ﻿namespace emulator.sound;
 
-internal enum WavePatternDuty : byte
+public enum WavePatternDuty : byte
 {
     Eigth = 0,
     Quarter = 1,

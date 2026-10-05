@@ -2,8 +2,32 @@
 
 namespace emulator.sound;
 
+public class WaveChannelState
+{
+    public required ChannelState Channel { get; init; }
+    public required bool ChannelOff { get; init; }
+    public required WaveOutputLevel OutputLevel { get; init; }
+    public required ushort Frequency { get; init; }
+    public required int PositionCounter { get; init; }
+    public required int FrequencyTimer { get; init; }
+    public required int AccessWindow { get; init; }
+    public required int FetchedByteIndex { get; init; }
+}
+
 internal class WaveChannel : Channel
 {
+    public WaveChannelState GetState() => new()
+    {
+        Channel = GetChannelState(),
+        ChannelOff = ChannelOff,
+        OutputLevel = OutputLevel,
+        Frequency = Frequency,
+        PositionCounter = PositionCounter,
+        FrequencyTimer = frequencyTimer,
+        AccessWindow = accessWindow,
+        FetchedByteIndex = fetchedByteIndex
+    };
+
     private readonly byte[] table;
 
     private bool ChannelOff;
@@ -52,7 +76,7 @@ internal class WaveChannel : Channel
     private int accessWindow;
     private int fetchedByteIndex;
 
-    public override void Clock()
+    internal override void Clock()
     {
         if (accessWindow > 0) accessWindow--;
         if (!ChannelEnabled) return;
@@ -105,7 +129,9 @@ internal class WaveChannel : Channel
         WaveOutputLevel.Full => sample,
         _ => throw new NotSupportedException()
     };
-    public override bool DACOn() => NR30.GetBit(7);
+
+    //This is suspicious, shouldn't this bit be flipped?
+    internal override bool DACOn() => ChannelOff;
 
     public byte this[int n]
     {

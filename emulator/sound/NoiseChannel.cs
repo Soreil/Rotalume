@@ -1,11 +1,37 @@
 ﻿
 using emulator.extensions;
 
-using System.Collections;
-
 namespace emulator.sound;
-public class NoiseChannel : Channel
+
+public class NoiseChannelState
 {
+    public required ChannelState Channel { get; init; }
+    public required EnvelopeState Envelope { get; init; }
+    public required LFSRState LFSR { get; init; }
+
+    public required int DivisorShiftAmount { get; init; }
+    public required bool ShiftRegisterWidth { get; init; }
+    public required int BaseDivisorCode { get; init; }
+    public required int Divisor { get; init; }
+    public required int FrequencyTimer { get; init; }
+
+}
+
+internal class NoiseChannel : Channel
+{
+    public NoiseChannelState GetState() => new()
+    {
+        Channel = GetChannelState(),
+        Envelope = envelope.GetState(),
+        LFSR = ShiftRegister.GetState(),
+
+        DivisorShiftAmount = DivisorShiftAmount,
+        ShiftRegisterWidth = ShiftRegisterWidth,
+        BaseDivisorCode = BaseDivisorCode,
+        Divisor = Divisor,
+        FrequencyTimer = FrequencyTimer
+    };
+
     public byte NR41
     {
         get => NRx1;
@@ -56,7 +82,7 @@ public class NoiseChannel : Channel
 
     private readonly LFSR ShiftRegister;
 
-    public override void Clock()
+    internal override void Clock()
     {
         if (FrequencyTimer == 0)
         {
@@ -95,38 +121,11 @@ public class NoiseChannel : Channel
         return (byte)(start * envelope.Volume);
     }
 
-    public override bool DACOn() => (NR42 >> 3) != 0;
+    internal override bool DACOn() => (NR42 >> 3) != 0;
 
-    public NoiseChannel()
+    internal NoiseChannel()
     {
         ShiftRegister = new();
         envelope = new();
-    }
-}
-
-public class LFSR
-{
-    private const int LFSRbitCount = 15;
-    private BitArray bits;
-
-    //Waveform output is bit 0 of the LFSR flipped
-    public bool Output() => !bits[0];
-
-    public void Step(bool WidthMode)
-    {
-        var newBit = bits[0] ^ bits[1];
-
-        bits = bits.RightShift(1);
-        bits.Set(LFSRbitCount - 1, newBit);
-
-        if (WidthMode) bits.Set(6, newBit);
-    }
-
-    public void ResetBits() => bits.SetAll(true);
-
-    public LFSR()
-    {
-        bits = new(LFSRbitCount);
-        ResetBits();
     }
 }

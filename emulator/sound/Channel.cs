@@ -1,23 +1,32 @@
 ﻿namespace emulator.sound;
 
-public abstract class Channel
+public class ChannelState
 {
-    public void TickLength()
+    public required bool ChannelEnabled { get; init; }
+    public required bool UseLength { get; init; }
+    public required int LengthTimer { get; init; }
+    public required bool NextStepClocksLength { get; init; }
+    public required byte NRx1 { get; init; }
+}
+
+internal abstract class Channel
+{
+    protected virtual ChannelState GetChannelState() => new()
+    {
+        ChannelEnabled = ChannelEnabled,
+        UseLength = UseLength,
+        LengthTimer = LengthTimer,
+        NextStepClocksLength = NextStepClocksLength,
+        NRx1 = _NRx1
+    };
+
+    internal void TickLength()
     {
         if (!UseLength || LengthTimer == 0) return;
 
         LengthTimer--;
         if (LengthTimer == 0) ChannelEnabled = false;
     }
-
-    internal bool NextStepClocksLength { get; set; } = true;
-
-    internal void PowerOff()
-    {
-        ChannelEnabled = false;
-        UseLength = false;
-    }
-
     protected void SetLengthControl(byte value)
     {
         bool wasEnabled = UseLength;
@@ -30,20 +39,30 @@ public abstract class Channel
         if (reloadLength && UseLength && !NextStepClocksLength) TickLength();
     }
 
-    protected int LengthTimer { get; set; }
-    protected byte NRx1 { get => 0xff; set => LengthTimer = SoundLengthMAX - (value & (SoundLengthMAX - 1)); }
-
+    internal bool NextStepClocksLength { get; set; } = true;
+    private int LengthTimer { get; set; }
+    protected bool UseLength { get; set; }
     protected abstract int SoundLengthMAX { get; }
 
-    public bool IsOn() => ChannelEnabled;
-    public abstract void Clock();
-
+    //This field exists for serialization, we can't just read back 0xff since then we couldn't see internal state.
+    private byte _NRx1;
+    protected byte NRx1 { get => 0xff; set { _NRx1 = value; LengthTimer = SoundLengthMAX - (value & (SoundLengthMAX - 1)); } }
     protected bool ChannelEnabled;
-    protected bool UseLength { get; set; }
+
+    internal void PowerOff()
+    {
+        ChannelEnabled = false;
+        UseLength = false;
+    }
+
+    internal bool IsOn() => ChannelEnabled;
+    internal abstract void Clock();
+
 
     public abstract byte Sample();
 
-    public abstract bool DACOn();
+    internal abstract bool DACOn();
+
     protected virtual void Trigger()
     {
         ChannelEnabled = DACOn();

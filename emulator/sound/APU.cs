@@ -348,15 +348,6 @@ public class APU(ILogger<APU> logger)
     public byte this[Address index]
     {
         get =>
-            //Length registers are accesible during power off on the dmg
-            //if (MasterSoundDisable &&
-            //    index is not Address.NR52
-            //              or Address.NR11
-            //              or Address.NR21
-            //              or Address.NR31
-            //              or Address.NR41)
-            //    return 0xff;
-
             index switch
             {
                 Address.NR10 => ToneSweep.NR10,
@@ -488,4 +479,32 @@ public class APU(ILogger<APU> logger)
                               or Address.Wave13
                               or Address.Wave14
                               or Address.Wave15));
+
+    internal APUState SerializeState()
+    {
+        return new APUState
+        {
+            Noise = Noise.GetState(),
+            Tone = Tone.GetToneChannelState(),
+            ToneSweep = ToneSweep.GetToneSweepChannelState(),
+            Wave = Wave.GetState(),
+            OutputToLeftTerminal = OutputToLeftTerminal,
+            OutputToRightTerminal = OutputToRightTerminal,
+            OutputVolumeLeft = OutputVolumeLeft,
+            OutputVolumeRight = OutputVolumeRight,
+            Sound1LeftOn = Sound1LeftOn,
+            Sound1RightOn = Sound1RightOn,
+            Sound2LeftOn = Sound2LeftOn,
+            Sound2RightOn = Sound2RightOn,
+            Sound3LeftOn = Sound3LeftOn,
+            Sound3RightOn = Sound3RightOn,
+            Sound4LeftOn = Sound4LeftOn,
+            Sound4RightOn = Sound4RightOn,
+            MasterSoundDisable = MasterSoundDisable,
+            SoundClock = SoundClock,
+            FrameSequencerState = FrameSequencerState,
+            CapacitorLeft = capacitorLeft,
+            CapacitorRight = capacitorRight
+        };
+    }
 }

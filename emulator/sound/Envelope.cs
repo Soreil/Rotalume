@@ -2,8 +2,26 @@
 
 namespace emulator.sound;
 
+public class EnvelopeState
+{
+    public required int CurrentEnvelopeVolume { get; init; }
+    public required int InitialEnvelopeVolume { get; init; }
+    public required bool EnvelopeIncreasing { get; init; }
+    public required int EnvelopeStepPeriod { get; init; }
+    public required int EnvelopeSweepTimer { get; init; }
+}
+
 public class Envelope
 {
+    public EnvelopeState GetState() => new()
+    {
+        CurrentEnvelopeVolume = Volume,
+        InitialEnvelopeVolume = InitialEnvelopeVolume,
+        EnvelopeIncreasing = EnvelopeIncreasing,
+        EnvelopeStepPeriod = EnvelopeStepPeriod,
+        EnvelopeSweepTimer = envelopeSweepTimer
+    };
+
     //https://nightshade256.github.io/2021/03/27/gb-sound-emulation.html
     public void Tick()
     {
@@ -17,14 +35,12 @@ public class Envelope
             //The case where this is 0 but has to be treated as 8 can't ever possibly work, why is it so then?
             envelopeSweepTimer = EnvelopeStepPeriod == 0 ? 8 : EnvelopeStepPeriod;
 
-            if (CurrentEnvelopeVolume < 0xf && EnvelopeIncreasing) CurrentEnvelopeVolume++;
-            if (CurrentEnvelopeVolume > 0x0 && !EnvelopeIncreasing) CurrentEnvelopeVolume--;
+            if (Volume < 0xf && EnvelopeIncreasing) Volume++;
+            if (Volume > 0x0 && !EnvelopeIncreasing) Volume--;
         }
     }
 
-    public int Volume => CurrentEnvelopeVolume;
-
-    public int CurrentEnvelopeVolume;
+    public int Volume { get; private set; }
 
     private int InitialEnvelopeVolume;
     private bool EnvelopeIncreasing;
@@ -34,7 +50,7 @@ public class Envelope
     public void Trigger()
     {
         envelopeSweepTimer = EnvelopeStepPeriod == 0 ? 8 : EnvelopeStepPeriod;
-        CurrentEnvelopeVolume = InitialEnvelopeVolume;
+        Volume = InitialEnvelopeVolume;
     }
 
     public byte Register

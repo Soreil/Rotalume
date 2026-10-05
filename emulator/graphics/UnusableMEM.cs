@@ -19,6 +19,11 @@ public class UnusableMEM
         get => mem[n - Start];
         set => mem[n - Start] = value;
     }
+
+    internal object SerializeState()
+    {
+        throw new NotImplementedException();
+    }
 }
 
 

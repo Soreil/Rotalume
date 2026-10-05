@@ -108,4 +108,17 @@ public class OAM
         for (int i = 0; i < 8; i++)
             this[destination + i] = this[source + i];
     }
+
+    internal OAMState SerializeState()
+    {
+        return new OAMState
+        {
+            Sprites = sprites,
+        };
+    }
+}
+
+public class OAMState
+{
+    public required SpriteAttributes[] Sprites { get; init; }
 }

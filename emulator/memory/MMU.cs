@@ -5,6 +5,21 @@ using emulator.memory.mappers;
 using emulator.opcodes;
 
 namespace emulator.memory;
+
+public class MMUState
+{
+    public required object BootRom { get; init; }
+    //public required object Card { get; init; }
+    public required object VRAM { get; init; }
+    public required object WRAM { get; init; }
+    public required object OAM { get; init; }
+    public required object APU { get; init; }
+    public required object HRAM { get; init; }
+    public required object UnusableMEM { get; init; }
+    public required object Keypad { get; init; }
+    public required object DMA { get; init; }
+}
+
 public sealed class MMU
 {
     private readonly MBC Card;
@@ -69,88 +84,88 @@ public sealed class MMU
                 };
 
     private void WriteMapped(ushort at, byte value)
+    {
+        switch (at)
         {
-            switch (at)
+            case >= 0 and < 0x4000:
+            Card[at] = value;//bank0
+            break;
+            case >= 0x4000 and < 0x8000:
+            Card[at] = value;//bank1
+            break;
+            case >= 0x8000 and < 0xa000:
+            if (!VRAM.Locked)
             {
-                case >= 0 and < 0x4000:
-                Card[at] = value;//bank0
-                break;
-                case >= 0x4000 and < 0x8000:
-                Card[at] = value;//bank1
-                break;
-                case >= 0x8000 and < 0xa000:
-                if (!VRAM.Locked)
-                {
-                    VRAM[at] = value;
-                }
-                break;
-                case >= 0xa000 and < 0xc000:
-                Card[at] = value;//ext_ram
-                break;
-                case >= 0xc000 and < 0xe000:
-                WRAM[at] = value;//wram
-                break;
-                case >= 0xe000 and < 0xFE00:
-                WRAM[at] = value;//wram mirror
-                break;
-                case >= 0xfe00 and < 0xfea0:
-                if (!OAM.Locked)
-                {
-                    OAM[at] = value;
-                }
-                break;
-                case >= 0xfea0 and < 0xff00:
-                UnusableMEM[at] = value;
-                break;
-
-                case 0xff00:
-                Keypad.Register = value;
-                break;
-
-                case 0xff01:
-                Serial.Data = value;
-                break;
-
-                case 0xff02:
-                Serial.Control = value;
-                break;
-
-                case >= 0xff04 and < 0xff08:
-                Timers[at] = value;
-                break;
-
-                case 0xff0f:
-                InterruptRegisters.Request = value;
-                break;
-
-                case >= 0xff10 and < 0xff27:
-                APU[(sound.Address)at] = value;
-                break;
-
-                case >= 0xff30 and < 0xff40:
-                APU[(sound.Address)at] = value;
-                break;
-
-                case not (ushort)graphics.Address.DMA and >= 0xff40 and < 0xff50:
-                PPU[(graphics.Address)at] = value;
-                break;
-
-                case (ushort)graphics.Address.DMA:
-                DMA.Register = value;
-                break;
-
-                case 0xff50:
-                BootRom.Register = value;
-                break;
-
-                case >= 0xff80 and < 0xffff:
-                HRAM[at] = value;
-                break;
-                case 0xffff:
-                InterruptRegisters.Enable = value;
-                break;
+                VRAM[at] = value;
             }
+            break;
+            case >= 0xa000 and < 0xc000:
+            Card[at] = value;//ext_ram
+            break;
+            case >= 0xc000 and < 0xe000:
+            WRAM[at] = value;//wram
+            break;
+            case >= 0xe000 and < 0xFE00:
+            WRAM[at] = value;//wram mirror
+            break;
+            case >= 0xfe00 and < 0xfea0:
+            if (!OAM.Locked)
+            {
+                OAM[at] = value;
+            }
+            break;
+            case >= 0xfea0 and < 0xff00:
+            UnusableMEM[at] = value;
+            break;
+
+            case 0xff00:
+            Keypad.Register = value;
+            break;
+
+            case 0xff01:
+            Serial.Data = value;
+            break;
+
+            case 0xff02:
+            Serial.Control = value;
+            break;
+
+            case >= 0xff04 and < 0xff08:
+            Timers[at] = value;
+            break;
+
+            case 0xff0f:
+            InterruptRegisters.Request = value;
+            break;
+
+            case >= 0xff10 and < 0xff27:
+            APU[(sound.Address)at] = value;
+            break;
+
+            case >= 0xff30 and < 0xff40:
+            APU[(sound.Address)at] = value;
+            break;
+
+            case not (ushort)graphics.Address.DMA and >= 0xff40 and < 0xff50:
+            PPU[(graphics.Address)at] = value;
+            break;
+
+            case (ushort)graphics.Address.DMA:
+            DMA.Register = value;
+            break;
+
+            case 0xff50:
+            BootRom.Register = value;
+            break;
+
+            case >= 0xff80 and < 0xffff:
+            HRAM[at] = value;
+            break;
+            case 0xffff:
+            InterruptRegisters.Enable = value;
+            break;
         }
+    }
 
     private readonly BootRom BootRom;
     private readonly InterruptRegisters InterruptRegisters;
@@ -203,4 +218,23 @@ public sealed class MMU
     // The DMA engine is not subject to the CPU's DMA bus restriction.
     internal byte ReadForDMA(ushort at) => at < 0xfe00 ? ReadMapped(at) : WRAM[at];
     public byte ExternalBusRAM(ushort at) => ReadForDMA(at);
+
+    internal MMUState SerializeState()
+    {
+        var state = new MMUState
+        {
+            BootRom = BootRom.SerializeState(),
+            //Card = Card.SerializeState(),
+            VRAM = VRAM.SerializeState(),
+            WRAM = WRAM.SerializeState(),
+            OAM = OAM.SerializeState(),
+            APU = APU.SerializeState(),
+            HRAM = HRAM.SerializeState(),
+            UnusableMEM = UnusableMEM.SerializeState(),
+            Keypad = Keypad.SerializeState(),
+            DMA = DMA.SerializeState()
+        };
+
+        return state;
+    }
 }

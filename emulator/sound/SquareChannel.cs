@@ -1,9 +1,27 @@
-﻿using emulator.extensions;
+﻿namespace emulator.sound;
 
-namespace emulator.sound;
-
-internal class SquareChannel : Channel
+public class SquareChannelState
 {
+    public required ChannelState Channel { get; init; }
+    public required EnvelopeState Envelope { get; init; }
+    public required WavePatternDuty WavePatternDuty { get; init; }
+    public required ushort Frequency { get; init; }
+    public required int WaveFormIndex { get; init; }
+    public required byte CurrentSample { get; init; }
+}
+
+internal abstract class SquareChannel : Channel
+{
+    public SquareChannelState GetState() => new()
+    {
+        Channel = GetChannelState(),
+        Envelope = envelope.GetState(),
+        WavePatternDuty = wavePatternDuty,
+        Frequency = Frequency,
+        WaveFormIndex = WaveFormIndex,
+        CurrentSample = CurrentSample
+    };
+
     public SquareChannel() => envelope = new();
 
 
@@ -66,7 +84,7 @@ internal class SquareChannel : Channel
 
     private byte CurrentSample;
 
-    public override void Clock()
+    internal override void Clock()
     {
         CurrentSample = waveTable[(int)wavePatternDuty, WaveFormIndex];
 
@@ -74,6 +92,6 @@ internal class SquareChannel : Channel
         WaveFormIndex &= 0x7;
     }
     public override byte Sample() => (byte)(CurrentSample * envelope.Volume);
-    public override bool DACOn() => (NRs2 >> 3) != 0;
+    internal override bool DACOn() => (NRs2 >> 3) != 0;
 }
 

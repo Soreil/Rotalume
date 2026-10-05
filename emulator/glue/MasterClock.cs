@@ -6,4 +6,9 @@ public class MasterClock
     public void Tick() => clock++;
 
     public long Now() => clock;
+
+    internal long SerializeState()
+    {
+        return clock;
+    }
 }

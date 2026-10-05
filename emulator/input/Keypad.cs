@@ -85,4 +85,9 @@ public class Keypad
         else Input.Vibrate(0, 0);
         Rumbling = !Rumbling;
     }
+
+    internal object SerializeState()
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -1,6 +1,6 @@
 ﻿namespace emulator.sound;
 
-internal enum WaveOutputLevel : byte
+public enum WaveOutputLevel : byte
 {
     Mute = 0,
     Full = 1,

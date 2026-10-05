@@ -21,6 +21,17 @@ public class WRAM
         get => mem[n & 0x1fff];
         set => mem[n & 0x1fff] = value;
     }
+
+    internal WRAMState SerializeState()
+    {
+        return new WRAMState
+        {
+            Mem = mem,
+        };
+    }
 }
 
-
+public class WRAMState
+{
+    public required byte[] Mem { get; init; }
+}

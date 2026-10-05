@@ -86,7 +86,6 @@ public class Core : IDisposable
         var cycler = new Cycler(Timers, PPU, APU, DMA, MasterClock, Samples);
 
 
-
         //We have to replicate the state of the system post boot without running the bootrom
         if (bootROM == null)
         {
@@ -117,6 +116,16 @@ public class Core : IDisposable
         };
     }
 
+    public SerializedGameboyState SerializeState()
+    {
+        return new SerializedGameboyState
+        {
+            CPU = CPU.SerializeState(),
+            Memory = Memory.SerializeState(),
+            APU = APU.SerializeState(),
+            MasterClock = MasterClock.SerializeState(),
+        };
+    }
 
     public void Step() => CPU.Step();
 

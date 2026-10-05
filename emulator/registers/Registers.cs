@@ -2,8 +2,25 @@
 
 namespace emulator.registers;
 
+public class RegistersState { 
+    public required ushort AF { get; init; }
+    public required ushort BC { get; init; }
+    public required ushort DE { get; init; }
+    public required ushort HL { get; init; }
+    public required ushort SP { get; init; }
+}
+
 public class Registers
 {
+    public RegistersState GetState() => new()
+    {
+        AF = AF,
+        BC = BC,
+        DE = DE,
+        HL = HL,
+        SP = SP
+    };
+
     public ushort AF
     {
         get => (ushort)((A << 8) | MakeF());

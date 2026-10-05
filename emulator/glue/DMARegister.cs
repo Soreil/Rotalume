@@ -16,4 +16,9 @@ public class DMARegister
             BaseAddr = (ushort)(value << 8);
         }
     }
+
+    internal object SerializeState()
+    {
+        throw new NotImplementedException();
+    }
 }

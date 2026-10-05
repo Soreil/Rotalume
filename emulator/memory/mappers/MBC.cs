@@ -13,4 +13,6 @@ public abstract class MBC : IDisposable
     }
 
     public abstract void Dispose();
+
+    //internal abstract object SerializeState();
 }

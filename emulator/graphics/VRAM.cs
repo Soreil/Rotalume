@@ -1,5 +1,11 @@
 ﻿namespace emulator.graphics;
 
+public class VRAMState
+{
+    public required byte[] Mem { get; init; }
+    public required bool Locked { get; init; }
+}
+
 public class VRAM
 {
     private readonly byte[] mem;
@@ -26,5 +32,14 @@ public class VRAM
     {
         get => mem[n - Start];
         set => mem[n - Start] = value;
+    }
+
+    internal VRAMState SerializeState()
+    {
+        return new VRAMState
+        {
+            Mem = mem,
+            Locked = Locked
+        };
     }
 }
