@@ -1,5 +1,6 @@
 ﻿
 using emulator.extensions;
+using emulator.glue;
 using emulator.registers;
 
 namespace emulator.opcodes;
@@ -143,15 +144,6 @@ public partial class CPU
         Write(address, value);
     };
 
-    internal void SetStateWithoutBootrom()
-    {
-        PC = 0x100;
-        Registers.AF = 0x0100;
-        Registers.BC = 0xff13;
-        Registers.DE = 0x00c1;
-        Registers.HL = 0x8403;
-        Registers.SP = 0xfffe;
-    }
     public Action INC(WideRegister reg) => () =>
     {
         var wide = Registers.Get(reg);
@@ -162,17 +154,17 @@ public partial class CPU
         CycleElapsed();
     };
 
-    public event EventHandler<OAMCorruptionEventArgs>? OAMCorruption;
+    public event EventHandler<OAMCorruptionEventArgs> OAMCorruption = delegate { };
 
     private void CorruptOAM(ushort address, OAMCorruptionKind kind)
     {
         // The address bus decodes the full FE page, including unusable OAM addresses.
         if ((address >> 8) == 0xfe)
-            OAMCorruption?.Invoke(this, new OAMCorruptionEventArgs { Kind = kind });
+            OAMCorruption(this, new OAMCorruptionEventArgs { Kind = kind });
     }
 
     private void CorruptOAMAddress() =>
-        OAMCorruption?.Invoke(this, new OAMCorruptionEventArgs { Kind = OAMCorruptionKind.Address });
+        OAMCorruption(this, new OAMCorruptionEventArgs { Kind = OAMCorruptionKind.Address });
 
 
     public Action INC(Register p0) => () =>
