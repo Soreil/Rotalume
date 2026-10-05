@@ -1,4 +1,4 @@
-using emulator.graphics;
+﻿using emulator.graphics;
 using emulator.opcodes;
 
 using NUnit.Framework;
@@ -24,12 +24,12 @@ internal class OAMCorruptionTests
 
         // Synchronize to a regular scanline, avoiding the LCD startup offset.
         for (int cycles = 0; cycles < 114 && core.Memory[0xff44] != 1; cycles++)
-            core.CPU.Cycle();
+            core.CPU.Cycler.Cycle();
         Assert.That(core.Memory[0xff44], Is.EqualTo(1));
         Assert.That(core.Memory[0xff41] & 3, Is.EqualTo((int)Mode.OAMSearch));
 
         for (int dots = 0; dots < dotsAfterLineStart; dots += 4)
-            core.CPU.Cycle();
+            core.CPU.Cycler.Cycle();
 
         core.CPU.Registers.DE = 0xfe00;
         // Invoke the execution phase directly: the event occurs before its internal cycle.
@@ -66,10 +66,10 @@ internal class OAMCorruptionTests
             core.Memory[(ushort)(OAM.Start + i)] = expected[i];
         core.Memory[0xff40] = 0x91;
         for (int cycles = 0; cycles < 114 && core.Memory[0xff44] != 1; cycles++)
-            core.CPU.Cycle();
+            core.CPU.Cycler.Cycle();
         Assert.That(core.Memory[0xff44], Is.EqualTo(1));
         for (int cycle = 0; cycle < 6; cycle++)
-            core.CPU.Cycle();
+            core.CPU.Cycler.Cycle();
 
         // CPU addresses do not select the damaged row; include the unusable FE page.
         core.CPU.Registers.DE = 0xfea0;
