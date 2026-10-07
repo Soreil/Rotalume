@@ -1,4 +1,6 @@
-﻿using ImageMagick;
+﻿using emulator.opcodes;
+
+using ImageMagick;
 
 using NUnit.Framework;
 
@@ -167,4 +169,89 @@ internal class GraphicalOutputTest
             Assert.Fail($"Images did not match after {frameToCheck} frames. Wrote debug image to {outputFile}");
         }
     }
+
+
+
+    [Test]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m2_win_en_toggle.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_bgp_change.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_bgp_change_sprites.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_lcdc_bg_en_change.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_lcdc_bg_en_change2.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_lcdc_bg_map_change.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_lcdc_bg_map_change2.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_lcdc_obj_en_change.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_lcdc_obj_en_change_variant.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_lcdc_obj_size_change.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_lcdc_obj_size_change_scx.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_lcdc_tile_sel_change.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_lcdc_tile_sel_change2.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_lcdc_tile_sel_win_change.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_lcdc_tile_sel_win_change2.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_lcdc_win_en_change_multiple.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_lcdc_win_en_change_multiple_wx.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_lcdc_win_map_change.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_lcdc_win_map_change2.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_obp0_change.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_scx_high_5_bits.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_scx_high_5_bits_change2.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_scx_low_3_bits.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_scy_change.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_scy_change2.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_window_timing.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_window_timing_wx_0.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_wx_4_change.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_wx_4_change_sprites.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_wx_5_change.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_wx_6_change.gb")]
+    public async Task TestTeaRoom(string romPath)
+    {
+        var imageName = Path.GetFileNameWithoutExtension(romPath) + "_dmg_blob.png";
+        var imagePath = Path.Combine(Path.GetDirectoryName(romPath)!, imageName);
+        await TestMatchesOnBreakCondition(romPath, imagePath, Path.ChangeExtension(romPath, ".bmp"));
+    }
+
+    public async Task TestMatchesOnBreakCondition(string romPath, string imagePath, string outputFile)
+    {
+        var render = new TestRenderDevice();
+
+        var rom = File.ReadAllBytes(romPath);
+        var expectedImage = new MagickImage(imagePath);
+
+        var core = TestHelpers.NewCore(rom, Path.GetFileNameWithoutExtension(romPath), render);
+
+        int FramesDrawn = 0;
+        render.FramePushed += (sender, e) =>
+        {
+            FramesDrawn++;
+        };
+
+        bool breakPointHit = false;
+
+        core.CPU.BreakInstructions.Add(Opcode.LD_B_B); // Break on a no-op instruction, Mealybug tests are designed to hit this instruction at the end of the test.
+        core.CPU.BreakPointHit += (sender, e) =>
+        {
+            Console.WriteLine($"Hit breakpoint at PC: {core.CPU.PC:X4}, FramesDrawn: {FramesDrawn}");
+            breakPointHit = true;
+        };
+
+        while (!breakPointHit)
+            core.Step();
+        core.Dispose();
+
+
+        var settings = new MagickReadSettings
+        {
+            Width = 160,
+            Height = 144,
+            Format = MagickFormat.Gray
+        };
+        using var outputImage = new MagickImage(render.Image, settings);
+
+
+        outputImage.Write(outputFile, MagickFormat.Bmp);
+        Assert.That(ImageComparer.AreImagesEqual(expectedImage, outputImage), $"Images did not match after breakpoint. Wrote debug image to {outputFile}");
+
+    }
+
 }

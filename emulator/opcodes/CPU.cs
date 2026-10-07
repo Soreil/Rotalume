@@ -6,8 +6,17 @@ using Microsoft.Extensions.Logging;
 
 namespace emulator.opcodes;
 
+public class InstructionHitEventArgs(ushort pC, Opcode opcode) : EventArgs
+{
+    public ushort PC { get; } = pC;
+    public Opcode Opcode { get; } = opcode;
+}
+
 public partial class CPU
 {
+    public event EventHandler<InstructionHitEventArgs>? BreakPointHit;
+    public List<Opcode> BreakInstructions = [];
+
     private readonly Action[] StdOps;
     private readonly Action[] CbOps;
     private readonly InterruptRegisters ISR;
@@ -31,7 +40,14 @@ public partial class CPU
     }
 
 
-    public Action Op(Opcode op) => StdOps[(int)op];
+    public Action Op(Opcode op)
+    {
+        if (BreakInstructions.Contains(op))
+        {
+            BreakPointHit?.Invoke(this, new InstructionHitEventArgs(PC, op));
+        }
+        return StdOps[(int)op];
+    }
 
     public Action Op(CBOpcode op) => CbOps[(int)op];
 
