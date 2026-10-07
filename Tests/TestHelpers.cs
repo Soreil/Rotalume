@@ -12,6 +12,10 @@ public static class TestHelpers
 {
     private static byte[] LoadGameROM() => File.ReadAllBytes(@"rom\Tetris (World) (Rev A).gb");
     private static byte[] LoadBootROM() => File.ReadAllBytes(@"rom\dmg_rom.bin");
+    public static Core NewBootCore(byte[] gamerom, string fileName, IFrameSink frameSink) =>
+        new(gamerom, LoadBootROM(), fileName,
+            new(new InputDevices(new MockGameController(), [])), frameSink);
+
     public static Core NewBootCore(IFrameSink? frameSink = null)
     {
         var bootrom = LoadBootROM();

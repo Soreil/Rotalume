@@ -175,7 +175,7 @@ internal class GraphicalOutputTest
     [Test]
     [TestCase(@"rom\mealybug-tearoom-tests\ppu\m2_win_en_toggle.gb")]
     [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_bgp_change.gb")]
-    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_bgp_change_sprites.gb")]
+    [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_bgp_change_sprites.gb", true, Category = "RequiresBootROM")]
     [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_lcdc_bg_en_change.gb")]
     [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_lcdc_bg_en_change2.gb")]
     [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_lcdc_bg_map_change.gb")]
@@ -204,14 +204,14 @@ internal class GraphicalOutputTest
     [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_wx_4_change_sprites.gb")]
     [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_wx_5_change.gb")]
     [TestCase(@"rom\mealybug-tearoom-tests\ppu\m3_wx_6_change.gb")]
-    public async Task TestTeaRoom(string romPath)
+    public async Task TestTeaRoom(string romPath, bool runBootROM = false)
     {
         var imageName = Path.GetFileNameWithoutExtension(romPath) + "_dmg_blob.png";
         var imagePath = Path.Combine(Path.GetDirectoryName(romPath)!, imageName);
-        await TestMatchesOnBreakCondition(romPath, imagePath, Path.ChangeExtension(romPath, ".bmp"));
+        await TestMatchesOnBreakCondition(romPath, imagePath, Path.ChangeExtension(romPath, ".bmp"), runBootROM);
     }
 
-    public async Task TestMatchesOnBreakCondition(string romPath, string imagePath, string outputFile)
+    public async Task TestMatchesOnBreakCondition(string romPath, string imagePath, string outputFile, bool runBootROM = false)
     {
         var render = new TestRenderDevice();
 
@@ -219,7 +219,10 @@ internal class GraphicalOutputTest
         var expectedImage = new MagickImage(imagePath);
         MapMealybugImageToExpectedPalette(expectedImage);
 
-        var core = TestHelpers.NewCore(rom, Path.GetFileNameWithoutExtension(romPath), render);
+        // This sprite test reuses the trademark tile left in VRAM by the DMG boot ROM.
+        var core = runBootROM
+            ? TestHelpers.NewBootCore(rom, Path.GetFileNameWithoutExtension(romPath), render)
+            : TestHelpers.NewCore(rom, Path.GetFileNameWithoutExtension(romPath), render);
 
         int FramesDrawn = 0;
         render.FramePushed += (sender, e) =>
@@ -250,7 +253,8 @@ internal class GraphicalOutputTest
 
 
         outputImage.Write(outputFile, MagickFormat.Bmp);
-        Assert.That(ImageComparer.AreImagesEqual(expectedImage, outputImage), $"Images did not match after breakpoint. Wrote debug image to {outputFile}");
+        Console.WriteLine($"Wrote debug image to {Path.GetFullPath(outputFile)}");
+        Assert.That(ImageComparer.AreImagesEqual(expectedImage, outputImage), $"Images did not match after breakpoint. Wrote debug image to {Path.GetFullPath(outputFile)}");
 
     }
 

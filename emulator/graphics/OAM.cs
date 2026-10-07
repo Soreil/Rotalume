@@ -44,7 +44,7 @@ public class OAM
     private static bool OnLine(SpriteAttributes s, int line, int spriteHeight) =>
         (s.Y + spriteHeight) > GraphicConstants.DoubleSpriteHeight &&
         s.Y < GraphicConstants.ScreenWidth &&
-        s.X != 0 &&
+        // X=0 objects have no visible pixels, but still incur a fetch penalty.
         s.X < GraphicConstants.ScreenWidth + GraphicConstants.SpriteWidth &&
         line >= s.Y - GraphicConstants.DoubleSpriteHeight &&
         line < s.Y - GraphicConstants.DoubleSpriteHeight + spriteHeight;

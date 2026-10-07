@@ -69,6 +69,10 @@ public class PPU
     public int SpriteHeight => DoubleHeightSprites ? 16 : 8;
     public bool OBJDisplayEnable { get; private set; }
     public bool BGDisplayEnable { get; private set; }
+    private bool PreviousBGDisplayEnable;
+    private long BGEnableEffectiveClock;
+    // LCDC readback changes immediately; pixel output retains bit 0 for one dot.
+    internal bool BGEnabledForOutput => Clock < BGEnableEffectiveClock ? PreviousBGDisplayEnable : BGDisplayEnable;
 
 
     //FF40 - FF4B, PPU control registers
@@ -92,6 +96,14 @@ public class PPU
             BGTileMapDisplaySelectFlag = value.GetBit(3);
             DoubleHeightSprites = value.GetBit(2);
             OBJDisplayEnable = value.GetBit(1);
+            if (BGDisplayEnable != value.GetBit(0))
+            {
+                PreviousBGDisplayEnable = BGEnabledForOutput;
+                // Before the first LCD pixel there is no preceding output state
+                // to retain, including while the initial object fetch is stalled.
+                BGEnableEffectiveClock = Clock +
+                    (Mode == Mode.Transfer && Renderer is not null && Renderer.fetcher.PixelsSentToLCD > 0 ? 2 : 1);
+            }
             BGDisplayEnable = value.GetBit(0);
             if (ScreenJustTurnedOn)
             {
@@ -154,6 +166,8 @@ public class PPU
     //DMA register is located outside of the PPU for our implementation
 
     private byte BGP = 0xff; //FF47
+    private byte PreviousBGP;
+    private long BGPTransitionClock = -1;
     private byte OBP0 = 0xff; //FF48
     private byte OBP1 = 0xff; //FF49
 
@@ -176,12 +190,16 @@ public class PPU
         _ => throw new IndexOutOfRangeException()
     };
 
+    // On the first dot following a DMG BGP write, old and new palette bits overlap.
+    // The register itself already reads back the new value.
+    private byte BackgroundPalette => Clock == BGPTransitionClock ? (byte)(PreviousBGP | BGP) : BGP;
+
     public Shade BackgroundColor(int n) => n switch
     {
-        0 => (Shade)((BGP & 0x3) >> 0),
-        1 => (Shade)((BGP & 0xC) >> 2),
-        2 => (Shade)((BGP & 0x30) >> 4),
-        3 => (Shade)((BGP & 0xC0) >> 6),
+        0 => (Shade)((BackgroundPalette & 0x3) >> 0),
+        1 => (Shade)((BackgroundPalette & 0xC) >> 2),
+        2 => (Shade)((BackgroundPalette & 0x30) >> 4),
+        3 => (Shade)((BackgroundPalette & 0xC0) >> 6),
         _ => throw new IndexOutOfRangeException()
     };
 
@@ -296,7 +314,11 @@ public class PPU
                 case Address.LYC: LYC = value; break;
                 case Address.WY: WY = value; break;
                 case Address.WX: WX = value; break;
-                case Address.BGP: BGP = value; break;
+                case Address.BGP:
+                PreviousBGP = BGP;
+                BGPTransitionClock = Clock + 1;
+                BGP = value;
+                break;
                 case Address.OBP0: OBP0 = value; break;
                 case Address.OBP1: OBP1 = value; break;
             }

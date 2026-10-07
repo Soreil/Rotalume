@@ -13,6 +13,8 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
 
     private int FetcherStep;
     private bool PushedEarly;
+    private int SpriteFetchDotsRemaining;
+    private SpriteAttributes? SpriteBeingFetched;
     private readonly HashSet<int> WindowLY = [];
 
     //Line finished resets all state which is only relevant for a single line
@@ -20,6 +22,8 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
     {
         FetcherStep = 0;
         PushedEarly = false;
+        SpriteFetchDotsRemaining = 0;
+        SpriteBeingFetched = null;
         delaying = false;
         scanlineX = 0;
         BGFIFO.Clear();
@@ -40,6 +44,9 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
 
     public void Fetch()
     {
+        // Object fetching owns the fetcher until its dot budget has elapsed.
+        if (SpriteFetchDotsRemaining > 0) return;
+
         if (delaying)
         {
             delaying = false;
@@ -85,11 +92,13 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
     {
         if (SpriteFIFO.Count <= 8)
         {
-            for (var i = GraphicConstants.SpriteWidth; i > 0; i--)
+            int clippedPixels = int.Clamp(scanlineX + 8 - (Ppu.SCX & 7) - sprite.X, 0, GraphicConstants.SpriteWidth);
+            for (int pos = 0; pos < GraphicConstants.SpriteWidth - clippedPixels; pos++)
             {
-                var paletteIndex = (byte)(Convert.ToByte(low.GetBit(i - 1)) | (byte)(Convert.ToByte(high.GetBit(i - 1)) << 1));
+                int sourcePixel = pos + clippedPixels;
+                int bit = sprite.XFlipped ? sourcePixel : 7 - sourcePixel;
+                var paletteIndex = (byte)(Convert.ToByte(low.GetBit(bit)) | (byte)(Convert.ToByte(high.GetBit(bit)) << 1));
 
-                var pos = sprite.XFlipped ? (i - 1) : GraphicConstants.SpriteWidth - i;
                 ref var existingSpritePixel = ref SpriteFIFO.At(pos);
                 var candidate = new FIFOSpritePixel(sprite.Palette, paletteIndex, sprite.SpriteToBackgroundPriority);
 
@@ -107,12 +116,24 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
 
     public Shade? TryRenderPixel()
     {
-        //Sprites are enabled and there is a sprite starting on the current X position
-        //We can't start the sprite fetching yet if the background fifo is empty
-        var sprite = CanRenderASprite();
-        if (sprite is SpriteAttributes sa)
+        if (SpriteFetchDotsRemaining > 0)
         {
-            PushSpriteRowToPixelFetcher(sa);
+            if (--SpriteFetchDotsRemaining > 0) return null;
+            PushSpriteRowToPixelFetcher(SpriteBeingFetched!.Value);
+            SpriteBeingFetched = null;
+        }
+
+        // Start only when a background pixel could otherwise be emitted. In
+        // particular, an object at the left edge must not bypass BG startup.
+        if (BGFIFO.Count > 8 || FIFOsNotEmpty())
+        {
+            var sprite = CanRenderASprite();
+            if (sprite is SpriteAttributes sa)
+            {
+                SpriteBeingFetched = sa;
+                SpriteFetchDotsRemaining = 6 + Math.Max(0, 5 - ((sa.X + Ppu.SCX) & 7));
+                return null;
+            }
         }
 
         if (FIFOsNotEmpty())
@@ -124,7 +145,7 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
             var pix = BGFIFO.Pop();
             //Do we need to pop in order to do this?
             //Do we need pixels in the fifo to do this?
-            return Ppu.BackgroundColor(Ppu.BGDisplayEnable ? pix.Color : 0);
+            return Ppu.BackgroundColor(Ppu.BGEnabledForOutput ? pix.Color : 0);
         }
         else
         {
@@ -141,7 +162,7 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
             //obj to bg priority bit is set to true so the sprite pixel
             //will be behind bg color 1,2,3
             return sp.Priority && bp.Color != 0
-                ? Ppu.BackgroundColor(Ppu.BGDisplayEnable ? bp.Color : 0)
+                ? Ppu.BackgroundColor(Ppu.BGEnabledForOutput ? bp.Color : 0)
                 : sp.Palette switch
                 {
                     0 => Ppu.SpritePalette0(sp.Color),
@@ -152,7 +173,7 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
         }
         else
         {
-            return Ppu.BackgroundColor(Ppu.BGDisplayEnable ? bp.Color : 0);
+            return Ppu.BackgroundColor(Ppu.BGEnabledForOutput ? bp.Color : 0);
         }
     }
 
@@ -236,7 +257,7 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
 
         for (int i = SpritesFinished; i < SpriteCount; i++)
         {
-            if (SpriteAttributes[i].X == wanted)
+            if (SpriteAttributes[i].X <= wanted)
             {
                 return SpriteAttributes[i];
             }
