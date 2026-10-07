@@ -217,6 +217,7 @@ internal class GraphicalOutputTest
 
         var rom = File.ReadAllBytes(romPath);
         var expectedImage = new MagickImage(imagePath);
+        MapMealybugImageToExpectedPalette(expectedImage);
 
         var core = TestHelpers.NewCore(rom, Path.GetFileNameWithoutExtension(romPath), render);
 
@@ -239,7 +240,6 @@ internal class GraphicalOutputTest
             core.Step();
         core.Dispose();
 
-
         var settings = new MagickReadSettings
         {
             Width = 160,
@@ -252,6 +252,16 @@ internal class GraphicalOutputTest
         outputImage.Write(outputFile, MagickFormat.Bmp);
         Assert.That(ImageComparer.AreImagesEqual(expectedImage, outputImage), $"Images did not match after breakpoint. Wrote debug image to {outputFile}");
 
+    }
+
+    public static void MapMealybugImageToExpectedPalette(MagickImage image)
+    {
+        // Replace exact reference shades without assuming an RGBA pixel layout.
+        image.ColorFuzz = new Percentage(0);
+        byte lightGray = emulator.graphics.Renderer.ShadeToGray(emulator.graphics.Shade.LightGray);
+        byte darkGray = emulator.graphics.Renderer.ShadeToGray(emulator.graphics.Shade.DarkGray);
+        image.Opaque(new MagickColor(170, 170, 170), new MagickColor(lightGray, lightGray, lightGray));
+        image.Opaque(new MagickColor(85, 85, 85), new MagickColor(darkGray, darkGray, darkGray));
     }
 
 }
