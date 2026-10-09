@@ -145,6 +145,7 @@ public class PixelFetcher(PPU p, VRAM vram, OAM oam)
             var pix = BGFIFO.Pop();
             //Do we need to pop in order to do this?
             //Do we need pixels in the fifo to do this?
+
             return Ppu.BackgroundColor(Ppu.BGEnabledForOutput ? pix.Color : 0);
         }
         else

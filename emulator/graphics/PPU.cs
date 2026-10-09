@@ -72,6 +72,7 @@ public class PPU
     private bool PreviousBGDisplayEnable;
     private long BGEnableEffectiveClock;
     // LCDC readback changes immediately; pixel output retains bit 0 for one dot.
+    // This fails on test m3_lcdc_bg_en_change.gb
     internal bool BGEnabledForOutput => Clock < BGEnableEffectiveClock ? PreviousBGDisplayEnable : BGDisplayEnable;
 
 
